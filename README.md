@@ -88,13 +88,13 @@ src/
 
 ## Getting Started
 
-> [!NOTE]  
+> [!NOTE]
 > We are using **Next 15** with **React 19**, follow these steps:
 
 Clone the repo:
 
 ```
-git clone https://github.com/Kiranism/next-shadcn-dashboard-starter.git
+git clone https://github.com/Stoner-Bros/fascm-fe.git
 ```
 
 - `pnpm install` ( we have legacy-peer-deps=true added in the .npmrc)

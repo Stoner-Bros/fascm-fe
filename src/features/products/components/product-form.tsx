@@ -79,7 +79,7 @@ export default function ProductForm({
       </CardHeader>
       <CardContent>
         <Form
-          form={form}
+          form={form as any}
           onSubmit={form.handleSubmit(onSubmit)}
           className='space-y-8'
         >
