@@ -30,8 +30,41 @@ export const navItems: NavItem[] = [
     items: [] // No child items
   },
   {
+    title: 'Warehouse',
+    url: '/dashboard/warehouse',
+    icon: 'inventory',
+    shortcut: ['w', 'w'],
+    isActive: true,
+    items: [
+      {
+        title: 'Inventory',
+        url: '/dashboard/warehouse/inventory',
+        icon: 'inventory',
+        shortcut: ['w', 'i']
+      },
+      {
+        title: 'Stock Management',
+        url: '/dashboard/warehouse/stock',
+        icon: 'warehouse',
+        shortcut: ['w', 's']
+      },
+      {
+        title: 'IoT Dashboard',
+        url: '/dashboard/warehouse/iot-dashboard',
+        icon: 'iotDashboard',
+        shortcut: ['w', 'i']
+      },
+      {
+        title: 'IoT Device',
+        url: '/dashboard/warehouse/iot-devices',
+        icon: 'iotDevice',
+        shortcut: ['w', 'a']
+      }
+    ]
+  },
+  {
     title: 'Account',
-    url: '#', // Placeholder as there is no direct link for the parent
+    url: '/dashboard/profile', // Navigate to profile page
     icon: 'billing',
     isActive: true,
 

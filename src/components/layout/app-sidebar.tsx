@@ -101,6 +101,12 @@ export default function AppSidebar() {
                       <SidebarMenuButton
                         tooltip={item.title}
                         isActive={pathname === item.url}
+                        onClick={(e) => {
+                          if (item.url && item.url !== '#') {
+                            e.preventDefault();
+                            router.push(item.url);
+                          }
+                        }}
                       >
                         {item.icon && <Icon />}
                         <span>{item.title}</span>
