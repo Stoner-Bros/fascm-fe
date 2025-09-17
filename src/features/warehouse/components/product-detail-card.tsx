@@ -355,10 +355,6 @@ export function ProductDetailCard({
                             </div>
                           </div>
                           <div className='text-right'>
-                            <div className='text-sm font-medium'>
-                              {batch.sellingPrice.toLocaleString('vi-VN')}đ/
-                              {batch.unit}
-                            </div>
                             <div className='text-muted-foreground text-xs'>
                               Nhập:{' '}
                               {format(

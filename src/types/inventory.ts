@@ -19,6 +19,7 @@ export interface Area {
   id: string;
   warehouseId: string;
   name: string;
+  type: string; // Type of storage area (e.g., 'fresh', 'frozen', 'dry', 'controlled')
   description?: string;
   temperature: number;
   humidity: number;
@@ -54,6 +55,7 @@ export interface Product {
   currentStock: number;
   reservedStock: number;
   availableStock: number;
+  areaId?: string; // Area where the product is stored
   batches: Batch[];
   supplier: Supplier;
   storageRequirements: StorageRequirements;
@@ -76,8 +78,6 @@ export interface Batch {
   quality: 'A' | 'B' | 'C' | 'D';
   origin: string;
   supplier: Supplier;
-  purchasePrice: number;
-  sellingPrice: number;
   notes?: string;
   qrCode?: string;
   barcode?: string;

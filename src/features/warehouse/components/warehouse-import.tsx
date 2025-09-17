@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+import { z } from 'zod';
 import PageContainer from '@/components/layout/page-container';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -53,6 +53,7 @@ import { format } from 'date-fns';
 import type { Warehouse, Area, Product, Supplier } from '@/types/inventory';
 
 // Schema validation cho form nhập kho
+
 const stockEntrySchema = z
   .object({
     productId: z.string().min(1, 'Vui lòng chọn sản phẩm'),
@@ -61,23 +62,19 @@ const stockEntrySchema = z
     batchNumber: z.string().min(1, 'Vui lòng nhập mã lô hàng'),
     quantity: z.number().min(1, 'Số lượng phải lớn hơn 0'),
     unit: z.string().min(1, 'Vui lòng chọn đơn vị'),
-    manufacturingDate: z.date({
-      required_error: 'Vui lòng chọn ngày sản xuất',
-      invalid_type_error: 'Ngày sản xuất không hợp lệ'
-    }),
-    expiryDate: z.date({
-      required_error: 'Vui lòng chọn ngày hết hạn',
-      invalid_type_error: 'Ngày hết hạn không hợp lệ'
-    }),
-    receivedDate: z.date({
-      required_error: 'Vui lòng chọn ngày nhập kho',
-      invalid_type_error: 'Ngày nhập kho không hợp lệ'
-    }),
+
+    // nếu form trả về string thì dùng .string().transform(...)
+    manufacturingDate: z.string().min(1, 'Vui lòng chọn ngày sản xuất'),
+
+    expiryDate: z.string().min(1, 'Vui lòng chọn ngày hết hạn'),
+
+    receivedDate: z.string().min(1, 'Vui lòng chọn ngày nhập kho'),
+
     origin: z.string().min(1, 'Vui lòng nhập xuất xứ'),
-    quality: z.enum(['A', 'B', 'C', 'D'], {
-      required_error: 'Vui lòng chọn chất lượng',
-      invalid_type_error: 'Chất lượng không hợp lệ'
+    quality: z.enum(['A', 'B', 'C', 'D']).refine((val) => !!val, {
+      message: 'Vui lòng chọn chất lượng'
     }),
+
     supplierId: z.string().min(1, 'Vui lòng chọn nhà cung cấp'),
     notes: z.string().optional()
   })
@@ -89,6 +86,7 @@ const stockEntrySchema = z
     message: 'Ngày nhập kho không thể trước ngày sản xuất',
     path: ['receivedDate']
   });
+
 type StockEntryFormData = z.infer<typeof stockEntrySchema>;
 
 // Mock data cho warehouses, products, suppliers
@@ -111,6 +109,7 @@ const mockWarehouses: Warehouse[] = [
         id: '1-1',
         warehouseId: '1',
         name: 'Khu A1 - Rau lá',
+        type: 'fresh',
         capacity: 200,
         currentStock: 120,
         temperature: 4,
@@ -125,6 +124,7 @@ const mockWarehouses: Warehouse[] = [
         id: '1-2',
         warehouseId: '1',
         name: 'Khu A2 - Trái cây',
+        type: 'fresh',
         capacity: 300,
         currentStock: 180,
         temperature: 8,
@@ -139,6 +139,7 @@ const mockWarehouses: Warehouse[] = [
         id: '1-3',
         warehouseId: '1',
         name: 'Khu A3 - Đông lạnh',
+        type: 'frozen',
         capacity: 250,
         currentStock: 200,
         temperature: -18,
@@ -169,6 +170,7 @@ const mockWarehouses: Warehouse[] = [
         id: '2-1',
         warehouseId: '2',
         name: 'Khu B1 - Rau củ',
+        type: 'fresh',
         capacity: 400,
         currentStock: 250,
         temperature: 6,
@@ -183,6 +185,7 @@ const mockWarehouses: Warehouse[] = [
         id: '2-2',
         warehouseId: '2',
         name: 'Khu B2 - Ngũ cốc',
+        type: 'dry',
         capacity: 500,
         currentStock: 300,
         temperature: 20,
@@ -197,6 +200,7 @@ const mockWarehouses: Warehouse[] = [
         id: '2-3',
         warehouseId: '2',
         name: 'Khu B3 - Thảo mộc',
+        type: 'controlled',
         capacity: 300,
         currentStock: 150,
         temperature: 15,
@@ -217,42 +221,194 @@ const mockProducts: Product[] = [
     name: 'Cà chua',
     sku: 'VEG-001',
     unit: 'kg',
-    category: 'Rau củ quả'
+    category: {
+      id: 'cat-001',
+      name: 'Rau củ quả',
+      storageType: 'fresh',
+      shelfLife: 7
+    },
+    description: 'Cà chua tươi chất lượng cao',
+    minStockLevel: 10,
+    maxStockLevel: 100,
+    currentStock: 50,
+    reservedStock: 5,
+    availableStock: 45,
+    areaId: '1-1',
+    batches: [],
+    supplier: {
+      id: '1',
+      name: 'Nông trại ABC',
+      contactPerson: 'Nguyễn Văn A',
+      phone: '0123456789',
+      email: 'contact@nongtrai-abc.com',
+      address: 'Đà Lạt, Lâm Đồng',
+      rating: 4.5,
+      isActive: true,
+      certifications: ['VietGAP', 'Organic']
+    },
+    storageRequirements: {
+      minTemperature: 2,
+      maxTemperature: 8,
+      minHumidity: 80,
+      maxHumidity: 95
+    },
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
   },
-  { id: '2', name: 'Táo', sku: 'FRU-001', unit: 'kg', category: 'Trái cây' },
+  {
+    id: '2',
+    name: 'Táo',
+    sku: 'FRU-001',
+    unit: 'kg',
+    category: {
+      id: 'cat-002',
+      name: 'Trái cây',
+      storageType: 'fresh',
+      shelfLife: 14
+    },
+    description: 'Táo tươi ngon',
+    minStockLevel: 20,
+    maxStockLevel: 200,
+    currentStock: 80,
+    reservedStock: 10,
+    availableStock: 70,
+    areaId: '1-2',
+    batches: [],
+    supplier: {
+      id: '1',
+      name: 'Nông trại ABC',
+      contactPerson: 'Nguyễn Văn A',
+      phone: '0123456789',
+      email: 'contact@nongtrai-abc.com',
+      address: 'Đà Lạt, Lâm Đồng',
+      rating: 4.5,
+      isActive: true,
+      certifications: ['VietGAP', 'Organic']
+    },
+    storageRequirements: {
+      minTemperature: 0,
+      maxTemperature: 4,
+      minHumidity: 85,
+      maxHumidity: 95
+    },
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
+  },
   {
     id: '3',
     name: 'Gạo ST25',
     sku: 'GRA-001',
     unit: 'kg',
-    category: 'Ngũ cốc'
+    category: {
+      id: 'cat-003',
+      name: 'Ngũ cốc',
+      storageType: 'dry',
+      shelfLife: 365
+    },
+    description: 'Gạo ST25 cao cấp',
+    minStockLevel: 100,
+    maxStockLevel: 1000,
+    currentStock: 500,
+    reservedStock: 50,
+    availableStock: 450,
+    areaId: '2-2',
+    batches: [],
+    supplier: {
+      id: '2',
+      name: 'Công ty XYZ',
+      contactPerson: 'Trần Thị B',
+      phone: '0987654321',
+      email: 'contact@xyz.com',
+      address: 'Long An',
+      rating: 4.2,
+      isActive: true,
+      certifications: ['ISO 9001']
+    },
+    storageRequirements: {
+      minTemperature: 15,
+      maxTemperature: 25,
+      minHumidity: 50,
+      maxHumidity: 70
+    },
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
   },
-  { id: '4', name: 'Rau cải', sku: 'VEG-002', unit: 'kg', category: 'Rau lá' }
+  {
+    id: '4',
+    name: 'Rau cải',
+    sku: 'VEG-002',
+    unit: 'kg',
+    category: {
+      id: 'cat-004',
+      name: 'Rau lá',
+      storageType: 'fresh',
+      shelfLife: 5
+    },
+    description: 'Rau cải xanh tươi',
+    minStockLevel: 15,
+    maxStockLevel: 150,
+    currentStock: 60,
+    reservedStock: 8,
+    availableStock: 52,
+    areaId: '1-1',
+    batches: [],
+    supplier: {
+      id: '3',
+      name: 'HTX Nông nghiệp',
+      contactPerson: 'Lê Văn C',
+      phone: '0369852147',
+      email: 'contact@htx-nongnghiep.com',
+      address: 'Cần Thơ',
+      rating: 4.0,
+      isActive: true,
+      certifications: ['VietGAP']
+    },
+    storageRequirements: {
+      minTemperature: 2,
+      maxTemperature: 6,
+      minHumidity: 85,
+      maxHumidity: 95
+    },
+    createdAt: '2024-01-01T00:00:00Z',
+    updatedAt: '2024-01-01T00:00:00Z'
+  }
 ];
 
 const mockSuppliers: Supplier[] = [
   {
     id: '1',
     name: 'Nông trại ABC',
-    contact: '0123456789',
-    address: 'Đà Lạt, Lâm Đồng'
+    contactPerson: 'Nguyễn Văn A',
+    phone: '0123456789',
+    email: 'contact@nongtrai-abc.com',
+    address: 'Đà Lạt, Lâm Đồng',
+    rating: 4.5,
+    isActive: true,
+    certifications: ['VietGAP', 'Organic']
   },
-  { id: '2', name: 'Công ty XYZ', contact: '0987654321', address: 'Long An' },
+  {
+    id: '2',
+    name: 'Công ty XYZ',
+    contactPerson: 'Trần Thị B',
+    phone: '0987654321',
+    email: 'contact@xyz.com',
+    address: 'Long An',
+    rating: 4.2,
+    isActive: true,
+    certifications: ['ISO 9001']
+  },
   {
     id: '3',
     name: 'HTX Nông nghiệp',
-    contact: '0369852147',
-    address: 'Cần Thơ'
+    contactPerson: 'Lê Văn C',
+    phone: '0369852147',
+    email: 'contact@htx-nongnghiep.com',
+    address: 'Cần Thơ',
+    rating: 4.0,
+    isActive: true,
+    certifications: ['VietGAP']
   }
 ];
-
-// Mock data cũ
-const mockSensorData = {
-  temperature: 18.5,
-  humidity: 65,
-  airQuality: 'Tốt',
-  lastUpdate: '2 phút trước'
-};
 
 const mockAIAnalysis = {
   riskLevel: 'Thấp',
@@ -273,7 +429,6 @@ export function WarehouseImport() {
   const [selectedArea, setSelectedArea] = useState<Area | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showBarcodeScanner, setShowBarcodeScanner] = useState(false);
 
   // Form setup
   const form = useForm<StockEntryFormData>({
@@ -285,9 +440,9 @@ export function WarehouseImport() {
       batchNumber: '',
       quantity: 1,
       unit: '',
-      manufacturingDate: new Date(),
-      expiryDate: new Date(),
-      receivedDate: new Date(),
+      manufacturingDate: '',
+      expiryDate: '',
+      receivedDate: '',
       origin: '',
       quality: 'A' as const,
       supplierId: '',

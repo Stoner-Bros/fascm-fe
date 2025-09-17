@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { IoTDashboard } from '@/features/warehouse/components/iot-dashboard';
 
 export const metadata: Metadata = {
   title: 'Giám sát IoT | FASCM',
@@ -21,11 +22,9 @@ export default async function WarehouseIoTDashboardPage({ params }: PageProps) {
   }
 
   return (
-    <div className='container mx-auto p-6'>
-      <h1 className='mb-4 text-2xl font-bold'>Giám sát IoT</h1>
-      <p className='text-muted-foreground'>Kho: {warehouseId}</p>
-      <div className='mt-6'>
-        <p>Trang này đang được phát triển...</p>
+    <div className='w-full max-w-full overflow-hidden'>
+      <div className='p-4 sm:p-6'>
+        <IoTDashboard warehouseId={warehouseId} />
       </div>
     </div>
   );

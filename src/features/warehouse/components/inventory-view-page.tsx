@@ -11,29 +11,18 @@ import {
 } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
-import { cn } from '@/lib/utils';
 import {
-  IconPlus,
   IconPackage,
   IconAlertTriangle,
   IconBarcode,
   IconClockHour4,
-  IconDownload,
   IconBuilding,
   IconMapPin,
   IconChartBar,
   IconList
 } from '@tabler/icons-react';
-import Link from 'next/link';
-import { Suspense, useState, useEffect } from 'react';
-import InventoryListingPage from './inventory-listing';
-import { InventoryFilters } from './inventory-filters';
-import { ProductDetailCard } from './product-detail-card';
-import { BatchManagementCard } from './batch-management-card';
+import { useState, useEffect } from 'react';
 import { WarehouseAreaSelector } from './warehouse-area-selector';
-import { StockEntryDialog } from './stock-entry-dialog';
 import { AreaProductsTable } from './area-products-table';
 import {
   InventoryFilter,
@@ -47,13 +36,10 @@ interface InventoryViewPageProps {}
 
 export default function InventoryViewPage({}: InventoryViewPageProps) {
   const [filters, setFilters] = useState<InventoryFilter>({
-    warehouse: '',
-    area: '',
-    batch: '',
-    expiryDate: '',
+    warehouseId: '',
+    areaId: '',
     status: 'all'
   });
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [selectedWarehouse, setSelectedWarehouse] = useState<string>('');
   const [selectedArea, setSelectedArea] = useState<string>('');
@@ -96,6 +82,7 @@ export default function InventoryViewPage({}: InventoryViewPageProps) {
           id: 'area-001',
           warehouseId: 'wh-001',
           name: 'Khu vực A1 - Sản phẩm khô',
+          type: 'dry',
           capacity: 1000,
           currentStock: 750,
           temperature: 25,
@@ -111,6 +98,7 @@ export default function InventoryViewPage({}: InventoryViewPageProps) {
           id: 'area-002',
           warehouseId: 'wh-001',
           name: 'Khu vực A2 - Sản phẩm tươi sống',
+          type: 'fresh',
           capacity: 500,
           currentStock: 480,
           temperature: 4,
@@ -142,6 +130,7 @@ export default function InventoryViewPage({}: InventoryViewPageProps) {
           id: 'area-003',
           warehouseId: 'wh-002',
           name: 'Khu vực B1 - Đông lạnh',
+          type: 'frozen',
           capacity: 800,
           currentStock: 600,
           temperature: -18,
@@ -163,6 +152,7 @@ export default function InventoryViewPage({}: InventoryViewPageProps) {
       id: 'batch-001',
       batchNumber: 'LOT001-2024',
       productId: 'prod-001', // Cà chua
+      areaId: 'area-001',
       quantity: 1000,
       remainingQuantity: 750,
       unit: 'kg',
@@ -178,14 +168,20 @@ export default function InventoryViewPage({}: InventoryViewPageProps) {
         contactPerson: 'Nguyễn Văn C',
         phone: '0123456789',
         email: 'contact@abc.com',
-        rating: 4.5
+        address: '123 Đường ABC, Hà Nội',
+        rating: 4.5,
+        isActive: true,
+        certifications: ['ISO 9001', 'HACCP', 'VietGAP']
       },
-      notes: 'Lô hàng chất lượng cao, bảo quản tốt'
+      notes: 'Lô hàng chất lượng cao, bảo quản tốt',
+      createdAt: '2024-01-20T00:00:00Z',
+      updatedAt: '2024-01-20T00:00:00Z'
     },
     {
       id: 'batch-002',
       batchNumber: 'LOT002-2024',
       productId: 'prod-001', // Cà chua
+      areaId: 'area-001',
       quantity: 500,
       remainingQuantity: 200,
       unit: 'kg',
@@ -201,13 +197,19 @@ export default function InventoryViewPage({}: InventoryViewPageProps) {
         contactPerson: 'Lê Thị D',
         phone: '0987654321',
         email: 'info@xyz.com',
-        rating: 4.2
-      }
+        address: '456 Đường XYZ, TP.HCM',
+        rating: 4.2,
+        isActive: true,
+        certifications: ['ISO 9001', 'GlobalGAP']
+      },
+      createdAt: '2024-02-05T00:00:00Z',
+      updatedAt: '2024-02-05T00:00:00Z'
     },
     {
       id: 'batch-003',
       batchNumber: 'LOT003-2024',
       productId: 'prod-002', // Cà rốt
+      areaId: 'area-001',
       quantity: 800,
       remainingQuantity: 600,
       unit: 'kg',
@@ -223,14 +225,20 @@ export default function InventoryViewPage({}: InventoryViewPageProps) {
         contactPerson: 'Phạm Văn E',
         phone: '0369852147',
         email: 'htx@dongbang.com',
-        rating: 4.8
+        address: '789 Đường DEF, Cần Thơ',
+        rating: 4.8,
+        isActive: true,
+        certifications: ['VietGAP', 'Organic Certificate', 'Fair Trade']
       },
-      notes: 'Cà rốt tươi ngon từ đồng bằng sông Cửu Long'
+      notes: 'Cà rốt tươi ngon từ đồng bằng sông Cửu Long',
+      createdAt: '2024-01-15T00:00:00Z',
+      updatedAt: '2024-01-15T00:00:00Z'
     },
     {
       id: 'batch-004',
       batchNumber: 'LOT004-2024',
       productId: 'prod-003', // Thịt bò đông lạnh
+      areaId: 'area-003',
       quantity: 200,
       remainingQuantity: 150,
       unit: 'kg',
@@ -246,9 +254,14 @@ export default function InventoryViewPage({}: InventoryViewPageProps) {
         contactPerson: 'Lê Thị D',
         phone: '0987654321',
         email: 'info@xyz.com',
-        rating: 4.2
+        address: '456 Đường XYZ, TP.HCM',
+        rating: 4.2,
+        isActive: true,
+        certifications: ['ISO 9001', 'GlobalGAP']
       },
-      notes: 'Thịt bò đông lạnh chất lượng cao từ Australia'
+      notes: 'Thịt bò đông lạnh chất lượng cao từ Australia',
+      createdAt: '2024-02-12T00:00:00Z',
+      updatedAt: '2024-02-12T00:00:00Z'
     }
   ];
 
@@ -390,57 +403,23 @@ export default function InventoryViewPage({}: InventoryViewPageProps) {
     }
   ];
 
-  // Mock product data
-  const mockProduct: Product = mockProducts[0];
-
-  const handleFiltersChange = (newFilters: InventoryFilter) => {
-    setFilters(newFilters);
-    // TODO: Gọi API để lọc dữ liệu
-  };
-
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-    // TODO: Gọi API để tìm kiếm
-  };
-
   const handleWarehouseChange = (warehouseId: string) => {
     setSelectedWarehouse(warehouseId);
-    setFilters((prev) => ({ ...prev, warehouse: warehouseId }));
+    setFilters((prev) => ({ ...prev, warehouseId: warehouseId }));
   };
 
   const handleAreaChange = (areaId: string) => {
     setSelectedArea(areaId);
-    setFilters((prev) => ({ ...prev, area: areaId }));
-  };
-
-  const handleBatchUpdate = (batch: Batch) => {
-    // TODO: Implement batch update logic
-    console.log('Update batch:', batch);
-  };
-
-  const handleBatchDelete = (batchId: string) => {
-    // TODO: Implement batch delete logic
-    console.log('Delete batch:', batchId);
+    setFilters((prev) => ({ ...prev, areaId: areaId }));
   };
 
   const handleViewProduct = (product: Product) => {
     setSelectedProduct(product);
   };
 
-  const handleEditBatch = (batch: Batch) => {
-    // TODO: Implement batch edit logic
-    console.log('Edit batch:', batch);
-  };
-
   // Get products for selected area
   const getProductsForArea = (areaId: string) => {
     return mockProducts.filter((product) => product.areaId === areaId);
-  };
-
-  const handleStockEntrySuccess = (data: any) => {
-    // TODO: Refresh inventory data after successful stock entry
-    console.log('Stock entry successful:', data);
-    // Có thể gọi lại API để cập nhật danh sách tồn kho
   };
 
   // Get selected area name
@@ -452,16 +431,6 @@ export default function InventoryViewPage({}: InventoryViewPageProps) {
 
     const area = warehouse.areas.find((a) => a.id === selectedArea);
     return area ? area.name : '';
-  };
-
-  const handleExportReport = (format: 'pdf' | 'excel' | 'csv') => {
-    // TODO: Implement report export logic
-    console.log(`Exporting report as ${format}...`);
-  };
-
-  const handleRefreshReport = () => {
-    // TODO: Implement report refresh logic
-    console.log('Refreshing report data...');
   };
 
   return (
@@ -625,7 +594,6 @@ export default function InventoryViewPage({}: InventoryViewPageProps) {
                     products={getProductsForArea(selectedArea)}
                     batches={mockBatches}
                     onViewProduct={handleViewProduct}
-                    onEditBatch={handleEditBatch}
                   />
                 )}
 
