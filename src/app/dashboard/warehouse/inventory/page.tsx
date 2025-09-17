@@ -1,4 +1,4 @@
-import { InventoryViewPage } from '@/features/warehouse/components/inventory-view-page';
+import InventoryViewPage from '@/features/warehouse/components/inventory-view-page';
 import { searchParamsCache } from '@/lib/searchparams';
 import { SearchParams } from 'nuqs/server';
 
