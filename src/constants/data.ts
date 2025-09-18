@@ -22,14 +22,6 @@ export const navItems: NavItem[] = [
     items: [] // Empty array as there are no child items for Dashboard
   },
   {
-    title: 'Product',
-    url: '/dashboard/product',
-    icon: 'product',
-    shortcut: ['p', 'p'],
-    isActive: false,
-    items: [] // No child items
-  },
-  {
     title: 'Warehouse',
     url: '/dashboard/warehouse',
     icon: 'inventory',
@@ -51,6 +43,35 @@ export const navItems: NavItem[] = [
     ]
   },
   {
+    title: 'Delivery',
+    url: '/dashboard/delivery',
+    icon: 'delivery',
+    shortcut: ['d', 'l'],
+    isActive: true,
+    items: [
+      {
+        title: 'Inbound (Vườn → Kho)',
+        url: '/dashboard/delivery/inbound',
+        icon: 'warehouse',
+        shortcut: ['d', 'i']
+      },
+      {
+        title: 'Outbound (Kho → Phân phối)',
+        url: '/dashboard/delivery/outbound',
+        icon: 'delivery',
+        shortcut: ['d', 'o']
+      }
+    ]
+  },
+  {
+    title: 'Product',
+    url: '/dashboard/product',
+    icon: 'product',
+    shortcut: ['p', 'p'],
+    isActive: false,
+    items: [] // No child items
+  },
+  {
     title: 'Account',
     url: '/dashboard/profile', // Navigate to profile page
     icon: 'billing',
@@ -70,14 +91,6 @@ export const navItems: NavItem[] = [
         icon: 'login'
       }
     ]
-  },
-  {
-    title: 'Delivery',
-    url: '/dashboard/delivery',
-    icon: 'delivery',
-    shortcut: ['d', 'l'],
-    isActive: false,
-    items: [] // No child items
   },
   {
     title: 'Kanban',

@@ -1,10 +1,10 @@
 import PageContainer from '@/components/layout/page-container';
-import { DeliveryView } from '@/features/delivery/components/delivery-view';
+import { DeliveryOverview } from '@/features/delivery/components/delivery-overview';
 
 export default function DeliveryPage() {
   return (
     <PageContainer scrollable={true}>
-      <DeliveryView />
+      <DeliveryOverview />
     </PageContainer>
   );
 }

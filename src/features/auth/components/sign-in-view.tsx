@@ -73,7 +73,7 @@ export default function SignInViewPage({ stars }: { stars: number }) {
           </Link>
           <ClerkSignInForm
             initialValues={{
-              emailAddress: 'your_mail+clerk_test@example.com'
+              emailAddress: 'test@example.com'
             }}
           />
 
