@@ -40,6 +40,7 @@ export interface Sensor {
   unit: string;
   status: 'normal' | 'warning' | 'critical';
   lastReading: string;
+  lastUpdate?: string;
   calibrationDate?: string;
 }
 

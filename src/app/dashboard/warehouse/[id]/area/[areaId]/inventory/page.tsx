@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import AreaInventoryView from '@/features/warehouse/components/area-inventory-view';
 
 export const metadata: Metadata = {
   title: 'Quản lý tồn kho khu vực | FASCM',
@@ -26,15 +27,5 @@ export default async function AreaInventoryPage({ params }: PageProps) {
     notFound();
   }
 
-  return (
-    <div className='container mx-auto p-6'>
-      <h1 className='mb-4 text-2xl font-bold'>
-        Quản lý tồn kho - Khu vực {areaId}
-      </h1>
-      <p className='text-muted-foreground'>Kho: {warehouseId}</p>
-      <div className='mt-6'>
-        <p>Trang này đang được phát triển...</p>
-      </div>
-    </div>
-  );
+  return <AreaInventoryView warehouseId={warehouseId} areaId={areaId} />;
 }

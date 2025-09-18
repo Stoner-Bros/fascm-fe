@@ -37,22 +37,10 @@ export const navItems: NavItem[] = [
     isActive: true,
     items: [
       {
-        title: 'Inventory',
-        url: '/dashboard/warehouse/inventory',
-        icon: 'inventory',
-        shortcut: ['w', 'i']
-      },
-      {
         title: 'Stock Management',
         url: '/dashboard/warehouse/stock',
         icon: 'warehouse',
         shortcut: ['w', 's']
-      },
-      {
-        title: 'IoT Dashboard',
-        url: '/dashboard/warehouse/iot-dashboard',
-        icon: 'iotDashboard',
-        shortcut: ['w', 'i']
       },
       {
         title: 'IoT Device',

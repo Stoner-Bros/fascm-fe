@@ -23,7 +23,8 @@ import {
   IconCalendar,
   IconAlertTriangle,
   IconEye,
-  IconEdit
+  IconEdit,
+  IconExternalLink
 } from '@tabler/icons-react';
 import { format, differenceInDays } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -35,6 +36,7 @@ interface AreaProductsTableProps {
   batches: Batch[];
   onViewProduct?: (product: Product) => void;
   onEditBatch?: (batch: Batch) => void;
+  onNavigateToInventory?: () => void;
 }
 
 interface ProductWithBatches extends Product {
@@ -46,7 +48,8 @@ export function AreaProductsTable({
   products,
   batches,
   onViewProduct,
-  onEditBatch
+  onEditBatch,
+  onNavigateToInventory
 }: AreaProductsTableProps) {
   // Kết hợp sản phẩm với các lô hàng tương ứng
   const productsWithBatches: ProductWithBatches[] = products.map((product) => ({
@@ -122,13 +125,17 @@ export function AreaProductsTable({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className='flex items-center gap-2'>
-          <IconPackage className='h-5 w-5' />
-          Sản phẩm trong {areaName}
-        </CardTitle>
-        <CardDescription>
-          Danh sách sản phẩm và thông tin lô hàng trong khu vực được chọn
-        </CardDescription>
+        <div className='flex items-center justify-between'>
+          <div>
+            <CardTitle className='flex items-center gap-2'>
+              <IconPackage className='h-5 w-5' />
+              Sản phẩm trong {areaName}
+            </CardTitle>
+            <CardDescription>
+              Danh sách sản phẩm và thông tin lô hàng trong khu vực được chọn
+            </CardDescription>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
         <div className='rounded-md border'>
