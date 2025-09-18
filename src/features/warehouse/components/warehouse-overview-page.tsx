@@ -192,64 +192,8 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
             title='Tổng quan kho hàng'
             description='Giám sát và quản lý toàn bộ hoạt động kho nông sản'
           />
-          <div className='flex gap-2'>
-            <Link
-              href='/dashboard/warehouse/inventory/new'
-              className={cn(buttonVariants(), 'text-xs md:text-sm')}
-            >
-              <IconPlus className='mr-2 h-4 w-4' /> Nhập hàng
-            </Link>
-            <Link
-              href='/dashboard/warehouse/stock/new'
-              className={cn(
-                buttonVariants({ variant: 'outline' }),
-                'text-xs md:text-sm'
-              )}
-            >
-              <IconTruck className='mr-2 h-4 w-4' /> Xuất hàng
-            </Link>
-          </div>
         </div>
         <Separator />
-
-        {/* Critical Alerts */}
-        {criticalAlerts.length > 0 && (
-          <Card className='border-orange-200 bg-orange-50'>
-            <CardHeader>
-              <CardTitle className='flex items-center text-orange-800'>
-                <IconAlertTriangle className='mr-2 h-5 w-5' />
-                Cảnh báo quan trọng
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className='space-y-2'>
-                {criticalAlerts.map((alert) => (
-                  <div
-                    key={alert.id}
-                    className='flex items-center justify-between rounded border bg-white p-2'
-                  >
-                    <span className='text-sm'>{alert.message}</span>
-                    <Badge
-                      variant={
-                        alert.severity === 'high'
-                          ? 'destructive'
-                          : alert.severity === 'medium'
-                            ? 'default'
-                            : 'secondary'
-                      }
-                    >
-                      {alert.severity === 'high'
-                        ? 'Cao'
-                        : alert.severity === 'medium'
-                          ? 'Trung bình'
-                          : 'Thấp'}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* Tổng quan hệ thống */}
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5'>
