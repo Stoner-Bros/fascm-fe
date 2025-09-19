@@ -1,6 +1,5 @@
 import PageContainer from '@/components/layout/page-container';
 import { buttonVariants } from '@/components/ui/button';
-import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -11,25 +10,14 @@ import {
 import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
 import {
-  IconPlus,
   IconTrendingUp,
   IconTrendingDown,
-  IconBarcode,
   IconPackage,
-  IconTruck,
   IconClockHour4,
   IconUser,
-  IconCalendar,
-  IconFilter,
-  IconDownload,
-  IconMapPin,
-  IconGps,
-  IconTemperature,
-  IconDroplet,
-  IconRoute
+  IconCalendar
 } from '@tabler/icons-react';
 import Link from 'next/link';
 
@@ -45,62 +33,62 @@ export function StockViewPage({}: StockViewPageProps) {
   };
 
   // Mock data cho tracking vận chuyển
-  const activeDeliveries = [
-    {
-      id: '1',
-      orderId: 'ORD-001',
-      type: 'export', // xuất hàng
-      vehicle: 'Xe tải 001',
-      driver: 'Nguyễn Văn A',
-      destination: 'Siêu thị BigC Thăng Long',
-      progress: 65,
-      status: 'Đang vận chuyển',
-      currentLocation: 'Đường Nguyễn Trãi, Q.Thanh Xuân',
-      estimatedArrival: '14:30',
-      temperature: 16.8,
-      humidity: 62,
-      items: [
-        { name: 'Cà chua', quantity: 50, unit: 'kg' },
-        { name: 'Táo', quantity: 30, unit: 'kg' }
-      ]
-    },
-    {
-      id: '2',
-      orderId: 'ORD-002',
-      type: 'export', // xuất hàng
-      vehicle: 'Xe tải 002',
-      driver: 'Trần Văn B',
-      destination: 'Chợ Hà Đông',
-      progress: 25,
-      status: 'Đang vận chuyển',
-      currentLocation: 'Kho hàng - Chuẩn bị xuất phát',
-      estimatedArrival: '15:45',
-      temperature: 17.2,
-      humidity: 58,
-      items: [
-        { name: 'Gạo', quantity: 100, unit: 'kg' },
-        { name: 'Đậu xanh', quantity: 25, unit: 'kg' }
-      ]
-    },
-    {
-      id: '3',
-      orderId: 'IMP-001',
-      type: 'import', // nhập hàng
-      vehicle: 'Xe tải 003',
-      driver: 'Lê Thị C',
-      destination: 'Kho hàng chính',
-      progress: 80,
-      status: 'Sắp đến nơi',
-      currentLocation: 'Đường Xuân Thủy, Q.Cầu Giấy',
-      estimatedArrival: '14:15',
-      temperature: 16.5,
-      humidity: 65,
-      items: [
-        { name: 'Xà lách tươi', quantity: 200, unit: 'kg' },
-        { name: 'Cải thảo', quantity: 150, unit: 'kg' }
-      ]
-    }
-  ];
+  // const activeDeliveries = [
+  //   {
+  //     id: '1',
+  //     orderId: 'ORD-001',
+  //     type: 'export', // xuất hàng
+  //     vehicle: 'Xe tải 001',
+  //     driver: 'Nguyễn Văn A',
+  //     destination: 'Siêu thị BigC Thăng Long',
+  //     progress: 65,
+  //     status: 'Đang vận chuyển',
+  //     currentLocation: 'Đường Nguyễn Trãi, Q.Thanh Xuân',
+  //     estimatedArrival: '14:30',
+  //     temperature: 16.8,
+  //     humidity: 62,
+  //     items: [
+  //       { name: 'Cà chua', quantity: 50, unit: 'kg' },
+  //       { name: 'Táo', quantity: 30, unit: 'kg' }
+  //     ]
+  //   },
+  //   {
+  //     id: '2',
+  //     orderId: 'ORD-002',
+  //     type: 'export', // xuất hàng
+  //     vehicle: 'Xe tải 002',
+  //     driver: 'Trần Văn B',
+  //     destination: 'Chợ Hà Đông',
+  //     progress: 25,
+  //     status: 'Đang vận chuyển',
+  //     currentLocation: 'Kho hàng - Chuẩn bị xuất phát',
+  //     estimatedArrival: '15:45',
+  //     temperature: 17.2,
+  //     humidity: 58,
+  //     items: [
+  //       { name: 'Gạo', quantity: 100, unit: 'kg' },
+  //       { name: 'Đậu xanh', quantity: 25, unit: 'kg' }
+  //     ]
+  //   },
+  //   {
+  //     id: '3',
+  //     orderId: 'IMP-001',
+  //     type: 'import', // nhập hàng
+  //     vehicle: 'Xe tải 003',
+  //     driver: 'Lê Thị C',
+  //     destination: 'Kho hàng chính',
+  //     progress: 80,
+  //     status: 'Sắp đến nơi',
+  //     currentLocation: 'Đường Xuân Thủy, Q.Cầu Giấy',
+  //     estimatedArrival: '14:15',
+  //     temperature: 16.5,
+  //     humidity: 65,
+  //     items: [
+  //       { name: 'Xà lách tươi', quantity: 200, unit: 'kg' },
+  //       { name: 'Cải thảo', quantity: 150, unit: 'kg' }
+  //     ]
+  //   }
+  // ];
 
   const recentMovements = [
     {

@@ -247,18 +247,18 @@ export default function WarehouseDetailPage({
     }
   };
 
-  const getSensorStatusColor = (status: string) => {
-    switch (status) {
-      case 'normal':
-        return 'text-green-600';
-      case 'warning':
-        return 'text-yellow-600';
-      case 'critical':
-        return 'text-red-600';
-      default:
-        return 'text-gray-600';
-    }
-  };
+  // const getSensorStatusColor = (status: string) => {
+  //   switch (status) {
+  //     case 'normal':
+  //       return 'text-green-600';
+  //     case 'warning':
+  //       return 'text-yellow-600';
+  //     case 'critical':
+  //       return 'text-red-600';
+  //     default:
+  //       return 'text-gray-600';
+  //   }
+  // };
 
   return (
     <PageContainer scrollable>

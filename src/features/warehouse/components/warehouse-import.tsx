@@ -34,7 +34,6 @@ import {
 } from '@/components/ui/tooltip';
 import {
   IconPackageImport,
-  IconScan,
   IconBrain,
   IconShield,
   IconAlertTriangle,
@@ -685,18 +684,18 @@ export function WarehouseImport() {
     setCurrentStep(1);
   };
 
-  const handleScan = () => {
-    setIsScanning(true);
-    // Simulate scanning
-    setTimeout(() => {
-      setIsScanning(false);
-      // Auto-fill form with scanned data
-      const scannedProduct = mockProducts[0];
-      handleProductChange(scannedProduct.id);
-      form.setValue('quantity', 50);
-      form.setValue('batchNumber', generateBatchNumber());
-    }, 2000);
-  };
+  // const handleScan = () => {
+  //   setIsScanning(true);
+  //   // Simulate scanning
+  //   setTimeout(() => {
+  //     setIsScanning(false);
+  //     // Auto-fill form with scanned data
+  //     const scannedProduct = mockProducts[0];
+  //     handleProductChange(scannedProduct.id);
+  //     form.setValue('quantity', 50);
+  //     form.setValue('batchNumber', generateBatchNumber());
+  //   }, 2000);
+  // };
 
   return (
     <TooltipProvider>
