@@ -216,9 +216,9 @@ export function ProductDetailCard({
                 </span>
               </div>
               <Progress value={availablePercentage} className='h-2' />
-              <div className='text-muted-foreground text-xs'>
+              {/* <div className='text-muted-foreground text-xs'>
                 Đã đặt trước: {product.reservedStock} {product.unit}
-              </div>
+              </div> */}
             </div>
 
             <div className='space-y-2'>

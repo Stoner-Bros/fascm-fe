@@ -183,7 +183,7 @@ const mockProducts: Product[] = [
   }
 ];
 
-const units = ['kg', 'tấn', 'thùng', 'bao', 'lít', 'chai', 'hộp'];
+const units = ['kg', 'tấn'];
 
 export function WarehouseExport() {
   // State management
@@ -373,39 +373,41 @@ export function WarehouseExport() {
               className='space-y-6'
             >
               {/* Area Selection */}
-              <div className='grid grid-cols-1 gap-4'>
-                <FormField
-                  control={form.control}
-                  name='areaId'
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Khu vực *</FormLabel>
-                      <Select
-                        onValueChange={(value) => {
-                          field.onChange(value);
-                          handleAreaChange(value);
-                        }}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder='Chọn khu vực trong kho' />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {mockWarehouse.areas.map((area: any) => (
-                            <SelectItem key={area.id} value={area.id}>
-                              <div className='flex items-center gap-2'>
-                                <IconBuilding className='h-4 w-4' />
-                                {area.name}
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              <div className='flex items-center'>
+                <div className='w-[200px]'>
+                  <FormField
+                    control={form.control}
+                    name='areaId'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Khu vực *</FormLabel>
+                        <Select
+                          onValueChange={(value) => {
+                            field.onChange(value);
+                            handleAreaChange(value);
+                          }}
+                        >
+                          <FormControl>
+                            <SelectTrigger className='w-[250px]'>
+                              <SelectValue placeholder='Chọn khu vực trong kho' />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {mockWarehouse.areas.map((area: any) => (
+                              <SelectItem key={area.id} value={area.id}>
+                                <div className='flex w-[200px] items-center gap-2'>
+                                  <IconBuilding className='h-4 w-4' />
+                                  {area.name}
+                                </div>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
 
               {/* Area Information Display */}
@@ -418,13 +420,11 @@ export function WarehouseExport() {
                   <div className='grid grid-cols-2 gap-4 text-sm md:grid-cols-4'>
                     <div>
                       <span className='text-muted-foreground'>Sức chứa:</span>
-                      <p className='font-medium'>{selectedArea.capacity} m²</p>
+                      <p className='font-medium'>{selectedArea.capacity} </p>
                     </div>
                     <div>
                       <span className='text-muted-foreground'>Đã sử dụng:</span>
-                      <p className='font-medium'>
-                        {selectedArea.currentStock} m²
-                      </p>
+                      <p className='font-medium'>{selectedArea.currentStock}</p>
                     </div>
                     <div>
                       <span className='text-muted-foreground'>Nhiệt độ:</span>
@@ -464,9 +464,9 @@ export function WarehouseExport() {
                                 <div className='font-medium text-green-600'>
                                   {stock.available} {product.unit} khả dụng
                                 </div>
-                                <div className='text-muted-foreground'>
+                                {/* <div className='text-muted-foreground'>
                                   {stock.reserved} {product.unit} đã đặt
-                                </div>
+                                </div> */}
                               </div>
                             </div>
                           );
@@ -523,7 +523,7 @@ export function WarehouseExport() {
                                   updateProductItem(index, 'productId', value)
                                 }
                               >
-                                <SelectTrigger>
+                                <SelectTrigger className='w-[250px]'>
                                   <SelectValue placeholder='Chọn sản phẩm' />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -532,7 +532,7 @@ export function WarehouseExport() {
                                       key={product.id}
                                       value={product.id}
                                     >
-                                      <div className='flex items-center gap-2'>
+                                      <div className='flex w-[200px] items-center gap-2'>
                                         <IconBarcode className='h-4 w-4' />
                                         {product.name} ({product.sku})
                                       </div>
@@ -569,23 +569,25 @@ export function WarehouseExport() {
                               <label className='mb-2 block text-sm font-medium'>
                                 Đơn vị *
                               </label>
-                              <Select
-                                value={item.unit}
-                                onValueChange={(value) =>
-                                  updateProductItem(index, 'unit', value)
-                                }
-                              >
-                                <SelectTrigger>
-                                  <SelectValue placeholder='Đơn vị' />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {units.map((unit) => (
-                                    <SelectItem key={unit} value={unit}>
-                                      {unit}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <div className='w-[50px]'>
+                                <Select
+                                  value={item.unit}
+                                  onValueChange={(value) =>
+                                    updateProductItem(index, 'unit', value)
+                                  }
+                                >
+                                  <SelectTrigger>
+                                    <SelectValue placeholder='Đơn vị' />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {units.map((unit) => (
+                                      <SelectItem key={unit} value={unit}>
+                                        {unit}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             </div>
                           </div>
 

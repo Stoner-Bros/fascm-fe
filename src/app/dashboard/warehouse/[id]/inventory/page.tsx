@@ -1,9 +1,10 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { WarehouseInventoryDetail } from '@/features/warehouse/components/warehouse-inventory-detail';
 
 export const metadata: Metadata = {
-  title: 'Quản lý tồn kho | FASCM',
-  description: 'Quản lý tồn kho cho kho hàng'
+  title: 'Chi tiết tồn kho | FASCM',
+  description: 'Quản lý chi tiết tồn kho cho kho hàng'
 };
 
 interface PageProps {
@@ -20,13 +21,5 @@ export default async function WarehouseInventoryPage({ params }: PageProps) {
     notFound();
   }
 
-  return (
-    <div className='container mx-auto p-6'>
-      <h1 className='mb-4 text-2xl font-bold'>Quản lý tồn kho</h1>
-      <p className='text-muted-foreground'>Kho: {warehouseId}</p>
-      <div className='mt-6'>
-        <p>Trang này đang được phát triển...</p>
-      </div>
-    </div>
-  );
+  return <WarehouseInventoryDetail />;
 }

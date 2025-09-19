@@ -14,16 +14,11 @@ import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
   IconPackage,
-  IconAlertTriangle,
   IconTemperature,
   IconDroplet,
-  IconTruck,
   IconPlus,
   IconEye,
   IconBarcode,
-  IconClockHour4,
-  IconTrendingUp,
-  IconTrendingDown,
   IconArrowLeft,
   IconSettings,
   IconRefresh
@@ -54,10 +49,10 @@ export default function WarehouseDetailPage({
     phone: '0123456789',
     email: 'manager@warehouse.com',
     address: '123 Đường ABC, Quận XYZ',
-    totalItems: 15420,
+    totalItems: 12,
     capacity: 78,
-    todayImport: 245,
-    todayExport: 189,
+    todayImport: 10,
+    todayExport: 5,
     lowStockItems: 12,
     expiringSoon: 8,
     outOfStock: 3,
@@ -67,7 +62,7 @@ export default function WarehouseDetailPage({
         name: 'Khu vực A1 - Rau củ tươi',
         temperature: 4,
         humidity: 65,
-        products: 1250,
+        products: 3,
         capacity: 85,
         status: 'normal' as const,
         lastUpdated: '2 phút trước',
@@ -100,7 +95,7 @@ export default function WarehouseDetailPage({
         name: 'Khu vực A2 - Trái cây',
         temperature: 6,
         humidity: 70,
-        products: 980,
+        products: 3,
         capacity: 72,
         status: 'warning' as const,
         lastUpdated: '1 phút trước',
@@ -133,7 +128,7 @@ export default function WarehouseDetailPage({
         name: 'Khu vực A3 - Thịt cá đông lạnh',
         temperature: -18,
         humidity: 45,
-        products: 750,
+        products: 3,
         capacity: 90,
         status: 'normal' as const,
         lastUpdated: '30 giây trước',
@@ -166,7 +161,7 @@ export default function WarehouseDetailPage({
         name: 'Khu vực A4 - Sản phẩm khô',
         temperature: 25,
         humidity: 40,
-        products: 2100,
+        products: 3,
         capacity: 65,
         status: 'normal' as const,
         lastUpdated: '5 phút trước',
@@ -229,13 +224,13 @@ export default function WarehouseDetailPage({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'normal':
-        return 'border-green-200';
+        return 'border-green-200 dark:border-green-500';
       case 'warning':
-        return 'border-yellow-200';
+        return 'border-yellow-200 dark:border-yellow-500';
       case 'critical':
-        return 'border-red-200';
+        return 'border-red-200 dark:border-red-500';
       default:
-        return 'border-gray-200';
+        return 'border-gray-200 dark:border-gray-500';
     }
   };
 
@@ -471,7 +466,7 @@ export default function WarehouseDetailPage({
                         {area.temperature}°C
                       </p>
                     </div>
-                    <div className='min-w-0 space-y-0.5'>
+                    <div className='ml-3 min-w-0 space-y-0.5'>
                       <div className='flex flex-wrap items-center justify-center'>
                         <IconDroplet className='mr-0.5 h-3 w-3 shrink-0 text-cyan-500' />
                         <span className='text-muted-foreground truncate text-xs'>
@@ -486,7 +481,7 @@ export default function WarehouseDetailPage({
                       <div className='flex flex-wrap items-center justify-center'>
                         <IconPackage className='mr-0.5 h-3 w-3 shrink-0 text-green-500' />
                         <span className='text-muted-foreground truncate text-xs'>
-                          Sản phẩm
+                          SP
                         </span>
                       </div>
                       <p className='truncate text-xs font-bold text-green-600'>
@@ -517,7 +512,7 @@ export default function WarehouseDetailPage({
                       {area.sensors.map((sensor) => (
                         <div
                           key={sensor.id}
-                          className='flex min-w-0 items-center justify-between gap-1 rounded bg-gray-50 p-1 text-xs'
+                          className='flex min-w-0 items-center justify-between gap-1 rounded bg-gray-50 p-1 text-xs dark:bg-gray-800'
                         >
                           <span className='min-w-0 flex-1 truncate text-xs font-medium'>
                             {sensor.id}
@@ -531,10 +526,10 @@ export default function WarehouseDetailPage({
                               className={cn(
                                 'h-1.5 w-1.5 shrink-0 rounded-full',
                                 sensor.status === 'normal'
-                                  ? 'bg-green-500'
+                                  ? 'bg-green-500 dark:bg-green-600'
                                   : sensor.status === 'warning'
-                                    ? 'bg-yellow-500'
-                                    : 'bg-red-500'
+                                    ? 'bg-yellow-500 dark:bg-yellow-600'
+                                    : 'bg-red-500 dark:bg-red-600'
                               )}
                             />
                           </div>

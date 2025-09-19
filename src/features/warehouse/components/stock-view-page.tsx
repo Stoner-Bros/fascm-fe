@@ -163,12 +163,12 @@ export function StockViewPage({}: StockViewPageProps) {
             description='Theo dõi và quản lý các hoạt động xuất nhập kho nông sản'
           />
           <div className='flex gap-2'>
-            <Button variant='outline' size='sm'>
+            {/* <Button variant='outline' size='sm'>
               <IconBarcode className='mr-2 h-4 w-4' /> Quét mã vạch
             </Button>
             <Button variant='outline' size='sm'>
               <IconDownload className='mr-2 h-4 w-4' /> Xuất báo cáo
-            </Button>
+            </Button> */}
             <Link
               href='/dashboard/warehouse/stock/import'
               className={cn(
@@ -267,7 +267,7 @@ export function StockViewPage({}: StockViewPageProps) {
               {recentMovements.map((movement) => (
                 <div
                   key={movement.id}
-                  className='flex items-center justify-between rounded-lg border p-4 hover:bg-gray-50'
+                  className='flex items-center justify-between rounded-lg border p-4 hover:bg-gray-50 dark:hover:bg-gray-800'
                 >
                   <div className='flex items-center space-x-4'>
                     <div
