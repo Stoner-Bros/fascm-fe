@@ -42,43 +42,97 @@ import {
   IconRefresh,
   IconSearch,
   IconDownload,
-  IconActivity
+  IconActivity,
+  IconThermometer,
+  IconDroplet,
+  IconMapPin,
+  IconUsers
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import type { InboundDelivery, Truck } from '@/types/delivery';
 
-interface InboundDelivery {
-  id: string;
-  farmName: string;
-  farmAddress: string;
-  farmContact: string;
-  warehouseId: string;
-  warehouseName: string;
-  warehouseAddress: string;
-  driverName: string;
-  driverPhone: string;
-  vehicleNumber: string;
-  productType: string;
-  quantity: number;
-  unit: string;
-  estimatedValue: number;
-  departureTime: string;
-  estimatedArrival: string;
-  actualArrival?: string;
-  status:
-    | 'scheduled'
-    | 'in_transit'
-    | 'arrived'
-    | 'completed'
-    | 'cancelled'
-    | 'delayed';
-  temperature?: number;
-  humidity?: number;
-  gpsLocation?: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// Mock truck data
+const mockTrucks: Truck[] = [
+  {
+    id: 'TRUCK-001',
+    licenseNumber: 'HY-29A-12345',
+    model: 'Hyundai H350 Refrigerated',
+    capacity: 2000,
+    maxWeight: 2500,
+    volume: 15.5,
+    fuelType: 'diesel',
+    status: 'available',
+    gpsDevice: {
+      deviceId: 'GPS-001',
+      isActive: true,
+      lastUpdate: new Date().toISOString()
+    },
+    environmentSensors: {
+      temperatureSensorId: 'TEMP-001',
+      humiditySensorId: 'HUM-001',
+      isActive: true,
+      lastUpdate: new Date().toISOString()
+    },
+    transportStaff: [
+      {
+        id: 'STAFF-001',
+        name: 'Nguyễn Văn A',
+        phone: '0987654321',
+        role: 'driver',
+        licenseNumber: 'B2-123456789',
+        experience: 5
+      },
+      {
+        id: 'STAFF-002',
+        name: 'Trần Văn B',
+        phone: '0976543210',
+        role: 'assistant',
+        experience: 3
+      }
+    ],
+    registrationExpiry: '2025-12-31'
+  },
+  {
+    id: 'TRUCK-002',
+    licenseNumber: 'HN-30B-67890',
+    model: 'Isuzu NPR Cooler Truck',
+    capacity: 1500,
+    maxWeight: 2000,
+    volume: 12.0,
+    fuelType: 'diesel',
+    status: 'available',
+    gpsDevice: {
+      deviceId: 'GPS-002',
+      isActive: true,
+      lastUpdate: new Date().toISOString()
+    },
+    environmentSensors: {
+      temperatureSensorId: 'TEMP-002',
+      humiditySensorId: 'HUM-002',
+      isActive: true,
+      lastUpdate: new Date().toISOString()
+    },
+    transportStaff: [
+      {
+        id: 'STAFF-003',
+        name: 'Lê Văn C',
+        phone: '0965432109',
+        role: 'driver',
+        licenseNumber: 'C-987654321',
+        experience: 8
+      },
+      {
+        id: 'STAFF-004',
+        name: 'Phạm Văn D',
+        phone: '0954321098',
+        role: 'assistant',
+        experience: 2
+      }
+    ],
+    registrationExpiry: '2025-08-15'
+  }
+];
 
 export function InboundDelivery() {
   const router = useRouter();
@@ -91,9 +145,8 @@ export function InboundDelivery() {
       warehouseId: 'WH-001',
       warehouseName: 'Kho Trung tâm Hà Nội',
       warehouseAddress: 'Số 123 Đường Giải Phóng, Hai Bà Trưng, Hà Nội',
-      driverName: 'Nguyễn Văn A',
-      driverPhone: '0987654321',
-      vehicleNumber: 'HY-29A-12345',
+      truckId: 'TRUCK-001',
+      truck: mockTrucks[0],
       productType: 'Rau lá tươi',
       quantity: 500,
       unit: 'kg',
@@ -102,10 +155,26 @@ export function InboundDelivery() {
       estimatedArrival: '2024-09-18T09:00:00',
       actualArrival: '2024-09-18T09:15:00',
       status: 'completed',
-      temperature: 4.2,
-      humidity: 65,
-      gpsLocation: '21.0285, 105.8542',
-      notes: 'Hàng hóa chất lượng tốt, đã kiểm tra kỹ',
+      monitoring: {
+        truckId: 'TRUCK-001',
+        location: {
+          latitude: 21.0285,
+          longitude: 105.8542,
+          address: 'Kho Trung tâm Hà Nội',
+          timestamp: '2024-09-18T09:15:00'
+        },
+        environment: {
+          temperature: 4.2,
+          humidity: 65,
+          timestamp: '2024-09-18T09:15:00'
+        },
+        speed: 0,
+        fuel: 85,
+        isMoving: false,
+        lastUpdate: '2024-09-18T09:15:00'
+      },
+      notes:
+        'Hàng hóa chất lượng tốt, đã kiểm tra kỹ. Xe vận chuyển với 2 nhân viên.',
       createdAt: '2024-09-17T10:00:00',
       updatedAt: '2024-09-18T09:30:00'
     },
@@ -117,9 +186,8 @@ export function InboundDelivery() {
       warehouseId: 'WH-002',
       warehouseName: 'Kho Lạnh Thanh Xuân',
       warehouseAddress: 'Số 456 Đường Nguyễn Trãi, Thanh Xuân, Hà Nội',
-      driverName: 'Trần Văn B',
-      driverPhone: '0976543210',
-      vehicleNumber: 'HN-30B-67890',
+      truckId: 'TRUCK-002',
+      truck: mockTrucks[1],
       productType: 'Củ quả tươi',
       quantity: 300,
       unit: 'kg',
@@ -127,10 +195,25 @@ export function InboundDelivery() {
       departureTime: '2024-09-18T06:30:00',
       estimatedArrival: '2024-09-18T10:30:00',
       status: 'in_transit',
-      temperature: 6.1,
-      humidity: 70,
-      gpsLocation: '21.1542, 105.7841',
-      notes: 'Đang trên đường về kho',
+      monitoring: {
+        truckId: 'TRUCK-002',
+        location: {
+          latitude: 21.1542,
+          longitude: 105.7841,
+          address: 'Đang trên đường Quốc lộ 32',
+          timestamp: '2024-09-18T09:00:00'
+        },
+        environment: {
+          temperature: 6.1,
+          humidity: 70,
+          timestamp: '2024-09-18T09:00:00'
+        },
+        speed: 45,
+        fuel: 78,
+        isMoving: true,
+        lastUpdate: '2024-09-18T09:00:00'
+      },
+      notes: 'Đang trên đường về kho. Đội ngũ 2 nhân viên vận chuyển.',
       createdAt: '2024-09-17T14:00:00',
       updatedAt: '2024-09-18T08:45:00'
     },
@@ -142,9 +225,8 @@ export function InboundDelivery() {
       warehouseId: 'WH-003',
       warehouseName: 'Kho Nông sản Đông Anh',
       warehouseAddress: 'Khu Công nghiệp Đông Anh, Đông Anh, Hà Nội',
-      driverName: 'Lê Văn C',
-      driverPhone: '0965432109',
-      vehicleNumber: 'HN-31C-11111',
+      truckId: 'TRUCK-001',
+      truck: mockTrucks[0],
       productType: 'Hoa quả tươi',
       quantity: 200,
       unit: 'kg',
@@ -152,10 +234,26 @@ export function InboundDelivery() {
       departureTime: '2024-09-18T07:00:00',
       estimatedArrival: '2024-09-18T11:00:00',
       status: 'delayed',
-      temperature: 8.5,
-      humidity: 60,
-      gpsLocation: '20.9842, 105.8461',
-      notes: 'Gặp ùn tắc giao thông, dự kiến trễ 1 giờ',
+      monitoring: {
+        truckId: 'TRUCK-001',
+        location: {
+          latitude: 20.9842,
+          longitude: 105.8461,
+          address: 'Giao lộ Thanh Trì - Đông Anh',
+          timestamp: '2024-09-18T10:30:00'
+        },
+        environment: {
+          temperature: 8.5,
+          humidity: 60,
+          timestamp: '2024-09-18T10:30:00'
+        },
+        speed: 15,
+        fuel: 72,
+        isMoving: true,
+        lastUpdate: '2024-09-18T10:30:00'
+      },
+      notes:
+        'Gặp ùn tắc giao thông, dự kiến trễ 1 giờ. Xe có GPS và cảm biến theo dõi.',
       createdAt: '2024-09-17T16:30:00',
       updatedAt: '2024-09-18T09:00:00'
     }
@@ -197,9 +295,7 @@ export function InboundDelivery() {
     warehouseId: '',
     warehouseName: '',
     warehouseAddress: '',
-    driverName: '',
-    driverPhone: '',
-    vehicleNumber: '',
+    truckId: '',
     productType: '',
     quantity: 0,
     unit: 'kg',
@@ -215,6 +311,12 @@ export function InboundDelivery() {
         return (
           <Badge className='border-gray-200 bg-gray-100 text-gray-700'>
             Đã lên lịch
+          </Badge>
+        );
+      case 'departed':
+        return (
+          <Badge className='border-yellow-200 bg-yellow-100 text-yellow-700'>
+            Đã khởi hành
           </Badge>
         );
       case 'in_transit':
@@ -276,10 +378,30 @@ export function InboundDelivery() {
     }
   };
 
+  const handleTruckChange = (truckId: string) => {
+    const selectedTruck = mockTrucks.find((truck) => truck.id === truckId);
+    if (selectedTruck) {
+      setFormData({
+        ...formData,
+        truckId: selectedTruck.id,
+        truck: selectedTruck
+      });
+    }
+  };
+
   const handleCreate = () => {
+    const selectedTruck = mockTrucks.find(
+      (truck) => truck.id === formData.truckId
+    );
+    if (!selectedTruck) {
+      alert('Vui lòng chọn xe tải');
+      return;
+    }
+
     const newDelivery: InboundDelivery = {
       ...(formData as InboundDelivery),
       id: `IN-2024-${(deliveries.length + 1).toString().padStart(3, '0')}`,
+      truck: selectedTruck,
       status: 'scheduled',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -293,9 +415,7 @@ export function InboundDelivery() {
       warehouseId: '',
       warehouseName: '',
       warehouseAddress: '',
-      driverName: '',
-      driverPhone: '',
-      vehicleNumber: '',
+      truckId: '',
       productType: '',
       quantity: 0,
       unit: 'kg',
@@ -419,47 +539,130 @@ export function InboundDelivery() {
                   </Select>
                 </div>
 
-                <div className='grid grid-cols-3 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='driverName'>Tên tài xế</Label>
-                    <Input
-                      id='driverName'
-                      value={formData.driverName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, driverName: e.target.value })
-                      }
-                      placeholder='Nhập tên tài xế'
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='driverPhone'>SĐT tài xế</Label>
-                    <Input
-                      id='driverPhone'
-                      value={formData.driverPhone}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          driverPhone: e.target.value
-                        })
-                      }
-                      placeholder='Nhập SĐT'
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='vehicleNumber'>Biển số xe</Label>
-                    <Input
-                      id='vehicleNumber'
-                      value={formData.vehicleNumber}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          vehicleNumber: e.target.value
-                        })
-                      }
-                      placeholder='Nhập biển số'
-                    />
-                  </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='truck'>Chọn xe tải</Label>
+                  <Select
+                    value={formData.truckId}
+                    onValueChange={handleTruckChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder='Chọn xe tải' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mockTrucks
+                        .filter((truck) => truck.status === 'available')
+                        .map((truck) => (
+                          <SelectItem key={truck.id} value={truck.id}>
+                            <div className='flex flex-col'>
+                              <div className='font-medium'>
+                                {truck.licenseNumber} - {truck.model}
+                              </div>
+                              <div className='text-muted-foreground text-sm'>
+                                Tải trọng: {truck.capacity}kg | Thể tích:{' '}
+                                {truck.volume}m³
+                              </div>
+                              <div className='text-muted-foreground text-sm'>
+                                Nhân viên:{' '}
+                                {truck.transportStaff
+                                  .map(
+                                    (staff) => `${staff.name} (${staff.role})`
+                                  )
+                                  .join(', ')}
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+
+                {formData.truckId && (
+                  <Card className='bg-muted/20'>
+                    <CardHeader className='pb-3'>
+                      <CardTitle className='text-sm'>
+                        Thông tin xe tải
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className='space-y-2'>
+                      {(() => {
+                        const selectedTruck = mockTrucks.find(
+                          (t) => t.id === formData.truckId
+                        );
+                        if (!selectedTruck) return null;
+
+                        return (
+                          <>
+                            <div className='grid grid-cols-2 gap-4 text-sm'>
+                              <div>
+                                <span className='font-medium'>Biển số:</span>{' '}
+                                {selectedTruck.licenseNumber}
+                              </div>
+                              <div>
+                                <span className='font-medium'>Model:</span>{' '}
+                                {selectedTruck.model}
+                              </div>
+                              <div>
+                                <span className='font-medium'>Tải trọng:</span>{' '}
+                                {selectedTruck.capacity}kg
+                              </div>
+                              <div>
+                                <span className='font-medium'>Thể tích:</span>{' '}
+                                {selectedTruck.volume}m³
+                              </div>
+                            </div>
+                            <div className='space-y-1'>
+                              <div className='flex items-center gap-2 text-sm font-medium'>
+                                <IconUsers className='h-4 w-4' />
+                                Đội ngũ vận chuyển:
+                              </div>
+                              {selectedTruck.transportStaff.map((staff) => (
+                                <div
+                                  key={staff.id}
+                                  className='text-muted-foreground pl-6 text-sm'
+                                >
+                                  • {staff.name} ({staff.role}) - {staff.phone}
+                                  {staff.licenseNumber &&
+                                    ` - Bằng lái: ${staff.licenseNumber}`}
+                                </div>
+                              ))}
+                            </div>
+                            <div className='space-y-1'>
+                              <div className='flex items-center gap-2 text-sm font-medium'>
+                                <IconActivity className='h-4 w-4' />
+                                Thiết bị giám sát:
+                              </div>
+                              <div className='text-muted-foreground pl-6 text-sm'>
+                                • GPS: {selectedTruck.gpsDevice.deviceId}
+                                <Badge
+                                  variant='outline'
+                                  className='ml-2 bg-green-50 text-green-700'
+                                >
+                                  {selectedTruck.gpsDevice.isActive
+                                    ? 'Hoạt động'
+                                    : 'Không hoạt động'}
+                                </Badge>
+                              </div>
+                              <div className='text-muted-foreground pl-6 text-sm'>
+                                • Cảm biến nhiệt độ:{' '}
+                                {
+                                  selectedTruck.environmentSensors
+                                    .temperatureSensorId
+                                }
+                              </div>
+                              <div className='text-muted-foreground pl-6 text-sm'>
+                                • Cảm biến độ ẩm:{' '}
+                                {
+                                  selectedTruck.environmentSensors
+                                    .humiditySensorId
+                                }
+                              </div>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </CardContent>
+                  </Card>
+                )}
 
                 <div className='grid grid-cols-4 gap-4'>
                   <div className='space-y-2'>
@@ -667,6 +870,7 @@ export function InboundDelivery() {
               <SelectContent>
                 <SelectItem value='all'>Tất cả trạng thái</SelectItem>
                 <SelectItem value='scheduled'>Đã lên lịch</SelectItem>
+                <SelectItem value='departed'>Đã khởi hành</SelectItem>
                 <SelectItem value='in_transit'>Đang vận chuyển</SelectItem>
                 <SelectItem value='arrived'>Đã đến kho</SelectItem>
                 <SelectItem value='completed'>Hoàn thành</SelectItem>
@@ -696,8 +900,10 @@ export function InboundDelivery() {
                 <TableHead>Mã đợt</TableHead>
                 <TableHead>Vườn</TableHead>
                 <TableHead>Kho đích</TableHead>
+                <TableHead>Xe tải & Nhân viên</TableHead>
                 <TableHead>Sản phẩm</TableHead>
                 <TableHead>Số lượng</TableHead>
+                <TableHead>Giám sát</TableHead>
                 <TableHead>Thời gian</TableHead>
                 <TableHead>Trạng thái</TableHead>
               </TableRow>
@@ -732,6 +938,20 @@ export function InboundDelivery() {
                   </TableCell>
                   <TableCell>
                     <div>
+                      <div className='flex items-center gap-2 font-medium'>
+                        <IconTruck className='h-4 w-4' />
+                        {delivery.truck.licenseNumber}
+                      </div>
+                      <div className='text-muted-foreground text-sm'>
+                        {delivery.truck.model}
+                      </div>
+                      <div className='text-muted-foreground text-xs'>
+                        {delivery.truck.transportStaff.length} nhân viên
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div>
                       <div>{delivery.productType}</div>
                       <div className='text-muted-foreground text-sm'>
                         {formatCurrency(delivery.estimatedValue)}
@@ -740,6 +960,51 @@ export function InboundDelivery() {
                   </TableCell>
                   <TableCell>
                     {delivery.quantity} {delivery.unit}
+                  </TableCell>
+                  <TableCell>
+                    {delivery.monitoring ? (
+                      <div className='space-y-1'>
+                        <div className='flex items-center gap-1 text-xs'>
+                          <IconMapPin className='h-3 w-3 text-blue-600' />
+                          <span className='text-muted-foreground'>
+                            {delivery.monitoring.location.address}
+                          </span>
+                        </div>
+                        <div className='flex items-center gap-1 text-xs'>
+                          <IconThermometer className='h-3 w-3 text-orange-600' />
+                          <span>
+                            {delivery.monitoring.environment.temperature}°C
+                          </span>
+                        </div>
+                        <div className='flex items-center gap-1 text-xs'>
+                          <IconDroplet className='h-3 w-3 text-blue-500' />
+                          <span>
+                            {delivery.monitoring.environment.humidity}%
+                          </span>
+                        </div>
+                        <div className='text-muted-foreground text-xs'>
+                          {delivery.monitoring.isMoving ? (
+                            <Badge
+                              variant='outline'
+                              className='bg-green-50 text-green-700'
+                            >
+                              Di chuyển {delivery.monitoring.speed}km/h
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant='outline'
+                              className='bg-gray-50 text-gray-700'
+                            >
+                              Đã dừng
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ) : (
+                      <span className='text-muted-foreground text-xs'>
+                        Chưa có dữ liệu
+                      </span>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className='text-sm'>

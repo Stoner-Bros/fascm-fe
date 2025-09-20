@@ -34,6 +34,12 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
+import type {
+  Order,
+  OutboundDelivery,
+  Truck,
+  WeightCapacityValidation
+} from '@/types/delivery';
 import {
   IconActivity,
   IconBuilding,
@@ -45,46 +51,189 @@ import {
   IconSearch,
   IconTruck
 } from '@tabler/icons-react';
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 
-interface OutboundDelivery {
-  id: string;
-  warehouseId: string;
-  warehouseName: string;
-  warehouseAddress: string;
-  customerName: string;
-  customerAddress: string;
-  customerContact: string;
-  customerType: 'supermarket' | 'restaurant' | 'distributor' | 'retailer';
-  driverName: string;
-  driverPhone: string;
-  vehicleNumber: string;
-  productType: string;
-  quantity: number;
-  unit: string;
-  totalValue: number;
-  departureTime: string;
-  estimatedArrival: string;
-  actualArrival?: string;
-  status:
-    | 'scheduled'
-    | 'loading'
-    | 'in_transit'
-    | 'arrived'
-    | 'delivered'
-    | 'returned'
-    | 'cancelled';
-  temperature?: number;
-  humidity?: number;
-  gpsLocation?: string;
-  notes?: string;
-  priorityLevel: 'low' | 'medium' | 'high' | 'urgent';
-  requiresSignature: boolean;
-  specialHandling?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// Mock truck data (same as inbound)
+const mockTrucks: Truck[] = [
+  {
+    id: 'TRUCK-001',
+    licenseNumber: 'HY-29A-12345',
+    model: 'Hyundai H350 Refrigerated',
+    capacity: 2000,
+    maxWeight: 2500,
+    volume: 15.5,
+    fuelType: 'diesel',
+    status: 'available',
+    gpsDevice: {
+      deviceId: 'GPS-001',
+      isActive: true,
+      lastUpdate: new Date().toISOString()
+    },
+    environmentSensors: {
+      temperatureSensorId: 'TEMP-001',
+      humiditySensorId: 'HUM-001',
+      isActive: true,
+      lastUpdate: new Date().toISOString()
+    },
+    transportStaff: [
+      {
+        id: 'STAFF-001',
+        name: 'Nguyễn Văn A',
+        phone: '0987654321',
+        role: 'driver',
+        licenseNumber: 'B2-123456789',
+        experience: 5
+      },
+      {
+        id: 'STAFF-002',
+        name: 'Trần Văn B',
+        phone: '0976543210',
+        role: 'assistant',
+        experience: 3
+      }
+    ],
+    registrationExpiry: '2025-12-31'
+  },
+  {
+    id: 'TRUCK-002',
+    licenseNumber: 'HN-30B-67890',
+    model: 'Isuzu NPR Cooler Truck',
+    capacity: 1500,
+    maxWeight: 2000,
+    volume: 12.0,
+    fuelType: 'diesel',
+    status: 'available',
+    gpsDevice: {
+      deviceId: 'GPS-002',
+      isActive: true,
+      lastUpdate: new Date().toISOString()
+    },
+    environmentSensors: {
+      temperatureSensorId: 'TEMP-002',
+      humiditySensorId: 'HUM-002',
+      isActive: true,
+      lastUpdate: new Date().toISOString()
+    },
+    transportStaff: [
+      {
+        id: 'STAFF-003',
+        name: 'Lê Văn C',
+        phone: '0965432109',
+        role: 'driver',
+        licenseNumber: 'C-987654321',
+        experience: 8
+      },
+      {
+        id: 'STAFF-004',
+        name: 'Phạm Văn D',
+        phone: '0954321098',
+        role: 'assistant',
+        experience: 2
+      }
+    ],
+    registrationExpiry: '2025-08-15'
+  }
+];
+
+// Mock orders data
+const mockOrders: Order[] = [
+  {
+    id: 'ORD-2024-001',
+    customerId: 'CUST-001',
+    customerName: 'Siêu thị BigC',
+    customerAddress: '123 Nguyễn Huệ, Quận 1, TP.HCM',
+    customerContact: '0281234567',
+    customerType: 'supermarket',
+    items: [
+      {
+        id: 'ITEM-001',
+        productId: 'PROD-001',
+        productName: 'Rau lá tươi',
+        quantity: 100,
+        unit: 'kg',
+        weight: 100,
+        volume: 1.5,
+        specialRequirements: 'Bảo quản lạnh 2-4°C'
+      },
+      {
+        id: 'ITEM-002',
+        productId: 'PROD-002',
+        productName: 'Củ cải trắng',
+        quantity: 50,
+        unit: 'kg',
+        weight: 50,
+        volume: 0.8
+      }
+    ],
+    totalWeight: 150,
+    totalVolume: 2.3,
+    totalValue: 4500000,
+    deliveryDate: '2024-09-18T14:00:00',
+    priority: 'high',
+    requiresSignature: true,
+    status: 'confirmed',
+    createdAt: '2024-09-17T08:00:00',
+    updatedAt: '2024-09-17T10:00:00'
+  },
+  {
+    id: 'ORD-2024-002',
+    customerId: 'CUST-002',
+    customerName: 'Nhà hàng Hải Sản Tươi',
+    customerAddress: '456 Lê Văn Sỹ, Quận 3, TP.HCM',
+    customerContact: '0287654321',
+    customerType: 'restaurant',
+    items: [
+      {
+        id: 'ITEM-003',
+        productId: 'PROD-003',
+        productName: 'Hải sản đông lạnh',
+        quantity: 80,
+        unit: 'kg',
+        weight: 80,
+        volume: 1.2,
+        specialRequirements: 'Đông lạnh -2°C'
+      }
+    ],
+    totalWeight: 80,
+    totalVolume: 1.2,
+    totalValue: 2400000,
+    deliveryDate: '2024-09-18T11:30:00',
+    priority: 'urgent',
+    requiresSignature: true,
+    status: 'confirmed',
+    createdAt: '2024-09-17T15:00:00',
+    updatedAt: '2024-09-17T16:00:00'
+  },
+  {
+    id: 'ORD-2024-003',
+    customerId: 'CUST-003',
+    customerName: 'Kho bãi Miền Tây',
+    customerAddress: '789 Quốc lộ 1A, Cần Thơ',
+    customerContact: '0292345678',
+    customerType: 'distributor',
+    items: [
+      {
+        id: 'ITEM-004',
+        productId: 'PROD-004',
+        productName: 'Thực phẩm khô',
+        quantity: 200,
+        unit: 'kg',
+        weight: 200,
+        volume: 2.5
+      }
+    ],
+    totalWeight: 200,
+    totalVolume: 2.5,
+    totalValue: 3000000,
+    deliveryDate: '2024-09-18T16:00:00',
+    priority: 'medium',
+    requiresSignature: false,
+    status: 'pending',
+    createdAt: '2024-09-17T12:00:00',
+    updatedAt: '2024-09-17T12:00:00'
+  }
+];
 
 export function OutboundDelivery() {
   const router = useRouter();
@@ -94,28 +243,48 @@ export function OutboundDelivery() {
       warehouseId: 'WH-001',
       warehouseName: 'Kho Trung tâm Hà Nội',
       warehouseAddress: 'Số 123 Đường Giải Phóng, Hai Bà Trưng, Hà Nội',
-      customerName: 'Siêu thị BigC',
-      customerAddress: '123 Nguyễn Huệ, Quận 1, TP.HCM',
-      customerContact: '0281234567',
-      customerType: 'supermarket',
-      driverName: 'Phạm Văn D',
-      driverPhone: '0912345678',
-      vehicleNumber: 'SG-51A-12345',
-      productType: 'Rau lá tươi',
-      quantity: 800,
-      unit: 'kg',
-      totalValue: 24000000,
+      truckId: 'TRUCK-001',
+      truck: mockTrucks[0],
+      orders: [mockOrders[0]],
+      totalWeight: 150,
+      totalVolume: 2.3,
+      totalValue: 4500000,
       departureTime: '2024-09-18T06:00:00',
       estimatedArrival: '2024-09-18T14:00:00',
       actualArrival: '2024-09-18T13:45:00',
-      status: 'delivered',
-      temperature: 4.5,
-      humidity: 65,
-      gpsLocation: '10.7769, 106.7009',
-      notes: 'Giao hàng thành công, đã có chữ ký xác nhận',
+      status: 'completed',
+      monitoring: {
+        truckId: 'TRUCK-001',
+        location: {
+          latitude: 10.7769,
+          longitude: 106.7009,
+          address: 'Siêu thị BigC, Quận 1, TP.HCM',
+          timestamp: '2024-09-18T13:45:00'
+        },
+        environment: {
+          temperature: 4.5,
+          humidity: 65,
+          timestamp: '2024-09-18T13:45:00'
+        },
+        speed: 0,
+        fuel: 75,
+        isMoving: false,
+        lastUpdate: '2024-09-18T13:45:00'
+      },
+      route: [
+        {
+          orderId: 'ORD-2024-001',
+          customerName: 'Siêu thị BigC',
+          customerAddress: '123 Nguyễn Huệ, Quận 1, TP.HCM',
+          estimatedArrival: '2024-09-18T14:00:00',
+          actualArrival: '2024-09-18T13:45:00',
+          status: 'delivered'
+        }
+      ],
       priorityLevel: 'high',
-      requiresSignature: true,
       specialHandling: 'Bảo quản lạnh',
+      notes:
+        'Giao hàng thành công, đã có chữ ký xác nhận. Xe có 2 nhân viên vận chuyển.',
       createdAt: '2024-09-17T08:00:00',
       updatedAt: '2024-09-18T14:00:00'
     },
@@ -124,27 +293,46 @@ export function OutboundDelivery() {
       warehouseId: 'WH-002',
       warehouseName: 'Kho Lạnh Thanh Xuân',
       warehouseAddress: 'Số 456 Đường Nguyễn Trãi, Thanh Xuân, Hà Nội',
-      customerName: 'Nhà hàng Hải Sản Tươi',
-      customerAddress: '456 Lê Văn Sỹ, Quận 3, TP.HCM',
-      customerContact: '0287654321',
-      customerType: 'restaurant',
-      driverName: 'Nguyễn Văn E',
-      driverPhone: '0923456789',
-      vehicleNumber: 'SG-52B-67890',
-      productType: 'Hải sản đông lạnh',
-      quantity: 200,
-      unit: 'kg',
-      totalValue: 18000000,
+      truckId: 'TRUCK-002',
+      truck: mockTrucks[1],
+      orders: [mockOrders[1]],
+      totalWeight: 80,
+      totalVolume: 1.2,
+      totalValue: 2400000,
       departureTime: '2024-09-18T07:30:00',
       estimatedArrival: '2024-09-18T11:30:00',
       status: 'in_transit',
-      temperature: -1.8,
-      humidity: 45,
-      gpsLocation: '10.7829, 106.6831',
-      notes: 'Đang trên đường giao, nhiệt độ ổn định',
+      monitoring: {
+        truckId: 'TRUCK-002',
+        location: {
+          latitude: 10.7829,
+          longitude: 106.6831,
+          address: 'Đường Điện Biên Phủ, Quận 3, TP.HCM',
+          timestamp: '2024-09-18T10:45:00'
+        },
+        environment: {
+          temperature: -1.8,
+          humidity: 45,
+          timestamp: '2024-09-18T10:45:00'
+        },
+        speed: 35,
+        fuel: 68,
+        isMoving: true,
+        lastUpdate: '2024-09-18T10:45:00'
+      },
+      route: [
+        {
+          orderId: 'ORD-2024-002',
+          customerName: 'Nhà hàng Hải Sản Tươi',
+          customerAddress: '456 Lê Văn Sỹ, Quận 3, TP.HCM',
+          estimatedArrival: '2024-09-18T11:30:00',
+          status: 'pending'
+        }
+      ],
       priorityLevel: 'urgent',
-      requiresSignature: true,
       specialHandling: 'Đông lạnh -2°C',
+      notes:
+        'Đang trên đường giao, nhiệt độ ổn định. Đội ngũ 2 nhân viên vận chuyển.',
       createdAt: '2024-09-17T15:00:00',
       updatedAt: '2024-09-18T09:00:00'
     },
@@ -153,23 +341,27 @@ export function OutboundDelivery() {
       warehouseId: 'WH-003',
       warehouseName: 'Kho Nông sản Đông Anh',
       warehouseAddress: 'Khu Công nghiệp Đông Anh, Đông Anh, Hà Nội',
-      customerName: 'Kho bãi Miền Tây',
-      customerAddress: '789 Quốc lộ 1A, Cần Thơ',
-      customerContact: '0292345678',
-      customerType: 'distributor',
-      driverName: 'Trần Văn F',
-      driverPhone: '0934567890',
-      vehicleNumber: 'CT-60C-11111',
-      productType: 'Thực phẩm khô',
-      quantity: 1200,
-      unit: 'kg',
-      totalValue: 15000000,
+      truckId: 'TRUCK-001',
+      truck: mockTrucks[0],
+      orders: [mockOrders[2]],
+      totalWeight: 200,
+      totalVolume: 2.5,
+      totalValue: 3000000,
       departureTime: '2024-09-18T05:00:00',
       estimatedArrival: '2024-09-18T12:00:00',
       status: 'loading',
+      route: [
+        {
+          orderId: 'ORD-2024-003',
+          customerName: 'Kho bãi Miền Tây',
+          customerAddress: '789 Quốc lộ 1A, Cần Thơ',
+          estimatedArrival: '2024-09-18T16:00:00',
+          status: 'pending'
+        }
+      ],
       priorityLevel: 'medium',
-      requiresSignature: false,
-      notes: 'Đang tiến hành đóng gói và chất hàng',
+      notes:
+        'Đang tiến hành đóng gói và chất hàng. Xe tải có GPS và cảm biến giám sát.',
       createdAt: '2024-09-17T12:00:00',
       updatedAt: '2024-09-18T05:30:00'
     }
@@ -179,6 +371,11 @@ export function OutboundDelivery() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [priorityFilter, setPriorityFilter] = useState<string>('all');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [selectedOrders, setSelectedOrders] = useState<Order[]>([]);
+  const [selectedTruckId, setSelectedTruckId] = useState<string>('');
+  const [validation, setValidation] = useState<WeightCapacityValidation | null>(
+    null
+  );
 
   // Warehouse options
   const warehouseOptions = [
@@ -204,26 +401,94 @@ export function OutboundDelivery() {
     }
   ];
 
+  // Weight/Capacity validation function
+  const validateWeightCapacity = (
+    orders: Order[],
+    truck: Truck
+  ): WeightCapacityValidation => {
+    const totalWeight = orders.reduce(
+      (sum, order) => sum + order.totalWeight,
+      0
+    );
+    const totalVolume = orders.reduce(
+      (sum, order) => sum + order.totalVolume,
+      0
+    );
+
+    const errors: WeightCapacityValidation['errors'] = [];
+    const warnings: WeightCapacityValidation['warnings'] = [];
+
+    // Check weight limit
+    if (totalWeight > truck.maxWeight) {
+      errors.push({
+        type: 'weight_exceeded',
+        message: `Tổng trọng lượng vượt quá giới hạn xe tải`,
+        currentValue: totalWeight,
+        maxValue: truck.maxWeight,
+        unit: 'kg'
+      });
+    } else if (totalWeight > truck.maxWeight * 0.9) {
+      warnings.push({
+        type: 'near_limit',
+        message: `Gần đạt giới hạn trọng lượng`,
+        percentage: (totalWeight / truck.maxWeight) * 100
+      });
+    }
+
+    // Check capacity limit
+    if (totalWeight > truck.capacity) {
+      errors.push({
+        type: 'capacity_exceeded',
+        message: `Tổng trọng lượng vượt quá khả năng chở của xe`,
+        currentValue: totalWeight,
+        maxValue: truck.capacity,
+        unit: 'kg'
+      });
+    } else if (totalWeight > truck.capacity * 0.9) {
+      warnings.push({
+        type: 'near_limit',
+        message: `Gần đạt giới hạn khả năng chở`,
+        percentage: (totalWeight / truck.capacity) * 100
+      });
+    }
+
+    // Check volume limit
+    if (totalVolume > truck.volume) {
+      errors.push({
+        type: 'volume_exceeded',
+        message: `Tổng thể tích vượt quá không gian chứa của xe`,
+        currentValue: totalVolume,
+        maxValue: truck.volume,
+        unit: 'm³'
+      });
+    } else if (totalVolume > truck.volume * 0.9) {
+      warnings.push({
+        type: 'near_limit',
+        message: `Gần đạt giới hạn thể tích`,
+        percentage: (totalVolume / truck.volume) * 100
+      });
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings
+    };
+  };
+
   // Form states
   const [formData, setFormData] = useState<Partial<OutboundDelivery>>({
     warehouseId: '',
     warehouseName: '',
     warehouseAddress: '',
-    customerName: '',
-    customerAddress: '',
-    customerContact: '',
-    customerType: 'supermarket',
-    driverName: '',
-    driverPhone: '',
-    vehicleNumber: '',
-    productType: '',
-    quantity: 0,
-    unit: 'kg',
+    truckId: '',
+    orders: [],
+    totalWeight: 0,
+    totalVolume: 0,
     totalValue: 0,
     departureTime: '',
     estimatedArrival: '',
     priorityLevel: 'medium',
-    requiresSignature: true,
     specialHandling: '',
     notes: ''
   });
@@ -242,27 +507,33 @@ export function OutboundDelivery() {
             Đang chất hàng
           </Badge>
         );
+      case 'departed':
+        return (
+          <Badge className='border-orange-200 bg-orange-100 text-orange-700'>
+            Đã khởi hành
+          </Badge>
+        );
       case 'in_transit':
         return (
           <Badge className='border-blue-200 bg-blue-100 text-blue-700'>
             Đang vận chuyển
           </Badge>
         );
-      case 'arrived':
+      case 'delivering':
         return (
-          <Badge className='border-orange-200 bg-orange-100 text-orange-700'>
-            Đã đến nơi
+          <Badge className='border-purple-200 bg-purple-100 text-purple-700'>
+            Đang giao hàng
           </Badge>
         );
-      case 'delivered':
+      case 'completed':
         return (
           <Badge className='border-green-200 bg-green-100 text-green-700'>
-            Đã giao
+            Hoàn thành
           </Badge>
         );
       case 'returned':
         return (
-          <Badge className='border-purple-200 bg-purple-100 text-purple-700'>
+          <Badge className='border-red-200 bg-red-100 text-red-700'>
             Đã trả về
           </Badge>
         );
@@ -308,26 +579,18 @@ export function OutboundDelivery() {
     }
   };
 
-  const getCustomerTypeLabel = (type: OutboundDelivery['customerType']) => {
-    switch (type) {
-      case 'supermarket':
-        return 'Siêu thị';
-      case 'restaurant':
-        return 'Nhà hàng';
-      case 'distributor':
-        return 'Nhà phân phối';
-      case 'retailer':
-        return 'Cửa hàng bán lẻ';
-      default:
-        return type;
-    }
-  };
-
   const filteredDeliveries = deliveries.filter((delivery) => {
+    const customerNames = delivery.orders
+      .map((order) => order.customerName)
+      .join(' ');
     const matchesSearch =
-      delivery.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customerNames.toLowerCase().includes(searchTerm.toLowerCase()) ||
       delivery.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      delivery.productType.toLowerCase().includes(searchTerm.toLowerCase());
+      delivery.orders.some((order) =>
+        order.items.some((item) =>
+          item.productName.toLowerCase().includes(searchTerm.toLowerCase())
+        )
+      );
     const matchesStatus =
       statusFilter === 'all' || delivery.status === statusFilter;
     const matchesPriority =
@@ -349,10 +612,117 @@ export function OutboundDelivery() {
     }
   };
 
+  const handleTruckChange = (truckId: string) => {
+    const selectedTruck = mockTrucks.find((truck) => truck.id === truckId);
+    if (selectedTruck) {
+      setSelectedTruckId(truckId);
+      setFormData({
+        ...formData,
+        truckId: selectedTruck.id,
+        truck: selectedTruck
+      });
+
+      // Validate with current orders
+      if (selectedOrders.length > 0) {
+        const validation = validateWeightCapacity(
+          selectedOrders,
+          selectedTruck
+        );
+        setValidation(validation);
+      }
+    }
+  };
+
+  const handleOrderSelection = (order: Order, isSelected: boolean) => {
+    let newSelectedOrders: Order[];
+
+    if (isSelected) {
+      newSelectedOrders = [...selectedOrders, order];
+    } else {
+      newSelectedOrders = selectedOrders.filter((o) => o.id !== order.id);
+    }
+
+    setSelectedOrders(newSelectedOrders);
+
+    // Calculate totals
+    const totalWeight = newSelectedOrders.reduce(
+      (sum, o) => sum + o.totalWeight,
+      0
+    );
+    const totalVolume = newSelectedOrders.reduce(
+      (sum, o) => sum + o.totalVolume,
+      0
+    );
+    const totalValue = newSelectedOrders.reduce(
+      (sum, o) => sum + o.totalValue,
+      0
+    );
+
+    // Generate route from orders
+    const route = newSelectedOrders.map((order) => ({
+      orderId: order.id,
+      customerName: order.customerName,
+      customerAddress: order.customerAddress,
+      estimatedArrival: order.deliveryDate,
+      status: 'pending' as const
+    }));
+
+    setFormData({
+      ...formData,
+      orders: newSelectedOrders,
+      totalWeight,
+      totalVolume,
+      totalValue,
+      route
+    });
+
+    // Validate if truck is selected
+    if (selectedTruckId) {
+      const selectedTruck = mockTrucks.find((t) => t.id === selectedTruckId);
+      if (selectedTruck) {
+        const validation = validateWeightCapacity(
+          newSelectedOrders,
+          selectedTruck
+        );
+        setValidation(validation);
+      }
+    }
+  };
+
   const handleCreate = () => {
+    // Validation
+    if (!selectedTruckId) {
+      alert('Vui lòng chọn xe tải');
+      return;
+    }
+
+    if (selectedOrders.length === 0) {
+      alert('Vui lòng chọn ít nhất một đơn hàng');
+      return;
+    }
+
+    const selectedTruck = mockTrucks.find((t) => t.id === selectedTruckId);
+    if (!selectedTruck) {
+      alert('Xe tải không hợp lệ');
+      return;
+    }
+
+    // Final validation
+    const finalValidation = validateWeightCapacity(
+      selectedOrders,
+      selectedTruck
+    );
+    if (!finalValidation.isValid) {
+      alert(
+        'Vượt quá giới hạn tải trọng hoặc thể tích của xe. Vui lòng điều chỉnh đơn hàng.'
+      );
+      return;
+    }
+
     const newDelivery: OutboundDelivery = {
       ...(formData as OutboundDelivery),
       id: `OUT-2024-${(deliveries.length + 1).toString().padStart(3, '0')}`,
+      truck: selectedTruck,
       status: 'scheduled',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
@@ -363,24 +733,20 @@ export function OutboundDelivery() {
       warehouseId: '',
       warehouseName: '',
       warehouseAddress: '',
-      customerName: '',
-      customerAddress: '',
-      customerContact: '',
-      customerType: 'supermarket',
-      driverName: '',
-      driverPhone: '',
-      vehicleNumber: '',
-      productType: '',
-      quantity: 0,
-      unit: 'kg',
+      truckId: '',
+      orders: [],
+      totalWeight: 0,
+      totalVolume: 0,
       totalValue: 0,
       departureTime: '',
       estimatedArrival: '',
       priorityLevel: 'medium',
-      requiresSignature: true,
       specialHandling: '',
       notes: ''
     });
+    setSelectedOrders([]);
+    setSelectedTruckId('');
+    setValidation(null);
     setIsCreateDialogOpen(false);
   };
 
@@ -456,211 +822,68 @@ export function OutboundDelivery() {
                   </Select>
                 </div>
 
-                <div className='grid grid-cols-2 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='customerName'>Tên khách hàng</Label>
-                    <Input
-                      id='customerName'
-                      value={formData.customerName}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          customerName: e.target.value
-                        })
-                      }
-                      placeholder='Nhập tên khách hàng'
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='customerType'>Loại khách hàng</Label>
-                    <Select
-                      value={formData.customerType}
-                      onValueChange={(value) =>
-                        setFormData({
-                          ...formData,
-                          customerType:
-                            value as OutboundDelivery['customerType']
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='supermarket'>Siêu thị</SelectItem>
-                        <SelectItem value='restaurant'>Nhà hàng</SelectItem>
-                        <SelectItem value='distributor'>
-                          Nhà phân phối
-                        </SelectItem>
-                        <SelectItem value='retailer'>
-                          Cửa hàng bán lẻ
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className='grid grid-cols-2 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='customerContact'>SĐT khách hàng</Label>
-                    <Input
-                      id='customerContact'
-                      value={formData.customerContact}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          customerContact: e.target.value
-                        })
-                      }
-                      placeholder='Nhập số điện thoại'
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='priorityLevel'>Mức độ ưu tiên</Label>
-                    <Select
-                      value={formData.priorityLevel}
-                      onValueChange={(value) =>
-                        setFormData({
-                          ...formData,
-                          priorityLevel:
-                            value as OutboundDelivery['priorityLevel']
-                        })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='low'>Thấp</SelectItem>
-                        <SelectItem value='medium'>Trung bình</SelectItem>
-                        <SelectItem value='high'>Cao</SelectItem>
-                        <SelectItem value='urgent'>Khẩn cấp</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='truck'>Chọn xe tải</Label>
+                  <Select
+                    value={selectedTruckId}
+                    onValueChange={handleTruckChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder='Chọn xe tải khả dụng' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {mockTrucks
+                        .filter((truck) => truck.status === 'available')
+                        .map((truck) => (
+                          <SelectItem key={truck.id} value={truck.id}>
+                            <div>
+                              <div className='font-medium'>
+                                {truck.licenseNumber} - {truck.model}
+                              </div>
+                              <div className='text-muted-foreground text-sm'>
+                                Tải trọng: {truck.capacity}kg | Thể tích:{' '}
+                                {truck.volume}m³
+                              </div>
+                            </div>
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='customerAddress'>Địa chỉ giao hàng</Label>
-                  <Textarea
-                    id='customerAddress'
-                    value={formData.customerAddress}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        customerAddress: e.target.value
-                      })
-                    }
-                    placeholder='Nhập địa chỉ đầy đủ'
-                    rows={2}
-                  />
-                </div>
-
-                <div className='grid grid-cols-3 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='driverName'>Tên tài xế</Label>
-                    <Input
-                      id='driverName'
-                      value={formData.driverName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, driverName: e.target.value })
-                      }
-                      placeholder='Nhập tên tài xế'
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='driverPhone'>SĐT tài xế</Label>
-                    <Input
-                      id='driverPhone'
-                      value={formData.driverPhone}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          driverPhone: e.target.value
-                        })
-                      }
-                      placeholder='Nhập SĐT'
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='vehicleNumber'>Biển số xe</Label>
-                    <Input
-                      id='vehicleNumber'
-                      value={formData.vehicleNumber}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          vehicleNumber: e.target.value
-                        })
-                      }
-                      placeholder='Nhập biển số'
-                    />
-                  </div>
-                </div>
-
-                <div className='grid grid-cols-4 gap-4'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='productType'>Loại sản phẩm</Label>
-                    <Input
-                      id='productType'
-                      value={formData.productType}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          productType: e.target.value
-                        })
-                      }
-                      placeholder='Ví dụ: Rau lá tươi'
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='quantity'>Số lượng</Label>
-                    <Input
-                      id='quantity'
-                      type='number'
-                      value={formData.quantity}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          quantity: Number(e.target.value)
-                        })
-                      }
-                      placeholder='Nhập số lượng'
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='unit'>Đơn vị</Label>
-                    <Select
-                      value={formData.unit}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, unit: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='kg'>Kilogram (kg)</SelectItem>
-                        <SelectItem value='tấn'>Tấn</SelectItem>
-                        <SelectItem value='thùng'>Thùng</SelectItem>
-                        <SelectItem value='bao'>Bao</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='totalValue'>Tổng giá trị (VND)</Label>
-                    <Input
-                      id='totalValue'
-                      type='number'
-                      value={formData.totalValue}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          totalValue: Number(e.target.value)
-                        })
-                      }
-                      placeholder='Nhập giá trị'
-                    />
+                  <Label>Chọn đơn hàng</Label>
+                  <div className='max-h-40 overflow-y-auto rounded-lg border p-4'>
+                    {mockOrders
+                      .filter((order) => order.status === 'confirmed')
+                      .map((order) => (
+                        <div
+                          key={order.id}
+                          className='mb-2 flex items-center space-x-3 rounded border p-2'
+                        >
+                          <input
+                            type='checkbox'
+                            checked={selectedOrders.some(
+                              (o) => o.id === order.id
+                            )}
+                            onChange={(e) =>
+                              handleOrderSelection(order, e.target.checked)
+                            }
+                            className='rounded'
+                          />
+                          <div className='flex-1'>
+                            <div className='font-medium'>
+                              {order.customerName}
+                            </div>
+                            <div className='text-muted-foreground text-sm'>
+                              {order.items
+                                .map((item) => item.productName)
+                                .join(', ')}{' '}
+                              - {order.totalWeight}kg
+                            </div>
+                          </div>
+                        </div>
+                      ))}
                   </div>
                 </div>
 
@@ -711,21 +934,9 @@ export function OutboundDelivery() {
                     />
                   </div>
                   <div className='flex items-center space-x-2 pt-6'>
-                    <input
-                      type='checkbox'
-                      id='requiresSignature'
-                      checked={formData.requiresSignature}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          requiresSignature: e.target.checked
-                        })
-                      }
-                      className='rounded'
-                    />
-                    <Label htmlFor='requiresSignature'>
-                      Yêu cầu chữ ký xác nhận
-                    </Label>
+                    <div className='text-muted-foreground text-sm'>
+                      Chữ ký xác nhận sẽ được xử lý theo từng đơn hàng
+                    </div>
                   </div>
                 </div>
 
@@ -791,7 +1002,7 @@ export function OutboundDelivery() {
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold text-green-600'>
-              {deliveries.filter((d) => d.status === 'delivered').length}
+              {deliveries.filter((d) => d.status === 'completed').length}
             </div>
             <p className='text-muted-foreground text-xs'>hoàn thành</p>
           </CardContent>
@@ -853,8 +1064,9 @@ export function OutboundDelivery() {
                 <SelectItem value='scheduled'>Đã lên lịch</SelectItem>
                 <SelectItem value='loading'>Đang chất hàng</SelectItem>
                 <SelectItem value='in_transit'>Đang vận chuyển</SelectItem>
-                <SelectItem value='arrived'>Đã đến nơi</SelectItem>
-                <SelectItem value='delivered'>Đã giao</SelectItem>
+                <SelectItem value='departed'>Đã khởi hành</SelectItem>
+                <SelectItem value='delivering'>Đang giao hàng</SelectItem>
+                <SelectItem value='completed'>Hoàn thành</SelectItem>
                 <SelectItem value='returned'>Đã trả về</SelectItem>
                 <SelectItem value='cancelled'>Đã hủy</SelectItem>
               </SelectContent>
@@ -922,22 +1134,35 @@ export function OutboundDelivery() {
                   </TableCell>
                   <TableCell>
                     <div>
-                      <div className='font-medium'>{delivery.customerName}</div>
-                      <div className='text-muted-foreground text-sm'>
-                        {getCustomerTypeLabel(delivery.customerType)}
-                      </div>
+                      {delivery.orders.slice(0, 2).map((order) => (
+                        <div key={order.id} className='mb-1'>
+                          <div className='font-medium'>
+                            {order.customerName}
+                          </div>
+                          <div className='text-muted-foreground text-sm'>
+                            {order.items
+                              .map((item) => item.productName)
+                              .join(', ')}
+                          </div>
+                        </div>
+                      ))}
+                      {delivery.orders.length > 2 && (
+                        <div className='text-muted-foreground text-xs'>
+                          +{delivery.orders.length - 2} đơn nữa
+                        </div>
+                      )}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div>
-                      <div>{delivery.productType}</div>
+                      <div>{delivery.orders.length} đơn hàng</div>
                       <div className='text-muted-foreground text-sm'>
                         {formatCurrency(delivery.totalValue)}
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
-                    {delivery.quantity} {delivery.unit}
+                    {delivery.totalWeight}kg / {delivery.totalVolume}m³
                   </TableCell>
                   <TableCell>
                     {getPriorityBadge(delivery.priorityLevel)}

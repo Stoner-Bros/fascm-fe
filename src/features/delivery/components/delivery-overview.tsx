@@ -44,7 +44,8 @@ export function DeliveryOverview() {
             Quản lý Vận chuyển
           </h1>
           <p className='text-muted-foreground'>
-            Tổng quan và quản lý các đợt vận chuyển nhập kho và xuất kho
+            Tổng quan và quản lý các đợt vận chuyển với hệ thống xe tải thông
+            minh
           </p>
         </div>
       </div>
@@ -125,7 +126,9 @@ export function DeliveryOverview() {
                 </div>
                 <div>
                   <CardTitle className='text-xl'>Nhập kho (Inbound)</CardTitle>
-                  <CardDescription>Vận chuyển từ vườn về kho</CardDescription>
+                  <CardDescription>
+                    Vận chuyển từ vườn về kho (không giới hạn tải trọng)
+                  </CardDescription>
                 </div>
               </div>
               <Badge
@@ -179,7 +182,8 @@ export function DeliveryOverview() {
                 <div>
                   <CardTitle className='text-xl'>Xuất kho (Outbound)</CardTitle>
                   <CardDescription>
-                    Vận chuyển từ kho ra phân phối
+                    Vận chuyển từ kho ra phân phối (kiểm soát tải trọng & đa đơn
+                    hàng)
                   </CardDescription>
                 </div>
               </div>
@@ -238,7 +242,7 @@ export function DeliveryOverview() {
                 <p className='font-medium'>Inbound IN-2024-001 đã hoàn thành</p>
                 <p className='text-muted-foreground text-sm'>
                   500kg rau lá tươi từ Vườn Organic A đã được nhập kho thành
-                  công
+                  công bằng xe HY-29A-12345 (2 nhân viên)
                 </p>
               </div>
               <span className='text-muted-foreground text-xs'>
@@ -253,7 +257,8 @@ export function DeliveryOverview() {
                   Outbound OUT-2024-015 đang vận chuyển
                 </p>
                 <p className='text-muted-foreground text-sm'>
-                  800kg hoa quả đông lạnh đang trên đường đến Siêu thị BigC
+                  Xe HN-30B-67890 chở 3 đơn hàng (total: 150kg) đang đến khách
+                  hàng đầu tiên - nhiệt độ -2°C
                 </p>
               </div>
               <span className='text-muted-foreground text-xs'>
@@ -268,7 +273,8 @@ export function DeliveryOverview() {
                   Cảnh báo: Inbound IN-2024-003 chậm trễ
                 </p>
                 <p className='text-muted-foreground text-sm'>
-                  Đợt vận chuyển từ Vườn B đã trễ hơn 2 giờ so với dự kiến
+                  Xe HY-29A-12345 từ Vườn B bị ùn tắc, GPS hiện tại: 15km/h -
+                  trễ 1h so với dự kiến
                 </p>
               </div>
               <span className='text-muted-foreground text-xs'>1 giờ trước</span>
