@@ -271,14 +271,14 @@ export default function InventoryViewPage({}: InventoryViewPageProps) {
       id: 'cat-001',
       name: 'Thực phẩm',
       description: 'Các sản phẩm thực phẩm nông sản',
-      storageType: 'dry' as const,
+      storageType: 'tươi sống' as const,
       shelfLife: 365
     },
     beverage: {
       id: 'cat-002',
       name: 'Đồ uống',
       description: 'Các sản phẩm đồ uống',
-      storageType: 'dry' as const,
+      storageType: 'tươi sống' as const,
       shelfLife: 180
     }
   };

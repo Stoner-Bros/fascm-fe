@@ -37,12 +37,12 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
       name: 'Kho Trung tâm Hà Nội',
       location: 'Hà Nội',
       capacity: 85,
-      totalItems: 1247,
+      totalItems: 10,
       lowStockItems: 23,
       expiringSoon: 8,
       outOfStock: 5,
-      todayImport: 45,
-      todayExport: 32,
+      todayImport: 10,
+      todayExport: 15,
       status: 'active',
       areas: [
         {
@@ -51,7 +51,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
           temperature: 4.2,
           humidity: 65,
           capacity: 90,
-          products: 320
+          products: 3
         },
         {
           id: 'A2',
@@ -59,7 +59,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
           temperature: 7.2,
           humidity: 70,
           capacity: 75,
-          products: 280
+          products: 2
         },
         {
           id: 'A3',
@@ -67,7 +67,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
           temperature: 18.5,
           humidity: 45,
           capacity: 95,
-          products: 647
+          products: 5
         }
       ]
     },
@@ -76,12 +76,12 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
       name: 'Kho Miền Nam TP.HCM',
       location: 'TP. Hồ Chí Minh',
       capacity: 78,
-      totalItems: 892,
+      totalItems: 10,
       lowStockItems: 15,
       expiringSoon: 3,
       outOfStock: 2,
-      todayImport: 28,
-      todayExport: 41,
+      todayImport: 15,
+      todayExport: 20,
       status: 'active',
       areas: [
         {
@@ -90,7 +90,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
           temperature: 5.1,
           humidity: 68,
           capacity: 85,
-          products: 245
+          products: 5
         },
         {
           id: 'B2',
@@ -98,7 +98,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
           temperature: 8.0,
           humidity: 75,
           capacity: 80,
-          products: 367
+          products: 3
         },
         {
           id: 'B3',
@@ -106,7 +106,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
           temperature: 20.0,
           humidity: 40,
           capacity: 70,
-          products: 280
+          products: 2
         }
       ]
     },
@@ -115,21 +115,21 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
       name: 'Kho Miền Trung Đà Nẵng',
       location: 'Đà Nẵng',
       capacity: 92,
-      totalItems: 1456,
+      totalItems: 10,
       lowStockItems: 31,
       expiringSoon: 12,
       outOfStock: 7,
-      todayImport: 52,
-      todayExport: 38,
+      todayImport: 15,
+      todayExport: 10,
       status: 'active',
       areas: [
         {
           id: 'C1',
-          name: 'Khu vực C1 - Hải sản khô',
+          name: 'Khu vực C1 - Nông sản tươi',
           temperature: 15.0,
           humidity: 35,
           capacity: 88,
-          products: 412
+          products: 2
         },
         {
           id: 'C2',
@@ -137,7 +137,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
           temperature: 4.8,
           humidity: 62,
           capacity: 95,
-          products: 523
+          products: 3
         },
         {
           id: 'C3',
@@ -145,7 +145,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
           temperature: 6.5,
           humidity: 72,
           capacity: 93,
-          products: 521
+          products: 5
         }
       ]
     }
@@ -352,14 +352,14 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
                     warehouse.expiringSoon > 0 ||
                     warehouse.outOfStock > 0) && (
                     <div className='space-y-2'>
-                      <p className='text-sm font-medium text-orange-700'>
+                      <p className='text-sm font-medium text-orange-700 dark:text-orange-500'>
                         Cảnh báo:
                       </p>
                       <div className='flex flex-wrap gap-2'>
                         {warehouse.lowStockItems > 0 && (
                           <Badge
                             variant='outline'
-                            className='border-yellow-300 text-yellow-700'
+                            className='border-yellow-300 text-yellow-700 dark:border-yellow-500 dark:text-yellow-500'
                           >
                             {warehouse.lowStockItems} sắp hết
                           </Badge>
@@ -367,13 +367,16 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
                         {warehouse.expiringSoon > 0 && (
                           <Badge
                             variant='outline'
-                            className='border-red-300 text-red-700'
+                            className='border-red-300 text-red-700 dark:border-red-500 dark:text-red-500'
                           >
                             {warehouse.expiringSoon} hết hạn
                           </Badge>
                         )}
                         {warehouse.outOfStock > 0 && (
-                          <Badge variant='destructive'>
+                          <Badge
+                            variant='destructive'
+                            className='dark:bg-red-500 dark:text-white'
+                          >
                             {warehouse.outOfStock} hết hàng
                           </Badge>
                         )}
@@ -390,20 +393,24 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
                       {warehouse.areas.map((area) => (
                         <div
                           key={area.id}
-                          className='flex items-center justify-between rounded bg-gray-50 p-2'
+                          className='flex items-center justify-between rounded bg-gray-50 p-2 dark:bg-gray-300'
                         >
                           <div className='flex-1'>
-                            <p className='text-sm font-medium'>{area.name}</p>
+                            <p className='text-sm font-medium dark:text-black'>
+                              {area.name}
+                            </p>
                             <div className='text-muted-foreground flex items-center space-x-4 text-xs'>
-                              <span className='flex items-center'>
+                              <span className='flex items-center dark:text-black'>
                                 <IconTemperature className='mr-1 h-3 w-3' />
                                 {area.temperature}°C
                               </span>
-                              <span className='flex items-center'>
+                              <span className='flex items-center dark:text-black'>
                                 <IconDroplet className='mr-1 h-3 w-3' />
                                 {area.humidity}%
                               </span>
-                              <span>{area.products} sản phẩm</span>
+                              <span className='dark:text-black'>
+                                {area.products} sản phẩm
+                              </span>
                             </div>
                           </div>
                           <div className='text-right'>
@@ -412,7 +419,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
                                 value={area.capacity}
                                 className='h-2 w-12'
                               />
-                              <span className='text-xs font-medium'>
+                              <span className='text-xs font-medium dark:text-black'>
                                 {area.capacity}%
                               </span>
                             </div>

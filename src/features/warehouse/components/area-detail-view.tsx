@@ -69,7 +69,7 @@ export default function AreaDetailView({
     id: 'A1',
     warehouseId: 'WH001',
     name: 'Khu vực A1 - Sản phẩm khô',
-    type: 'dry',
+    type: 'Khô',
     capacity: 500,
     currentStock: 410,
     temperature: 25,
@@ -110,7 +110,7 @@ export default function AreaDetailView({
       category: {
         id: 'CAT001',
         name: 'Rau củ quả',
-        storageType: 'fresh',
+        storageType: 'tươi sống',
         shelfLife: 7
       },
       unit: 'kg',
@@ -149,7 +149,7 @@ export default function AreaDetailView({
       category: {
         id: 'CAT001',
         name: 'Rau củ quả',
-        storageType: 'fresh',
+        storageType: 'tươi sống',
         shelfLife: 14
       },
       unit: 'kg',
@@ -163,6 +163,45 @@ export default function AreaDetailView({
       batches: [],
       supplier: {
         id: 'SUP001',
+        name: 'Nông trại Đà Lạt',
+        contactPerson: 'Nguyễn Văn A',
+        phone: '0123456789',
+        email: 'contact@dalat-farm.com',
+        address: 'Đà Lạt, Lâm Đồng',
+        rating: 4.5,
+        isActive: true,
+        certifications: ['VietGAP', 'Organic']
+      },
+      storageRequirements: {
+        minTemperature: 0,
+        maxTemperature: 4,
+        minHumidity: 90,
+        maxHumidity: 95
+      },
+      createdAt: '2024-01-01T00:00:00Z',
+      updatedAt: '2024-01-01T00:00:00Z'
+    },
+    {
+      id: 'PROD003',
+      name: 'Dưa',
+      sku: 'PEPPER-002',
+      category: {
+        id: 'CAT001',
+        name: 'Rau củ quả',
+        storageType: 'khô ráo',
+        shelfLife: 365
+      },
+      unit: 'kg',
+      description: 'Dưa tươi từ Đà Lạt',
+      minStockLevel: 100,
+      maxStockLevel: 500,
+      currentStock: 200,
+      reservedStock: 0,
+      availableStock: 200,
+      areaId: 'A1',
+      batches: [],
+      supplier: {
+        id: 'SUP002',
         name: 'Nông trại Đà Lạt',
         contactPerson: 'Nguyễn Văn A',
         phone: '0123456789',
@@ -261,14 +300,22 @@ export default function AreaDetailView({
     switch (status) {
       case 'normal':
         return (
-          <Badge className='bg-green-100 text-green-800'>Bình thường</Badge>
+          <Badge className='bg-green-100 text-green-800 dark:bg-green-600 dark:text-white'>
+            Bình thường
+          </Badge>
         );
       case 'warning':
         return (
-          <Badge className='bg-yellow-100 text-yellow-800'>Cảnh báo</Badge>
+          <Badge className='bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'>
+            Cảnh báo
+          </Badge>
         );
       case 'critical':
-        return <Badge className='bg-red-100 text-red-800'>Nghiêm trọng</Badge>;
+        return (
+          <Badge className='bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'>
+            Nghiêm trọng
+          </Badge>
+        );
       default:
         return <Badge variant='secondary'>Không xác định</Badge>;
     }

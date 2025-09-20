@@ -91,7 +91,7 @@ export interface ProductCategory {
   name: string;
   description?: string;
   parentId?: string;
-  storageType: 'fresh' | 'frozen' | 'dry' | 'controlled';
+  storageType: 'tươi sống' | 'đông lạnh' | 'khô ráo' | 'kiểm soát nhiệt độ';
   shelfLife: number; // in days
 }
 

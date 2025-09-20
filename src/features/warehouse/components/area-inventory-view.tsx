@@ -91,7 +91,7 @@ export default function AreaInventoryView({
         id: 'cat-001',
         name: 'Thực phẩm',
         description: 'Các sản phẩm thực phẩm nông sản',
-        storageType: 'dry',
+        storageType: 'khô ráo',
         shelfLife: 365
       },
       description: 'Cà chua tươi chất lượng cao',
@@ -132,7 +132,7 @@ export default function AreaInventoryView({
         id: 'cat-001',
         name: 'Thực phẩm',
         description: 'Các sản phẩm thực phẩm nông sản',
-        storageType: 'dry',
+        storageType: 'khô ráo',
         shelfLife: 365
       },
       description: 'Cà rốt tươi từ Đà Lạt',

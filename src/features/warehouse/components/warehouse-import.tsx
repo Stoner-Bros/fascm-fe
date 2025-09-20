@@ -34,7 +34,6 @@ import {
 } from '@/components/ui/tooltip';
 import {
   IconPackageImport,
-  IconScan,
   IconBrain,
   IconShield,
   IconAlertTriangle,
@@ -224,7 +223,7 @@ const mockProducts: Product[] = [
     category: {
       id: 'cat-001',
       name: 'Rau củ quả',
-      storageType: 'fresh',
+      storageType: 'tươi sống',
       shelfLife: 7
     },
     description: 'Cà chua tươi chất lượng cao',
@@ -263,7 +262,7 @@ const mockProducts: Product[] = [
     category: {
       id: 'cat-002',
       name: 'Trái cây',
-      storageType: 'fresh',
+      storageType: 'tươi sống',
       shelfLife: 14
     },
     description: 'Táo tươi ngon',
@@ -302,7 +301,7 @@ const mockProducts: Product[] = [
     category: {
       id: 'cat-003',
       name: 'Ngũ cốc',
-      storageType: 'dry',
+      storageType: 'khô ráo',
       shelfLife: 365
     },
     description: 'Gạo ST25 cao cấp',
@@ -341,7 +340,7 @@ const mockProducts: Product[] = [
     category: {
       id: 'cat-004',
       name: 'Rau lá',
-      storageType: 'fresh',
+      storageType: 'tươi sống',
       shelfLife: 5
     },
     description: 'Rau cải xanh tươi',
@@ -552,24 +551,28 @@ export function WarehouseImport() {
     };
   };
 
-  const units = ['kg', 'tấn', 'thùng', 'bao', 'lít', 'chai', 'hộp', 'cái'];
+  const units = ['kg', 'tấn'];
   const qualityOptions = [
     {
       value: 'A',
-      label: 'Loại A - Xuất khẩu',
-      color: 'bg-green-100 text-green-800'
+      label: 'Loại A ',
+      color: 'bg-green-100 text-green-800 dark:bg-green-500 dark:text-white'
     },
     {
       value: 'B',
-      label: 'Loại B - Nội địa cao cấp',
-      color: 'bg-blue-100 text-blue-800'
+      label: 'Loại B ',
+      color: 'bg-blue-100 text-blue-800 dark:bg-blue-500 dark:text-white'
     },
     {
       value: 'C',
-      label: 'Loại C - Nội địa thường',
-      color: 'bg-yellow-100 text-yellow-800'
+      label: 'Loại C ',
+      color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500 dark:text-white'
     },
-    { value: 'D', label: 'Loại D - Chế biến', color: 'bg-red-100 text-red-800' }
+    {
+      value: 'D',
+      label: 'Loại D ',
+      color: 'bg-red-100 text-red-800 dark:bg-red-500 dark:text-white'
+    }
   ];
 
   // Enhanced validation function
@@ -681,18 +684,18 @@ export function WarehouseImport() {
     setCurrentStep(1);
   };
 
-  const handleScan = () => {
-    setIsScanning(true);
-    // Simulate scanning
-    setTimeout(() => {
-      setIsScanning(false);
-      // Auto-fill form with scanned data
-      const scannedProduct = mockProducts[0];
-      handleProductChange(scannedProduct.id);
-      form.setValue('quantity', 50);
-      form.setValue('batchNumber', generateBatchNumber());
-    }, 2000);
-  };
+  // const handleScan = () => {
+  //   setIsScanning(true);
+  //   // Simulate scanning
+  //   setTimeout(() => {
+  //     setIsScanning(false);
+  //     // Auto-fill form with scanned data
+  //     const scannedProduct = mockProducts[0];
+  //     handleProductChange(scannedProduct.id);
+  //     form.setValue('quantity', 50);
+  //     form.setValue('batchNumber', generateBatchNumber());
+  //   }, 2000);
+  // };
 
   return (
     <TooltipProvider>
@@ -708,7 +711,7 @@ export function WarehouseImport() {
                 Quản lý nhập kho với AI phân tích và blockchain logging
               </p>
             </div>
-            <div className='flex gap-2'>
+            {/* <div className='flex gap-2'>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -737,7 +740,7 @@ export function WarehouseImport() {
                   <p>Nhập từ file Excel</p>
                 </TooltipContent>
               </Tooltip>
-            </div>
+            </div> */}
           </div>
 
           <div className='grid gap-6 md:grid-cols-2'>
@@ -766,44 +769,45 @@ export function WarehouseImport() {
                   <div className='space-y-4'>
                     <h3 className='text-lg font-medium'>Thông tin cơ bản</h3>
 
-                    <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                    <div className='flex items-center gap-9'>
                       {/* Chọn sản phẩm */}
-                      <FormField
-                        control={form.control}
-                        name='productId'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Sản phẩm *</FormLabel>
-                            <Select
-                              onValueChange={handleProductChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder='Chọn sản phẩm...' />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {mockProducts.map((product) => (
-                                  <SelectItem
-                                    key={product.id}
-                                    value={product.id}
-                                  >
-                                    <div className='flex items-center gap-2'>
-                                      <span>{product.name}</span>
-                                      <Badge variant='outline'>
-                                        {product.sku}
-                                      </Badge>
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
+                      <div className='w-[250px]'>
+                        <FormField
+                          control={form.control}
+                          name='productId'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Sản phẩm *</FormLabel>
+                              <Select
+                                onValueChange={handleProductChange}
+                                value={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className='w-full'>
+                                    <SelectValue placeholder='Chọn sản phẩm...' />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {mockProducts.map((product) => (
+                                    <SelectItem
+                                      key={product.id}
+                                      value={product.id}
+                                    >
+                                      <div className='flex w-[200px] items-center gap-2'>
+                                        <span>{product.name}</span>
+                                        <Badge variant='outline'>
+                                          {product.sku}
+                                        </Badge>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                       {/* Mã lô hàng */}
                       <FormField
                         control={form.control}
@@ -821,6 +825,7 @@ export function WarehouseImport() {
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <Button
+                                    className='h-[35px] w-[40px]'
                                     type='button'
                                     variant='outline'
                                     size='sm'
@@ -844,98 +849,102 @@ export function WarehouseImport() {
                         )}
                       />
                     </div>
-
-                    <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-                      {/* Số lượng */}
-                      <FormField
-                        control={form.control}
-                        name='quantity'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Số lượng *</FormLabel>
-                            <FormControl>
-                              <Input
-                                type='number'
-                                placeholder='0'
-                                {...field}
-                                onChange={(e) =>
-                                  field.onChange(Number(e.target.value))
-                                }
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* Đơn vị */}
-                      <FormField
-                        control={form.control}
-                        name='unit'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Đơn vị *</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
+                    <div className='flex items-center gap-3'>
+                      <div className='flex w-[200px] items-center gap-3'>
+                        {/* Số lượng */}
+                        <FormField
+                          control={form.control}
+                          name='quantity'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Số lượng *</FormLabel>
                               <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder='Chọn đơn vị...' />
-                                </SelectTrigger>
+                                <Input
+                                  type='number'
+                                  placeholder='0'
+                                  {...field}
+                                  onChange={(e) =>
+                                    field.onChange(Number(e.target.value))
+                                  }
+                                />
                               </FormControl>
-                              <SelectContent>
-                                {units.map((unit) => (
-                                  <SelectItem key={unit} value={unit}>
-                                    {unit}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
 
+                        {/* Đơn vị */}
+                        <div className='w-[50px]'>
+                          <FormField
+                            control={form.control}
+                            name='unit'
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Đơn vị *</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  value={field.value}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger className='w-[100px]'>
+                                      <SelectValue placeholder='kg' />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {units.map((unit) => (
+                                      <SelectItem key={unit} value={unit}>
+                                        {unit}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
                       {/* Chất lượng */}
-                      <FormField
-                        control={form.control}
-                        name='quality'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Chất lượng *</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder='Chọn chất lượng...' />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {qualityOptions.map((option) => (
-                                  <SelectItem
-                                    key={option.value}
-                                    value={option.value}
-                                  >
-                                    <div className='flex items-center gap-2'>
-                                      <Badge
-                                        className={option.color}
-                                        variant='outline'
-                                      >
-                                        {option.value}
-                                      </Badge>
-                                      <span>{option.label}</span>
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className='ml-[75px]'>
+                        <FormField
+                          control={form.control}
+                          name='quality'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Chất lượng *</FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder='Chọn chất lượng...' />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {qualityOptions.map((option) => (
+                                    <SelectItem
+                                      key={option.value}
+                                      value={option.value}
+                                    >
+                                      <div className='flex items-center gap-2'>
+                                        <Badge
+                                          className={option.color}
+                                          variant='outline'
+                                        >
+                                          {option.value}
+                                        </Badge>
+                                        <span>{option.label}</span>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -943,93 +952,96 @@ export function WarehouseImport() {
                   <div className='space-y-4'>
                     <h3 className='text-lg font-medium'>Vị trí lưu trữ</h3>
 
-                    <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                    <div className='flex items-center gap-9'>
                       {/* Chọn kho */}
-                      <FormField
-                        control={form.control}
-                        name='warehouseId'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Kho hàng *</FormLabel>
-                            <Select
-                              onValueChange={handleWarehouseChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder='Chọn kho...' />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {mockWarehouses.map((warehouse) => (
-                                  <SelectItem
-                                    key={warehouse.id}
-                                    value={warehouse.id}
-                                  >
-                                    <div className='flex items-center gap-2'>
-                                      <IconBuilding className='h-4 w-4' />
-                                      <span>{warehouse.name}</span>
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      {/* Chọn khu vực */}
-                      <FormField
-                        control={form.control}
-                        name='areaId'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Khu vực *</FormLabel>
-                            <Select
-                              onValueChange={handleAreaChange}
-                              value={field.value}
-                              disabled={!selectedWarehouse}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder='Chọn khu vực...' />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {selectedWarehouse?.areas.map((area) => {
-                                  const capacity = checkAreaCapacity(
-                                    area,
-                                    form.watch('quantity') || 0
-                                  );
-                                  return (
-                                    <SelectItem key={area.id} value={area.id}>
-                                      <div className='flex w-full items-center justify-between'>
-                                        <div className='flex items-center gap-2'>
-                                          <IconMapPin className='h-4 w-4' />
-                                          <span>{area.name}</span>
-                                          {!capacity.hasSpace && (
-                                            <IconAlertTriangle className='h-4 w-4 text-orange-500' />
-                                          )}
-                                        </div>
-                                        <span className='text-muted-foreground text-xs'>
-                                          {(
-                                            (area.currentStock /
-                                              area.capacity) *
-                                            100
-                                          ).toFixed(1)}
-                                          %
-                                        </span>
+                      <div className='w-[250px]'>
+                        <FormField
+                          control={form.control}
+                          name='warehouseId'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Kho hàng *</FormLabel>
+                              <Select
+                                onValueChange={handleWarehouseChange}
+                                value={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className='w-full'>
+                                    <SelectValue placeholder='Chọn kho...' />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {mockWarehouses.map((warehouse) => (
+                                    <SelectItem
+                                      key={warehouse.id}
+                                      value={warehouse.id}
+                                    >
+                                      <div className='flex w-[200px] items-center gap-2'>
+                                        <IconBuilding className='h-4 w-4' />
+                                        <span>{warehouse.name}</span>
                                       </div>
                                     </SelectItem>
-                                  );
-                                })}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      {/* Chọn khu vực */}
+                      <div className='w-[250px]'>
+                        <FormField
+                          control={form.control}
+                          name='areaId'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Khu vực *</FormLabel>
+                              <Select
+                                onValueChange={handleAreaChange}
+                                value={field.value}
+                                disabled={!selectedWarehouse}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className='w-full'>
+                                    <SelectValue placeholder='Chọn khu vực...' />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {selectedWarehouse?.areas.map((area) => {
+                                    const capacity = checkAreaCapacity(
+                                      area,
+                                      form.watch('quantity') || 0
+                                    );
+                                    return (
+                                      <SelectItem key={area.id} value={area.id}>
+                                        <div className='flex w-[200px] items-center justify-between'>
+                                          <div className='flex items-center gap-2'>
+                                            <IconMapPin className='h-4 w-4' />
+                                            <span>{area.name}</span>
+                                            {!capacity.hasSpace && (
+                                              <IconAlertTriangle className='h-4 w-4 text-orange-500' />
+                                            )}
+                                          </div>
+                                          <span className='text-muted-foreground text-xs'>
+                                            {(
+                                              (area.currentStock /
+                                                area.capacity) *
+                                              100
+                                            ).toFixed(1)}
+                                            %
+                                          </span>
+                                        </div>
+                                      </SelectItem>
+                                    );
+                                  })}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </div>
 
                     {/* Thông tin khu vực được chọn */}
@@ -1042,7 +1054,7 @@ export function WarehouseImport() {
                                 Sức chứa:
                               </span>
                               <div className='font-medium'>
-                                {selectedArea.capacity} m²
+                                {selectedArea.capacity}
                               </div>
                             </div>
                             <div>
@@ -1050,7 +1062,7 @@ export function WarehouseImport() {
                                 Đã sử dụng:
                               </span>
                               <div className='font-medium'>
-                                {selectedArea.currentStock} m²
+                                {selectedArea.currentStock}
                               </div>
                             </div>
                             <div>
@@ -1079,59 +1091,62 @@ export function WarehouseImport() {
                   <div className='space-y-4'>
                     <h3 className='text-lg font-medium'>Thông tin bổ sung</h3>
 
-                    <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                    <div className='flex items-center gap-3'>
                       {/* Nhà cung cấp */}
-                      <FormField
-                        control={form.control}
-                        name='supplierId'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Nhà cung cấp *</FormLabel>
-                            <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                            >
-                              <FormControl>
-                                <SelectTrigger>
-                                  <SelectValue placeholder='Chọn nhà cung cấp...' />
-                                </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                {mockSuppliers.map((supplier) => (
-                                  <SelectItem
-                                    key={supplier.id}
-                                    value={supplier.id}
-                                  >
-                                    <div className='flex items-center gap-2'>
-                                      <IconUser className='h-4 w-4' />
-                                      <span>{supplier.name}</span>
-                                    </div>
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
+                      <div className='w-[250px]'>
+                        <FormField
+                          control={form.control}
+                          name='supplierId'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Nhà cung cấp *</FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger className='w-full'>
+                                    <SelectValue placeholder='Chọn nhà cung cấp...' />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {mockSuppliers.map((supplier) => (
+                                    <SelectItem
+                                      key={supplier.id}
+                                      value={supplier.id}
+                                    >
+                                      <div className='flex w-[200px] items-center gap-2'>
+                                        <IconUser className='h-4 w-4' />
+                                        <span>{supplier.name}</span>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                       {/* Xuất xứ */}
-                      <FormField
-                        control={form.control}
-                        name='origin'
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Xuất xứ *</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder='VD: Đà Lạt, Lâm Đồng'
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
+                      <div className='ml-[20px] w-[250px]'>
+                        <FormField
+                          control={form.control}
+                          name='origin'
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Xuất xứ *</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder='VD: Đà Lạt, Lâm Đồng'
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
                     </div>
 
                     {/* Ghi chú */}
