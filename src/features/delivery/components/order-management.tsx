@@ -607,7 +607,7 @@ export function OrderManagement({
                   disabled={
                     !selectedTruckId ||
                     selectedOrders.length === 0 ||
-                    (validation && !validation.isValid)
+                    (validation ? !validation.isValid : false)
                   }
                 >
                   Tạo đợt vận chuyển
