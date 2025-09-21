@@ -22,6 +22,13 @@ export const navItems: NavItem[] = [
     items: [] // Empty array as there are no child items for Dashboard
   },
   {
+    title: 'Order',
+    url: '/dashboard/order',
+    icon: 'order',
+    shortcut: ['o', 'o'],
+    isActive: true
+  },
+  {
     title: 'Warehouse',
     url: '/dashboard/warehouse',
     icon: 'inventory',
@@ -50,16 +57,22 @@ export const navItems: NavItem[] = [
     isActive: true,
     items: [
       {
-        title: 'Inbound (Vườn → Kho)',
+        title: 'Inbound',
         url: '/dashboard/delivery/inbound',
         icon: 'warehouse',
         shortcut: ['d', 'i']
       },
       {
-        title: 'Outbound (Kho → Phân phối)',
+        title: 'Outbound',
         url: '/dashboard/delivery/outbound',
         icon: 'delivery',
         shortcut: ['d', 'o']
+      },
+      {
+        title: 'Truck',
+        url: '/dashboard/delivery/truck',
+        icon: 'delivery',
+        shortcut: ['d', 't']
       }
     ]
   },
