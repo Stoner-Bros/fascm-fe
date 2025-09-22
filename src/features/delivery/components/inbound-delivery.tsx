@@ -37,15 +37,13 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import type { InboundDelivery, Truck } from '@/types/delivery';
 import {
-  IconActivity,
   IconClock,
   IconDownload,
   IconHome,
   IconPlus,
   IconRefresh,
   IconSearch,
-  IconTruck,
-  IconUsers
+  IconTruck
 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
@@ -472,7 +470,7 @@ export function InboundDelivery() {
                 </DialogDescription>
               </DialogHeader>
               <div className='grid gap-4 py-4'>
-                <div className='grid grid-cols-2 gap-4'>
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                   <div className='space-y-2'>
                     <Label htmlFor='farmName'>Tên vườn</Label>
                     <Input
@@ -560,12 +558,6 @@ export function InboundDelivery() {
                               Tải trọng: {truck.capacity}kg | Thể tích:{' '}
                               {truck.volume}m³
                             </div>
-                            <div className='text-muted-foreground text-sm'>
-                              Nhân viên:{' '}
-                              {truck.transportStaff
-                                .map((staff) => `${staff.name} (${staff.role})`)
-                                .join(', ')}
-                            </div>
                           </SelectItem>
                         ))}
                     </SelectContent>
@@ -576,84 +568,35 @@ export function InboundDelivery() {
                   <Card className='bg-muted/20'>
                     <CardHeader className='pb-3'>
                       <CardTitle className='text-sm'>
-                        Thông tin xe tải
+                        Thông tin xe đã chọn
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className='space-y-2'>
+                    <CardContent>
                       {(() => {
                         const selectedTruck = mockTrucks.find(
                           (t) => t.id === formData.truckId
                         );
                         if (!selectedTruck) return null;
-
                         return (
-                          <>
-                            <div className='grid grid-cols-2 gap-4 text-sm'>
-                              <div>
-                                <span className='font-medium'>Biển số:</span>{' '}
-                                {selectedTruck.licenseNumber}
-                              </div>
-                              <div>
-                                <span className='font-medium'>Model:</span>{' '}
-                                {selectedTruck.model}
-                              </div>
-                              <div>
-                                <span className='font-medium'>Tải trọng:</span>{' '}
-                                {selectedTruck.capacity}kg
-                              </div>
-                              <div>
-                                <span className='font-medium'>Thể tích:</span>{' '}
-                                {selectedTruck.volume}m³
-                              </div>
+                          <div className='grid gap-4 text-sm sm:grid-cols-2'>
+                            <div className='flex items-center gap-2'>
+                              <IconTruck className='h-4 w-4' />
+                              <span className='font-medium'>Biển số:</span>
+                              {selectedTruck.licenseNumber}
                             </div>
-                            <div className='space-y-1'>
-                              <div className='flex items-center gap-2 text-sm font-medium'>
-                                <IconUsers className='h-4 w-4' />
-                                Đội ngũ vận chuyển:
-                              </div>
-                              {selectedTruck.transportStaff.map((staff) => (
-                                <div
-                                  key={staff.id}
-                                  className='text-muted-foreground pl-6 text-sm'
-                                >
-                                  • {staff.name} ({staff.role}) - {staff.phone}
-                                  {staff.licenseNumber &&
-                                    ` - Bằng lái: ${staff.licenseNumber}`}
-                                </div>
-                              ))}
+                            <div>
+                              <span className='font-medium'>Model:</span>{' '}
+                              {selectedTruck.model}
                             </div>
-                            <div className='space-y-1'>
-                              <div className='flex items-center gap-2 text-sm font-medium'>
-                                <IconActivity className='h-4 w-4' />
-                                Thiết bị giám sát:
-                              </div>
-                              <div className='text-muted-foreground pl-6 text-sm'>
-                                • GPS: {selectedTruck.gpsDevice.deviceId}
-                                <Badge
-                                  variant='outline'
-                                  className='ml-2 bg-green-50 text-green-700'
-                                >
-                                  {selectedTruck.gpsDevice.isActive
-                                    ? 'Hoạt động'
-                                    : 'Không hoạt động'}
-                                </Badge>
-                              </div>
-                              <div className='text-muted-foreground pl-6 text-sm'>
-                                • Cảm biến nhiệt độ:{' '}
-                                {
-                                  selectedTruck.environmentSensors
-                                    .temperatureSensorId
-                                }
-                              </div>
-                              <div className='text-muted-foreground pl-6 text-sm'>
-                                • Cảm biến độ ẩm:{' '}
-                                {
-                                  selectedTruck.environmentSensors
-                                    .humiditySensorId
-                                }
-                              </div>
+                            <div>
+                              <span className='font-medium'>Tải trọng:</span>{' '}
+                              {selectedTruck.capacity}kg
                             </div>
-                          </>
+                            <div>
+                              <span className='font-medium'>Thể tích:</span>{' '}
+                              {selectedTruck.volume}m³
+                            </div>
+                          </div>
                         );
                       })()}
                     </CardContent>
@@ -787,7 +730,6 @@ export function InboundDelivery() {
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Tổng đợt</CardTitle>
-            <IconActivity className='text-muted-foreground h-4 w-4' />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>{deliveries.length}</div>
@@ -813,7 +755,6 @@ export function InboundDelivery() {
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Hoàn thành</CardTitle>
-            <IconActivity className='h-4 w-4 text-green-600' />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold text-green-600'>
