@@ -17,6 +17,7 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { Label } from '@/components/ui/label';
 import {
   Select,
@@ -789,7 +790,7 @@ export function OutboundDelivery() {
                 Tạo đợt vận chuyển
               </Button>
             </DialogTrigger>
-            <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
+            <DialogContent className='max-h-[90vh] max-w-[95vw] overflow-y-auto sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl'>
               <DialogHeader>
                 <DialogTitle>Tạo đợt vận chuyển xuất kho mới</DialogTitle>
                 <DialogDescription>
@@ -809,12 +810,13 @@ export function OutboundDelivery() {
                     </SelectTrigger>
                     <SelectContent>
                       {warehouseOptions.map((warehouse) => (
-                        <SelectItem key={warehouse.id} value={warehouse.id}>
-                          <div>
-                            <div className='font-medium'>{warehouse.name}</div>
-                            <div className='text-muted-foreground text-sm'>
-                              {warehouse.address}
-                            </div>
+                        <SelectItem
+                          key={warehouse.id}
+                          value={warehouse.id}
+                          label={warehouse.name}
+                        >
+                          <div className='text-muted-foreground text-sm'>
+                            {warehouse.address}
                           </div>
                         </SelectItem>
                       ))}
@@ -835,15 +837,14 @@ export function OutboundDelivery() {
                       {mockTrucks
                         .filter((truck) => truck.status === 'available')
                         .map((truck) => (
-                          <SelectItem key={truck.id} value={truck.id}>
-                            <div>
-                              <div className='font-medium'>
-                                {truck.licenseNumber} - {truck.model}
-                              </div>
-                              <div className='text-muted-foreground text-sm'>
-                                Tải trọng: {truck.capacity}kg | Thể tích:{' '}
-                                {truck.volume}m³
-                              </div>
+                          <SelectItem
+                            key={truck.id}
+                            value={truck.id}
+                            label={`${truck.licenseNumber} - ${truck.model}`}
+                          >
+                            <div className='text-muted-foreground text-sm'>
+                              Tải trọng: {truck.capacity}kg | Thể tích:{' '}
+                              {truck.volume}m³
                             </div>
                           </SelectItem>
                         ))}
@@ -890,28 +891,24 @@ export function OutboundDelivery() {
                 <div className='grid grid-cols-2 gap-4'>
                   <div className='space-y-2'>
                     <Label htmlFor='departureTime'>Thời gian khởi hành</Label>
-                    <Input
-                      id='departureTime'
-                      type='datetime-local'
-                      value={formData.departureTime?.substring(0, 16)}
-                      onChange={(e) =>
+                    <DateTimePicker
+                      value={formData.departureTime}
+                      onChange={(v) =>
                         setFormData({
                           ...formData,
-                          departureTime: e.target.value
+                          departureTime: v
                         })
                       }
                     />
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='estimatedArrival'>Dự kiến giao hàng</Label>
-                    <Input
-                      id='estimatedArrival'
-                      type='datetime-local'
-                      value={formData.estimatedArrival?.substring(0, 16)}
-                      onChange={(e) =>
+                    <DateTimePicker
+                      value={formData.estimatedArrival}
+                      onChange={(v) =>
                         setFormData({
                           ...formData,
-                          estimatedArrival: e.target.value
+                          estimatedArrival: v
                         })
                       }
                     />
