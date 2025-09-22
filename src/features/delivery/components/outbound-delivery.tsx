@@ -852,6 +852,45 @@ export function OutboundDelivery() {
                   </Select>
                 </div>
 
+                {selectedTruckId && (
+                  <Card className='bg-muted/20 mt-2'>
+                    <CardHeader className='pb-3'>
+                      <CardTitle className='text-sm'>
+                        Thông tin xe đã chọn
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      {(() => {
+                        const selectedTruck = mockTrucks.find(
+                          (t) => t.id === selectedTruckId
+                        );
+                        if (!selectedTruck) return null;
+                        return (
+                          <div className='grid gap-4 text-sm sm:grid-cols-2'>
+                            <div className='flex items-center gap-2'>
+                              <IconTruck className='h-4 w-4' />
+                              <span className='font-medium'>Biển số:</span>
+                              {selectedTruck.licenseNumber}
+                            </div>
+                            <div>
+                              <span className='font-medium'>Model:</span>{' '}
+                              {selectedTruck.model}
+                            </div>
+                            <div>
+                              <span className='font-medium'>Tải trọng:</span>{' '}
+                              {selectedTruck.capacity}kg
+                            </div>
+                            <div>
+                              <span className='font-medium'>Thể tích:</span>{' '}
+                              {selectedTruck.volume}m³
+                            </div>
+                          </div>
+                        );
+                      })()}
+                    </CardContent>
+                  </Card>
+                )}
+
                 <div className='space-y-2'>
                   <Label>Chọn đơn hàng</Label>
                   <div className='max-h-40 overflow-y-auto rounded-lg border p-4'>
@@ -888,7 +927,7 @@ export function OutboundDelivery() {
                   </div>
                 </div>
 
-                <div className='grid grid-cols-2 gap-4'>
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                   <div className='space-y-2'>
                     <Label htmlFor='departureTime'>Thời gian khởi hành</Label>
                     <DateTimePicker
