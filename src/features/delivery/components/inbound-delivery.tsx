@@ -1,4 +1,6 @@
 'use client';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -6,18 +8,6 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
 import {
   Dialog,
   DialogContent,
@@ -26,6 +16,16 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -34,23 +34,21 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import type { InboundDelivery, Truck } from '@/types/delivery';
 import {
+  IconActivity,
+  IconClock,
+  IconDownload,
   IconHome,
   IconPlus,
-  IconTruck,
-  IconClock,
   IconRefresh,
   IconSearch,
-  IconDownload,
-  IconActivity,
-  IconThermometer,
-  IconDroplet,
-  IconMapPin,
+  IconTruck,
   IconUsers
 } from '@tabler/icons-react';
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import type { InboundDelivery, Truck } from '@/types/delivery';
+import { useState } from 'react';
 
 // Mock truck data
 const mockTrucks: Truck[] = [
@@ -466,7 +464,7 @@ export function InboundDelivery() {
                 Tạo đợt vận chuyển
               </Button>
             </DialogTrigger>
-            <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
+            <DialogContent className='max-h-[90vh] max-w-[95vw] overflow-y-auto sm:max-w-4xl lg:max-w-5xl xl:max-w-6xl'>
               <DialogHeader>
                 <DialogTitle>Tạo đợt vận chuyển nhập kho mới</DialogTitle>
                 <DialogDescription>
@@ -526,12 +524,13 @@ export function InboundDelivery() {
                     </SelectTrigger>
                     <SelectContent>
                       {warehouseOptions.map((warehouse) => (
-                        <SelectItem key={warehouse.id} value={warehouse.id}>
-                          <div>
-                            <div className='font-medium'>{warehouse.name}</div>
-                            <div className='text-muted-foreground text-sm'>
-                              {warehouse.address}
-                            </div>
+                        <SelectItem
+                          key={warehouse.id}
+                          value={warehouse.id}
+                          label={warehouse.name}
+                        >
+                          <div className='text-muted-foreground text-sm'>
+                            {warehouse.address}
                           </div>
                         </SelectItem>
                       ))}
@@ -552,23 +551,20 @@ export function InboundDelivery() {
                       {mockTrucks
                         .filter((truck) => truck.status === 'available')
                         .map((truck) => (
-                          <SelectItem key={truck.id} value={truck.id}>
-                            <div className='flex flex-col'>
-                              <div className='font-medium'>
-                                {truck.licenseNumber} - {truck.model}
-                              </div>
-                              <div className='text-muted-foreground text-sm'>
-                                Tải trọng: {truck.capacity}kg | Thể tích:{' '}
-                                {truck.volume}m³
-                              </div>
-                              <div className='text-muted-foreground text-sm'>
-                                Nhân viên:{' '}
-                                {truck.transportStaff
-                                  .map(
-                                    (staff) => `${staff.name} (${staff.role})`
-                                  )
-                                  .join(', ')}
-                              </div>
+                          <SelectItem
+                            key={truck.id}
+                            value={truck.id}
+                            label={`${truck.licenseNumber} - ${truck.model}`}
+                          >
+                            <div className='text-muted-foreground text-sm'>
+                              Tải trọng: {truck.capacity}kg | Thể tích:{' '}
+                              {truck.volume}m³
+                            </div>
+                            <div className='text-muted-foreground text-sm'>
+                              Nhân viên:{' '}
+                              {truck.transportStaff
+                                .map((staff) => `${staff.name} (${staff.role})`)
+                                .join(', ')}
                             </div>
                           </SelectItem>
                         ))}
@@ -735,28 +731,24 @@ export function InboundDelivery() {
                 <div className='grid grid-cols-2 gap-4'>
                   <div className='space-y-2'>
                     <Label htmlFor='departureTime'>Thời gian khởi hành</Label>
-                    <Input
-                      id='departureTime'
-                      type='datetime-local'
-                      value={formData.departureTime?.substring(0, 16)}
-                      onChange={(e) =>
+                    <DateTimePicker
+                      value={formData.departureTime}
+                      onChange={(v) =>
                         setFormData({
                           ...formData,
-                          departureTime: e.target.value
+                          departureTime: v
                         })
                       }
                     />
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='estimatedArrival'>Dự kiến đến kho</Label>
-                    <Input
-                      id='estimatedArrival'
-                      type='datetime-local'
-                      value={formData.estimatedArrival?.substring(0, 16)}
-                      onChange={(e) =>
+                    <DateTimePicker
+                      value={formData.estimatedArrival}
+                      onChange={(v) =>
                         setFormData({
                           ...formData,
-                          estimatedArrival: e.target.value
+                          estimatedArrival: v
                         })
                       }
                     />
@@ -900,10 +892,8 @@ export function InboundDelivery() {
                 <TableHead>Mã đợt</TableHead>
                 <TableHead>Vườn</TableHead>
                 <TableHead>Kho đích</TableHead>
-                <TableHead>Xe tải & Nhân viên</TableHead>
                 <TableHead>Sản phẩm</TableHead>
                 <TableHead>Số lượng</TableHead>
-                <TableHead>Giám sát</TableHead>
                 <TableHead>Thời gian</TableHead>
                 <TableHead>Trạng thái</TableHead>
               </TableRow>
@@ -936,20 +926,7 @@ export function InboundDelivery() {
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell>
-                    <div>
-                      <div className='flex items-center gap-2 font-medium'>
-                        <IconTruck className='h-4 w-4' />
-                        {delivery.truck.licenseNumber}
-                      </div>
-                      <div className='text-muted-foreground text-sm'>
-                        {delivery.truck.model}
-                      </div>
-                      <div className='text-muted-foreground text-xs'>
-                        {delivery.truck.transportStaff.length} nhân viên
-                      </div>
-                    </div>
-                  </TableCell>
+                  {/* Removed Truck & Staff column */}
                   <TableCell>
                     <div>
                       <div>{delivery.productType}</div>
@@ -961,51 +938,7 @@ export function InboundDelivery() {
                   <TableCell>
                     {delivery.quantity} {delivery.unit}
                   </TableCell>
-                  <TableCell>
-                    {delivery.monitoring ? (
-                      <div className='space-y-1'>
-                        <div className='flex items-center gap-1 text-xs'>
-                          <IconMapPin className='h-3 w-3 text-blue-600' />
-                          <span className='text-muted-foreground'>
-                            {delivery.monitoring.location.address}
-                          </span>
-                        </div>
-                        <div className='flex items-center gap-1 text-xs'>
-                          <IconThermometer className='h-3 w-3 text-orange-600' />
-                          <span>
-                            {delivery.monitoring.environment.temperature}°C
-                          </span>
-                        </div>
-                        <div className='flex items-center gap-1 text-xs'>
-                          <IconDroplet className='h-3 w-3 text-blue-500' />
-                          <span>
-                            {delivery.monitoring.environment.humidity}%
-                          </span>
-                        </div>
-                        <div className='text-muted-foreground text-xs'>
-                          {delivery.monitoring.isMoving ? (
-                            <Badge
-                              variant='outline'
-                              className='bg-green-50 text-green-700'
-                            >
-                              Di chuyển {delivery.monitoring.speed}km/h
-                            </Badge>
-                          ) : (
-                            <Badge
-                              variant='outline'
-                              className='bg-gray-50 text-gray-700'
-                            >
-                              Đã dừng
-                            </Badge>
-                          )}
-                        </div>
-                      </div>
-                    ) : (
-                      <span className='text-muted-foreground text-xs'>
-                        Chưa có dữ liệu
-                      </span>
-                    )}
-                  </TableCell>
+                  {/* Removed Monitoring column */}
                   <TableCell>
                     <div className='text-sm'>
                       <div>
