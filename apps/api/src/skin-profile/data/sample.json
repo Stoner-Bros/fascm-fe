@@ -1,0 +1,302 @@
+[
+  {
+    "question": "Làm thế nào bạn mô tả loại da của mình?",
+    "description": "Hiểu loại da của bạn là bước đầu tiên để xây dựng quy trình chăm sóc da phù hợp.",
+    "type": "SINGLE_CHOICE",
+    "options": [
+      {
+        "value": "oily",
+        "label": "Da dầu",
+        "description": "Da thường xuyên bóng nhờn, đặc biệt ở vùng chữ T"
+      },
+      {
+        "value": "dry",
+        "label": "Da khô",
+        "description": "Da thường căng, bong tróc hoặc thô ráp"
+      },
+      {
+        "value": "combination",
+        "label": "Da hỗn hợp",
+        "description": "Vùng chữ T dầu nhưng má khô"
+      },
+      {
+        "value": "normal",
+        "label": "Da thường",
+        "description": "Không quá dầu cũng không quá khô"
+      }
+    ],
+    "order": 1,
+    "isActive": true,
+    "isRequired": true
+  },
+  {
+    "question": "Bạn có vấn đề về da nào sau đây?",
+    "description": "Chọn tất cả vấn đề da bạn đang gặp phải.",
+    "type": "MULTIPLE_CHOICE",
+    "options": [
+      {
+        "value": "acne",
+        "label": "Mụn trứng cá",
+        "description": "Mụn đầu đen, mụn đầu trắng, mụn viêm"
+      },
+      {
+        "value": "pigmentation",
+        "label": "Nám, tàn nhang",
+        "description": "Đốm nâu, tăng sắc tố, không đều màu da"
+      },
+      {
+        "value": "aging",
+        "label": "Dấu hiệu lão hóa",
+        "description": "Nếp nhăn, chân chim, da chảy xệ"
+      },
+      {
+        "value": "redness",
+        "label": "Da đỏ, kích ứng",
+        "description": "Viêm da, đỏ, ngứa hoặc khó chịu"
+      }
+    ],
+    "order": 2,
+    "isActive": true,
+    "isRequired": true
+  },
+  {
+    "question": "Da của bạn có nhạy cảm không?",
+    "description": "Da nhạy cảm thường phản ứng với các sản phẩm, thời tiết hoặc môi trường.",
+    "type": "SINGLE_CHOICE",
+    "options": [
+      {
+        "value": "very_sensitive",
+        "label": "Rất nhạy cảm",
+        "description": "Dễ bị đỏ và kích ứng với nhiều sản phẩm"
+      },
+      {
+        "value": "somewhat_sensitive",
+        "label": "Hơi nhạy cảm",
+        "description": "Thỉnh thoảng bị kích ứng với một số sản phẩm"
+      },
+      {
+        "value": "not_sensitive",
+        "label": "Không nhạy cảm",
+        "description": "Hiếm khi phản ứng với sản phẩm"
+      },
+      {
+        "value": "unsure",
+        "label": "Không chắc chắn",
+        "description": "Chưa xác định được mức độ nhạy cảm của da"
+      }
+    ],
+    "order": 3,
+    "isActive": true,
+    "isRequired": false
+  },
+  {
+    "question": "Bạn thường xuyên tiếp xúc với ánh nắng mặt trời như thế nào?",
+    "description": "Mức độ tiếp xúc với tia UV ảnh hưởng đến lựa chọn sản phẩm chăm sóc da.",
+    "type": "SINGLE_CHOICE",
+    "options": [
+      {
+        "value": "minimal",
+        "label": "Rất ít",
+        "description": "Chủ yếu ở trong nhà"
+      },
+      {
+        "value": "moderate",
+        "label": "Thỉnh thoảng",
+        "description": "Ra ngoài vài giờ mỗi ngày"
+      },
+      {
+        "value": "frequent",
+        "label": "Thường xuyên",
+        "description": "Dành nhiều thời gian ngoài trời"
+      },
+      {
+        "value": "constant",
+        "label": "Liên tục",
+        "description": "Làm việc ngoài trời hoặc tham gia các hoạt động ngoài trời"
+      }
+    ],
+    "order": 4,
+    "isActive": true,
+    "isRequired": true
+  },
+  {
+    "question": "Bạn có sử dụng thành phần đặc trị nào sau đây?",
+    "description": "Các thành phần hoạt tính có thể ảnh hưởng đến việc lựa chọn sản phẩm.",
+    "type": "MULTIPLE_CHOICE",
+    "options": [
+      {
+        "value": "retinol",
+        "label": "Retinol/Retinoid",
+        "description": "Giúp giảm nếp nhăn, cải thiện kết cấu da"
+      },
+      {
+        "value": "vitamin_c",
+        "label": "Vitamin C",
+        "description": "Làm sáng da, chống oxy hóa"
+      },
+      {
+        "value": "acids",
+        "label": "AHA/BHA",
+        "description": "Acid glycolic, acid salicylic giúp tẩy tế bào chết"
+      },
+      {
+        "value": "hyaluronic",
+        "label": "Hyaluronic Acid",
+        "description": "Cung cấp độ ẩm và làm đầy da"
+      }
+    ],
+    "order": 5,
+    "isActive": true,
+    "isRequired": false
+  },
+  {
+    "question": "Mục tiêu chăm sóc da quan trọng nhất của bạn là gì?",
+    "description": "Hiểu mục tiêu của bạn giúp chúng tôi đưa ra đề xuất phù hợp nhất.",
+    "type": "SINGLE_CHOICE",
+    "options": [
+      {
+        "value": "acne_control",
+        "label": "Giảm mụn và kiểm soát dầu",
+        "description": "Giảm mụn trứng cá và kiểm soát da dầu"
+      },
+      {
+        "value": "brightening",
+        "label": "Làm sáng da và giảm nám",
+        "description": "Cải thiện tông màu da và giảm đốm nâu"
+      },
+      {
+        "value": "anti_aging",
+        "label": "Chống lão hóa",
+        "description": "Giảm nếp nhăn và dấu hiệu lão hóa"
+      },
+      {
+        "value": "hydration",
+        "label": "Dưỡng ẩm",
+        "description": "Phục hồi độ ẩm và hàng rào bảo vệ da"
+      }
+    ],
+    "order": 6,
+    "isActive": true,
+    "isRequired": true
+  },
+  {
+    "question": "Bạn thường dành bao nhiêu thời gian cho quy trình chăm sóc da?",
+    "description": "Thời gian bạn sẵn sàng dành cho việc chăm sóc da hàng ngày.",
+    "type": "SINGLE_CHOICE",
+    "options": [
+      {
+        "value": "minimal",
+        "label": "Tối thiểu",
+        "description": "Chỉ rửa mặt và dưỡng ẩm (1-2 phút)"
+      },
+      {
+        "value": "basic",
+        "label": "Cơ bản",
+        "description": "3-4 bước mỗi ngày (3-5 phút)"
+      },
+      {
+        "value": "moderate",
+        "label": "Trung bình",
+        "description": "5-7 bước mỗi ngày (5-10 phút)"
+      },
+      {
+        "value": "extensive",
+        "label": "Kỹ lưỡng",
+        "description": "7+ bước và mặt nạ thường xuyên (10+ phút)"
+      }
+    ],
+    "order": 7,
+    "isActive": true,
+    "isRequired": false
+  },
+  {
+    "question": "Bạn đang gặp vấn đề gì với lỗ chân lông?",
+    "description": "Tình trạng lỗ chân lông ảnh hưởng đến lựa chọn sản phẩm và phương pháp điều trị.",
+    "type": "SINGLE_CHOICE",
+    "options": [
+      {
+        "value": "enlarged",
+        "label": "Lỗ chân lông to",
+        "description": "Lỗ chân lông to và dễ thấy"
+      },
+      {
+        "value": "clogged",
+        "label": "Lỗ chân lông bị tắc",
+        "description": "Lỗ chân lông bị tắc và có mụn đầu đen"
+      },
+      {
+        "value": "normal",
+        "label": "Lỗ chân lông bình thường",
+        "description": "Lỗ chân lông bình thường, không đáng kể"
+      },
+      {
+        "value": "none",
+        "label": "Không có vấn đề",
+        "description": "Không nhận thấy vấn đề với lỗ chân lông"
+      }
+    ],
+    "order": 8,
+    "isActive": true,
+    "isRequired": false
+  },
+  {
+    "question": "Bạn có tiền sử bệnh da liễu nào không?",
+    "description": "Tiền sử bệnh da liễu có thể ảnh hưởng đến lựa chọn sản phẩm chăm sóc da.",
+    "type": "MULTIPLE_CHOICE",
+    "options": [
+      {
+        "value": "eczema",
+        "label": "Chàm (Eczema)",
+        "description": "Da khô, ngứa, đỏ và viêm"
+      },
+      {
+        "value": "psoriasis",
+        "label": "Vảy nến (Psoriasis)",
+        "description": "Mảng da đỏ với vảy bạc"
+      },
+      {
+        "value": "rosacea",
+        "label": "Rosacea",
+        "description": "Đỏ mặt, mạch máu nổi và mụn"
+      },
+      {
+        "value": "none",
+        "label": "Không có",
+        "description": "Không có tiền sử bệnh da liễu"
+      }
+    ],
+    "order": 9,
+    "isActive": true,
+    "isRequired": true
+  },
+  {
+    "question": "Mức ngân sách bạn muốn chi cho sản phẩm chăm sóc da?",
+    "description": "Ngân sách sẽ giúp chúng tôi đề xuất sản phẩm phù hợp với khả năng tài chính của bạn.",
+    "type": "SCALE",
+    "options": [
+      {
+        "value": "budget",
+        "label": "Tiết kiệm",
+        "description": "Dưới 500.000 VNĐ/sản phẩm"
+      },
+      {
+        "value": "mid_range",
+        "label": "Trung bình",
+        "description": "500.000 - 1.000.000 VNĐ/sản phẩm"
+      },
+      {
+        "value": "high_end",
+        "label": "Cao cấp",
+        "description": "1.000.000 - 2.000.000 VNĐ/sản phẩm"
+      },
+      {
+        "value": "luxury",
+        "label": "Xa xỉ",
+        "description": "Trên 2.000.000 VNĐ/sản phẩm"
+      }
+    ],
+    "order": 10,
+    "isActive": true,
+    "isRequired": false
+  }
+]

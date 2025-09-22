@@ -1,0 +1,62 @@
+[
+  {
+    "question": "Bạn muốn chu trình chăm sóc da của mình có bao nhiêu bước?",
+    "description": "Chọn mức độ phức tạp của chu trình chăm sóc da mong muốn",
+    "type": "SINGLE_CHOICE",
+    "options": [
+      {
+        "value": "minimal",
+        "label": "Tối giản (1-3 bước)",
+        "description": "Chu trình cơ bản chỉ tập trung vào các sản phẩm thiết yếu"
+      },
+      {
+        "value": "moderate",
+        "label": "Vừa phải (4-6 bước)",
+        "description": "Chu trình cân bằng với các sản phẩm cơ bản và một số sản phẩm điều trị"
+      },
+      {
+        "value": "extensive",
+        "label": "Đầy đủ (7-10 bước)",
+        "description": "Chu trình toàn diện với nhiều sản phẩm điều trị"
+      },
+      {
+        "value": "complete",
+        "label": "Hoàn chỉnh (10+ bước)",
+        "description": "Chu trình chăm sóc da kiểu Hàn Quốc với nhiều lớp sản phẩm"
+      }
+    ],
+    "order": 1,
+    "isActive": true,
+    "isRequired": true
+  },
+  {
+    "question": "Ngân sách hàng tháng của bạn cho các sản phẩm chăm sóc da là bao nhiêu?",
+    "description": "Chọn khoảng giá phù hợp với chi tiêu hàng tháng của bạn cho sản phẩm chăm sóc da",
+    "type": "SINGLE_CHOICE",
+    "options": [
+      {
+        "value": "budget",
+        "label": "Dưới 500.000 VND",
+        "description": "Các sản phẩm bình dân, giá rẻ"
+      },
+      {
+        "value": "moderate",
+        "label": "500.000 - 1.000.000 VND",
+        "description": "Kết hợp sản phẩm bình dân và tầm trung"
+      },
+      {
+        "value": "premium",
+        "label": "1.000.000 - 2.000.000 VND",
+        "description": "Sản phẩm tầm trung đến cao cấp"
+      },
+      {
+        "value": "luxury",
+        "label": "Trên 2.000.000 VND",
+        "description": "Sản phẩm cao cấp và xa xỉ"
+      }
+    ],
+    "order": 2,
+    "isActive": true,
+    "isRequired": true
+  }
+]

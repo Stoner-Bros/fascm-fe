@@ -1,0 +1,210 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Welcome to Kasha - Let’s Build Your Business</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        color: #333;
+        line-height: 1.6;
+        background: #f1f0f0;
+        padding: 24px;
+        margin: 0;
+      }
+      .container {
+        display: table;
+        margin: 0 auto;
+      }
+      .content {
+        display: table;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+      .content-body {
+        display: block;
+        background-color: #fff;
+        border-radius: 20px;
+        padding: 42px;
+      }
+      .content-body p {
+        color: #4d4948;
+        margin-top: 16px;
+        margin-bottom: 0px;
+        padding: 0px;
+        font-family: Inter;
+        font-size: 16px;
+        font-style: normal;
+        font-weight: 400;
+        line-height: 150%;
+        letter-spacing: -0.096px;
+      }
+      .content-help {
+        display: block;
+        margin-top: 24px;
+        padding: 42px;
+        background-color: #ff381d;
+        border-radius: 20px;
+        color: #fff;
+      }
+      .support-button {
+        border-radius: 999px;
+        background: #fff;
+        color: #ff381d;
+        cursor: pointer;
+        display: inline-block;
+        padding: 16px 24px;
+        text-align: center;
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 100%;
+        letter-spacing: -0.16px;
+        text-decoration: none;
+      }
+      .code-cell {
+        display: inline-block;
+        width: 66px;
+        height: 72px;
+        text-align: center;
+        border: 1px solid #140b091f;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 24px;
+        margin-right: 24px;
+        line-height: 72px;
+      }
+      .kasha-logo {
+        background-image: url(https://images.kasha.io/public/images/email/logo-color.png);
+        background-repeat: no-repeat;
+        margin-bottom: 32px;
+        width: 123.601px;
+        height: 34px;
+      }
+      .activate-link {
+        color: #ff381d;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+      }
+
+      @media only screen and (max-width: 600px) {
+        body {
+          padding: 8px;
+        }
+        .content {
+          max-width: max-content;
+        }
+        .content-body {
+          padding: 16px;
+        }
+        .code-cell {
+          margin-right: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="content">
+        <div class="content-body">
+          <div style="margin-bottom: 32px" class="kasha-logo"></div>
+          <div>
+            <p>
+              <strong>Dear {{userName}},</strong>
+            </p>
+            <p>
+              Thank you for joining Kasha!
+              <br />
+              Whether you're starting fresh or scaling fast, everything you need
+              to run your business is now in one powerful platform.
+            </p>
+            <p>
+              We’re here to make running your business simpler, smarter, and
+              stress-free - every step of the way.
+            </p>
+            <p>
+              Next Step: Complete your profile to personalize your experience
+              and unlock the tools built for you.
+            </p>
+            <p>
+              <a
+                class="activate-link"
+                href="{{kashaAppUrl}}/onboarding/my-profile"
+                >Complete Your Profile</a
+              >
+            </p>
+            <p>Let’s build something amazing together,</p>
+            <br />
+            <p>The Kasha Team</p>
+            <p
+              style="
+                font-size: 12px;
+                text-align: left;
+                color: #888;
+                margin-top: 24px;
+              "
+            >
+              Made with 🫶 by
+              <a
+                href="https://kasha.io"
+                style="color: #f97316; text-decoration: none"
+                >Kasha.io</a
+              >
+            </p>
+          </div>
+        </div>
+        <div class="content-help">
+          <div style="display: table; width: 100%">
+            <div
+              style="display: table-cell; width: 50%; vertical-align: middle"
+            >
+              <h2 style="margin: 0; padding: 0">Need help?</h2>
+            </div>
+            <div
+              style="
+                display: table-cell;
+                width: 50%;
+                text-align: right;
+                vertical-align: middle;
+              "
+            >
+              <a
+                href="https://kasha.io/support"
+                class="support-button"
+                style="color: #f97316; text-decoration: none"
+                >Support</a
+              >
+            </div>
+          </div>
+          <div style="margin-top: 32px">
+            <p style="color: #fff; margin-top: 0">
+              All you need to run your business - invoicing, business cards,
+              company formation, CRM, website builder, and bookings, all in one
+              platform.
+            </p>
+            <p style="color: #fff; margin-top: 8px">
+              Please don’t reply to this email. This is an automated message
+              from a no-reply address. For help, click the Support button above
+              or email us at support@kasha.io.
+            </p>
+            <div style="color: #fff; display: flex; margin-top: 16px">
+              <span
+                style="font-size: 14px; font-weight: 400; font-style: normal"
+                >Operated by</span
+              >
+              &nbsp;
+              <a
+                href="https://kasha.io"
+                style="color: #fff; text-decoration: none"
+              >
+                <img
+                  src="https://images.kasha.io/public/images/email/logo-white.png"
+                />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
