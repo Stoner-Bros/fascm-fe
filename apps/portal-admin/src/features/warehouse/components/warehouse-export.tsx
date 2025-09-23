@@ -3,12 +3,12 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
+import * as z from 'zod';
 import PageContainer from '@/components/layout/page-container';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import {
   Form,
   FormControl,
@@ -17,64 +17,81 @@ import {
   FormLabel,
   FormMessage
 } from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   IconPackageExport,
-  IconBuilding,
-  IconBarcode,
   IconUser,
-  IconPlus,
-  IconTrash,
   IconCheck,
   IconAlertTriangle,
-  IconPackage
+  IconPackage,
+  IconTruck,
+  IconMapPin,
+  IconPhone,
+  IconWeight,
+  IconCube,
+  IconClipboardList,
+  IconScan
 } from '@tabler/icons-react';
 import { toast } from 'sonner';
 
-// Type definitions
-interface StockInfo {
-  available: number;
-  reserved: number;
-  total: number;
-}
-
-interface Product {
+// Type definitions for Consignee and Orders
+interface Consignee {
   id: string;
   name: string;
-  sku: string;
-  category: string;
-  unit: string;
-  stockByArea: Record<string, StockInfo>;
+  address: string;
+  contact: string;
+  type: 'supermarket' | 'restaurant' | 'distributor' | 'retailer';
 }
 
-// Product item schema for multiple products
-const productItemSchema = z.object({
-  productId: z.string().min(1, 'Vui lòng chọn sản phẩm'),
-  quantity: z.number().min(1, 'Số lượng phải lớn hơn 0'),
-  unit: z.string().min(1, 'Vui lòng chọn đơn vị')
-});
+interface OrderItem {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unit: string;
+  weight: number;
+  volume: number;
+  specialRequirements?: string;
+}
 
-// Main form schema
+interface Order {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerAddress: string;
+  customerContact: string;
+  customerType: 'supermarket' | 'restaurant' | 'distributor' | 'retailer';
+  items: OrderItem[];
+  totalWeight: number;
+  totalVolume: number;
+  deliveryDate: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  requiresSignature: boolean;
+  status:
+    | 'pending'
+    | 'confirmed'
+    | 'packed'
+    | 'assigned'
+    | 'in_transit'
+    | 'delivered'
+    | 'cancelled';
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Main form schema - updated for order selection
 const exportFormSchema = z.object({
   areaId: z.string().min(1, 'Vui lòng chọn khu vực'),
-  products: z
-    .array(productItemSchema)
-    .min(1, 'Vui lòng thêm ít nhất một sản phẩm'),
-  customerName: z.string().min(1, 'Vui lòng nhập tên khách hàng'),
-  customerPhone: z.string().optional(),
-  destination: z.string().min(1, 'Vui lòng nhập địa chỉ giao hàng'),
+  consigneeId: z.string().min(1, 'Vui lòng chọn người nhận'),
+  selectedOrders: z
+    .array(z.string())
+    .min(1, 'Vui lòng chọn ít nhất một đơn hàng'),
   notes: z.string().optional()
 });
 
 type ExportFormData = z.infer<typeof exportFormSchema>;
-type ProductItem = z.infer<typeof productItemSchema>;
 
 // Mock data - Fixed warehouse (first one)
 const mockWarehouse = {
@@ -109,232 +126,382 @@ const mockWarehouse = {
     {
       id: 'area-004',
       name: 'Khu A4 - Khô',
-      capacity: 600,
-      currentStock: 400,
+      capacity: 1200,
+      currentStock: 900,
       temperature: 25,
       humidity: 60
     }
   ]
 };
 
-// Mock products with stock by area
-const mockProducts: Product[] = [
+// Mock consignees data
+const mockConsignees: Consignee[] = [
   {
-    id: 'prod-001',
-    name: 'Cà chua cherry',
-    sku: 'CT001',
-    category: 'Rau củ quả',
-    unit: 'kg',
-    stockByArea: {
-      'area-001': { available: 150, reserved: 20, total: 170 },
-      'area-002': { available: 80, reserved: 10, total: 90 }
-    }
+    id: 'CUST-001',
+    name: 'Siêu thị BigC',
+    address: '123 Nguyễn Huệ, Quận 1, TP.HCM',
+    contact: '0281234567',
+    type: 'supermarket'
   },
   {
-    id: 'prod-002',
-    name: 'Táo Fuji',
-    sku: 'TF002',
-    category: 'Trái cây',
-    unit: 'kg',
-    stockByArea: {
-      'area-002': { available: 200, reserved: 30, total: 230 },
-      'area-003': { available: 50, reserved: 5, total: 55 }
-    }
+    id: 'CUST-002',
+    name: 'Nhà hàng Hải Sản Tươi',
+    address: '456 Lê Văn Sỹ, Quận 3, TP.HCM',
+    contact: '0287654321',
+    type: 'restaurant'
   },
   {
-    id: 'prod-003',
-    name: 'Thịt bò Úc',
-    sku: 'TB003',
-    category: 'Thịt',
-    unit: 'kg',
-    stockByArea: {
-      'area-003': { available: 100, reserved: 15, total: 115 }
-    }
+    id: 'CUST-003',
+    name: 'Kho bãi Miền Tây',
+    address: '789 Quốc lộ 1A, Cần Thơ',
+    contact: '0292345678',
+    type: 'distributor'
   },
   {
-    id: 'prod-004',
-    name: 'Cá hồi Na Uy',
-    sku: 'CH004',
-    category: 'Hải sản',
-    unit: 'kg',
-    stockByArea: {
-      'area-003': { available: 75, reserved: 10, total: 85 }
-    }
-  },
-  {
-    id: 'prod-005',
-    name: 'Gạo ST25',
-    sku: 'G005',
-    category: 'Ngũ cốc',
-    unit: 'bao',
-    stockByArea: {
-      'area-004': { available: 500, reserved: 50, total: 550 }
-    }
-  },
-  {
-    id: 'prod-006',
-    name: 'Dầu ăn',
-    sku: 'DA006',
-    category: 'Gia vị',
-    unit: 'lít',
-    stockByArea: {
-      'area-004': { available: 300, reserved: 25, total: 325 }
-    }
+    id: 'CUST-004',
+    name: 'Cửa hàng Thực phẩm Sạch',
+    address: '321 Trần Hưng Đạo, Quận 5, TP.HCM',
+    contact: '0283456789',
+    type: 'retailer'
   }
 ];
 
-const units = ['kg', 'tấn'];
+// Mock orders data
+const mockOrders: Order[] = [
+  {
+    id: 'ORD-2024-001',
+    customerId: 'CUST-001',
+    customerName: 'Siêu thị BigC',
+    customerAddress: '123 Nguyễn Huệ, Quận 1, TP.HCM',
+    customerContact: '0281234567',
+    customerType: 'supermarket',
+    items: [
+      {
+        id: 'ITEM-001',
+        productId: 'PROD-001',
+        productName: 'Rau lá tươi',
+        quantity: 100,
+        unit: 'kg',
+        weight: 100,
+        volume: 1.5,
+        specialRequirements: 'Bảo quản lạnh 2-4°C'
+      },
+      {
+        id: 'ITEM-002',
+        productId: 'PROD-002',
+        productName: 'Củ cải trắng',
+        quantity: 50,
+        unit: 'kg',
+        weight: 50,
+        volume: 0.8
+      }
+    ],
+    totalWeight: 150,
+    totalVolume: 2.3,
+    deliveryDate: '2024-09-18T14:00:00',
+    priority: 'high',
+    requiresSignature: true,
+    status: 'confirmed',
+    createdAt: '2024-09-17T08:00:00',
+    updatedAt: '2024-09-17T10:00:00'
+  },
+  {
+    id: 'ORD-2024-002',
+    customerId: 'CUST-001',
+    customerName: 'Siêu thị BigC',
+    customerAddress: '123 Nguyễn Huệ, Quận 1, TP.HCM',
+    customerContact: '0281234567',
+    customerType: 'supermarket',
+    items: [
+      {
+        id: 'ITEM-003',
+        productId: 'PROD-003',
+        productName: 'Cà chua',
+        quantity: 80,
+        unit: 'kg',
+        weight: 80,
+        volume: 1.2
+      }
+    ],
+    totalWeight: 80,
+    totalVolume: 1.2,
+    deliveryDate: '2024-09-18T16:00:00',
+    priority: 'medium',
+    requiresSignature: true,
+    status: 'confirmed',
+    createdAt: '2024-09-17T15:00:00',
+    updatedAt: '2024-09-17T16:00:00'
+  },
+  {
+    id: 'ORD-2024-003',
+    customerId: 'CUST-002',
+    customerName: 'Nhà hàng Hải Sản Tươi',
+    customerAddress: '456 Lê Văn Sỹ, Quận 3, TP.HCM',
+    customerContact: '0287654321',
+    customerType: 'restaurant',
+    items: [
+      {
+        id: 'ITEM-004',
+        productId: 'PROD-004',
+        productName: 'Hải sản đông lạnh',
+        quantity: 60,
+        unit: 'kg',
+        weight: 60,
+        volume: 1.0,
+        specialRequirements: 'Đông lạnh -2°C'
+      }
+    ],
+    totalWeight: 60,
+    totalVolume: 1.0,
+    deliveryDate: '2024-09-18T11:30:00',
+    priority: 'urgent',
+    requiresSignature: true,
+    status: 'confirmed',
+    createdAt: '2024-09-17T12:00:00',
+    updatedAt: '2024-09-17T12:00:00'
+  },
+  {
+    id: 'ORD-2024-004',
+    customerId: 'CUST-003',
+    customerName: 'Kho bãi Miền Tây',
+    customerAddress: '789 Quốc lộ 1A, Cần Thơ',
+    customerContact: '0292345678',
+    customerType: 'distributor',
+    items: [
+      {
+        id: 'ITEM-005',
+        productId: 'PROD-005',
+        productName: 'Thực phẩm khô',
+        quantity: 200,
+        unit: 'kg',
+        weight: 200,
+        volume: 2.5
+      }
+    ],
+    totalWeight: 200,
+    totalVolume: 2.5,
+    deliveryDate: '2024-09-18T16:00:00',
+    priority: 'medium',
+    requiresSignature: false,
+    status: 'pending',
+    createdAt: '2024-09-17T12:00:00',
+    updatedAt: '2024-09-17T12:00:00'
+  }
+];
 
 export function WarehouseExport() {
   // State management
   const [selectedArea, setSelectedArea] = useState<any>(null);
-  const [availableProducts, setAvailableProducts] = useState<Product[]>([]);
-  const [productItems, setProductItems] = useState<ProductItem[]>([
-    { productId: '', quantity: 1, unit: '' }
-  ]);
+  const [selectedConsignee, setSelectedConsignee] = useState<Consignee | null>(
+    null
+  );
+  const [availableOrders, setAvailableOrders] = useState<Order[]>([]);
+  const [currentStep, setCurrentStep] = useState<number>(1);
+  const [scanMode, setScanMode] = useState<boolean>(false);
+  const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [exportOrders, setExportOrders] = useState<any[]>([]);
+
+  // const selectedOrders = availableOrders.filter(order =>
+  //   selectedOrderIds.includes(order.id)
+  // );
+
+  // // Helper function for order status labels
+  // const getOrderStatusLabel = (status: string) => {
+  //   switch (status) {
+  //     case 'pending': return 'Chờ xử lý';
+  //     case 'confirmed': return 'Đã xác nhận';
+  //     case 'packed': return 'Đã đóng gói';
+  //     case 'assigned': return 'Đã phân công';
+  //     case 'in_transit': return 'Đang vận chuyển';
+  //     case 'delivered': return 'Đã giao';
+  //     case 'cancelled': return 'Đã hủy';
+  //     default: return status;
+  //   }
+  // };
+
+  const steps = [
+    {
+      id: 1,
+      title: 'Chọn khu vực',
+      icon: IconMapPin,
+      description: 'Chọn khu vực kho xuất hàng'
+    },
+    {
+      id: 2,
+      title: 'Chọn người nhận',
+      icon: IconUser,
+      description: 'Chọn khách hàng nhận hàng'
+    },
+    {
+      id: 3,
+      title: 'Chọn đơn hàng',
+      icon: IconClipboardList,
+      description: 'Chọn các đơn hàng cần xuất'
+    },
+    {
+      id: 4,
+      title: 'Xác nhận',
+      icon: IconCheck,
+      description: 'Xem lại và xác nhận xuất kho'
+    }
+  ];
 
   // Form setup
   const form = useForm<ExportFormData>({
     resolver: zodResolver(exportFormSchema),
     defaultValues: {
       areaId: '',
-      products: [{ productId: '', quantity: 1, unit: '' }],
-      customerName: '',
-      customerPhone: '',
-      destination: '',
+      consigneeId: '',
+      selectedOrders: [],
       notes: ''
     }
   });
 
-  // Event handlers
+  // Handle area selection
   const handleAreaChange = (areaId: string) => {
     const area = mockWarehouse.areas.find((a: any) => a.id === areaId);
     setSelectedArea(area);
+    setCurrentStep(2);
+    // Reset subsequent selections
+    setSelectedConsignee(null);
+    setAvailableOrders([]);
+    setSelectedOrderIds([]);
+    form.setValue('consigneeId', '');
+    form.setValue('selectedOrders', []);
+  };
 
-    // Filter products available in this area
-    const productsInArea = mockProducts.filter(
-      (product) => product.stockByArea && product.stockByArea[areaId]
+  // Handle consignee selection
+  const handleConsigneeChange = (consigneeId: string) => {
+    const consignee = mockConsignees.find((c) => c.id === consigneeId);
+    setSelectedConsignee(consignee || null);
+
+    if (consignee) {
+      // Filter orders for selected consignee
+      const ordersForConsignee = mockOrders.filter(
+        (order) =>
+          order.customerId === consigneeId && order.status === 'confirmed'
+      );
+      setAvailableOrders(ordersForConsignee);
+      setCurrentStep(3);
+    }
+
+    setSelectedOrderIds([]);
+    form.setValue('selectedOrders', []);
+  };
+
+  // Handle order selection
+  const handleOrderSelection = (orderId: string, checked: boolean) => {
+    let updatedSelectedOrders: string[];
+
+    if (checked) {
+      updatedSelectedOrders = [...selectedOrderIds, orderId];
+    } else {
+      updatedSelectedOrders = selectedOrderIds.filter((id) => id !== orderId);
+    }
+
+    setSelectedOrderIds(updatedSelectedOrders);
+    form.setValue('selectedOrders', updatedSelectedOrders);
+
+    if (updatedSelectedOrders.length > 0) {
+      setCurrentStep(4);
+    }
+  };
+
+  // Get priority badge
+  const getPriorityBadge = (priority: Order['priority']) => {
+    switch (priority) {
+      case 'urgent':
+        return <Badge variant='destructive'>Khẩn cấp</Badge>;
+      case 'high':
+        return <Badge variant='default'>Cao</Badge>;
+      case 'medium':
+        return <Badge variant='secondary'>Trung bình</Badge>;
+      case 'low':
+        return <Badge variant='outline'>Thấp</Badge>;
+      default:
+        return null;
+    }
+  };
+
+  // Get customer type label
+  const getCustomerTypeLabel = (type: Consignee['type']) => {
+    switch (type) {
+      case 'supermarket':
+        return 'Siêu thị';
+      case 'restaurant':
+        return 'Nhà hàng';
+      case 'distributor':
+        return 'Nhà phân phối';
+      case 'retailer':
+        return 'Cửa hàng bán lẻ';
+      default:
+        return type;
+    }
+  };
+
+  // Calculate totals for selected orders
+  const calculateTotals = () => {
+    const selectedOrders = availableOrders.filter((order) =>
+      selectedOrderIds.includes(order.id)
     );
-    setAvailableProducts(productsInArea);
 
-    // Reset product items when area changes
-    setProductItems([{ productId: '', quantity: 1, unit: '' }]);
-    form.setValue('products', [{ productId: '', quantity: 1, unit: '' }]);
-  };
-
-  // Product management functions
-  const addProductItem = () => {
-    const newItem: ProductItem = { productId: '', quantity: 1, unit: '' };
-    const updatedItems = [...productItems, newItem];
-    setProductItems(updatedItems);
-    form.setValue('products', updatedItems);
-  };
-
-  const removeProductItem = (index: number) => {
-    if (productItems.length > 1) {
-      const updatedItems = productItems.filter((_, i) => i !== index);
-      setProductItems(updatedItems);
-      form.setValue('products', updatedItems);
-    }
-  };
-
-  const updateProductItem = (
-    index: number,
-    field: keyof ProductItem,
-    value: any
-  ) => {
-    const updatedItems = [...productItems];
-    updatedItems[index] = { ...updatedItems[index], [field]: value };
-
-    // Auto-set unit when product is selected
-    if (field === 'productId' && value) {
-      const product = availableProducts.find((p) => p.id === value);
-      if (product) {
-        updatedItems[index].unit = product.unit;
-      }
-    }
-
-    setProductItems(updatedItems);
-    form.setValue('products', updatedItems);
-  };
-
-  // Get stock information for a product
-  const getProductStock = (productId: string): StockInfo | null => {
-    if (!selectedArea || !productId) return null;
-    const product = availableProducts.find((p) => p.id === productId);
-    return product?.stockByArea?.[selectedArea.id] || null;
+    return {
+      totalOrders: selectedOrders.length,
+      totalWeight: selectedOrders.reduce(
+        (sum, order) => sum + order.totalWeight,
+        0
+      ),
+      totalVolume: selectedOrders.reduce(
+        (sum, order) => sum + order.totalVolume,
+        0
+      ),
+      totalItems: selectedOrders.reduce(
+        (sum, order) => sum + order.items.length,
+        0
+      )
+    };
   };
 
   const handleSubmit = async (data: ExportFormData) => {
     setIsSubmitting(true);
+
     try {
-      // Validate stock availability
-      const stockValidation = data.products.map((item) => {
-        const stock = getProductStock(item.productId);
-        const product = availableProducts.find((p) => p.id === item.productId);
+      const selectedOrders = availableOrders.filter((order) =>
+        data.selectedOrders.includes(order.id)
+      );
 
-        if (!stock || item.quantity > stock.available) {
-          return {
-            valid: false,
-            productName: product?.name || 'Unknown',
-            requested: item.quantity,
-            available: stock?.available || 0
-          };
-        }
-        return { valid: true };
-      });
+      const totals = calculateTotals();
 
-      const invalidItems = stockValidation.filter((item) => !item.valid);
-      if (invalidItems.length > 0) {
-        const errorMessage = invalidItems
-          .map(
-            (item) =>
-              `${item.productName}: yêu cầu ${item.requested}, chỉ có ${item.available} khả dụng`
-          )
-          .join('\n');
-
-        toast.error(`Không đủ hàng tồn kho:\n${errorMessage}`);
-        setIsSubmitting(false);
-        return;
-      }
-
-      // Create new order
-      const validatedProducts = data.products.map((item) => {
-        const product = availableProducts.find((p) => p.id === item.productId);
-        const stock = getProductStock(item.productId);
-        return {
-          ...product,
-          quantity: item.quantity,
-          unit: item.unit,
-          stockInfo: stock
-        };
-      });
-
-      const newOrder = {
+      const newExportOrder = {
         id: `EXP-${Date.now()}`,
         warehouseId: mockWarehouse.id,
         warehouseName: mockWarehouse.name,
         areaId: selectedArea.id,
         areaName: selectedArea.name,
-        products: validatedProducts,
-        customerName: data.customerName,
-        customerPhone: data.customerPhone || '',
-        destination: data.destination,
+        consigneeId: data.consigneeId,
+        consigneeName: selectedConsignee?.name,
+        consigneeAddress: selectedConsignee?.address,
+        consigneeContact: selectedConsignee?.contact,
+        orders: selectedOrders,
+        totalOrders: totals.totalOrders,
+        totalWeight: totals.totalWeight,
+        totalVolume: totals.totalVolume,
+        totalItems: totals.totalItems,
         notes: data.notes || '',
         status: 'pending',
         createdAt: new Date().toISOString(),
         createdBy: 'current-user'
       };
 
-      setExportOrders([newOrder, ...exportOrders]);
+      setExportOrders([newExportOrder, ...exportOrders]);
 
       // Reset form
       form.reset();
       setSelectedArea(null);
-      setAvailableProducts([]);
-      setProductItems([{ productId: '', quantity: 1, unit: '' }]);
+      setSelectedConsignee(null);
+      setAvailableOrders([]);
+      setSelectedOrderIds([]);
 
       toast.success('Tạo đơn xuất kho thành công!');
     } catch (error) {
@@ -362,385 +529,708 @@ export function WarehouseExport() {
         <Card>
           <CardHeader>
             <CardTitle className='flex items-center gap-2'>
-              <IconPackageExport className='h-5 w-5' />
+              <IconTruck className='h-5 w-5' />
               Tạo đơn xuất kho
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* Scan Mode Toggle */}
+            <div className='mb-6 flex items-center justify-between'>
+              <div className='flex items-center gap-2'>
+                <IconScan className='h-4 w-4' />
+                <span className='text-sm font-medium'>Chế độ quét mã</span>
+              </div>
+              <Button
+                variant={scanMode ? 'default' : 'outline'}
+                size='sm'
+                onClick={() => setScanMode(!scanMode)}
+              >
+                {scanMode ? 'Tắt quét mã' : 'Bật quét mã'}
+              </Button>
+            </div>
+
+            {scanMode && (
+              <Card className='mb-6 border-2 border-blue-200 bg-blue-50'>
+                <CardContent className='pt-6'>
+                  <div className='text-center'>
+                    <div className='flex flex-col items-center gap-4'>
+                      <div className='rounded-full bg-blue-100 p-4'>
+                        <IconScan className='h-8 w-8 text-blue-600' />
+                      </div>
+                      <div>
+                        <h3 className='mb-2 font-semibold text-blue-900'>
+                          Chế độ Scan & Go
+                        </h3>
+                        <p className='mb-4 text-sm text-blue-700'>
+                          Quét mã QR trên đơn hàng để tự động tải thông tin
+                          consignee và order
+                        </p>
+                        <Button
+                          variant='outline'
+                          className='border-blue-300 text-blue-700 hover:bg-blue-100'
+                          onClick={() => {
+                            // Simulate QR scan - in real app would open camera
+                            const mockScannedOrder = mockOrders[0];
+                            const mockConsignee = mockConsignees.find(
+                              (c) => c.id === mockScannedOrder.customerId
+                            );
+
+                            if (mockConsignee) {
+                              // Auto-fill form based on scanned QR
+                              form.setValue('consigneeId', mockConsignee.id);
+                              handleConsigneeChange(mockConsignee.id);
+
+                              // Auto-select the scanned order
+                              setTimeout(() => {
+                                handleOrderSelection(mockScannedOrder.id, true);
+                                setCurrentStep(4);
+                              }, 500);
+
+                              setScanMode(false);
+                              toast.success('Đã quét thành công đơn hàng!');
+                            }
+                          }}
+                        >
+                          <IconScan className='mr-2 h-4 w-4' />
+                          Bắt đầu quét QR
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Stepper Header */}
+            <div className='mb-8'>
+              {/* Desktop Stepper */}
+              <div className='hidden md:block'>
+                <div className='flex items-center justify-between'>
+                  {steps.map((step, index) => {
+                    const stepNumber = index + 1;
+                    const isActive = currentStep === stepNumber;
+                    const isCompleted = currentStep > stepNumber;
+                    const isAccessible = stepNumber <= currentStep;
+
+                    return (
+                      <div key={step.id} className='flex flex-1 items-center'>
+                        {/* Step Circle */}
+                        <div className='flex flex-col items-center'>
+                          <div
+                            className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold transition-all duration-200 ${
+                              isCompleted
+                                ? 'bg-green-500 text-white'
+                                : isActive
+                                  ? 'bg-blue-500 text-white ring-4 ring-blue-100'
+                                  : isAccessible
+                                    ? 'cursor-pointer bg-gray-200 text-gray-600 hover:bg-gray-300'
+                                    : 'bg-gray-100 text-gray-400'
+                            } `}
+                            onClick={() =>
+                              isAccessible && setCurrentStep(stepNumber)
+                            }
+                          >
+                            {isCompleted ? (
+                              <IconCheck className='h-5 w-5' />
+                            ) : (
+                              stepNumber
+                            )}
+                          </div>
+
+                          {/* Step Label */}
+                          <div className='mt-2 text-center'>
+                            <div
+                              className={`text-sm font-medium ${isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-500'}`}
+                            >
+                              {step.title}
+                            </div>
+                            <div className='mt-1 text-xs text-gray-400'>
+                              {step.description}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Connector Line */}
+                        {index < steps.length - 1 && (
+                          <div
+                            className={`mx-4 h-0.5 flex-1 ${isCompleted ? 'bg-green-500' : 'bg-gray-200'}`}
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Mobile Stepper */}
+              <div className='md:hidden'>
+                <div className='mb-4 flex items-center justify-center'>
+                  <div className='flex items-center space-x-2'>
+                    {steps.map((step, index) => {
+                      const stepNumber = index + 1;
+                      const isActive = currentStep === stepNumber;
+                      const isCompleted = currentStep > stepNumber;
+
+                      return (
+                        <div key={step.id} className='flex items-center'>
+                          <div
+                            className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-semibold ${
+                              isCompleted
+                                ? 'bg-green-500 text-white'
+                                : isActive
+                                  ? 'bg-blue-500 text-white'
+                                  : 'bg-gray-200 text-gray-600'
+                            } `}
+                          >
+                            {isCompleted ? (
+                              <IconCheck className='h-4 w-4' />
+                            ) : (
+                              stepNumber
+                            )}
+                          </div>
+                          {index < steps.length - 1 && (
+                            <div
+                              className={`mx-1 h-0.5 w-8 ${isCompleted ? 'bg-green-500' : 'bg-gray-200'}`}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Current Step Info */}
+                <div className='text-center'>
+                  <div className='text-lg font-semibold text-blue-600'>
+                    {steps[currentStep - 1]?.title}
+                  </div>
+                  <div className='mt-1 text-sm text-gray-500'>
+                    {steps[currentStep - 1]?.description}
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress Bar */}
+              <div className='mt-6'>
+                <div className='mb-2 flex justify-between text-sm text-gray-600'>
+                  <span>Tiến trình hoàn thành</span>
+                  <span>
+                    {Math.round(((currentStep - 1) / (steps.length - 1)) * 100)}
+                    %
+                  </span>
+                </div>
+                <Progress
+                  value={((currentStep - 1) / (steps.length - 1)) * 100}
+                  className='h-2'
+                />
+              </div>
+            </div>
+
             <Form
               form={form as any}
               onSubmit={form.handleSubmit(handleSubmit)}
               className='space-y-6'
             >
-              {/* Area Selection */}
-              <div className='flex items-center'>
-                <div className='w-[200px]'>
-                  <FormField
-                    control={form.control}
-                    name='areaId'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Khu vực *</FormLabel>
-                        <Select
-                          onValueChange={(value) => {
-                            field.onChange(value);
-                            handleAreaChange(value);
+              {/* Step 1: Area Selection - Card Based */}
+              {currentStep >= 1 && (
+                <div className='space-y-4'>
+                  <h3 className='flex items-center gap-2 text-lg font-semibold'>
+                    <IconMapPin className='h-5 w-5' />
+                    Bước 1: Chọn khu vực kho
+                  </h3>
+                  <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+                    {mockWarehouse.areas.map((area: any) => {
+                      const isSelected = selectedArea?.id === area.id;
+                      const capacityPercent =
+                        (area.currentStock / area.capacity) * 100;
+                      const isNearFull = capacityPercent > 80;
+
+                      return (
+                        <Card
+                          key={area.id}
+                          className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+                            isSelected
+                              ? 'bg-blue-50 ring-2 ring-blue-500 dark:bg-gray-700'
+                              : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }`}
+                          onClick={() => {
+                            handleAreaChange(area.id);
+                            form.setValue('areaId', area.id);
                           }}
                         >
-                          <FormControl>
-                            <SelectTrigger className='w-[250px]'>
-                              <SelectValue placeholder='Chọn khu vực trong kho' />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {mockWarehouse.areas.map((area: any) => (
-                              <SelectItem key={area.id} value={area.id}>
-                                <div className='flex w-[200px] items-center gap-2'>
-                                  <IconBuilding className='h-4 w-4' />
-                                  {area.name}
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
+                          <CardContent className='p-4'>
+                            <div className='mb-3 flex items-center justify-between'>
+                              <div className='flex items-center gap-2'>
+                                <IconMapPin
+                                  className={`h-5 w-5 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}
+                                />
+                                <span className='font-medium'>{area.name}</span>
+                              </div>
+                              {isSelected && (
+                                <IconCheck className='h-5 w-5 text-blue-600' />
+                              )}
+                            </div>
 
-              {/* Area Information Display */}
-              {selectedArea && (
-                <div className='bg-muted/50 rounded-lg p-4'>
-                  <h4 className='mb-3 flex items-center gap-2 font-medium'>
-                    <IconBuilding className='h-4 w-4' />
-                    Thông tin khu vực: {selectedArea.name}
-                  </h4>
-                  <div className='grid grid-cols-2 gap-4 text-sm md:grid-cols-4'>
-                    <div>
-                      <span className='text-muted-foreground'>Sức chứa:</span>
-                      <p className='font-medium'>{selectedArea.capacity} </p>
-                    </div>
-                    <div>
-                      <span className='text-muted-foreground'>Đã sử dụng:</span>
-                      <p className='font-medium'>{selectedArea.currentStock}</p>
-                    </div>
-                    <div>
-                      <span className='text-muted-foreground'>Nhiệt độ:</span>
-                      <p className='font-medium'>
-                        {selectedArea.temperature}°C
-                      </p>
-                    </div>
-                    <div>
-                      <span className='text-muted-foreground'>Độ ẩm:</span>
-                      <p className='font-medium'>{selectedArea.humidity}%</p>
-                    </div>
-                  </div>
-
-                  {availableProducts.length > 0 && (
-                    <div className='mt-4'>
-                      <h5 className='mb-2 text-sm font-medium'>
-                        Sản phẩm có sẵn trong khu vực:
-                      </h5>
-                      <div className='grid grid-cols-1 gap-2 md:grid-cols-2'>
-                        {availableProducts.map((product) => {
-                          const stock = product.stockByArea?.[selectedArea.id];
-                          if (!stock) return null;
-                          return (
-                            <div
-                              key={product.id}
-                              className='bg-background flex items-center justify-between rounded p-2 text-xs'
-                            >
-                              <div>
-                                <span className='font-medium'>
-                                  {product.name}
-                                </span>
-                                <span className='text-muted-foreground ml-1'>
-                                  ({product.sku})
+                            <div className='space-y-2'>
+                              <div className='flex justify-between text-sm'>
+                                <span>Dung lượng:</span>
+                                <span
+                                  className={
+                                    isNearFull
+                                      ? 'font-medium text-orange-600'
+                                      : 'text-gray-600'
+                                  }
+                                >
+                                  {area.currentStock}/{area.capacity}
                                 </span>
                               </div>
-                              <div className='text-right'>
-                                <div className='font-medium text-green-600'>
-                                  {stock.available} {product.unit} khả dụng
-                                </div>
-                                {/* <div className='text-muted-foreground'>
-                                  {stock.reserved} {product.unit} đã đặt
-                                </div> */}
+                              <Progress
+                                value={capacityPercent}
+                                className='h-2'
+                              />
+                              <div className='flex justify-between text-xs text-gray-500'>
+                                <span>
+                                  {capacityPercent.toFixed(1)}% đã sử dụng
+                                </span>
+                                {isNearFull && (
+                                  <span className='text-orange-600'>
+                                    Gần đầy
+                                  </span>
+                                )}
                               </div>
                             </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
 
-              {/* Products Section */}
-              {selectedArea && availableProducts.length > 0 && (
+              {/* Step 2: Consignee Selection - Card Based */}
+              {currentStep >= 2 && selectedArea && (
                 <div className='space-y-4'>
-                  <div className='flex items-center justify-between'>
-                    <h4 className='flex items-center gap-2 font-medium'>
-                      <IconPackage className='h-4 w-4' />
-                      Danh sách sản phẩm xuất
-                    </h4>
+                  <h3 className='flex items-center gap-2 text-lg font-semibold'>
+                    <IconUser className='h-5 w-5' />
+                    Bước 2: Chọn người nhận
+                  </h3>
+                  <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                    {mockConsignees.map((consignee) => {
+                      const isSelected = selectedConsignee?.id === consignee.id;
+
+                      return (
+                        <Card
+                          key={consignee.id}
+                          className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+                            isSelected
+                              ? 'bg-blue-50 ring-2 ring-blue-500 dark:bg-gray-700'
+                              : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }`}
+                          onClick={() => {
+                            handleConsigneeChange(consignee.id);
+                            form.setValue('consigneeId', consignee.id);
+                          }}
+                        >
+                          <CardContent className='p-4'>
+                            <div className='mb-3 flex items-center justify-between'>
+                              <div className='flex items-center gap-2'>
+                                <IconUser
+                                  className={`h-5 w-5 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}
+                                />
+                                <span className='font-medium'>
+                                  {consignee.name}
+                                </span>
+                                <Badge variant='outline' className='t text-xs'>
+                                  {getCustomerTypeLabel(consignee.type)}
+                                </Badge>
+                              </div>
+                              {isSelected && (
+                                <IconCheck className='h-5 w-5 text-blue-600' />
+                              )}
+                            </div>
+
+                            <div className='space-y-2 text-sm text-gray-600 dark:text-white'>
+                              <div className='flex items-start gap-2'>
+                                <IconMapPin className='mt-0.5 h-4 w-4 flex-shrink-0' />
+                                <span className='line-clamp-2'>
+                                  {consignee.address}
+                                </span>
+                              </div>
+                              <div className='flex items-center gap-2'>
+                                <IconPhone className='h-4 w-4 flex-shrink-0' />
+                                <span>{consignee.contact}</span>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Orders Selection - Card Based */}
+              {currentStep >= 3 &&
+                selectedConsignee &&
+                availableOrders.length > 0 && (
+                  <div className='space-y-4'>
+                    <h3 className='flex items-center gap-2 text-lg font-semibold'>
+                      <IconClipboardList className='h-5 w-5' />
+                      Bước 3: Chọn đơn hàng
+                    </h3>
+                    <FormField
+                      control={form.control}
+                      name='selectedOrders'
+                      render={() => (
+                        <FormItem>
+                          <div className='space-y-3'>
+                            {availableOrders.map((order) => (
+                              <Card key={order.id} className='p-4'>
+                                <div className='flex items-start gap-3'>
+                                  <Checkbox
+                                    checked={selectedOrderIds.includes(
+                                      order.id
+                                    )}
+                                    onCheckedChange={(checked) =>
+                                      handleOrderSelection(
+                                        order.id,
+                                        checked as boolean
+                                      )
+                                    }
+                                  />
+                                  <div className='flex-1 space-y-2'>
+                                    <div className='flex items-center justify-between'>
+                                      <div className='flex items-center gap-2'>
+                                        <Badge variant='outline'>
+                                          {order.id}
+                                        </Badge>
+                                        {getPriorityBadge(order.priority)}
+                                        {order.requiresSignature && (
+                                          <Badge variant='secondary'>
+                                            Cần chữ ký
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      <div className='text-muted-foreground text-sm'>
+                                        {new Date(
+                                          order.deliveryDate
+                                        ).toLocaleDateString('vi-VN')}
+                                      </div>
+                                    </div>
+
+                                    <div className='grid grid-cols-2 gap-4 text-sm md:grid-cols-4'>
+                                      <div className='flex items-center gap-1'>
+                                        <IconPackage className='h-4 w-4' />
+                                        <span>
+                                          {order.items.length} sản phẩm
+                                        </span>
+                                      </div>
+                                      <div className='flex items-center gap-1'>
+                                        <IconWeight className='h-4 w-4' />
+                                        <span>{order.totalWeight} kg</span>
+                                      </div>
+                                      <div className='flex items-center gap-1'>
+                                        <IconCube className='h-4 w-4' />
+                                        <span>{order.totalVolume} m³</span>
+                                      </div>
+                                    </div>
+
+                                    <div className='space-y-1'>
+                                      <div className='text-sm font-medium'>
+                                        Sản phẩm:
+                                      </div>
+                                      <div className='text-muted-foreground text-sm'>
+                                        {order.items.map((item, index) => (
+                                          <span key={item.id}>
+                                            {item.productName} ({item.quantity}{' '}
+                                            {item.unit})
+                                            {index < order.items.length - 1 &&
+                                              ', '}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              </Card>
+                            ))}
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+
+              {/* No Orders Message */}
+              {currentStep >= 3 &&
+                selectedConsignee &&
+                availableOrders.length === 0 && (
+                  <div className='space-y-4'>
+                    <h3 className='flex items-center gap-2 text-lg font-semibold'>
+                      <IconClipboardList className='h-5 w-5' />
+                      Bước 3: Chọn đơn hàng
+                    </h3>
+                    <Card className='p-6 text-center'>
+                      <div className='flex flex-col items-center gap-2'>
+                        <IconAlertTriangle className='text-muted-foreground h-8 w-8' />
+                        <p className='text-muted-foreground'>
+                          Không có đơn hàng nào đã xác nhận cho người nhận này
+                        </p>
+                      </div>
+                    </Card>
+                  </div>
+                )}
+
+              {/* Step 4: Review Dashboard */}
+              {currentStep >= 4 &&
+                selectedConsignee &&
+                selectedOrderIds.length > 0 && (
+                  <div className='space-y-6'>
+                    <h3 className='flex items-center gap-2 text-lg font-semibold'>
+                      <IconCheck className='h-5 w-5' />
+                      Bước 4: Xem lại thông tin xuất kho
+                    </h3>
+
+                    {/* Review Summary Cards */}
+                    <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+                      {/* Area Info */}
+                      <Card>
+                        <CardHeader className='pb-3'>
+                          <CardTitle className='flex items-center gap-2 text-sm'>
+                            <IconMapPin className='h-4 w-4' />
+                            Khu vực xuất
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className='pt-0'>
+                          <div className='space-y-2'>
+                            <p className='font-medium'>{selectedArea?.name}</p>
+                            <div className='flex items-center gap-2 text-sm text-gray-600'>
+                              <IconPackage className='h-4 w-4' />
+                              <span>
+                                Sức chứa: {selectedArea?.capacity}/800
+                              </span>
+                            </div>
+                            <Progress
+                              value={(selectedArea?.capacity || 0) / 8}
+                              className='h-2'
+                            />
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Consignee Info */}
+                      <Card>
+                        <CardHeader className='pb-3'>
+                          <CardTitle className='flex items-center gap-2 text-sm'>
+                            <IconUser className='h-4 w-4' />
+                            Người nhận
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className='pt-0'>
+                          <div className='space-y-2'>
+                            <p className='font-medium'>
+                              {selectedConsignee?.name}
+                            </p>
+                            <div className='flex items-center gap-2 text-sm text-gray-600'>
+                              <IconMapPin className='h-4 w-4' />
+                              <span className='line-clamp-2'>
+                                {selectedConsignee?.address}
+                              </span>
+                            </div>
+                            <div className='flex items-center gap-2 text-sm text-gray-600'>
+                              <IconPhone className='h-4 w-4' />
+                              <span>{selectedConsignee?.contact}</span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Order Summary */}
+                      <Card>
+                        <CardHeader className='pb-3'>
+                          <CardTitle className='flex items-center gap-2 text-sm'>
+                            <IconClipboardList className='h-4 w-4' />
+                            Tổng quan đơn hàng
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className='pt-0'>
+                          <div className='space-y-2'>
+                            <p className='font-medium'>
+                              {selectedOrderIds.length} đơn hàng
+                            </p>
+                            <div className='flex items-center gap-2 text-sm text-gray-600'>
+                              <IconWeight className='h-4 w-4' />
+                              <span>{calculateTotals().totalWeight} kg</span>
+                            </div>
+                            <div className='flex items-center gap-2 text-sm text-gray-600'>
+                              <IconCube className='h-4 w-4' />
+                              <span>{calculateTotals().totalVolume} m³</span>
+                            </div>
+                            <div className='flex items-center gap-2 text-sm text-gray-600'>
+                              <IconPackage className='h-4 w-4' />
+                              <span className='font-medium'>
+                                {calculateTotals().totalItems} sản phẩm
+                              </span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    {/* Selected Orders Detail */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className='flex items-center gap-2 text-base'>
+                          <IconClipboardList className='h-5 w-5' />
+                          Chi tiết đơn hàng được chọn
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className='space-y-4'>
+                          {availableOrders
+                            .filter((order) =>
+                              selectedOrderIds.includes(order.id)
+                            )
+                            .map((order) => (
+                              <div
+                                key={order.id}
+                                className='rounded-lg border bg-gray-50 p-4 dark:bg-gray-800 dark:text-white'
+                              >
+                                <div className='mb-3 flex items-center justify-between'>
+                                  <div className='flex items-center gap-2'>
+                                    <span className='font-medium'>
+                                      {order.id}
+                                    </span>
+                                    <Badge
+                                      className={`text-xs ${
+                                        order.status === 'pending'
+                                          ? 'bg-yellow-100 text-yellow-800'
+                                          : order.status === 'confirmed'
+                                            ? 'bg-green-100 text-green-800'
+                                            : 'bg-gray-100 text-gray-800'
+                                      }`}
+                                    >
+                                      {order.status === 'pending'
+                                        ? 'Chờ xử lý'
+                                        : order.status === 'confirmed'
+                                          ? 'Đã xác nhận'
+                                          : 'Khác'}
+                                    </Badge>
+                                  </div>
+                                  <span className='text-sm text-gray-600'>
+                                    {new Date(
+                                      order.deliveryDate
+                                    ).toLocaleDateString('vi-VN')}
+                                  </span>
+                                </div>
+
+                                <div className='grid grid-cols-2 gap-4 text-sm md:grid-cols-3'>
+                                  <div className='flex items-center gap-2'>
+                                    <IconWeight className='h-4 w-4 text-gray-500' />
+                                    <span>{order.totalWeight} kg</span>
+                                  </div>
+                                  <div className='flex items-center gap-2'>
+                                    <IconCube className='h-4 w-4 text-gray-500' />
+                                    <span>{order.totalVolume} m³</span>
+                                  </div>
+                                  <div className='flex items-center gap-2'>
+                                    <IconPackage className='h-4 w-4 text-gray-500' />
+                                    <span>
+                                      {order.items?.length || 0} sản phẩm
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Products List */}
+                                {order.items && order.items.length > 0 && (
+                                  <div className='mt-4 space-y-2'>
+                                    <h5 className='text-sm font-medium'>
+                                      Sản phẩm:
+                                    </h5>
+                                    <div className='space-y-2'>
+                                      {order.items.map((item, idx) => (
+                                        <div
+                                          key={idx}
+                                          className='flex items-center justify-between rounded border bg-white p-2 dark:bg-gray-800 dark:text-white'
+                                        >
+                                          <div className='flex-1'>
+                                            <span className='text-sm font-medium'>
+                                              {item.productName}
+                                            </span>
+                                            <div className='mt-1 flex items-center gap-2'>
+                                              <span className='text-xs text-gray-600 dark:text-white'>
+                                                Số lượng: {item.quantity}{' '}
+                                                {item.unit}
+                                              </span>
+                                              <span className='text-xs text-gray-600 dark:text-white'>
+                                                Trọng lượng: {item.weight} kg
+                                              </span>
+                                            </div>
+                                          </div>
+                                          <Badge
+                                            variant='outline'
+                                            className='text-xs'
+                                          >
+                                            {item.unit}
+                                          </Badge>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Notes Section */}
+                    <FormField
+                      control={form.control}
+                      name='notes'
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Ghi chú</FormLabel>
+                          <FormControl>
+                            <Textarea
+                              placeholder='Ghi chú thêm về đơn xuất kho...'
+                              className='min-h-[100px]'
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+
+              {/* Submit Buttons */}
+              {currentStep >= 4 &&
+                selectedConsignee &&
+                selectedOrderIds.length > 0 && (
+                  <div className='flex gap-2 border-t pt-4'>
+                    <Button type='submit' disabled={isSubmitting}>
+                      <IconPackageExport className='mr-2 h-4 w-4' />
+                      {isSubmitting ? 'Đang tạo...' : 'Tạo đơn xuất kho'}
+                    </Button>
                     <Button
                       type='button'
                       variant='outline'
-                      size='sm'
-                      onClick={addProductItem}
-                      className='flex items-center gap-1'
+                      onClick={() => {
+                        form.reset();
+                        setSelectedArea(null);
+                        setSelectedConsignee(null);
+                        setAvailableOrders([]);
+                        setSelectedOrderIds([]);
+                        setCurrentStep(1);
+                      }}
                     >
-                      <IconPlus className='h-4 w-4' />
-                      Thêm sản phẩm
+                      Làm mới
                     </Button>
                   </div>
-
-                  {productItems.map((item, index) => {
-                    const stock = getProductStock(item.productId);
-                    const product = availableProducts.find(
-                      (p) => p.id === item.productId
-                    );
-                    const isStockInsufficient =
-                      stock && item.quantity > stock.available;
-
-                    return (
-                      <Card
-                        key={index}
-                        className={`p-4 ${isStockInsufficient ? 'border-red-200 bg-red-50' : ''}`}
-                      >
-                        <div className='flex items-start gap-4'>
-                          <div className='grid flex-1 grid-cols-1 gap-4 md:grid-cols-4'>
-                            {/* Product Selection */}
-                            <div className='md:col-span-2'>
-                              <label className='mb-2 block text-sm font-medium'>
-                                Sản phẩm *
-                              </label>
-                              <Select
-                                value={item.productId}
-                                onValueChange={(value) =>
-                                  updateProductItem(index, 'productId', value)
-                                }
-                              >
-                                <SelectTrigger className='w-[250px]'>
-                                  <SelectValue placeholder='Chọn sản phẩm' />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {availableProducts.map((product) => (
-                                    <SelectItem
-                                      key={product.id}
-                                      value={product.id}
-                                    >
-                                      <div className='flex w-[200px] items-center gap-2'>
-                                        <IconBarcode className='h-4 w-4' />
-                                        {product.name} ({product.sku})
-                                      </div>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            {/* Quantity */}
-                            <div>
-                              <label className='mb-2 block text-sm font-medium'>
-                                Số lượng *
-                              </label>
-                              <Input
-                                type='number'
-                                min='1'
-                                value={item.quantity}
-                                onChange={(e) =>
-                                  updateProductItem(
-                                    index,
-                                    'quantity',
-                                    Number(e.target.value)
-                                  )
-                                }
-                                className={
-                                  isStockInsufficient ? 'border-red-300' : ''
-                                }
-                              />
-                            </div>
-
-                            {/* Unit */}
-                            <div>
-                              <label className='mb-2 block text-sm font-medium'>
-                                Đơn vị *
-                              </label>
-                              <div className='w-[50px]'>
-                                <Select
-                                  value={item.unit}
-                                  onValueChange={(value) =>
-                                    updateProductItem(index, 'unit', value)
-                                  }
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder='Đơn vị' />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {units.map((unit) => (
-                                      <SelectItem key={unit} value={unit}>
-                                        {unit}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Remove Button */}
-                          {productItems.length > 1 && (
-                            <Button
-                              type='button'
-                              variant='outline'
-                              size='sm'
-                              onClick={() => removeProductItem(index)}
-                              className='text-red-600 hover:bg-red-50 hover:text-red-700'
-                            >
-                              <IconTrash className='h-4 w-4' />
-                            </Button>
-                          )}
-                        </div>
-
-                        {/* Stock Information */}
-                        {stock && product && (
-                          <div className='mt-3 border-t pt-3'>
-                            <div className='flex items-center justify-between text-sm'>
-                              <div className='flex items-center gap-4'>
-                                <div className='flex items-center gap-1'>
-                                  <IconCheck className='h-4 w-4 text-green-600' />
-                                  <span>
-                                    Khả dụng:{' '}
-                                    <strong>
-                                      {stock.available} {product.unit}
-                                    </strong>
-                                  </span>
-                                </div>
-                              </div>
-                              {isStockInsufficient && (
-                                <div className='flex items-center gap-1 text-red-600'>
-                                  <IconAlertTriangle className='h-4 w-4' />
-                                  <span className='text-xs'>
-                                    Không đủ hàng tồn kho
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                      </Card>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Customer and Delivery Information */}
-              {selectedArea && (
-                <div className='space-y-4'>
-                  <h4 className='flex items-center gap-2 font-medium'>
-                    <IconUser className='h-4 w-4' />
-                    Thông tin khách hàng và giao hàng
-                  </h4>
-
-                  <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                    <FormField
-                      control={form.control}
-                      name='customerName'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Tên khách hàng *</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder='Nhập tên khách hàng'
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name='customerPhone'
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Số điện thoại</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder='Nhập số điện thoại'
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
-                      name='destination'
-                      render={({ field }) => (
-                        <FormItem className='md:col-span-2'>
-                          <FormLabel>Địa chỉ giao hàng *</FormLabel>
-                          <FormControl>
-                            <Input
-                              placeholder='Nhập địa chỉ giao hàng'
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <FormField
-                    control={form.control}
-                    name='notes'
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Ghi chú</FormLabel>
-                        <FormControl>
-                          <Textarea
-                            placeholder='Ghi chú thêm về đơn xuất kho...'
-                            className='min-h-[100px]'
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              )}
-
-              {/* Submit Buttons */}
-              {selectedArea && (
-                <div className='flex gap-2 border-t pt-4'>
-                  <Button type='submit' disabled={isSubmitting}>
-                    <IconPackageExport className='mr-2 h-4 w-4' />
-                    {isSubmitting ? 'Đang tạo...' : 'Tạo đơn xuất kho'}
-                  </Button>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    onClick={() => {
-                      form.reset();
-                      setSelectedArea(null);
-                      setAvailableProducts([]);
-                      setProductItems([
-                        { productId: '', quantity: 1, unit: '' }
-                      ]);
-                    }}
-                  >
-                    Làm mới
-                  </Button>
-                </div>
-              )}
+                )}
             </Form>
           </CardContent>
         </Card>
@@ -759,15 +1249,19 @@ export function WarehouseExport() {
                       <div className='flex items-center gap-2'>
                         <Badge variant='outline'>{order.id}</Badge>
                         <span className='font-medium'>
-                          {order.customerName}
+                          {order.consigneeName}
                         </span>
                       </div>
                       <Badge>{order.status}</Badge>
                     </div>
-                    <div className='text-muted-foreground text-sm'>
+                    <div className='text-muted-foreground space-y-1 text-sm'>
                       <p>Khu vực: {order.areaName}</p>
-                      <p>Địa chỉ: {order.destination}</p>
-                      <p>Sản phẩm: {order.products.length} loại</p>
+                      <p>Địa chỉ: {order.consigneeAddress}</p>
+                      <p>
+                        Đơn hàng: {order.totalOrders} đơn, {order.totalItems}{' '}
+                        sản phẩm
+                      </p>
+                      <p>Tổng trọng lượng: {order.totalWeight} kg</p>
                     </div>
                   </div>
                 ))}
