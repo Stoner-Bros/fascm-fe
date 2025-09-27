@@ -25,13 +25,13 @@ export function UserNav() {
         </DropdownMenuTrigger>
         <DropdownMenuContent
           className='w-56'
-          align='end'
+          align='start'
           sideOffset={10}
           forceMount
         >
           <DropdownMenuLabel className='font-normal'>
             <div className='flex flex-col space-y-1'>
-              <p className='text-sm leading-none font-medium'>
+              <p className='text-sm font-medium leading-none'>
                 {user.fullName}
               </p>
               <p className='text-muted-foreground text-xs leading-none'>
@@ -41,16 +41,21 @@ export function UserNav() {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
-              Profile
+            <DropdownMenuItem onClick={() => router.push('/consignee/order')}>
+              Đặt hàng
             </DropdownMenuItem>
-            <DropdownMenuItem>Billing</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem>New Team</DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => router.push('/consignee/my-orders')}
+            >
+              Xem đơn hàng
+            </DropdownMenuItem>
+            {/* <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
+              Profile
+            </DropdownMenuItem> */}
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem>
-            <SignOutButton redirectUrl='/auth/sign-in' />
+            <SignOutButton redirectUrl='/consignee'>Đăng xuất</SignOutButton>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

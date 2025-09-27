@@ -29,6 +29,35 @@ const LeafletMap = dynamic(() => import('./leaflet-map'), {
   )
 });
 
+// Error boundary cho map component
+function MapErrorBoundary({ children }: { children: React.ReactNode }) {
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    const handleError = () => setHasError(true);
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
+  if (hasError) {
+    return (
+      <div className='flex h-96 items-center justify-center rounded-lg bg-red-50 text-red-600'>
+        <div className='text-center'>
+          <p className='mb-2'>Lỗi tải bản đồ</p>
+          <button
+            onClick={() => setHasError(false)}
+            className='rounded bg-red-600 px-4 py-2 text-white hover:bg-red-700'
+          >
+            Thử lại
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
 interface TruckData {
   id: string;
   driver: string;
@@ -83,14 +112,6 @@ export default function TruckSimulation() {
 
   // Tạo route chi tiết với nhiều điểm interpolated và waypoints thực tế
   const createDetailedRoute = () => {
-    const routePoints = [
-      [21.0285, 105.8542], // Kho xuất phát (Hà Nội)
-      [21.0245, 105.8412], // Checkpoint 1
-      [21.0195, 105.8312], // Checkpoint 2
-      [21.0145, 105.8212], // Checkpoint 3
-      [21.0095, 105.8112] // Điểm giao hàng
-    ];
-
     // Thêm waypoints thực tế để tạo đường đi tự nhiên hơn
     const realisticRoute = [
       [21.0285, 105.8542], // Kho xuất phát
@@ -296,7 +317,7 @@ export default function TruckSimulation() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [isSimulationRunning, currentRouteIndex, route.length, checkpoints]);
+  });
 
   const startSimulation = () => {
     setIsSimulationRunning(true);
@@ -407,13 +428,17 @@ export default function TruckSimulation() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='h-64 overflow-hidden rounded-lg lg:h-96'>
-              <LeafletMap
-                route={route}
-                checkpoints={checkpoints}
-                truckPosition={truckData.position}
-                truckData={truckData}
-              />
+            <div className='relative h-64 w-full overflow-hidden rounded-lg lg:h-96'>
+              <div className='absolute inset-0'>
+                <MapErrorBoundary>
+                  <LeafletMap
+                    route={route}
+                    checkpoints={checkpoints}
+                    truckPosition={truckData.position}
+                    truckData={truckData}
+                  />
+                </MapErrorBoundary>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -475,73 +500,88 @@ export default function TruckSimulation() {
           <Card>
             <CardHeader>
               <CardTitle className='flex items-center'>
-                <Thermometer className='mr-2 h-5 w-5 text-red-600' />
+                <Thermometer className='mr-2 h-5 w-5 text-red-600 dark:text-red-400' />
                 Dữ liệu Sensor
               </CardTitle>
             </CardHeader>
             <CardContent className='space-y-4'>
+              {/* Temperature */}
               <div
                 className={`flex items-center justify-between rounded-lg p-3 ${
                   truckData.temperature > 5
-                    ? 'border border-red-200 bg-red-50'
-                    : 'bg-blue-50'
+                    ? 'border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/30'
+                    : 'bg-blue-50 dark:bg-blue-900/30'
                 }`}
               >
                 <div className='flex items-center'>
                   <Thermometer
                     className={`mr-2 h-4 w-4 ${
                       truckData.temperature > 5
-                        ? 'text-red-600'
-                        : 'text-blue-600'
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-blue-600 dark:text-blue-400'
                     }`}
                   />
-                  <span className='text-sm font-medium'>Nhiệt độ</span>
+                  <span className='text-sm font-medium text-gray-800 dark:text-gray-200'>
+                    Nhiệt độ
+                  </span>
                   {truckData.temperature > 5 && (
-                    <AlertTriangle className='ml-2 h-4 w-4 text-red-600' />
+                    <AlertTriangle className='ml-2 h-4 w-4 text-red-600 dark:text-red-400' />
                   )}
                 </div>
                 <span
                   className={`text-lg font-bold ${
-                    truckData.temperature > 5 ? 'text-red-600' : 'text-blue-600'
+                    truckData.temperature > 5
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-blue-600 dark:text-blue-400'
                   }`}
                 >
                   {truckData.temperature.toFixed(1)}°C
                 </span>
               </div>
+
+              {/* Humidity */}
               <div
                 className={`flex items-center justify-between rounded-lg p-3 ${
                   truckData.humidity > 75
-                    ? 'border border-red-200 bg-red-50'
-                    : 'bg-green-50'
+                    ? 'border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/30'
+                    : 'bg-green-50 dark:bg-green-900/30'
                 }`}
               >
                 <div className='flex items-center'>
                   <Droplets
                     className={`mr-2 h-4 w-4 ${
                       truckData.humidity > 75
-                        ? 'text-red-600'
-                        : 'text-green-600'
+                        ? 'text-red-600 dark:text-red-400'
+                        : 'text-green-600 dark:text-green-400'
                     }`}
                   />
-                  <span className='text-sm font-medium'>Độ ẩm</span>
+                  <span className='text-sm font-medium text-gray-800 dark:text-gray-200'>
+                    Độ ẩm
+                  </span>
                   {truckData.humidity > 75 && (
-                    <AlertTriangle className='ml-2 h-4 w-4 text-red-600' />
+                    <AlertTriangle className='ml-2 h-4 w-4 text-red-600 dark:text-red-400' />
                   )}
                 </div>
                 <span
                   className={`text-lg font-bold ${
-                    truckData.humidity > 75 ? 'text-red-600' : 'text-green-600'
+                    truckData.humidity > 75
+                      ? 'text-red-600 dark:text-red-400'
+                      : 'text-green-600 dark:text-green-400'
                   }`}
                 >
                   {truckData.humidity.toFixed(1)}%
                 </span>
               </div>
-              <div className='flex items-center justify-between rounded-lg bg-purple-50 p-3'>
+
+              {/* Position */}
+              <div className='flex items-center justify-between rounded-lg bg-purple-50 p-3 dark:bg-purple-900/30'>
                 <div className='flex items-center'>
-                  <MapPin className='mr-2 h-4 w-4 text-purple-600' />
-                  <span className='text-sm font-medium'>Vị trí</span>
+                  <MapPin className='mr-2 h-4 w-4 text-purple-600 dark:text-purple-400' />
+                  <span className='text-sm font-medium text-gray-800 dark:text-gray-200'>
+                    Vị trí
+                  </span>
                 </div>
-                <span className='font-mono text-sm text-purple-600'>
+                <span className='font-mono text-sm text-purple-600 dark:text-purple-400'>
                   {truckData.position[0].toFixed(4)},{' '}
                   {truckData.position[1].toFixed(4)}
                 </span>
@@ -553,7 +593,7 @@ export default function TruckSimulation() {
           <Card>
             <CardHeader>
               <CardTitle className='flex items-center'>
-                <Shield className='mr-2 h-5 w-5 text-purple-600' />
+                <Shield className='mr-2 h-5 w-5 text-purple-600 dark:text-purple-400' />
                 Blockchain Timeline
               </CardTitle>
             </CardHeader>
@@ -562,27 +602,38 @@ export default function TruckSimulation() {
                 {blockchainEvents.map((event, index) => (
                   <div
                     key={event.id}
-                    className='flex items-start space-x-3 rounded-lg bg-gray-50 p-3'
+                    className='flex items-start space-x-3 rounded-lg bg-gray-50 p-3 dark:bg-gray-800/40'
                   >
+                    {/* Status Icon */}
                     <div className='flex-shrink-0'>
                       {index === blockchainEvents.length - 1 ? (
                         <div className='h-3 w-3 animate-pulse rounded-full bg-green-500'></div>
                       ) : (
-                        <CheckCircle className='h-4 w-4 text-green-500' />
+                        <CheckCircle className='h-4 w-4 text-green-500 dark:text-green-400' />
                       )}
                     </div>
+
+                    {/* Event Info */}
                     <div className='min-w-0 flex-1'>
-                      <p className='text-sm font-medium'>{event.type}</p>
-                      <p className='text-xs text-gray-600'>{event.location}</p>
-                      <p className='text-xs text-gray-500'>{event.timestamp}</p>
-                      <p className='truncate font-mono text-xs text-purple-600'>
+                      <p className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                        {event.type}
+                      </p>
+                      <p className='text-xs text-gray-600 dark:text-gray-300'>
+                        {event.location}
+                      </p>
+                      <p className='text-xs text-gray-500 dark:text-gray-400'>
+                        {event.timestamp}
+                      </p>
+                      <p className='truncate font-mono text-xs text-purple-600 dark:text-purple-400'>
                         {event.hash}
                       </p>
                     </div>
+
+                    {/* View Button */}
                     <Button
                       size='sm'
                       variant='ghost'
-                      className='p-1'
+                      className='p-1 text-gray-700 hover:text-purple-600 dark:text-gray-300 dark:hover:text-purple-400'
                       onClick={() => setSelectedEvent(event)}
                     >
                       <Eye className='h-3 w-3' />
@@ -618,119 +669,134 @@ export default function TruckSimulation() {
       {/* Blockchain Event Detail Modal */}
       {selectedEvent && (
         <div
-          className='bg-opacity-50 fixed inset-0 flex items-center justify-center bg-black'
+          className='fixed inset-0 flex items-center justify-center bg-black/50 dark:bg-black/70'
           style={{ zIndex: 9999 }}
         >
           <div
-            className='relative mx-4 w-full max-w-md rounded-lg bg-white p-6'
+            className='relative mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-lg dark:bg-gray-900'
             style={{ zIndex: 10000 }}
           >
+            {/* Header */}
             <div className='mb-4 flex items-center justify-between'>
-              <h3 className='text-lg font-semibold'>
+              <h3 className='text-lg font-semibold text-gray-900 dark:text-gray-100'>
                 Chi tiết Blockchain Event
               </h3>
               <Button
                 variant='ghost'
                 size='sm'
                 onClick={() => setSelectedEvent(null)}
-                className='p-1'
+                className='p-1 text-gray-700 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400'
               >
                 <X className='h-4 w-4' />
               </Button>
             </div>
 
+            {/* Content */}
             <div className='space-y-3'>
               <div>
-                <label className='text-sm font-medium text-gray-600'>
+                <label className='text-sm font-medium text-gray-600 dark:text-gray-300'>
                   Loại sự kiện:
                 </label>
-                <p className='text-sm'>{selectedEvent.type}</p>
-              </div>
-
-              <div>
-                <label className='text-sm font-medium text-gray-600'>
-                  Thời gian:
-                </label>
-                <p className='text-sm'>{selectedEvent.timestamp}</p>
-              </div>
-
-              <div>
-                <label className='text-sm font-medium text-gray-600'>
-                  Vị trí:
-                </label>
-                <p className='text-sm'>{selectedEvent.location}</p>
-              </div>
-
-              <div>
-                <label className='text-sm font-medium text-gray-600'>
-                  Hash:
-                </label>
-                <p className='rounded bg-gray-100 p-2 font-mono text-xs break-all'>
-                  {selectedEvent.hash}
+                <p className='text-sm text-gray-900 dark:text-gray-100'>
+                  {selectedEvent.type}
                 </p>
               </div>
 
               <div>
-                <label className='text-sm font-medium text-gray-600'>
+                <label className='text-sm font-medium text-gray-600 dark:text-gray-300'>
+                  Thời gian:
+                </label>
+                <p className='text-sm text-gray-800 dark:text-gray-200'>
+                  {selectedEvent.timestamp}
+                </p>
+              </div>
+
+              <div>
+                <label className='text-sm font-medium text-gray-600 dark:text-gray-300'>
+                  Vị trí:
+                </label>
+                <p className='text-sm text-gray-800 dark:text-gray-200'>
+                  {selectedEvent.location}
+                </p>
+              </div>
+
+              <div>
+                <label className='text-sm font-medium text-gray-600 dark:text-gray-300'>
+                  Hash:
+                </label>
+                <p className='break-all rounded bg-gray-100 p-2 font-mono text-xs text-purple-600 dark:bg-gray-800/50 dark:text-purple-400'>
+                  {selectedEvent.hash}
+                </p>
+              </div>
+
+              {/* Sensor Data */}
+              <div>
+                <label className='text-sm font-medium text-gray-600 dark:text-gray-300'>
                   Dữ liệu cảm biến:
                 </label>
-                <div className='rounded bg-gray-50 p-3 text-sm'>
+                <div className='space-y-2 rounded bg-gray-50 p-3 text-sm dark:bg-gray-800/40'>
                   {selectedEvent.data.temperature && (
                     <div className='flex items-center justify-between'>
-                      <span className='flex items-center'>
-                        <Thermometer className='mr-1 h-4 w-4 text-blue-500' />
+                      <span className='flex items-center text-gray-800 dark:text-gray-200'>
+                        <Thermometer className='mr-1 h-4 w-4 text-blue-500 dark:text-blue-400' />
                         Nhiệt độ:
                       </span>
                       <span
                         className={
                           selectedEvent.data.temperature > 5
-                            ? 'font-semibold text-red-600'
-                            : ''
+                            ? 'font-semibold text-red-600 dark:text-red-400'
+                            : 'text-gray-800 dark:text-gray-200'
                         }
                       >
                         {selectedEvent.data.temperature}°C
                         {selectedEvent.data.temperature > 5 && (
-                          <AlertTriangle className='ml-1 inline h-4 w-4 text-red-600' />
+                          <AlertTriangle className='ml-1 inline h-4 w-4 text-red-600 dark:text-red-400' />
                         )}
                       </span>
                     </div>
                   )}
 
                   {selectedEvent.data.humidity && (
-                    <div className='mt-2 flex items-center justify-between'>
-                      <span className='flex items-center'>
-                        <Droplets className='mr-1 h-4 w-4 text-blue-500' />
+                    <div className='flex items-center justify-between'>
+                      <span className='flex items-center text-gray-800 dark:text-gray-200'>
+                        <Droplets className='mr-1 h-4 w-4 text-blue-500 dark:text-blue-400' />
                         Độ ẩm:
                       </span>
                       <span
                         className={
                           selectedEvent.data.humidity > 75
-                            ? 'font-semibold text-red-600'
-                            : ''
+                            ? 'font-semibold text-red-600 dark:text-red-400'
+                            : 'text-gray-800 dark:text-gray-200'
                         }
                       >
                         {selectedEvent.data.humidity}%
                         {selectedEvent.data.humidity > 75 && (
-                          <AlertTriangle className='ml-1 inline h-4 w-4 text-red-600' />
+                          <AlertTriangle className='ml-1 inline h-4 w-4 text-red-600 dark:text-red-400' />
                         )}
                       </span>
                     </div>
                   )}
 
                   {selectedEvent.data.speed && (
-                    <div className='mt-2 flex items-center justify-between'>
-                      <span className='flex items-center'>
-                        <Activity className='mr-1 h-4 w-4 text-green-500' />
+                    <div className='flex items-center justify-between'>
+                      <span className='flex items-center text-gray-800 dark:text-gray-200'>
+                        <Activity className='mr-1 h-4 w-4 text-green-500 dark:text-green-400' />
                         Tốc độ:
                       </span>
-                      <span>{selectedEvent.data.speed} km/h</span>
+                      <span className='text-gray-800 dark:text-gray-200'>
+                        {selectedEvent.data.speed} km/h
+                      </span>
                     </div>
                   )}
 
                   {selectedEvent.data.weight && (
-                    <div className='mt-2 flex items-center justify-between'>
-                      <span>Trọng lượng:</span>
-                      <span>{selectedEvent.data.weight}</span>
+                    <div className='flex items-center justify-between'>
+                      <span className='text-gray-800 dark:text-gray-200'>
+                        Trọng lượng:
+                      </span>
+                      <span className='text-gray-800 dark:text-gray-200'>
+                        {selectedEvent.data.weight}
+                      </span>
                     </div>
                   )}
                 </div>

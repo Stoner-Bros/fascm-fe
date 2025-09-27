@@ -1,16 +1,13 @@
-import ConsigneeFooter from '@/features/consignee/components/consignee-footer';
 import ConsigneeHeader from '@/features/consignee/components/consignee-header';
 
-export default function ConsigneeLayout({
+export default function OrderLayout({
   children
 }: {
   children: React.ReactNode;
 }) {
   return (
     <div className='flex min-h-screen flex-col'>
-      <ConsigneeHeader />
       <main className='flex-1'>{children}</main>
-      <ConsigneeFooter />
     </div>
   );
 }

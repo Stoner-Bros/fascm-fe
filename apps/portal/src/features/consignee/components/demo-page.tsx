@@ -7,6 +7,13 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger
+} from '@/components/ui/accordion';
+import { Progress } from '@/components/ui/progress';
+import {
   Thermometer,
   Droplets,
   Navigation,
@@ -18,22 +25,18 @@ import {
   Zap,
   Database,
   Search,
-  Eye,
-  TrendingUp,
-  Activity
+  Activity,
+  Download,
+  Factory,
+  Truck,
+  Store,
+  Leaf,
+  MapPin,
+  Calendar,
+  Hash,
+  User,
+  FileText
 } from 'lucide-react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts';
 import TruckSimulation from './truck-simulation';
 
 export default function DemoPage() {
@@ -44,14 +47,6 @@ export default function DemoPage() {
     location: { lat: 21.0285, lng: 105.8542 },
     status: 'active'
   });
-
-  const [temperatureHistory, setTemperatureHistory] = useState([
-    { time: '10:00', temp: 4.0 },
-    { time: '10:05', temp: 4.1 },
-    { time: '10:10', temp: 4.3 },
-    { time: '10:15', temp: 4.2 },
-    { time: '10:20', temp: 4.4 }
-  ]);
 
   // Blockchain Data
   const [blockchainData, setBlockchainData] = useState({
@@ -66,6 +61,137 @@ export default function DemoPage() {
   const [selectedSensor, setSelectedSensor] = useState('container-001');
   const [showQRResult, setShowQRResult] = useState(false);
   const [showBlockchainVerify, setShowBlockchainVerify] = useState(false);
+  const [blockchainHash, setBlockchainHash] = useState('');
+  const [lotTrackingResult, setLotTrackingResult] = useState<any>(null);
+  const [blockchainVerifyResult, setBlockchainVerifyResult] =
+    useState<any>(null);
+
+  // Sample lot tracking data
+  const sampleLotData: Record<string, any> = {
+    'LOT-2024-001': {
+      lotCode: 'LOT-2024-001',
+      productName: 'Rau xanh Đà Lạt',
+      productionDate: '05/09/2024',
+      expiryDate: '20/09/2024',
+      timeline: [
+        {
+          stage: 'Trang trại A',
+          icon: Leaf,
+          status: 'completed',
+          date: '05/09/2024 06:00',
+          location: 'Đà Lạt, Lâm Đồng'
+        },
+        {
+          stage: 'Nhà máy sơ chế',
+          icon: Factory,
+          status: 'completed',
+          date: '05/09/2024 14:00',
+          location: 'KCN Đà Lạt'
+        },
+        {
+          stage: 'Vận chuyển lạnh',
+          icon: Truck,
+          status: 'completed',
+          date: '06/09/2024 08:00',
+          location: 'Đường vận chuyển'
+        },
+        {
+          stage: 'Siêu thị XYZ',
+          icon: Store,
+          status: 'completed',
+          date: '06/09/2024 16:00',
+          location: 'TP.HCM'
+        }
+      ],
+      certificates: [
+        { name: 'VietGAP Certificate', type: 'PDF', size: '2.3 MB' },
+        { name: 'GlobalGAP Certificate', type: 'PDF', size: '1.8 MB' }
+      ],
+      qrCode: 'QR_LOT_2024_001_VERIFIED',
+      completionPercentage: 100
+    },
+    'LOT-2024-002': {
+      lotCode: 'LOT-2024-002',
+      productName: 'Thịt bò Úc',
+      productionDate: '03/09/2024',
+      expiryDate: '03/10/2024',
+      timeline: [
+        {
+          stage: 'Trang trại chăn nuôi',
+          icon: Leaf,
+          status: 'completed',
+          date: '03/09/2024 05:00',
+          location: 'Queensland, Úc'
+        },
+        {
+          stage: 'Nhà máy chế biến',
+          icon: Factory,
+          status: 'completed',
+          date: '03/09/2024 12:00',
+          location: 'Sydney, Úc'
+        },
+        {
+          stage: 'Vận chuyển quốc tế',
+          icon: Truck,
+          status: 'completed',
+          date: '04/09/2024 10:00',
+          location: 'Cảng Sydney'
+        },
+        {
+          stage: 'Siêu thị ABC',
+          icon: Store,
+          status: 'in_progress',
+          date: '07/09/2024 09:00',
+          location: 'Hà Nội'
+        }
+      ],
+      certificates: [
+        { name: 'Australian Beef Certificate', type: 'PDF', size: '3.1 MB' },
+        { name: 'Export Health Certificate', type: 'PDF', size: '2.5 MB' }
+      ],
+      qrCode: 'QR_LOT_2024_002_VERIFIED',
+      completionPercentage: 75
+    }
+  };
+
+  // Sample blockchain verification data
+  const sampleBlockchainData: Record<string, any> = {
+    '0x7a8b9c2d4e5f6789abcdef1234567890': {
+      status: 'confirmed',
+      blockNumber: 123456,
+      confirmations: 5,
+      hash: '0x7a8b9c2d4e5f6789abcdef1234567890',
+      timestamp: '06/09/2024 10:35 AM',
+      smartContract: 'TraceabilitySC',
+      signer: 'Công ty ABC',
+      gasUsed: '21000',
+      transactionFee: '0.001 ETH'
+    }
+  };
+
+  // Enhanced statistics data
+
+  // Function to handle lot tracking search
+  const handleLotSearch = () => {
+    if (sampleLotData[batchCode]) {
+      setLotTrackingResult(sampleLotData[batchCode]);
+      setShowQRResult(true);
+    } else {
+      setLotTrackingResult(null);
+      setShowQRResult(false);
+    }
+  };
+
+  // Function to handle blockchain verification
+  const handleBlockchainVerify = () => {
+    if (sampleBlockchainData[blockchainHash]) {
+      setBlockchainVerifyResult(sampleBlockchainData[blockchainHash]);
+      setShowBlockchainVerify(true);
+    } else {
+      setBlockchainVerifyResult(null);
+      setShowBlockchainVerify(false);
+    }
+  };
 
   // Simulate real-time data updates
   useEffect(() => {
@@ -78,21 +204,6 @@ export default function DemoPage() {
           Math.min(75, prev.humidity + (Math.random() - 0.5) * 3)
         )
       }));
-
-      setTemperatureHistory((prev) => {
-        const newTime = new Date().toLocaleTimeString('vi-VN', {
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-        const newData = [
-          ...prev.slice(1),
-          {
-            time: newTime,
-            temp: sensorData.temperature
-          }
-        ];
-        return newData;
-      });
 
       setBlockchainData((prev) => ({
         ...prev,
@@ -165,32 +276,27 @@ export default function DemoPage() {
     setShowQRResult(true);
   };
 
-  const handleBlockchainVerify = () => {
-    setShowBlockchainVerify(true);
-  };
-
   return (
-    <div className='min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-purple-50 p-6'>
+    <div className='min-h-screen from-blue-50 via-green-50 to-purple-50 p-6 dark:bg-gray-900'>
       <div className='mx-auto max-w-7xl space-y-8'>
         {/* Header */}
         <div className='space-y-4 text-center'>
-          <h1 className='text-4xl font-bold text-gray-900'>
+          <h1 className='text-4xl font-bold dark:text-white'>
             Demo Công nghệ <span className='text-blue-600'>IoT</span> &{' '}
             <span className='text-purple-600'>Blockchain</span>
           </h1>
-          <p className='mx-auto max-w-3xl text-xl text-gray-600'>
+          <p className='mx-auto max-w-3xl text-xl text-gray-600 dark:text-gray-300'>
             Trải nghiệm trực tiếp công nghệ giám sát realtime và truy xuất nguồn
             gốc minh bạch
           </p>
         </div>
 
         <Tabs defaultValue='dashboard' className='w-full'>
-          <TabsList className='grid w-full grid-cols-5'>
+          <TabsList className='grid w-full grid-cols-4'>
             <TabsTrigger value='dashboard'>IoT Dashboard</TabsTrigger>
             <TabsTrigger value='traceability'>
               Blockchain Traceability
             </TabsTrigger>
-            <TabsTrigger value='comparison'>So sánh Công nghệ</TabsTrigger>
             <TabsTrigger value='interactive'>Tra cứu</TabsTrigger>
             <TabsTrigger value='truck'>Truck Simulation</TabsTrigger>
           </TabsList>
@@ -199,7 +305,7 @@ export default function DemoPage() {
           <TabsContent value='dashboard' className='space-y-6'>
             <div className='grid gap-6 lg:grid-cols-3'>
               {/* Sensor Selection */}
-              <Card className='lg:col-span-1'>
+              <Card className='lg:col-span-1 dark:bg-gray-800'>
                 <CardHeader>
                   <CardTitle className='flex items-center'>
                     <Activity className='mr-2 h-5 w-5 text-blue-600' />
@@ -212,15 +318,19 @@ export default function DemoPage() {
                       key={sensor.id}
                       className={`cursor-pointer rounded-lg border p-3 transition-all ${
                         selectedSensor === sensor.id
-                          ? 'border-blue-500 bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300'
+                          ? 'border-blue-500 bg-blue-50 dark:bg-gray-700'
+                          : 'border-gray-200 hover:border-gray-300 dark:border-gray-700'
                       }`}
                       onClick={() => setSelectedSensor(sensor.id)}
                     >
                       <div className='flex items-center justify-between'>
                         <div>
-                          <p className='font-medium'>{sensor.name}</p>
-                          <p className='text-sm text-gray-600'>{sensor.type}</p>
+                          <p className='font-medium dark:text-white'>
+                            {sensor.name}
+                          </p>
+                          <p className='text-sm text-gray-600 dark:text-gray-300'>
+                            {sensor.type}
+                          </p>
                         </div>
                         <Badge
                           variant={
@@ -228,7 +338,7 @@ export default function DemoPage() {
                           }
                           className={
                             sensor.status === 'active'
-                              ? 'bg-green-100 text-green-800'
+                              ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
                               : ''
                           }
                         >
@@ -253,29 +363,35 @@ export default function DemoPage() {
                 </CardHeader>
                 <CardContent>
                   <div className='mb-6 grid grid-cols-3 gap-4'>
-                    <div className='rounded-lg bg-blue-50 p-4 text-center'>
-                      <Thermometer className='mx-auto mb-2 h-8 w-8 text-blue-600' />
-                      <p className='text-2xl font-bold text-blue-800'>
+                    <div className='rounded-lg bg-blue-50 p-4 text-center dark:bg-gray-800'>
+                      <Thermometer className='mx-auto mb-2 h-8 w-8 text-blue-700 dark:text-blue-500' />
+                      <p className='text-2xl font-bold text-blue-700 dark:text-blue-500'>
                         {sensorData.temperature.toFixed(1)}°C
                       </p>
-                      <p className='text-sm text-gray-600'>Nhiệt độ</p>
+                      <p className='text-sm text-gray-600 dark:text-gray-300'>
+                        Nhiệt độ
+                      </p>
                     </div>
-                    <div className='rounded-lg bg-green-50 p-4 text-center'>
-                      <Droplets className='mx-auto mb-2 h-8 w-8 text-green-600' />
-                      <p className='text-2xl font-bold text-green-800'>
+                    <div className='rounded-lg bg-green-50 p-4 text-center dark:bg-gray-800'>
+                      <Droplets className='mx-auto mb-2 h-8 w-8 text-green-600 dark:text-green-500' />
+                      <p className='text-2xl font-bold text-green-800 dark:text-green-500'>
                         {sensorData.humidity.toFixed(0)}%
                       </p>
-                      <p className='text-sm text-gray-600'>Độ ẩm</p>
+                      <p className='text-sm text-gray-600 dark:text-gray-300'>
+                        Độ ẩm
+                      </p>
                     </div>
-                    <div className='rounded-lg bg-orange-50 p-4 text-center'>
-                      <Navigation className='mx-auto mb-2 h-8 w-8 text-orange-600' />
-                      <p className='text-sm font-bold text-orange-800'>
+                    <div className='rounded-lg bg-orange-50 p-4 text-center dark:bg-gray-800'>
+                      <Navigation className='mx-auto mb-2 h-8 w-8 text-orange-600 dark:text-orange-500' />
+                      <p className='text-sm font-bold text-orange-800 dark:text-orange-500'>
                         {sensorData.location.lat.toFixed(4)}°N
                       </p>
-                      <p className='text-sm font-bold text-orange-800'>
+                      <p className='text-sm font-bold text-orange-800 dark:text-orange-500'>
                         {sensorData.location.lng.toFixed(4)}°E
                       </p>
-                      <p className='text-sm text-gray-600'>GPS</p>
+                      <p className='text-sm text-gray-600 dark:text-gray-300'>
+                        GPS
+                      </p>
                     </div>
                   </div>
 
@@ -312,31 +428,35 @@ export default function DemoPage() {
               </CardHeader>
               <CardContent>
                 <div className='grid gap-4 md:grid-cols-3'>
-                  <div className='flex items-center rounded-lg bg-green-50 p-3'>
-                    <CheckCircle className='mr-3 h-6 w-6 text-green-600' />
+                  <div className='flex items-center rounded-lg bg-green-50 p-3 dark:bg-gray-800'>
+                    <CheckCircle className='mr-3 h-6 w-6 text-green-600 dark:text-green-500' />
                     <div>
-                      <p className='font-medium text-green-800'>
+                      <p className='font-medium text-green-800 dark:text-green-500'>
                         Nhiệt độ ổn định
                       </p>
-                      <p className='text-sm text-green-600'>
+                      <p className='text-sm text-green-600 dark:text-green-500'>
                         Trong khoảng cho phép
                       </p>
                     </div>
                   </div>
-                  <div className='flex items-center rounded-lg bg-green-50 p-3'>
-                    <CheckCircle className='mr-3 h-6 w-6 text-green-600' />
+                  <div className='flex items-center rounded-lg bg-green-50 p-3 dark:bg-gray-800'>
+                    <CheckCircle className='mr-3 h-6 w-6 text-green-600 dark:text-green-500' />
                     <div>
-                      <p className='font-medium text-green-800'>
+                      <p className='font-medium text-green-800 dark:text-green-500'>
                         Độ ẩm bình thường
                       </p>
-                      <p className='text-sm text-green-600'>68% - Lý tưởng</p>
+                      <p className='text-sm text-green-600 dark:text-green-500'>
+                        68% - Lý tưởng
+                      </p>
                     </div>
                   </div>
-                  <div className='flex items-center rounded-lg bg-blue-50 p-3'>
-                    <Navigation className='mr-3 h-6 w-6 text-blue-600' />
+                  <div className='flex items-center rounded-lg bg-blue-50 p-3 dark:bg-gray-800'>
+                    <Navigation className='mr-3 h-6 w-6 text-blue-600 dark:text-blue-500' />
                     <div>
-                      <p className='font-medium text-blue-800'>GPS hoạt động</p>
-                      <p className='text-sm text-blue-600'>
+                      <p className='font-medium text-blue-800 dark:text-blue-500'>
+                        GPS hoạt động
+                      </p>
+                      <p className='text-sm text-blue-600 dark:text-blue-500'>
                         Đang theo dõi vị trí
                       </p>
                     </div>
@@ -390,11 +510,11 @@ export default function DemoPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className='space-y-4'>
-                  <div className='rounded-lg bg-gray-50 p-4'>
-                    <p className='mb-2 text-sm text-gray-600'>
+                  <div className='rounded-lg bg-gray-50 p-4 dark:bg-gray-800'>
+                    <p className='mb-2 text-sm text-gray-600 dark:text-gray-400'>
                       Transaction Hash:
                     </p>
-                    <code className='font-mono text-sm break-all text-purple-800'>
+                    <code className='break-all font-mono text-sm text-purple-800 dark:text-purple-50'>
                       {blockchainData.hash}
                     </code>
                   </div>
@@ -413,12 +533,12 @@ export default function DemoPage() {
                     </div>
                   </div>
                   <Button
-                    onClick={handleBlockchainVerify}
+                    className='w-full cursor-pointer'
                     variant='outline'
-                    className='w-full'
+                    onClick={handleBlockchainVerify}
                   >
-                    <Shield className='mr-2 h-4 w-4' />
-                    Verify on Blockchain
+                    <Database className='mr-2 h-4 w-4' />
+                    Kiểm tra trên Blockchain
                   </Button>
                 </CardContent>
               </Card>
@@ -435,7 +555,7 @@ export default function DemoPage() {
                 </CardHeader>
                 <CardContent>
                   <div className='space-y-4'>
-                    {traceabilityData.map((item, index) => (
+                    {traceabilityData.map((item: any, index: number) => (
                       <div key={index} className='flex items-start space-x-4'>
                         <div
                           className={`flex h-8 w-8 items-center justify-center rounded-full ${
@@ -456,7 +576,7 @@ export default function DemoPage() {
                         </div>
                         <div className='flex-1'>
                           <div className='flex items-center justify-between'>
-                            <h4 className='font-medium text-gray-900'>
+                            <h4 className='font-medium text-gray-900 dark:text-gray-300'>
                               {item.stage}
                             </h4>
                             <Badge
@@ -482,7 +602,7 @@ export default function DemoPage() {
                                   : 'Chờ xử lý'}
                             </Badge>
                           </div>
-                          <p className='text-sm text-gray-600'>
+                          <p className='text-sm text-gray-500'>
                             {item.location}
                           </p>
                           <p className='text-sm text-gray-500'>
@@ -505,130 +625,6 @@ export default function DemoPage() {
             )}
           </TabsContent>
 
-          {/* Technology Comparison Tab */}
-          <TabsContent value='comparison' className='space-y-6'>
-            <Card>
-              <CardHeader>
-                <CardTitle className='text-center'>
-                  So sánh: Truyền thống vs Công nghệ IoT + Blockchain
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='grid gap-8 lg:grid-cols-2'>
-                  {/* Traditional Process */}
-                  <div className='space-y-4'>
-                    <h3 className='text-center text-xl font-bold text-red-600'>
-                      ❌ Quy trình Truyền thống
-                    </h3>
-                    <div className='space-y-3'>
-                      <div className='rounded-lg border border-red-200 bg-red-50 p-4'>
-                        <h4 className='font-medium text-red-800'>
-                          Thiếu minh bạch
-                        </h4>
-                        <p className='text-sm text-red-600'>
-                          Không biết nguồn gốc chính xác
-                        </p>
-                      </div>
-                      <div className='rounded-lg border border-red-200 bg-red-50 p-4'>
-                        <h4 className='font-medium text-red-800'>
-                          Khó kiểm chứng
-                        </h4>
-                        <p className='text-sm text-red-600'>
-                          Dựa vào giấy tờ, dễ làm giả
-                        </p>
-                      </div>
-                      <div className='rounded-lg border border-red-200 bg-red-50 p-4'>
-                        <h4 className='font-medium text-red-800'>
-                          Không theo dõi realtime
-                        </h4>
-                        <p className='text-sm text-red-600'>
-                          Không biết tình trạng vận chuyển
-                        </p>
-                      </div>
-                      <div className='rounded-lg border border-red-200 bg-red-50 p-4'>
-                        <h4 className='font-medium text-red-800'>Rủi ro cao</h4>
-                        <p className='text-sm text-red-600'>
-                          Hàng hóa có thể bị hỏng mà không biết
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Modern Process */}
-                  <div className='space-y-4'>
-                    <h3 className='text-center text-xl font-bold text-green-600'>
-                      ✅ Công nghệ IoT + Blockchain
-                    </h3>
-                    <div className='space-y-3'>
-                      <div className='rounded-lg border border-green-200 bg-green-50 p-4'>
-                        <h4 className='font-medium text-green-800'>
-                          Minh bạch 100%
-                        </h4>
-                        <p className='text-sm text-green-600'>
-                          Quét QR biết ngay nguồn gốc
-                        </p>
-                      </div>
-                      <div className='rounded-lg border border-green-200 bg-green-50 p-4'>
-                        <h4 className='font-medium text-green-800'>
-                          Không thể làm giả
-                        </h4>
-                        <p className='text-sm text-green-600'>
-                          Dữ liệu được mã hóa trên blockchain
-                        </p>
-                      </div>
-                      <div className='rounded-lg border border-green-200 bg-green-50 p-4'>
-                        <h4 className='font-medium text-green-800'>
-                          Theo dõi realtime
-                        </h4>
-                        <p className='text-sm text-green-600'>
-                          IoT sensors cập nhật liên tục
-                        </p>
-                      </div>
-                      <div className='rounded-lg border border-green-200 bg-green-50 p-4'>
-                        <h4 className='font-medium text-green-800'>
-                          An toàn tối đa
-                        </h4>
-                        <p className='text-sm text-green-600'>
-                          Cảnh báo ngay khi có bất thường
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Benefits Summary */}
-                <div className='mt-8 rounded-lg bg-gradient-to-r from-blue-50 to-purple-50 p-6'>
-                  <h4 className='mb-4 text-center text-lg font-bold'>
-                    🚀 Lợi ích của Công nghệ IoT + Blockchain
-                  </h4>
-                  <div className='grid gap-4 text-center md:grid-cols-3'>
-                    <div>
-                      <TrendingUp className='mx-auto mb-2 h-8 w-8 text-blue-600' />
-                      <p className='font-medium'>Tăng hiệu quả</p>
-                      <p className='text-sm text-gray-600'>
-                        Tự động hóa quy trình
-                      </p>
-                    </div>
-                    <div>
-                      <Shield className='mx-auto mb-2 h-8 w-8 text-green-600' />
-                      <p className='font-medium'>Bảo mật cao</p>
-                      <p className='text-sm text-gray-600'>
-                        Dữ liệu không thể thay đổi
-                      </p>
-                    </div>
-                    <div>
-                      <Eye className='mx-auto mb-2 h-8 w-8 text-purple-600' />
-                      <p className='font-medium'>Minh bạch</p>
-                      <p className='text-sm text-gray-600'>
-                        Theo dõi toàn bộ chuỗi
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           {/* Interactive Search Tab */}
           <TabsContent value='interactive' className='space-y-6'>
             <div className='grid gap-6 lg:grid-cols-2'>
@@ -647,8 +643,13 @@ export default function DemoPage() {
                       value={batchCode}
                       onChange={(e) => setBatchCode(e.target.value)}
                     />
-                    <Button onClick={() => setShowQRResult(true)}>
-                      <Search className='h-4 w-4' />
+                    <Button
+                      type='button'
+                      onClick={handleLotSearch}
+                      className='cursor-pointer px-4 py-2'
+                    >
+                      <Search className='mr-2 h-4 w-4' />
+                      Tìm kiếm
                     </Button>
                   </div>
                   <div className='text-sm text-gray-600'>
@@ -674,8 +675,15 @@ export default function DemoPage() {
                   <Input
                     placeholder='Nhập transaction hash'
                     className='font-mono text-sm'
+                    value={blockchainHash}
+                    onChange={(e) => setBlockchainHash(e.target.value)}
                   />
-                  <Button className='w-full' variant='outline'>
+                  <Button
+                    type='button'
+                    className='w-full cursor-pointer'
+                    variant='outline'
+                    onClick={handleBlockchainVerify}
+                  >
                     <Database className='mr-2 h-4 w-4' />
                     Kiểm tra trên Blockchain
                   </Button>
@@ -687,41 +695,312 @@ export default function DemoPage() {
                   </div>
                 </CardContent>
               </Card>
-            </div>
 
-            {/* Statistics Dashboard */}
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center'>
-                  <TrendingUp className='mr-2 h-5 w-5 text-green-600' />
-                  Thống kê Hệ thống
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='grid gap-4 md:grid-cols-4'>
-                  <div className='rounded-lg bg-blue-50 p-4 text-center'>
-                    <p className='text-2xl font-bold text-blue-800'>1,247</p>
-                    <p className='text-sm text-blue-600'>
-                      Sản phẩm được theo dõi
-                    </p>
-                  </div>
-                  <div className='rounded-lg bg-green-50 p-4 text-center'>
-                    <p className='text-2xl font-bold text-green-800'>98.7%</p>
-                    <p className='text-sm text-green-600'>
-                      Độ chính xác dữ liệu
-                    </p>
-                  </div>
-                  <div className='rounded-lg bg-purple-50 p-4 text-center'>
-                    <p className='text-2xl font-bold text-purple-800'>24/7</p>
-                    <p className='text-sm text-purple-600'>Giám sát liên tục</p>
-                  </div>
-                  <div className='rounded-lg bg-orange-50 p-4 text-center'>
-                    <p className='text-2xl font-bold text-orange-800'>156</p>
-                    <p className='text-sm text-orange-600'>Cảnh báo đã xử lý</p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+              {/* Lot Tracking Results */}
+              {showQRResult && lotTrackingResult && (
+                <Card className='border-green-200 bg-green-50 dark:border-green-900 dark:bg-green-950'>
+                  <CardHeader>
+                    <CardTitle className='flex items-center text-green-800 dark:text-green-200'>
+                      <CheckCircle className='mr-2 h-5 w-5' />
+                      Kết quả tra cứu theo Mã lô
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-6'>
+                    {/* Basic Information */}
+                    <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+                      <div className='space-y-2'>
+                        <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
+                          Mã lô
+                        </p>
+                        <p className='font-semibold text-green-800 dark:text-green-300'>
+                          {lotTrackingResult.lotCode}
+                        </p>
+                      </div>
+                      <div className='space-y-2'>
+                        <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
+                          Sản phẩm
+                        </p>
+                        <p className='font-semibold'>
+                          {lotTrackingResult.productName}
+                        </p>
+                      </div>
+                      <div className='space-y-2'>
+                        <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
+                          Ngày sản xuất
+                        </p>
+                        <p className='font-semibold'>
+                          {lotTrackingResult.productionDate}
+                        </p>
+                      </div>
+                      <div className='space-y-2'>
+                        <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
+                          Hạn sử dụng
+                        </p>
+                        <p className='font-semibold'>
+                          {lotTrackingResult.expiryDate}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Supply Chain Timeline */}
+                    <div className='space-y-4'>
+                      <div className='flex items-center justify-between'>
+                        <h3 className='text-lg font-semibold dark:text-gray-200'>
+                          Chuỗi cung ứng
+                        </h3>
+                        <div className='flex items-center space-x-2'>
+                          <Progress
+                            value={lotTrackingResult.completionPercentage}
+                            className='w-32'
+                          />
+                          <span className='text-sm font-medium dark:text-gray-300'>
+                            {lotTrackingResult.completionPercentage}%
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className='relative'>
+                        <div className='absolute bottom-0 left-6 top-8 w-0.5 bg-gray-200 dark:bg-gray-700'></div>
+                        <div className='space-y-6'>
+                          {lotTrackingResult.timeline.map(
+                            (step: any, index: number) => {
+                              const IconComponent = step.icon;
+                              return (
+                                <div
+                                  key={index}
+                                  className='relative flex items-start space-x-4'
+                                >
+                                  <div
+                                    className={`relative z-10 flex h-12 w-12 items-center justify-center rounded-full border-2 ${
+                                      step.status === 'completed'
+                                        ? 'border-green-500 bg-green-100 dark:bg-green-900'
+                                        : step.status === 'in_progress'
+                                          ? 'border-blue-500 bg-blue-100 dark:bg-blue-900'
+                                          : 'border-gray-300 bg-gray-100 dark:border-gray-600 dark:bg-gray-800'
+                                    }`}
+                                  >
+                                    <IconComponent
+                                      className={`h-5 w-5 ${
+                                        step.status === 'completed'
+                                          ? 'text-green-600 dark:text-green-300'
+                                          : step.status === 'in_progress'
+                                            ? 'text-blue-600 dark:text-blue-300'
+                                            : 'text-gray-400 dark:text-gray-500'
+                                      }`}
+                                    />
+                                  </div>
+                                  <div className='flex-1 space-y-1'>
+                                    <div className='flex items-center space-x-2'>
+                                      <h4 className='font-semibold dark:text-gray-200'>
+                                        {step.stage}
+                                      </h4>
+                                      {step.status === 'completed' && (
+                                        <Badge
+                                          variant='secondary'
+                                          className='bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
+                                        >
+                                          <CheckCircle className='mr-1 h-3 w-3' />
+                                          Hoàn thành
+                                        </Badge>
+                                      )}
+                                      {step.status === 'in_progress' && (
+                                        <Badge
+                                          variant='secondary'
+                                          className='bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
+                                        >
+                                          <Clock className='mr-1 h-3 w-3' />
+                                          Đang xử lý
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className='flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400'>
+                                      <div className='flex items-center'>
+                                        <Calendar className='mr-1 h-4 w-4' />
+                                        {step.date}
+                                      </div>
+                                      <div className='flex items-center'>
+                                        <MapPin className='mr-1 h-4 w-4' />
+                                        {step.location}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            }
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Certificates and QR Code */}
+                    <Accordion type='single' collapsible className='w-full'>
+                      <AccordionItem value='certificates'>
+                        <AccordionTrigger className='text-left'>
+                          <div className='flex items-center dark:text-gray-200'>
+                            <FileText className='mr-2 h-5 w-5' />
+                            Giấy chứng nhận & QR Code
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className='space-y-4'>
+                          <div className='grid gap-4 md:grid-cols-2'>
+                            <div className='space-y-3'>
+                              <h4 className='font-semibold dark:text-gray-200'>
+                                Chứng nhận
+                              </h4>
+                              {lotTrackingResult.certificates.map(
+                                (cert: any, index: number) => (
+                                  <div
+                                    key={index}
+                                    className='flex items-center justify-between rounded-lg border p-3 dark:border-gray-600 dark:bg-gray-800'
+                                  >
+                                    <div className='flex items-center space-x-3'>
+                                      <FileText className='h-5 w-5 text-blue-600 dark:text-blue-300' />
+                                      <div>
+                                        <p className='font-medium dark:text-gray-200'>
+                                          {cert.name}
+                                        </p>
+                                        <p className='text-sm text-gray-600 dark:text-gray-400'>
+                                          {cert.type} • {cert.size}
+                                        </p>
+                                      </div>
+                                    </div>
+                                    <Button size='sm' variant='outline'>
+                                      <Download className='h-4 w-4' />
+                                    </Button>
+                                  </div>
+                                )
+                              )}
+                            </div>
+                            <div className='space-y-3'>
+                              <h4 className='font-semibold dark:text-gray-200'>
+                                QR Code xác minh
+                              </h4>
+                              <div className='flex flex-col items-center space-y-2 rounded-lg border p-4 dark:border-gray-600 dark:bg-gray-800'>
+                                <div className='flex h-24 w-24 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700'>
+                                  <QrCode className='h-12 w-12 text-gray-600 dark:text-gray-300' />
+                                </div>
+                                <p className='text-center text-xs text-gray-600 dark:text-gray-400'>
+                                  Quét để xác minh nhanh
+                                </p>
+                                <code className='rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-700 dark:text-gray-200'>
+                                  {lotTrackingResult.qrCode}
+                                </code>
+                              </div>
+                            </div>
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+                  </CardContent>
+                </Card>
+              )}
+              {/* Blockchain Verification Results */}
+              {showBlockchainVerify && blockchainVerifyResult && (
+                <Card className='border-purple-200 bg-purple-50 dark:border-purple-900 dark:bg-purple-950'>
+                  <CardHeader>
+                    <CardTitle className='flex items-center text-purple-800 dark:text-purple-300'>
+                      <Database className='mr-2 h-5 w-5' />
+                      Kết quả xác thực Blockchain
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-4'>
+                    <div className='grid gap-4 md:grid-cols-2'>
+                      <Card className='border-0 bg-white dark:bg-gray-900'>
+                        <CardHeader className='pb-3'>
+                          <CardTitle className='flex items-center text-base text-gray-900 dark:text-gray-100'>
+                            <CheckCircle className='mr-2 h-5 w-5 text-green-600' />
+                            Trạng thái giao dịch
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className='space-y-3'>
+                          <div className='flex items-center justify-between'>
+                            <span className='text-sm text-gray-600 dark:text-gray-400'>
+                              Trạng thái
+                            </span>
+                            <Badge className='bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'>
+                              <CheckCircle className='mr-1 h-3 w-3' />
+                              Transaction Confirmed
+                            </Badge>
+                          </div>
+                          <div className='flex items-center justify-between'>
+                            <span className='text-sm text-gray-600 dark:text-gray-400'>
+                              Block
+                            </span>
+                            <span className='font-mono text-sm text-gray-900 dark:text-gray-100'>
+                              #{blockchainVerifyResult.blockNumber}
+                            </span>
+                          </div>
+                          <div className='flex items-center justify-between'>
+                            <span className='text-sm text-gray-600 dark:text-gray-400'>
+                              Xác nhận
+                            </span>
+                            <span className='font-semibold text-green-600 dark:text-green-400'>
+                              {blockchainVerifyResult.confirmations} xác nhận
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      <Card className='border-0 bg-white dark:bg-gray-900'>
+                        <CardHeader className='pb-3'>
+                          <CardTitle className='flex items-center text-base text-gray-900 dark:text-gray-100'>
+                            <Hash className='mr-2 h-5 w-5 text-purple-600' />
+                            Thông tin Hash
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className='space-y-3'>
+                          <div className='space-y-1'>
+                            <span className='text-sm text-gray-600 dark:text-gray-400'>
+                              Hash
+                            </span>
+                            <code className='block break-all rounded bg-gray-100 p-2 font-mono text-xs dark:bg-gray-800 dark:text-gray-200'>
+                              {blockchainVerifyResult.hash}
+                            </code>
+                          </div>
+                          <div className='flex items-center justify-between'>
+                            <span className='text-sm text-gray-600 dark:text-gray-400'>
+                              Ngày ghi nhận
+                            </span>
+                            <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
+                              {blockchainVerifyResult.timestamp}
+                            </span>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+
+                    <Card className='border-0 bg-white dark:bg-gray-900'>
+                      <CardHeader className='pb-3'>
+                        <CardTitle className='flex items-center text-base text-gray-900 dark:text-gray-100'>
+                          <User className='mr-2 h-5 w-5 text-blue-600' />
+                          Bên ghi nhận
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className='space-y-3'>
+                        <div className='grid gap-4 md:grid-cols-2'>
+                          <div className='flex items-center justify-between'>
+                            <span className='text-sm text-gray-600 dark:text-gray-400'>
+                              Smart Contract
+                            </span>
+                            <span className='font-medium text-gray-900 dark:text-gray-100'>
+                              {blockchainVerifyResult.smartContract}
+                            </span>
+                          </div>
+                          <div className='flex items-center justify-between'>
+                            <span className='text-sm text-gray-600 dark:text-gray-400'>
+                              Người ký
+                            </span>
+                            <span className='font-medium text-gray-900 dark:text-gray-100'>
+                              {blockchainVerifyResult.signer}
+                            </span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           </TabsContent>
 
           {/* Truck Simulation Tab */}
