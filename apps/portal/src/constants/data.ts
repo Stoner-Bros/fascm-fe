@@ -60,6 +60,41 @@ export const navItems: NavItem[] = [
   }
 ];
 
+export const supplierNavItems: NavItem[] = [
+  {
+    title: 'Dashboard',
+    url: '/supplier/overview',
+    icon: 'dashboard',
+    isActive: false,
+    items: []
+  },
+  {
+    title: 'Harvest Batches',
+    url: '',
+    icon: 'product',
+    isActive: true,
+    items: [
+      {
+        title: 'Create Batch',
+        url: '/supplier/harvest-batches/create',
+        icon: 'add'
+      },
+      {
+        title: 'Track Batches',
+        url: '/supplier/harvest-batches/tracking',
+        icon: 'inventory'
+      }
+    ]
+  },
+  {
+    title: 'Payment Confirmation',
+    url: '/supplier/payment-confirmation',
+    icon: 'billing',
+    isActive: false,
+    items: []
+  }
+];
+
 export interface SaleUser {
   id: number;
   name: string;

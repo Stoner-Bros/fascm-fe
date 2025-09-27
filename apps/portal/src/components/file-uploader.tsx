@@ -211,11 +211,7 @@ export function FileUploader(props: FileUploaderProps) {
             )}
             {...dropzoneProps}
           >
-            <input
-              {...(getInputProps({
-                refKey: 'innerRef'
-              }) as React.InputHTMLAttributes<HTMLInputElement>)}
-            />
+            <input {...getInputProps()} />
             {isDragActive ? (
               <div className='flex flex-col items-center justify-center gap-4 sm:px-5'>
                 <div className='rounded-full border border-dashed p-3'>
