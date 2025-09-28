@@ -308,53 +308,12 @@ export function OrderPage() {
 
   return (
     <div className='flex-1 space-y-6 p-6'>
-      <div className='space-y-2'>
+      <div className='space-y-2 text-center'>
         <h1 className='text-3xl font-bold tracking-tight'>Đặt hàng theo lô</h1>
         <p className='text-muted-foreground'>
           Tạo đơn đặt hàng theo lô với thông tin chi tiết
         </p>
       </div>
-
-      {/* Thông tin lô hàng */}
-      <Card>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Package className='h-5 w-5' />
-            Thông tin lô hàng
-          </CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-            <div className='space-y-2'>
-              <Label htmlFor='batchNumber'>Số lô (tự động)</Label>
-              <Input
-                id='batchNumber'
-                value={batchNumber}
-                disabled
-                className='bg-gray-50'
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='orderDate'>Ngày đặt</Label>
-              <Input
-                id='orderDate'
-                type='date'
-                value={orderDate}
-                onChange={(e) => setOrderDate(e.target.value)}
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='expectedDeliveryDate'>Ngày dự kiến giao</Label>
-              <Input
-                id='expectedDeliveryDate'
-                type='date'
-                value={expectedDeliveryDate}
-                onChange={(e) => setExpectedDeliveryDate(e.target.value)}
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Địa chỉ giao hàng */}
       <Card>
@@ -545,40 +504,6 @@ export function OrderPage() {
                 }
               />
             </div>
-            <div className='space-y-2'>
-              <Label htmlFor='quality'>Chất lượng, tiêu chuẩn bảo quản</Label>
-              <Input
-                id='quality'
-                placeholder='VD: Nhiệt độ -18°C, độ ẩm 85%'
-                value={currentItem.qualityRequirements}
-                onChange={(e) =>
-                  setCurrentItem({
-                    ...currentItem,
-                    qualityRequirements: e.target.value
-                  })
-                }
-              />
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='packaging'>Đóng gói (bao bì)</Label>
-              <Select
-                value={currentItem.packaging}
-                onValueChange={(value) =>
-                  setCurrentItem({ ...currentItem, packaging: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder='Chọn loại đóng gói' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='thung-xop'>Thùng xốp</SelectItem>
-                  <SelectItem value='bao-nilon'>Bao nilon</SelectItem>
-                  <SelectItem value='container-lanh'>Container lạnh</SelectItem>
-                  <SelectItem value='thung-carton'>Thùng carton</SelectItem>
-                  <SelectItem value='bao-vai'>Bao vải</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
           <Button onClick={addOrderItem} className='w-full'>
@@ -647,98 +572,15 @@ export function OrderPage() {
             </div>
           )}
         </CardContent>
-      </Card>
-
-      {/* Thông tin vận chuyển */}
-      <Card>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <Truck className='h-5 w-5' />
-            Thông tin vận chuyển
-          </CardTitle>
-          <CardDescription>
-            Yêu cầu vận chuyển sẽ được Delivery Staff xử lý phù hợp
-          </CardDescription>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <div className='space-y-2'>
-            <Label htmlFor='transportRequirements'>Yêu cầu vận chuyển</Label>
-            <Textarea
-              id='transportRequirements'
-              placeholder='VD: Cần xe lạnh, Không được chồng chất, Giữ lạnh 2-8°C, Chống ẩm, Niêm phong...'
-              value={transportationRequirements}
-              onChange={(e) => setTransportationRequirements(e.target.value)}
-              rows={3}
-            />
-          </div>
-          <div className='space-y-2'>
-            <Label htmlFor='deliveryTime'>Thời gian giao hàng mong muốn</Label>
-            <Input
-              id='deliveryTime'
-              placeholder='VD: Trong 24h, Buổi sáng, Cuối tuần...'
-              value={desiredDeliveryTime}
-              onChange={(e) => setDesiredDeliveryTime(e.target.value)}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Thanh toán & hợp đồng */}
-      <Card>
-        <CardHeader>
-          <CardTitle className='flex items-center gap-2'>
-            <DollarSign className='h-5 w-5' />
-            Thanh toán & hợp đồng
-          </CardTitle>
-        </CardHeader>
-        <CardContent className='space-y-4'>
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-            <div className='space-y-2'>
-              <Label htmlFor='paymentMethod'>Phương thức thanh toán</Label>
-              <Select value={paymentMethod} onValueChange={setPaymentMethod}>
-                <SelectTrigger>
-                  <SelectValue placeholder='Chọn phương thức thanh toán' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='cod'>
-                    COD (Thanh toán khi nhận hàng)
-                  </SelectItem>
-                  <SelectItem value='bank-transfer'>
-                    Chuyển khoản ngân hàng
-                  </SelectItem>
-                  <SelectItem value='lc'>Letter of Credit (LC)</SelectItem>
-                  <SelectItem value='credit'>Thanh toán công nợ</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className='space-y-2'>
-              <Label htmlFor='incoterms'>Điều khoản hợp đồng (Incoterms)</Label>
-              <Select value={incoterms} onValueChange={setIncoterms}>
-                <SelectTrigger>
-                  <SelectValue placeholder='Chọn Incoterms (nếu B2B quốc tế)' />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value='fob'>FOB (Free On Board)</SelectItem>
-                  <SelectItem value='cif'>
-                    CIF (Cost, Insurance, Freight)
-                  </SelectItem>
-                  <SelectItem value='exw'>EXW (Ex Works)</SelectItem>
-                  <SelectItem value='dap'>DAP (Delivered At Place)</SelectItem>
-                  <SelectItem value='ddp'>DDP (Delivered Duty Paid)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          <div className='flex items-center space-x-2'>
-            <Checkbox
-              id='vatInvoice'
-              checked={vatInvoice}
-              onCheckedChange={(checked) => setVatInvoice(checked as boolean)}
-            />
-            <Label htmlFor='vatInvoice'>Xuất hóa đơn VAT</Label>
-          </div>
-        </CardContent>
+        <div className='flex items-center gap-3'>
+          <Checkbox
+            className='ml-5'
+            id='vatInvoice'
+            checked={vatInvoice}
+            onCheckedChange={(checked) => setVatInvoice(checked as boolean)}
+          />
+          <Label htmlFor='vatInvoice'>Xuất hóa đơn VAT</Label>
+        </div>
       </Card>
 
       {/* Errors */}

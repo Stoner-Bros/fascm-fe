@@ -5,12 +5,12 @@ import Link from 'next/link';
 
 export default function ConsigneeFooter() {
   return (
-    <footer className='bg-gray-900 py-16 text-white'>
+    <footer className='h-[250px] bg-gray-900 py-3 text-white'>
       <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
         <div className='grid gap-8 md:grid-cols-4'>
           {/* Company Info */}
           <div className='space-y-4'>
-            <div className='flex items-center space-x-3'>
+            <div className='flex items-center space-x-2'>
               <div className='flex h-10 w-10 items-center justify-center rounded-lg bg-green-600'>
                 <Leaf className='h-6 w-6 text-white' />
               </div>
@@ -34,7 +34,7 @@ export default function ConsigneeFooter() {
             <ul className='space-y-2'>
               <li>
                 <Link
-                  href='/consignee'
+                  href='/consignee/home'
                   className='text-gray-400 hover:text-white'
                 >
                   Trang chủ
@@ -122,7 +122,7 @@ export default function ConsigneeFooter() {
           </div>
         </div>
 
-        <div className='mt-12 border-t border-gray-800 pt-8 text-center'>
+        <div className='mt-3 border-t border-gray-800 pt-3 text-center'>
           <p className='text-gray-400'>
             © 2024 AgriChain. Tất cả quyền được bảo lưu.
           </p>

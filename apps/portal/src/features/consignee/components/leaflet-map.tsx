@@ -102,6 +102,7 @@ export default function LeafletMap({
   truckPosition,
   truckData
 }: LeafletMapProps) {
+  const mapKey = useRef(Math.random().toString(36).substr(2, 9));
   const truckMarkerRef = useRef<L.Marker | null>(null);
 
   // Component để auto-fit map bounds
@@ -119,152 +120,181 @@ export default function LeafletMap({
         });
         map.fitBounds(bounds, { padding: [20, 20] });
       }
-    }, [map, route, truckPosition, checkpoints]);
+    });
 
     return null;
   }
 
-  // Component để animate truck movement
+  // Component để animate truck
   function AnimatedTruck() {
     const map = useMap();
 
     useEffect(() => {
+      // Cleanup existing marker trước khi tạo mới
       if (truckMarkerRef.current) {
-        // Smooth animation khi truck di chuyển
-        truckMarkerRef.current.setLatLng(truckPosition);
+        try {
+          map.removeLayer(truckMarkerRef.current);
+        } catch (error) {
+          // Ignore error nếu marker đã bị remove
+        }
+        truckMarkerRef.current = null;
       }
-    }, [truckPosition, map]);
 
-    return (
-      <Marker position={truckPosition} icon={truckIcon} ref={truckMarkerRef}>
-        <Popup>
-          <div className='rounded-lg bg-red-50 p-3'>
-            <h3 className='mb-2 flex items-center text-lg font-semibold text-red-800'>
-              🚛 TRUCK {truckData.id}
+      // Tạo marker mới với error handling
+      try {
+        const marker = L.marker(truckPosition, { icon: truckIcon });
+
+        // Thêm popup cho marker
+        marker.bindPopup(`
+          <div class="rounded-lg bg-red-50 p-3">
+            <h3 class="mb-2 flex items-center text-lg font-semibold text-red-800">
+              🚛 TRUCK ${truckData.id}
             </h3>
-            <div className='space-y-1'>
-              <p className='text-sm text-gray-700'>
-                <span className='font-medium'>Tài xế:</span> {truckData.driver}
+            <div class="space-y-1">
+              <p class="text-sm font-medium text-gray-700">
+                <span class="font-medium">Tài xế:</span> ${truckData.driver}
               </p>
-              <p className='text-sm text-gray-700'>
-                <span className='font-medium'>Tốc độ:</span>{' '}
-                {truckData.speed.toFixed(1)} km/h
+              <p class="text-sm font-medium text-gray-700">
+                <span class="font-medium">Tốc độ:</span> ${truckData.speed.toFixed(1)} km/h
               </p>
-              <p
-                className={`text-sm font-medium ${truckData.temperature > 5 ? 'text-red-600' : 'text-gray-700'}`}
-              >
-                <span className='font-medium'>Nhiệt độ:</span>{' '}
-                {truckData.temperature.toFixed(1)}°C
-                {truckData.temperature > 5 && ' ⚠️'}
+              <p class="text-sm font-medium ${truckData.temperature > 5 ? 'text-red-600' : 'text-gray-700'}">
+                <span class="font-medium">Nhiệt độ:</span> ${truckData.temperature.toFixed(1)}°C
+                ${truckData.temperature > 5 ? ' ⚠️' : ''}
               </p>
-              <p
-                className={`text-sm font-medium ${truckData.humidity > 75 ? 'text-red-600' : 'text-gray-700'}`}
-              >
-                <span className='font-medium'>Độ ẩm:</span>{' '}
-                {truckData.humidity.toFixed(1)}%
-                {truckData.humidity > 75 && ' ⚠️'}
+              <p class="text-sm font-medium ${truckData.humidity > 75 ? 'text-red-600' : 'text-gray-700'}">
+                <span class="font-medium">Độ ẩm:</span> ${truckData.humidity.toFixed(1)}%
+                ${truckData.humidity > 75 ? ' ⚠️' : ''}
               </p>
             </div>
           </div>
-        </Popup>
-      </Marker>
-    );
+        `);
+
+        truckMarkerRef.current = marker;
+        marker.addTo(map);
+      } catch (error) {}
+
+      // Cleanup function
+      return () => {
+        if (truckMarkerRef.current) {
+          try {
+            map.removeLayer(truckMarkerRef.current);
+          } catch (error) {
+            // Ignore cleanup errors
+          }
+          truckMarkerRef.current = null;
+        }
+      };
+    });
+
+    // Không return Marker component nữa để tránh duplicate
+    return null;
   }
 
   return (
-    <MapContainer
-      center={[21.019, 105.8327]}
-      zoom={13}
-      style={{ height: '100%', width: '100%' }}
-    >
-      <FitBounds />
-      <TileLayer
-        url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-      />
+    <div className='h-full w-full overflow-hidden'>
+      <MapContainer
+        key={mapKey.current}
+        center={[21.019, 105.8327]}
+        zoom={13}
+        style={{ height: '100%', width: '100%', position: 'relative' }}
+        className='z-0'
+        whenCreated={(mapInstance: L.Map) => {
+          // Đảm bảo map được khởi tạo đúng cách
+          setTimeout(() => {
+            mapInstance.invalidateSize();
+          }, 100);
+        }}
+      >
+        <FitBounds />
+        <TileLayer
+          url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
 
-      {/* Route với style cải thiện */}
-      <Polyline
-        positions={route}
-        color='#2563eb'
-        weight={5}
-        opacity={0.8}
-        dashArray='0'
-        lineCap='round'
-        lineJoin='round'
-      />
-
-      {/* Route shadow để tạo hiệu ứng 3D */}
-      <Polyline
-        positions={route}
-        color='#1e40af'
-        weight={7}
-        opacity={0.3}
-        dashArray='0'
-        lineCap='round'
-        lineJoin='round'
-      />
-
-      {/* Route đã đi (màu xanh lá) */}
-      {route.length > 0 && (
+        {/* Route với style cải thiện */}
         <Polyline
-          positions={route.slice(
-            0,
-            Math.max(1, Math.floor(route.length * 0.3))
-          )}
-          color='#16a34a'
+          positions={route}
+          color='#2563eb'
           weight={5}
-          opacity={0.9}
+          opacity={0.8}
           dashArray='0'
           lineCap='round'
           lineJoin='round'
         />
-      )}
 
-      {/* Checkpoints */}
-      {checkpoints.map((checkpoint) => (
-        <Marker
-          key={checkpoint.id}
-          position={checkpoint.position}
-          icon={
-            checkpoint.reached ? checkpointReachedIcon : checkpointPendingIcon
-          }
-        >
-          <Popup>
-            <div
-              className={`rounded-lg p-3 ${checkpoint.reached ? 'bg-green-50' : 'bg-gray-50'}`}
-            >
-              <h3
-                className={`mb-2 text-lg font-semibold ${checkpoint.reached ? 'text-green-800' : 'text-gray-800'}`}
+        {/* Route shadow để tạo hiệu ứng 3D */}
+        <Polyline
+          positions={route}
+          color='#1e40af'
+          weight={7}
+          opacity={0.3}
+          dashArray='0'
+          lineCap='round'
+          lineJoin='round'
+        />
+
+        {/* Route đã đi (màu xanh lá) */}
+        {route.length > 0 && (
+          <Polyline
+            positions={route.slice(
+              0,
+              Math.max(1, Math.floor(route.length * 0.3))
+            )}
+            color='#16a34a'
+            weight={5}
+            opacity={0.9}
+            dashArray='0'
+            lineCap='round'
+            lineJoin='round'
+          />
+        )}
+
+        {/* Checkpoints */}
+        {checkpoints.map((checkpoint) => (
+          <Marker
+            key={checkpoint.id}
+            position={checkpoint.position}
+            icon={
+              checkpoint.reached ? checkpointReachedIcon : checkpointPendingIcon
+            }
+          >
+            <Popup>
+              <div
+                className={`rounded-lg p-3 ${checkpoint.reached ? 'bg-green-50' : 'bg-gray-50'}`}
               >
-                {checkpoint.name}
-              </h3>
-              <div className='space-y-1'>
-                <p
-                  className={`text-sm font-medium ${checkpoint.reached ? 'text-green-700' : 'text-gray-600'}`}
+                <h3
+                  className={`mb-2 text-lg font-semibold ${checkpoint.reached ? 'text-green-800' : 'text-gray-800'}`}
                 >
-                  Trạng thái: {checkpoint.reached ? '✅ Đã qua' : '⏳ Chưa đến'}
-                </p>
-                {checkpoint.timestamp && (
-                  <p className='text-sm text-gray-600'>
-                    <span className='font-medium'>Thời gian:</span>{' '}
-                    {checkpoint.timestamp}
+                  {checkpoint.name}
+                </h3>
+                <div className='space-y-1'>
+                  <p
+                    className={`text-sm font-medium ${checkpoint.reached ? 'text-green-700' : 'text-gray-600'}`}
+                  >
+                    Trạng thái:{' '}
+                    {checkpoint.reached ? '✅ Đã qua' : '⏳ Chưa đến'}
                   </p>
-                )}
-                {checkpoint.blockHash && (
-                  <p className='font-mono text-xs break-all text-gray-500'>
-                    <span className='font-medium'>Hash:</span>{' '}
-                    {checkpoint.blockHash}
-                  </p>
-                )}
+                  {checkpoint.timestamp && (
+                    <p className='text-sm text-gray-600'>
+                      <span className='font-medium'>Thời gian:</span>{' '}
+                      {checkpoint.timestamp}
+                    </p>
+                  )}
+                  {checkpoint.blockHash && (
+                    <p className='break-all font-mono text-xs text-gray-500'>
+                      <span className='font-medium'>Hash:</span>{' '}
+                      {checkpoint.blockHash}
+                    </p>
+                  )}
+                </div>
               </div>
-            </div>
-          </Popup>
-        </Marker>
-      ))}
+            </Popup>
+          </Marker>
+        ))}
 
-      {/* Truck - Với animation mượt */}
-      <AnimatedTruck />
-    </MapContainer>
+        {/* Truck - Với animation mượt */}
+        <AnimatedTruck />
+      </MapContainer>
+    </div>
   );
 }

@@ -237,7 +237,7 @@ export function MyOrdersPage() {
 
   return (
     <div className='flex-1 space-y-6 p-6'>
-      <div className='space-y-2'>
+      <div className='space-y-2 text-center'>
         <h1 className='text-3xl font-bold tracking-tight'>Đơn hàng của tôi</h1>
         <p className='text-muted-foreground'>
           Theo dõi và quản lý tất cả đơn hàng đã đặt
@@ -256,7 +256,7 @@ export function MyOrdersPage() {
           <div className='flex gap-4'>
             <div className='flex-1'>
               <div className='relative'>
-                <Search className='text-muted-foreground absolute top-3 left-3 h-4 w-4' />
+                <Search className='text-muted-foreground absolute left-3 top-3 h-4 w-4' />
                 <Input
                   placeholder='Tìm kiếm theo mã đơn hàng hoặc nhà cung cấp...'
                   value={searchTerm}
