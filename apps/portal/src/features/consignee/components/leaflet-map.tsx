@@ -12,6 +12,24 @@ import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { useEffect, useRef } from 'react';
 
+// Component để xử lý việc khởi tạo map
+function MapInitializer() {
+  const map = useMap();
+
+  useEffect(() => {
+    // Đảm bảo map được khởi tạo đúng cách
+    const timer = setTimeout(() => {
+      if (map) {
+        map.invalidateSize();
+      }
+    }, 100);
+
+    return () => clearTimeout(timer);
+  }, [map]);
+
+  return null;
+}
+
 // Fix cho default markers
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -198,13 +216,8 @@ export default function LeafletMap({
         zoom={13}
         style={{ height: '100%', width: '100%', position: 'relative' }}
         className='z-0'
-        whenReady={(mapInstance: L.Map) => {
-          // Đảm bảo map được khởi tạo đúng cách
-          setTimeout(() => {
-            mapInstance.invalidateSize();
-          }, 100);
-        }}
       >
+        <MapInitializer />
         <FitBounds />
         <TileLayer
           url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
