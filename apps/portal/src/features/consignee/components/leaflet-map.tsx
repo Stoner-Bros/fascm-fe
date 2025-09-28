@@ -198,7 +198,7 @@ export default function LeafletMap({
         zoom={13}
         style={{ height: '100%', width: '100%', position: 'relative' }}
         className='z-0'
-        whenCreated={(mapInstance: L.Map) => {
+        whenReady={(mapInstance: L.Map) => {
           // Đảm bảo map được khởi tạo đúng cách
           setTimeout(() => {
             mapInstance.invalidateSize();
