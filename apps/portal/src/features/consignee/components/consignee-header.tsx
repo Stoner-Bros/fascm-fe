@@ -4,18 +4,75 @@ import { ModeToggle } from '@/components/layout/ThemeToggle/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { UserNav } from '@/components/layout/user-nav';
 import { useUser, SignInButton } from '@clerk/nextjs';
-import { Leaf } from 'lucide-react';
+import { Leaf, Bell } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useState } from 'react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Badge } from '@/components/ui/badge';
+
+// Mock notifications data
+const mockNotifications = [
+  {
+    id: 1,
+    title: 'Đơn hàng #ORD001 đã được xác nhận',
+    message: 'Đơn hàng của bạn đã được xác nhận và đang được chuẩn bị.',
+    time: '5 phút trước',
+    isRead: false,
+    type: 'order'
+  },
+  {
+    id: 2,
+    title: 'Sản phẩm mới có sẵn',
+    message: 'Rau xanh hữu cơ từ trang trại ABC đã có sẵn.',
+    time: '1 giờ trước',
+    isRead: false,
+    type: 'product'
+  },
+  {
+    id: 3,
+    title: 'Đơn hàng #ORD002 đang giao',
+    message: 'Đơn hàng của bạn đang trên đường giao đến địa chỉ.',
+    time: '2 giờ trước',
+    isRead: true,
+    type: 'delivery'
+  }
+];
 
 export default function ConsigneeHeader() {
   const pathname = usePathname();
   const { user } = useUser();
+  const [notifications, setNotifications] = useState(mockNotifications);
+
+  const unreadCount = notifications.filter((n) => !n.isRead).length;
 
   const isActive = (path: string) => {
     if (path === '/consignee' && pathname === '/consignee') return true;
     if (path !== '/consignee' && pathname.startsWith(path)) return true;
     return false;
+  };
+
+  const markAsRead = (id: number) => {
+    setNotifications((prev) =>
+      prev.map((notification) =>
+        notification.id === id
+          ? { ...notification, isRead: true }
+          : notification
+      )
+    );
+  };
+
+  const markAllAsRead = () => {
+    setNotifications((prev) =>
+      prev.map((notification) => ({ ...notification, isRead: true }))
+    );
   };
 
   return (
@@ -63,10 +120,86 @@ export default function ConsigneeHeader() {
           </nav>
 
           {/* Login/Register Button hoặc User Avatar */}
-          <div className='flex items-center space-x-10'>
+          <div className='flex items-center space-x-4'>
             <ModeToggle />
             {user ? (
-              <UserNav />
+              <>
+                {/* Notification Button */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant='ghost' size='sm' className='relative'>
+                      <Bell className='h-5 w-5' />
+                      {unreadCount > 0 && (
+                        <Badge
+                          variant='destructive'
+                          className='absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full p-0 text-xs'
+                        >
+                          {unreadCount}
+                        </Badge>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align='end' className='w-80'>
+                    <DropdownMenuLabel className='flex items-center justify-between'>
+                      Thông báo
+                      {unreadCount > 0 && (
+                        <Button
+                          variant='ghost'
+                          size='sm'
+                          onClick={markAllAsRead}
+                          className='text-xs'
+                        >
+                          Đánh dấu tất cả đã đọc
+                        </Button>
+                      )}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <div className='max-h-96 overflow-y-auto'>
+                      {notifications.length === 0 ? (
+                        <div className='p-4 text-center text-gray-500'>
+                          Không có thông báo nào
+                        </div>
+                      ) : (
+                        notifications.map((notification) => (
+                          <DropdownMenuItem
+                            key={notification.id}
+                            className={`flex cursor-pointer flex-col items-start p-3 ${
+                              !notification.isRead
+                                ? 'bg-blue-50 dark:bg-blue-900/20'
+                                : ''
+                            }`}
+                            onClick={() => markAsRead(notification.id)}
+                          >
+                            <div className='flex w-full items-start justify-between'>
+                              <div className='flex-1'>
+                                <p
+                                  className={`text-sm font-medium ${
+                                    !notification.isRead
+                                      ? 'text-blue-900 dark:text-blue-100'
+                                      : 'text-gray-900 dark:text-gray-100'
+                                  }`}
+                                >
+                                  {notification.title}
+                                </p>
+                                <p className='mt-1 text-xs text-gray-600 dark:text-gray-400'>
+                                  {notification.message}
+                                </p>
+                                <p className='mt-1 text-xs text-gray-500 dark:text-gray-500'>
+                                  {notification.time}
+                                </p>
+                              </div>
+                              {!notification.isRead && (
+                                <div className='ml-2 mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-blue-600'></div>
+                              )}
+                            </div>
+                          </DropdownMenuItem>
+                        ))
+                      )}
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <UserNav />
+              </>
             ) : (
               <>
                 <SignInButton mode='modal'>

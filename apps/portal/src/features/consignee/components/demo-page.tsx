@@ -68,38 +68,38 @@ export default function DemoPage() {
 
   // Sample lot tracking data
   const sampleLotData: Record<string, any> = {
-    'LOT-2024-001': {
-      lotCode: 'LOT-2024-001',
+    'LOT-2025-001': {
+      lotCode: 'LOT-2025-001',
       productName: 'Rau xanh Đà Lạt',
-      productionDate: '05/09/2024',
-      expiryDate: '20/09/2024',
+      productionDate: '05/09/2025',
+      expiryDate: '20/09/2025',
       timeline: [
         {
           stage: 'Trang trại A',
           icon: Leaf,
           status: 'completed',
-          date: '05/09/2024 06:00',
+          date: '05/09/2025 06:00',
           location: 'Đà Lạt, Lâm Đồng'
         },
         {
           stage: 'Nhà máy sơ chế',
           icon: Factory,
           status: 'completed',
-          date: '05/09/2024 14:00',
+          date: '05/09/2025 14:00',
           location: 'KCN Đà Lạt'
         },
         {
           stage: 'Vận chuyển lạnh',
           icon: Truck,
           status: 'completed',
-          date: '06/09/2024 08:00',
+          date: '06/09/2025 08:00',
           location: 'Đường vận chuyển'
         },
         {
           stage: 'Siêu thị XYZ',
           icon: Store,
           status: 'completed',
-          date: '06/09/2024 16:00',
+          date: '06/09/2025 16:00',
           location: 'TP.HCM'
         }
       ],
@@ -107,41 +107,41 @@ export default function DemoPage() {
         { name: 'VietGAP Certificate', type: 'PDF', size: '2.3 MB' },
         { name: 'GlobalGAP Certificate', type: 'PDF', size: '1.8 MB' }
       ],
-      qrCode: 'QR_LOT_2024_001_VERIFIED',
+      qrCode: 'QR_LOT_2025_001_VERIFIED',
       completionPercentage: 100
     },
-    'LOT-2024-002': {
-      lotCode: 'LOT-2024-002',
+    'LOT-2025-002': {
+      lotCode: 'LOT-2025-002',
       productName: 'Thịt bò Úc',
-      productionDate: '03/09/2024',
-      expiryDate: '03/10/2024',
+      productionDate: '03/09/2025',
+      expiryDate: '03/10/2025',
       timeline: [
         {
           stage: 'Trang trại chăn nuôi',
           icon: Leaf,
           status: 'completed',
-          date: '03/09/2024 05:00',
+          date: '03/09/2025 05:00',
           location: 'Queensland, Úc'
         },
         {
           stage: 'Nhà máy chế biến',
           icon: Factory,
           status: 'completed',
-          date: '03/09/2024 12:00',
+          date: '03/09/2025 12:00',
           location: 'Sydney, Úc'
         },
         {
           stage: 'Vận chuyển quốc tế',
           icon: Truck,
           status: 'completed',
-          date: '04/09/2024 10:00',
+          date: '04/09/2025 10:00',
           location: 'Cảng Sydney'
         },
         {
           stage: 'Siêu thị ABC',
           icon: Store,
           status: 'in_progress',
-          date: '07/09/2024 09:00',
+          date: '07/09/2025 09:00',
           location: 'Hà Nội'
         }
       ],
@@ -149,7 +149,7 @@ export default function DemoPage() {
         { name: 'Australian Beef Certificate', type: 'PDF', size: '3.1 MB' },
         { name: 'Export Health Certificate', type: 'PDF', size: '2.5 MB' }
       ],
-      qrCode: 'QR_LOT_2024_002_VERIFIED',
+      qrCode: 'QR_LOT_2025_002_VERIFIED',
       completionPercentage: 75
     }
   };
@@ -161,7 +161,7 @@ export default function DemoPage() {
       blockNumber: 123456,
       confirmations: 5,
       hash: '0x7a8b9c2d4e5f6789abcdef1234567890',
-      timestamp: '06/09/2024 10:35 AM',
+      timestamp: '06/09/2025 10:35 AM',
       smartContract: 'TraceabilitySC',
       signer: 'Công ty ABC',
       gasUsed: '21000',
@@ -219,7 +219,7 @@ export default function DemoPage() {
     {
       stage: 'Thu hoạch',
       location: 'Trang trại Organic Đà Lạt',
-      timestamp: '2024-01-15 06:30:00',
+      timestamp: '2025-01-15 06:30:00',
       hash: '0x1a2b3c4d',
       status: 'completed',
       details: 'Thu hoạch rau xanh tại độ cao 1,500m'
@@ -227,7 +227,7 @@ export default function DemoPage() {
     {
       stage: 'Kho lưu trữ',
       location: 'Kho lạnh Hòa Lạc',
-      timestamp: '2024-01-15 14:20:00',
+      timestamp: '2025-01-15 14:20:00',
       hash: '0x2b3c4d5e',
       status: 'completed',
       details: 'Bảo quản ở 4°C, độ ẩm 70%'
@@ -235,7 +235,7 @@ export default function DemoPage() {
     {
       stage: 'Vận chuyển',
       location: 'Xe tải lạnh VN-001',
-      timestamp: '2024-01-16 08:00:00',
+      timestamp: '2025-01-16 08:00:00',
       hash: '0x3c4d5e6f',
       status: 'in_progress',
       details: 'Đang vận chuyển đến Hà Nội'
@@ -243,7 +243,7 @@ export default function DemoPage() {
     {
       stage: 'Giao hàng',
       location: 'Siêu thị BigC Thăng Long',
-      timestamp: '2024-01-16 16:00:00',
+      timestamp: '2025-01-16 16:00:00',
       hash: '0x4d5e6f7g',
       status: 'pending',
       details: 'Dự kiến giao hàng'
@@ -272,7 +272,7 @@ export default function DemoPage() {
   ];
 
   const handleQRScan = () => {
-    setBatchCode('LOT-2024-001');
+    setBatchCode('LOT-2025-001');
     setShowQRResult(true);
   };
 
@@ -491,7 +491,7 @@ export default function DemoPage() {
                   {showQRResult && (
                     <div className='mt-4 rounded-lg bg-purple-50 p-4'>
                       <p className='font-medium text-purple-800'>
-                        Mã lô: LOT-2024-001
+                        Mã lô: LOT-2025-001
                       </p>
                       <p className='text-sm text-purple-600'>
                         Rau xanh hữu cơ Đà Lạt
@@ -550,7 +550,7 @@ export default function DemoPage() {
                 <CardHeader>
                   <CardTitle className='flex items-center'>
                     <Clock className='mr-2 h-5 w-5 text-blue-600' />
-                    Lịch sử Blockchain Timeline - LOT-2024-001
+                    Lịch sử Blockchain Timeline - LOT-2025-001
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -639,7 +639,7 @@ export default function DemoPage() {
                 <CardContent className='space-y-4'>
                   <div className='flex space-x-2'>
                     <Input
-                      placeholder='Nhập mã lô (VD: LOT-2024-001)'
+                      placeholder='Nhập mã lô (VD: LOT-2025-001)'
                       value={batchCode}
                       onChange={(e) => setBatchCode(e.target.value)}
                     />
@@ -655,9 +655,9 @@ export default function DemoPage() {
                   <div className='text-sm text-gray-600'>
                     <p>Mã lô mẫu để thử:</p>
                     <ul className='mt-2 list-inside list-disc space-y-1'>
-                      <li>LOT-2024-001 (Rau xanh Đà Lạt)</li>
-                      <li>LOT-2024-002 (Thịt bò Úc)</li>
-                      <li>LOT-2024-003 (Cá hồi Na Uy)</li>
+                      <li>LOT-2025-001 (Rau xanh Đà Lạt)</li>
+                      <li>LOT-2025-002 (Thịt bò Úc)</li>
+                      <li>LOT-2025-003 (Cá hồi Na Uy)</li>
                     </ul>
                   </div>
                 </CardContent>

@@ -124,7 +124,7 @@ export default function ConsigneeFooter() {
 
         <div className='mt-3 border-t border-gray-800 pt-3 text-center'>
           <p className='text-gray-400'>
-            © 2024 AgriChain. Tất cả quyền được bảo lưu.
+            © 2025 AgriChain. Tất cả quyền được bảo lưu.
           </p>
         </div>
       </div>

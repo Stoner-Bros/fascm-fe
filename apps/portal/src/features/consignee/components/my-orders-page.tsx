@@ -11,7 +11,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import {
   Select,
   SelectContent,
@@ -30,8 +29,7 @@ import {
   Download,
   Truck,
   AlertTriangle,
-  ThumbsUp,
-  ThumbsDown
+  X
 } from 'lucide-react';
 import { orderStatuses } from '@/features/consignee/constants/data';
 
@@ -59,15 +57,15 @@ interface Order {
 const mockOrders: Order[] = [
   {
     id: '1',
-    orderNumber: 'ORD-2024-001',
-    date: '2024-01-15',
+    orderNumber: 'ORD-2025-001',
+    date: '2025-01-15',
     status: 'DELIVERED',
     totalAmount: 2500000,
     totalWeight: 150,
     productCount: 3,
     supplierName: 'Nông trường Đồng Tâm',
-    estimatedDelivery: '2024-01-20',
-    actualDelivery: '2024-01-20',
+    estimatedDelivery: '2025-01-20',
+    actualDelivery: '2025-01-20',
     consigneeConfirmation: 'ACCEPTED',
     products: [
       { name: 'Gạo ST25', quantity: 50, unit: 'kg', price: 25000 },
@@ -77,15 +75,15 @@ const mockOrders: Order[] = [
   },
   {
     id: '2',
-    orderNumber: 'ORD-2024-002',
-    date: '2024-01-18',
+    orderNumber: 'ORD-2025-002',
+    date: '2025-01-18',
     status: 'DELIVERED',
     totalAmount: 1800000,
     totalWeight: 100,
     productCount: 2,
     supplierName: 'Hợp tác xã Xanh',
-    estimatedDelivery: '2024-01-25',
-    actualDelivery: '2024-01-25',
+    estimatedDelivery: '2025-01-25',
+    actualDelivery: '2025-01-25',
     consigneeConfirmation: null, // Chờ xác nhận
     products: [
       { name: 'Dưa chuột', quantity: 40, unit: 'kg', price: 18000 },
@@ -94,14 +92,14 @@ const mockOrders: Order[] = [
   },
   {
     id: '3',
-    orderNumber: 'ORD-2024-003',
-    date: '2024-01-20',
+    orderNumber: 'ORD-2025-003',
+    date: '2025-01-20',
     status: 'IN_TRANSIT',
     totalAmount: 3200000,
     totalWeight: 200,
     productCount: 4,
     supplierName: 'Trang trại Organic',
-    estimatedDelivery: '2024-01-28',
+    estimatedDelivery: '2025-01-28',
     products: [
       { name: 'Bắp cải', quantity: 60, unit: 'kg', price: 20000 },
       { name: 'Cà rót', quantity: 35, unit: 'kg', price: 22000 },
@@ -111,14 +109,14 @@ const mockOrders: Order[] = [
   },
   {
     id: '4',
-    orderNumber: 'ORD-2024-004',
-    date: '2024-01-22',
+    orderNumber: 'ORD-2025-004',
+    date: '2025-01-22',
     status: 'CANCELLED',
     totalAmount: 1200000,
     totalWeight: 80,
     productCount: 2,
     supplierName: 'Vườn rau sạch Miền Nam',
-    estimatedDelivery: '2024-01-30',
+    estimatedDelivery: '2025-01-30',
     products: [
       { name: 'Xà lách', quantity: 30, unit: 'kg', price: 25000 },
       { name: 'Cải thảo', quantity: 25, unit: 'kg', price: 18000 }
@@ -130,7 +128,6 @@ export function MyOrdersPage() {
   const [orders, setOrders] = useState<Order[]>(mockOrders);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
@@ -141,60 +138,45 @@ export function MyOrdersPage() {
     return matchesSearch && matchesStatus;
   });
 
-  // Xác nhận đơn hàng
-  const confirmOrder = (
-    orderId: string,
-    confirmation: 'ACCEPTED' | 'REJECTED',
-    reason?: string
-  ) => {
-    setOrders(
-      orders.map((order) =>
-        order.id === orderId
-          ? {
-              ...order,
-              consigneeConfirmation: confirmation,
-              rejectionReason: confirmation === 'REJECTED' ? reason : undefined,
-              status: confirmation === 'ACCEPTED' ? 'CONFIRMED' : 'DELIVERED'
-            }
-          : order
-      )
-    );
+  // Hủy đơn hàng (chỉ khi PENDING)
+  const cancelOrder = (orderId: string) => {
+    if (confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')) {
+      setOrders(
+        orders.map((order) =>
+          order.id === orderId ? { ...order, status: 'CANCELLED' } : order
+        )
+      );
+    }
   };
 
-  // Kiểm tra xem đơn hàng có cần xác nhận không
-  const needsConfirmation = (order: Order) => {
-    return order.status === 'DELIVERED' && order.consigneeConfirmation === null;
+  // Điều hướng đến trang chi tiết đơn hàng
+  const viewOrderDetail = (orderId: string) => {
+    window.location.href = `/consignee/my-orders/${orderId}`;
   };
 
-  // Lấy badge xác nhận
+  // Tải hóa đơn
+  const downloadInvoice = (orderId: string) => {
+    // TODO: Implement invoice download
+    console.log('Download invoice for order:', orderId);
+    alert('Tính năng tải hóa đơn sẽ được triển khai sớm!');
+  };
+
+  // Lấy badge xác nhận đơn giản
   const getConfirmationBadge = (order: Order) => {
     if (order.consigneeConfirmation === 'ACCEPTED') {
       return (
-        <Badge
-          variant='default'
-          className='flex items-center gap-1 bg-green-100 text-green-800'
-        >
-          <ThumbsUp className='h-3 w-3' />
-          Đã chấp nhận
+        <Badge variant='default' className='bg-green-100 text-green-800'>
+          ✓ Đã xác nhận
         </Badge>
       );
     }
     if (order.consigneeConfirmation === 'REJECTED') {
-      return (
-        <Badge variant='destructive' className='flex items-center gap-1'>
-          <ThumbsDown className='h-3 w-3' />
-          Đã từ chối
-        </Badge>
-      );
+      return <Badge variant='destructive'>✗ Đã từ chối</Badge>;
     }
-    if (needsConfirmation(order)) {
+    if (order.status === 'DELIVERED' && order.consigneeConfirmation === null) {
       return (
-        <Badge
-          variant='secondary'
-          className='flex items-center gap-1 bg-yellow-100 text-yellow-800'
-        >
-          <AlertTriangle className='h-3 w-3' />
-          Chờ xác nhận
+        <Badge variant='secondary' className='bg-yellow-100 text-yellow-800'>
+          ⚠ Chờ xác nhận
         </Badge>
       );
     }
@@ -240,16 +222,16 @@ export function MyOrdersPage() {
       <div className='space-y-2 text-center'>
         <h1 className='text-3xl font-bold tracking-tight'>Đơn hàng của tôi</h1>
         <p className='text-muted-foreground'>
-          Theo dõi và quản lý tất cả đơn hàng đã đặt
+          Tổng quan và quản lý nhanh các đơn hàng
         </p>
       </div>
 
-      {/* Filters */}
+      {/* Filters - Simplified */}
       <Card>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <Filter className='h-5 w-5' />
-            Bộ lọc
+            Tìm kiếm & Lọc
           </CardTitle>
         </CardHeader>
         <CardContent className='space-y-4'>
@@ -283,7 +265,7 @@ export function MyOrdersPage() {
         </CardContent>
       </Card>
 
-      {/* Orders List */}
+      {/* Orders List - Simplified */}
       <div className='space-y-4'>
         {filteredOrders.length === 0 ? (
           <Card>
@@ -327,17 +309,18 @@ export function MyOrdersPage() {
               </CardHeader>
 
               <CardContent className='space-y-4'>
+                {/* Quick Overview Info */}
                 <div className='grid grid-cols-2 gap-4 text-sm md:grid-cols-4'>
                   <div>
-                    <p className='text-muted-foreground'>Số sản phẩm</p>
-                    <p className='font-medium'>{order.productCount} sản phẩm</p>
+                    <p className='text-muted-foreground'>Sản phẩm</p>
+                    <p className='font-medium'>{order.productCount} loại</p>
                   </div>
                   <div>
-                    <p className='text-muted-foreground'>Tổng trọng lượng</p>
+                    <p className='text-muted-foreground'>Trọng lượng</p>
                     <p className='font-medium'>{order.totalWeight}kg</p>
                   </div>
                   <div>
-                    <p className='text-muted-foreground'>Tổng giá trị</p>
+                    <p className='text-muted-foreground'>Giá trị</p>
                     <p className='font-medium'>
                       {order.totalAmount.toLocaleString('vi-VN')} VNĐ
                     </p>
@@ -352,61 +335,42 @@ export function MyOrdersPage() {
                   </div>
                 </div>
 
-                <Separator />
+                {/* Basic Actions Only */}
+                <div className='flex items-center justify-between border-t pt-4'>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={() => viewOrderDetail(order.id)}
+                    className='flex items-center gap-2'
+                  >
+                    <Eye className='h-4 w-4' />
+                    Xem chi tiết
+                  </Button>
 
-                <div className='flex items-center justify-between'>
                   <div className='flex gap-2'>
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      onClick={() => setSelectedOrder(order)}
-                    >
-                      <Eye className='mr-2 h-4 w-4' />
-                      Xem chi tiết
-                    </Button>
-
-                    {order.status === 'DELIVERED' && (
-                      <Button variant='outline' size='sm'>
-                        <Download className='mr-2 h-4 w-4' />
-                        Tải hóa đơn
+                    {/* Hủy đơn - chỉ khi PENDING */}
+                    {order.status === 'PENDING' && (
+                      <Button
+                        variant='destructive'
+                        size='sm'
+                        onClick={() => cancelOrder(order.id)}
+                        className='flex items-center gap-2'
+                      >
+                        <X className='h-4 w-4' />
+                        Hủy đơn
                       </Button>
                     )}
-                  </div>
 
-                  <div className='flex gap-2'>
-                    {/* Nút xác nhận cho đơn hàng đã giao */}
-                    {needsConfirmation(order) && (
-                      <>
-                        <Button
-                          variant='default'
-                          size='sm'
-                          className='bg-green-600 hover:bg-green-700'
-                          onClick={() => confirmOrder(order.id, 'ACCEPTED')}
-                        >
-                          <ThumbsUp className='mr-2 h-4 w-4' />
-                          Chấp nhận
-                        </Button>
-                        <Button
-                          variant='destructive'
-                          size='sm'
-                          onClick={() => {
-                            const reason = prompt(
-                              'Lý do từ chối (hàng hỏng, thiếu, v.v.):'
-                            );
-                            if (reason) {
-                              confirmOrder(order.id, 'REJECTED', reason);
-                            }
-                          }}
-                        >
-                          <ThumbsDown className='mr-2 h-4 w-4' />
-                          Từ chối
-                        </Button>
-                      </>
-                    )}
-
-                    {order.status === 'PENDING' && (
-                      <Button variant='destructive' size='sm'>
-                        Hủy đơn hàng
+                    {/* Tải hóa đơn - chỉ khi DELIVERED */}
+                    {order.status === 'DELIVERED' && (
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => downloadInvoice(order.id)}
+                        className='flex items-center gap-2'
+                      >
+                        <Download className='h-4 w-4' />
+                        Tải hóa đơn
                       </Button>
                     )}
                   </div>
@@ -416,134 +380,6 @@ export function MyOrdersPage() {
           ))
         )}
       </div>
-
-      {/* Order Detail Modal */}
-      {selectedOrder && (
-        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4'>
-          <Card className='max-h-[80vh] w-full max-w-2xl overflow-y-auto'>
-            <CardHeader>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <CardTitle>
-                    Chi tiết đơn hàng {selectedOrder.orderNumber}
-                  </CardTitle>
-                  <CardDescription>
-                    Đặt ngày{' '}
-                    {new Date(selectedOrder.date).toLocaleDateString('vi-VN')}
-                  </CardDescription>
-                </div>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() => setSelectedOrder(null)}
-                >
-                  Đóng
-                </Button>
-              </div>
-            </CardHeader>
-
-            <CardContent className='space-y-6'>
-              {/* Order Status */}
-              <div className='flex flex-wrap items-center gap-2'>
-                <Badge
-                  variant={getStatusVariant(selectedOrder.status)}
-                  className='flex items-center gap-1'
-                >
-                  {getStatusIcon(selectedOrder.status)}
-                  {orderStatuses[selectedOrder.status].label}
-                </Badge>
-                <span className='text-muted-foreground text-sm'>
-                  {orderStatuses[selectedOrder.status].description}
-                </span>
-                {getConfirmationBadge(selectedOrder)}
-              </div>
-
-              {/* Consignee Confirmation Section */}
-              {selectedOrder.consigneeConfirmation === 'REJECTED' &&
-                selectedOrder.rejectionReason && (
-                  <div className='rounded-lg border border-red-200 bg-red-50 p-4'>
-                    <h4 className='mb-2 font-medium text-red-800'>
-                      Lý do từ chối
-                    </h4>
-                    <p className='text-sm text-red-700'>
-                      {selectedOrder.rejectionReason}
-                    </p>
-                  </div>
-                )}
-
-              {/* Delivery Information */}
-              {selectedOrder.actualDelivery && (
-                <div>
-                  <h4 className='mb-2 font-medium'>Thông tin giao hàng</h4>
-                  <p className='text-muted-foreground text-sm'>
-                    Đã giao:{' '}
-                    {new Date(selectedOrder.actualDelivery).toLocaleDateString(
-                      'vi-VN'
-                    )}
-                  </p>
-                </div>
-              )}
-
-              {/* Supplier Info */}
-              <div>
-                <h4 className='mb-2 font-medium'>Thông tin nhà cung cấp</h4>
-                <p className='text-sm'>{selectedOrder.supplierName}</p>
-                <p className='text-muted-foreground text-sm'>
-                  Dự kiến giao:{' '}
-                  {new Date(selectedOrder.estimatedDelivery).toLocaleDateString(
-                    'vi-VN'
-                  )}
-                </p>
-              </div>
-
-              {/* Products */}
-              <div>
-                <h4 className='mb-3 font-medium'>Sản phẩm đã đặt</h4>
-                <div className='space-y-2'>
-                  {selectedOrder.products.map((product, index) => (
-                    <div
-                      key={index}
-                      className='flex items-center justify-between rounded border p-3'
-                    >
-                      <div>
-                        <p className='font-medium'>{product.name}</p>
-                        <p className='text-muted-foreground text-sm'>
-                          {product.quantity} {product.unit} ×{' '}
-                          {product.price.toLocaleString('vi-VN')} VNĐ
-                        </p>
-                      </div>
-                      <p className='font-medium'>
-                        {(product.quantity * product.price).toLocaleString(
-                          'vi-VN'
-                        )}{' '}
-                        VNĐ
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Order Summary */}
-              <div className='border-t pt-4'>
-                <div className='space-y-2'>
-                  <div className='flex justify-between'>
-                    <span>Tổng trọng lượng:</span>
-                    <span className='font-medium'>
-                      {selectedOrder.totalWeight}kg
-                    </span>
-                  </div>
-                  <div className='flex justify-between text-lg font-bold'>
-                    <span>Tổng cộng:</span>
-                    <span>
-                      {selectedOrder.totalAmount.toLocaleString('vi-VN')} VNĐ
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

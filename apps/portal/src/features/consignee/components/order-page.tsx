@@ -8,15 +8,12 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import {
   Select,
   SelectContent,
@@ -31,14 +28,7 @@ import {
   AlertCircle,
   ShoppingCart,
   Trash2,
-  MapPin,
-  User,
-  Building2,
-  Clock,
-  Truck,
-  DollarSign,
-  CheckCircle,
-  XCircle
+  MapPin
 } from 'lucide-react';
 
 // Mock data cho sản phẩm trong kho
@@ -95,8 +85,6 @@ interface OrderItem {
   quantity: number;
   unit: string;
   price: number;
-  qualityRequirements: string;
-  packaging: string;
 }
 
 interface DeliveryAddress {
@@ -113,11 +101,6 @@ interface DeliveryAddress {
 export function OrderPage() {
   // Thông tin lô hàng
   const [batchNumber, setBatchNumber] = useState('');
-  const [orderDate, setOrderDate] = useState(
-    new Date().toISOString().split('T')[0]
-  );
-  const [expectedDeliveryDate, setExpectedDeliveryDate] = useState('');
-
   // Địa chỉ giao hàng
   const [deliveryAddresses, setDeliveryAddresses] = useState<DeliveryAddress[]>(
     []
@@ -142,15 +125,8 @@ export function OrderPage() {
     packaging: ''
   });
 
-  // Vận chuyển
-  const [transportationRequirements, setTransportationRequirements] =
-    useState('');
-  const [desiredDeliveryTime, setDesiredDeliveryTime] = useState('');
-
   // Thanh toán
-  const [paymentMethod, setPaymentMethod] = useState('');
   const [vatInvoice, setVatInvoice] = useState(false);
-  const [incoterms, setIncoterms] = useState('');
 
   const [errors, setErrors] = useState<string[]>([]);
 
@@ -225,9 +201,7 @@ export function OrderPage() {
       category: selectedProduct.category,
       quantity: currentItem.quantity,
       unit: selectedProduct.unit,
-      price: selectedProduct.price,
-      qualityRequirements: currentItem.qualityRequirements,
-      packaging: currentItem.packaging
+      price: selectedProduct.price
     };
 
     setOrderItems([...orderItems, newItem]);
@@ -275,33 +249,10 @@ export function OrderPage() {
       newErrors.push('Vui lòng thêm ít nhất một sản phẩm');
     }
 
-    if (!expectedDeliveryDate) {
-      newErrors.push('Vui lòng chọn ngày giao hàng dự kiến');
-    }
-
-    if (!paymentMethod) {
-      newErrors.push('Vui lòng chọn phương thức thanh toán');
-    }
-
     if (newErrors.length > 0) {
       setErrors(newErrors);
       return;
     }
-
-    // Xử lý gửi đơn hàng
-    console.log('Đơn hàng đã được gửi:', {
-      batchNumber,
-      orderDate,
-      expectedDeliveryDate,
-      deliveryAddresses,
-      orderItems,
-      transportationRequirements,
-      desiredDeliveryTime,
-      paymentMethod,
-      vatInvoice,
-      incoterms,
-      totalValue: getTotalValue()
-    });
 
     alert('Đơn hàng đã được gửi thành công!');
   };
@@ -490,7 +441,7 @@ export function OrderPage() {
               </Select>
             </div>
             <div className='space-y-2'>
-              <Label htmlFor='quantity'>Số lượng</Label>
+              <Label htmlFor='quantity'>Khối lượng</Label>
               <Input
                 id='quantity'
                 type='number'
@@ -523,13 +474,6 @@ export function OrderPage() {
                   <div className='flex-1'>
                     <h4 className='font-medium'>{item.productName}</h4>
                     <p className='text-sm text-gray-600'>{item.category}</p>
-                    <p className='text-sm text-gray-600'>
-                      Chất lượng:{' '}
-                      {item.qualityRequirements || 'Không yêu cầu đặc biệt'}
-                    </p>
-                    <p className='text-sm text-gray-600'>
-                      Đóng gói: {item.packaging || 'Tiêu chuẩn'}
-                    </p>
                     <p className='text-sm font-medium text-green-600'>
                       {item.price.toLocaleString('vi-VN')} VNĐ/{item.unit}
                     </p>
