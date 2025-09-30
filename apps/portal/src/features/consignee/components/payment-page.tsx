@@ -58,63 +58,63 @@ interface PaymentRecord {
 const mockPayments: PaymentRecord[] = [
   {
     id: '1',
-    orderNumber: 'ORD-2024-001',
-    invoiceNumber: 'INV-2024-001',
+    orderNumber: 'ORD-2025-001',
+    invoiceNumber: 'INV-2025-001',
     amount: 2500000,
     status: 'paid',
-    dueDate: '2024-01-25',
-    paidDate: '2024-01-23',
+    dueDate: '2025-01-25',
+    paidDate: '2025-01-23',
     paymentMethod: 'Chuyển khoản ngân hàng',
     supplierName: 'Nông trường Đồng Tâm',
     description: 'Thanh toán đơn hàng gạo ST25 và rau củ',
     documents: [
       {
         type: 'invoice',
-        name: 'Hóa đơn INV-2024-001.pdf',
+        name: 'Hóa đơn INV-2025-001.pdf',
         url: '#',
-        uploadDate: '2024-01-20'
+        uploadDate: '2025-01-20'
       },
       {
         type: 'receipt',
         name: 'Biên lai thanh toán.pdf',
         url: '#',
-        uploadDate: '2024-01-23'
+        uploadDate: '2025-01-23'
       }
     ]
   },
   {
     id: '2',
-    orderNumber: 'ORD-2024-002',
-    invoiceNumber: 'INV-2024-002',
+    orderNumber: 'ORD-2025-002',
+    invoiceNumber: 'INV-2025-002',
     amount: 1800000,
     status: 'pending',
-    dueDate: '2024-01-30',
+    dueDate: '2025-01-30',
     supplierName: 'Hợp tác xã Xanh',
     description: 'Thanh toán đơn hàng dưa chuột và ớt chuông',
     documents: [
       {
         type: 'invoice',
-        name: 'Hóa đơn INV-2024-002.pdf',
+        name: 'Hóa đơn INV-2025-002.pdf',
         url: '#',
-        uploadDate: '2024-01-25'
+        uploadDate: '2025-01-25'
       }
     ]
   },
   {
     id: '3',
-    orderNumber: 'ORD-2024-003',
-    invoiceNumber: 'INV-2024-003',
+    orderNumber: 'ORD-2025-003',
+    invoiceNumber: 'INV-2025-003',
     amount: 3200000,
     status: 'overdue',
-    dueDate: '2024-01-20',
+    dueDate: '2025-01-20',
     supplierName: 'Trang trại Organic',
     description: 'Thanh toán đơn hàng rau củ organic',
     documents: [
       {
         type: 'invoice',
-        name: 'Hóa đơn INV-2024-003.pdf',
+        name: 'Hóa đơn INV-2025-003.pdf',
         url: '#',
-        uploadDate: '2024-01-18'
+        uploadDate: '2025-01-18'
       }
     ]
   }
