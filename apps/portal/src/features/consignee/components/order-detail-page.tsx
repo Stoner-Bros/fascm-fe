@@ -380,8 +380,12 @@ export function OrderDetailPage({ orderId = '1' }: OrderDetailPageProps) {
         <div className='mb-4 flex items-center justify-between'>
           <div>
             <div className='mb-2 flex items-center gap-4'>
-              <span className='text-sm text-gray-600'>MÃ ĐƠN HÀNG</span>
-              <span className='text-lg font-semibold'>{order.orderNumber}</span>
+              <span className='text-sm text-gray-600 dark:text-black'>
+                MÃ ĐƠN HÀNG
+              </span>
+              <span className='text-lg font-semibold dark:text-black'>
+                {order.orderNumber}
+              </span>
               <span className='text-gray-400'>|</span>
               <Badge
                 variant={order.status === 'DELIVERED' ? 'default' : 'secondary'}
@@ -403,12 +407,6 @@ export function OrderDetailPage({ orderId = '1' }: OrderDetailPageProps) {
               className='border-orange-600 text-orange-600 hover:bg-orange-50'
             >
               Mua Lại
-            </Button>
-            <Button
-              variant='outline'
-              className='border-blue-600 text-blue-600 hover:bg-blue-50'
-            >
-              Liên Hệ Người Bán
             </Button>
           </div>
         </div>
@@ -447,7 +445,7 @@ export function OrderDetailPage({ orderId = '1' }: OrderDetailPageProps) {
                 </div>
                 {index < 4 && (
                   <div
-                    className={`absolute left-12 top-6 h-0.5 w-full ${
+                    className={`absolute left-11 top-6 h-0.5 w-full ${
                       order.timeline[index + 1]?.completed
                         ? 'bg-green-500'
                         : 'bg-gray-300'
@@ -526,7 +524,7 @@ export function OrderDetailPage({ orderId = '1' }: OrderDetailPageProps) {
                           className={`mb-1 font-medium ${
                             item.isDelivered
                               ? 'text-green-600'
-                              : 'text-gray-900'
+                              : 'text-gray-900 dark:text-white'
                           }`}
                         >
                           {item.status}
@@ -737,8 +735,9 @@ export function OrderDetailPage({ orderId = '1' }: OrderDetailPageProps) {
               </div>
 
               <div>
-                <Label htmlFor='feedback-text'>Nhận xét của bạn</Label>
+                <Label htmlFor='feedback-text'>Nhận xét của bạn:</Label>
                 <Textarea
+                  className='mt-2'
                   id='feedback-text'
                   placeholder='Chia sẻ trải nghiệm của bạn về sản phẩm và dịch vụ giao hàng...'
                   value={feedback}
