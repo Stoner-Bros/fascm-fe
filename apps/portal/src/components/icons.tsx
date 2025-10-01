@@ -33,12 +33,13 @@ import {
   IconBrandGithub,
   IconPackage,
   IconBuildingWarehouse,
-  IconDevicesCog,
-  IconTir,
   IconTruck,
   IconHome,
   IconShoppingCart,
-  IconBrandStorj
+  IconBrandStorj,
+  IconHistory,
+  IconMap,
+  IconBuilding
 } from '@tabler/icons-react';
 
 export type Icon = React.ComponentType<IconProps>;
@@ -74,8 +75,6 @@ export const Icons = {
   laptop: IconDeviceLaptop,
   github: IconBrandGithub,
   twitter: IconBrandTwitter,
-  iotDashboard: IconDevicesCog,
-  iotDevice: IconTir,
   check: IconCheck,
   inventory: IconPackage,
   warehouse: IconBuildingWarehouse,
@@ -85,5 +84,8 @@ export const Icons = {
   package: IconPackage,
   truck: IconTruck,
   creditCard: IconCreditCard,
-  blockChain: IconBrandStorj
+  blockChain: IconBrandStorj,
+  history: IconHistory,
+  map: IconMap,
+  building: IconBuilding
 };

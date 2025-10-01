@@ -1,7 +1,9 @@
 export type HarvestBatchStatus =
-  | 'pending_pickup' // Chờ lấy hàng
-  | 'picking_up' // Đang lấy
-  | 'delivered' // Đã giao
+  | 'pending' // Chờ duyệt
+  | 'approved' // Đã duyệt
+  | 'in_progress' // Đang thực hiện
+  | 'picked_up' // Đã lấy hàng
+  | 'confirmed' // Đã xác nhận (supplier xác nhận đã giao)
   | 'completed'; // Hoàn tất
 
 export type ProductType =
@@ -12,17 +14,10 @@ export type ProductType =
   | 'root_vegetables' // Củ quả
   | 'other'; // Khác
 
-export type QualityGrade =
-  | 'premium' // Cao cấp
-  | 'good' // Tốt
-  | 'standard' // Tiêu chuẩn
-  | 'below_standard'; // Dưới tiêu chuẩn
-
 export type Unit =
   | 'kg' // Kilogram
-  | 'box' // Thùng
-  | 'bag' // Bao
-  | 'piece'; // Cái
+  | 'ton' // Tấn
+  | 'box'; // Thùng
 
 export interface HarvestBatch {
   id: string;
@@ -30,89 +25,184 @@ export interface HarvestBatch {
   supplierName: string;
   productType: ProductType;
   productName: string;
-  harvestDate: Date;
   quantity: number;
   unit: Unit;
-  expectedQuality: QualityGrade;
+  expectedPickupDate: Date;
   description?: string;
   images: string[];
-  certificates: string[];
   status: HarvestBatchStatus;
   createdAt: Date;
   updatedAt: Date;
 
-  // Tracking information
-  pickupDate?: Date;
-  deliveryDate?: Date;
-  completionDate?: Date;
+  // Status tracking
+  approvedAt?: Date;
+  inProgressAt?: Date;
+  pickedUpAt?: Date;
+  confirmedAt?: Date;
+  completedAt?: Date;
 
-  // Payment information
-  estimatedPrice?: number;
-  finalPrice?: number;
-  paymentConfirmed?: boolean;
-  paymentProofs: string[];
+  // Staff information
+  deliveryStaffId?: string;
+  deliveryStaffName?: string;
+  pickupTime?: Date;
+
+  // Status history
+  statusHistory: StatusHistoryItem[];
+}
+
+export interface StatusHistoryItem {
+  status: HarvestBatchStatus;
+  timestamp: Date;
+  note?: string;
+  staffId?: string;
+  staffName?: string;
 }
 
 export interface CreateHarvestBatchData {
   productType: ProductType;
   productName: string;
-  harvestDate: Date;
   quantity: number;
   unit: Unit;
-  expectedQuality: QualityGrade;
+  expectedPickupDate: Date;
   description?: string;
   images?: File[];
-  certificates?: File[];
 }
 
-export interface PaymentConfirmationData {
+export interface ConfirmDeliveryData {
   batchId: string;
-  paymentProofs: File[];
-  notes?: string;
+  confirmed: boolean;
+  note?: string;
 }
 
 // Mock data for development
 export const mockHarvestBatches: HarvestBatch[] = [
   {
-    id: 'batch-001',
+    id: 'HB001',
     supplierId: 'supplier-1',
     supplierName: 'Nông trại Xanh',
     productType: 'vegetables',
     productName: 'Cà chua',
-    harvestDate: new Date('2024-01-15'),
     quantity: 500,
     unit: 'kg',
-    expectedQuality: 'premium',
+    expectedPickupDate: new Date('2024-02-01'),
     description: 'Cà chua cherry hữu cơ, không thuốc trừ sâu',
     images: [],
-    certificates: [],
-    status: 'pending_pickup',
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-01-10'),
-    estimatedPrice: 15000,
-    paymentProofs: []
+    status: 'pending',
+    createdAt: new Date('2024-01-20'),
+    updatedAt: new Date('2024-01-20'),
+    statusHistory: [
+      {
+        status: 'pending',
+        timestamp: new Date('2024-01-20'),
+        note: 'Đợt thu hoạch được tạo'
+      }
+    ]
   },
   {
-    id: 'batch-002',
+    id: 'HB002',
     supplierId: 'supplier-1',
     supplierName: 'Nông trại Xanh',
     productType: 'leafy_greens',
     productName: 'Rau cải',
-    harvestDate: new Date('2024-01-12'),
-    quantity: 100,
-    unit: 'box',
-    expectedQuality: 'good',
+    quantity: 2,
+    unit: 'ton',
+    expectedPickupDate: new Date('2024-01-30'),
     description: 'Rau cải xanh tươi',
     images: [],
-    certificates: [],
-    status: 'delivered',
-    createdAt: new Date('2024-01-08'),
-    updatedAt: new Date('2024-01-12'),
-    pickupDate: new Date('2024-01-11'),
-    deliveryDate: new Date('2024-01-12'),
-    estimatedPrice: 12000,
-    finalPrice: 12000,
-    paymentProofs: []
+    status: 'picked_up',
+    createdAt: new Date('2024-01-15'),
+    updatedAt: new Date('2024-01-28'),
+    approvedAt: new Date('2024-01-16'),
+    inProgressAt: new Date('2024-01-26'),
+    pickedUpAt: new Date('2024-01-28'),
+    deliveryStaffId: 'staff-001',
+    deliveryStaffName: 'Nguyễn Văn A',
+    pickupTime: new Date('2024-01-28T08:30:00'),
+    statusHistory: [
+      {
+        status: 'pending',
+        timestamp: new Date('2024-01-15'),
+        note: 'Đợt thu hoạch được tạo'
+      },
+      {
+        status: 'approved',
+        timestamp: new Date('2024-01-16'),
+        note: 'Đã duyệt bởi quản lý',
+        staffId: 'manager-001',
+        staffName: 'Trần Thị B'
+      },
+      {
+        status: 'in_progress',
+        timestamp: new Date('2024-01-26'),
+        note: 'Bắt đầu quá trình vận chuyển'
+      },
+      {
+        status: 'picked_up',
+        timestamp: new Date('2024-01-28T08:30:00'),
+        note: 'Đã lấy hàng thành công',
+        staffId: 'staff-001',
+        staffName: 'Nguyễn Văn A'
+      }
+    ]
+  },
+  {
+    id: 'HB003',
+    supplierId: 'supplier-1',
+    supplierName: 'Nông trại Xanh',
+    productType: 'fruits',
+    productName: 'Cam sành',
+    quantity: 100,
+    unit: 'box',
+    expectedPickupDate: new Date('2024-01-25'),
+    description: 'Cam sành ngọt, vỏ mỏng',
+    images: [],
+    status: 'completed',
+    createdAt: new Date('2024-01-10'),
+    updatedAt: new Date('2024-01-27'),
+    approvedAt: new Date('2024-01-11'),
+    inProgressAt: new Date('2024-01-24'),
+    pickedUpAt: new Date('2024-01-25'),
+    confirmedAt: new Date('2024-01-26'),
+    completedAt: new Date('2024-01-27'),
+    deliveryStaffId: 'staff-002',
+    deliveryStaffName: 'Lê Văn C',
+    pickupTime: new Date('2024-01-25T14:15:00'),
+    statusHistory: [
+      {
+        status: 'pending',
+        timestamp: new Date('2024-01-10'),
+        note: 'Đợt thu hoạch được tạo'
+      },
+      {
+        status: 'approved',
+        timestamp: new Date('2024-01-11'),
+        note: 'Đã duyệt bởi quản lý',
+        staffId: 'manager-001',
+        staffName: 'Trần Thị B'
+      },
+      {
+        status: 'in_progress',
+        timestamp: new Date('2024-01-24'),
+        note: 'Bắt đầu quá trình vận chuyển'
+      },
+      {
+        status: 'picked_up',
+        timestamp: new Date('2024-01-25T14:15:00'),
+        note: 'Đã lấy hàng thành công',
+        staffId: 'staff-002',
+        staffName: 'Lê Văn C'
+      },
+      {
+        status: 'confirmed',
+        timestamp: new Date('2024-01-26'),
+        note: 'Nhà cung cấp xác nhận đã giao'
+      },
+      {
+        status: 'completed',
+        timestamp: new Date('2024-01-27'),
+        note: 'Hoàn tất quá trình'
+      }
+    ]
   }
 ];
 
@@ -125,30 +215,26 @@ export const productTypeOptions = [
   { value: 'other', label: 'Khác' }
 ];
 
-export const qualityGradeOptions = [
-  { value: 'premium', label: 'Cao cấp' },
-  { value: 'good', label: 'Tốt' },
-  { value: 'standard', label: 'Tiêu chuẩn' },
-  { value: 'below_standard', label: 'Dưới tiêu chuẩn' }
-];
-
 export const unitOptions = [
   { value: 'kg', label: 'Kilogram (kg)' },
-  { value: 'box', label: 'Thùng' },
-  { value: 'bag', label: 'Bao' },
-  { value: 'piece', label: 'Cái' }
+  { value: 'ton', label: 'Tấn' },
+  { value: 'box', label: 'Thùng' }
 ];
 
 export const statusLabels: Record<HarvestBatchStatus, string> = {
-  pending_pickup: 'Chờ lấy hàng',
-  picking_up: 'Đang lấy',
-  delivered: 'Đã giao',
+  pending: 'Chờ duyệt',
+  approved: 'Đã duyệt',
+  in_progress: 'Đang thực hiện',
+  picked_up: 'Đã lấy hàng',
+  confirmed: 'Đã xác nhận',
   completed: 'Hoàn tất'
 };
 
 export const statusColors: Record<HarvestBatchStatus, string> = {
-  pending_pickup: 'bg-yellow-100 text-yellow-800',
-  picking_up: 'bg-blue-100 text-blue-800',
-  delivered: 'bg-green-100 text-green-800',
+  pending: 'bg-yellow-100 text-yellow-800',
+  approved: 'bg-blue-100 text-blue-800',
+  in_progress: 'bg-orange-100 text-orange-800',
+  picked_up: 'bg-purple-100 text-purple-800',
+  confirmed: 'bg-green-100 text-green-800',
   completed: 'bg-gray-100 text-gray-800'
 };
