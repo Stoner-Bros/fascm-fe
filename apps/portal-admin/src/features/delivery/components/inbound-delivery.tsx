@@ -284,7 +284,10 @@ export function InboundDelivery() {
   ];
 
   // Form states
-  const [formData, setFormData] = useState<Partial<InboundDelivery>>({
+  const [formData, setFormData] = useState<
+    Partial<InboundDelivery> & { harvestBatchId?: string }
+  >({
+    harvestBatchId: '',
     farmName: '',
     farmAddress: '',
     farmContact: '',
@@ -405,6 +408,7 @@ export function InboundDelivery() {
 
     setDeliveries([...deliveries, newDelivery]);
     setFormData({
+      harvestBatchId: '',
       farmName: '',
       farmAddress: '',
       farmContact: '',
@@ -454,7 +458,28 @@ export function InboundDelivery() {
           </Button>
           <Dialog
             open={isCreateDialogOpen}
-            onOpenChange={setIsCreateDialogOpen}
+            onOpenChange={(open) => {
+              if (!open) {
+                setFormData({
+                  harvestBatchId: '',
+                  farmName: '',
+                  farmAddress: '',
+                  farmContact: '',
+                  warehouseId: '',
+                  warehouseName: '',
+                  warehouseAddress: '',
+                  truckId: '',
+                  productType: '',
+                  quantity: 0,
+                  unit: 'kg',
+                  estimatedValue: 0,
+                  departureTime: '',
+                  estimatedArrival: '',
+                  notes: ''
+                });
+              }
+              setIsCreateDialogOpen(open);
+            }}
           >
             <DialogTrigger asChild>
               <Button>
@@ -470,16 +495,55 @@ export function InboundDelivery() {
                 </DialogDescription>
               </DialogHeader>
               <div className='grid gap-4 py-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='harvestBatch'>Mã thu hoạch</Label>
+                  <Select
+                    value={formData.harvestBatchId}
+                    onValueChange={(value) => {
+                      const selectedDelivery = deliveries.find(
+                        (delivery) => delivery.id === value
+                      );
+                      if (selectedDelivery) {
+                        setFormData({
+                          ...formData,
+                          harvestBatchId: value,
+                          farmName: selectedDelivery.farmName,
+                          farmAddress: selectedDelivery.farmAddress,
+                          farmContact: selectedDelivery.farmContact,
+                          warehouseId: selectedDelivery.warehouseId,
+                          warehouseName: selectedDelivery.warehouseName,
+                          warehouseAddress: selectedDelivery.warehouseAddress,
+                          truckId: selectedDelivery.truckId,
+                          truck: selectedDelivery.truck,
+                          estimatedValue: selectedDelivery.estimatedValue,
+                          productType: selectedDelivery.productType,
+                          quantity: selectedDelivery.quantity,
+                          unit: selectedDelivery.unit
+                        });
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder='Chọn mã thu hoạch' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {deliveries.map((delivery) => (
+                        <SelectItem key={delivery.id} value={delivery.id}>
+                          {delivery.id}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                   <div className='space-y-2'>
                     <Label htmlFor='farmName'>Tên vườn</Label>
                     <Input
                       id='farmName'
                       value={formData.farmName}
-                      onChange={(e) =>
-                        setFormData({ ...formData, farmName: e.target.value })
-                      }
-                      placeholder='Nhập tên vườn'
+                      disabled
+                      readOnly
                     />
                   </div>
                   <div className='space-y-2'>
@@ -487,13 +551,8 @@ export function InboundDelivery() {
                     <Input
                       id='farmContact'
                       value={formData.farmContact}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          farmContact: e.target.value
-                        })
-                      }
-                      placeholder='Nhập số điện thoại'
+                      disabled
+                      readOnly
                     />
                   </div>
                 </div>
@@ -503,105 +562,35 @@ export function InboundDelivery() {
                   <Textarea
                     id='farmAddress'
                     value={formData.farmAddress}
-                    onChange={(e) =>
-                      setFormData({ ...formData, farmAddress: e.target.value })
-                    }
-                    placeholder='Nhập địa chỉ đầy đủ'
+                    disabled
+                    readOnly
                     rows={2}
                   />
                 </div>
 
                 <div className='space-y-2'>
                   <Label htmlFor='warehouse'>Kho đích</Label>
-                  <Select
-                    value={formData.warehouseId}
-                    onValueChange={handleWarehouseChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Chọn kho đích' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {warehouseOptions.map((warehouse) => (
-                        <SelectItem
-                          key={warehouse.id}
-                          value={warehouse.id}
-                          label={warehouse.name}
-                        >
-                          <div className='text-muted-foreground text-sm'>
-                            {warehouse.address}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Input
+                    id='warehouseName'
+                    value={formData.warehouseName}
+                    disabled
+                    readOnly
+                  />
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='truck'>Chọn xe tải</Label>
-                  <Select
-                    value={formData.truckId}
-                    onValueChange={handleTruckChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Chọn xe tải' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockTrucks
-                        .filter((truck) => truck.status === 'available')
-                        .map((truck) => (
-                          <SelectItem
-                            key={truck.id}
-                            value={truck.id}
-                            label={`${truck.licenseNumber} - ${truck.model}`}
-                          >
-                            <div className='text-muted-foreground text-sm'>
-                              Tải trọng: {truck.capacity}kg | Thể tích:{' '}
-                              {truck.volume}m³
-                            </div>
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor='truck'>Xe tải</Label>
+                  <Input
+                    id='truckId'
+                    value={
+                      formData.truck
+                        ? `${formData.truck.licenseNumber} - ${formData.truck.model}`
+                        : ''
+                    }
+                    disabled
+                    readOnly
+                  />
                 </div>
-
-                {formData.truckId && (
-                  <Card className='bg-muted/20'>
-                    <CardHeader className='pb-3'>
-                      <CardTitle className='text-sm'>
-                        Thông tin xe đã chọn
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {(() => {
-                        const selectedTruck = mockTrucks.find(
-                          (t) => t.id === formData.truckId
-                        );
-                        if (!selectedTruck) return null;
-                        return (
-                          <div className='grid gap-4 text-sm sm:grid-cols-2'>
-                            <div className='flex items-center gap-2'>
-                              <IconTruck className='h-4 w-4' />
-                              <span className='font-medium'>Biển số:</span>
-                              {selectedTruck.licenseNumber}
-                            </div>
-                            <div>
-                              <span className='font-medium'>Model:</span>{' '}
-                              {selectedTruck.model}
-                            </div>
-                            <div>
-                              <span className='font-medium'>Tải trọng:</span>{' '}
-                              {selectedTruck.capacity}kg
-                            </div>
-                            <div>
-                              <span className='font-medium'>Thể tích:</span>{' '}
-                              {selectedTruck.volume}m³
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </CardContent>
-                  </Card>
-                )}
 
                 <div className='grid grid-cols-4 gap-4'>
                   <div className='space-y-2'>
@@ -609,13 +598,8 @@ export function InboundDelivery() {
                     <Input
                       id='productType'
                       value={formData.productType}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          productType: e.target.value
-                        })
-                      }
-                      placeholder='Ví dụ: Rau lá tươi'
+                      disabled
+                      readOnly
                     />
                   </div>
                   <div className='space-y-2'>
@@ -624,49 +608,21 @@ export function InboundDelivery() {
                       id='quantity'
                       type='number'
                       value={formData.quantity}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          quantity: Number(e.target.value)
-                        })
-                      }
-                      placeholder='Nhập số lượng'
+                      disabled
+                      readOnly
                     />
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='unit'>Đơn vị</Label>
-                    <Select
-                      value={formData.unit}
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, unit: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value='kg'>Kilogram (kg)</SelectItem>
-                        <SelectItem value='tấn'>Tấn</SelectItem>
-                        <SelectItem value='thùng'>Thùng</SelectItem>
-                        <SelectItem value='bao'>Bao</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <Input id='unit' value={formData.unit} disabled readOnly />
                   </div>
                   <div className='space-y-2'>
-                    <Label htmlFor='estimatedValue'>
-                      Giá trị ước tính (VND)
-                    </Label>
+                    <Label htmlFor='unit'>Đơn giá</Label>
                     <Input
                       id='estimatedValue'
-                      type='number'
                       value={formData.estimatedValue}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          estimatedValue: Number(e.target.value)
-                        })
-                      }
-                      placeholder='Nhập giá trị'
+                      disabled
+                      readOnly
                     />
                   </div>
                 </div>

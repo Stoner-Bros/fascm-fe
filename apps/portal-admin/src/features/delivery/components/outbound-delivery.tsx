@@ -152,7 +152,7 @@ const mockOrders: Order[] = [
         productId: 'PROD-001',
         productName: 'Rau lá tươi',
         quantity: 100,
-        unit: 'kg',
+        unit: 'tấn',
         weight: 100,
         volume: 1.5,
         specialRequirements: 'Bảo quản lạnh 2-4°C'
@@ -162,7 +162,7 @@ const mockOrders: Order[] = [
         productId: 'PROD-002',
         productName: 'Củ cải trắng',
         quantity: 50,
-        unit: 'kg',
+        unit: 'tấn',
         weight: 50,
         volume: 0.8
       }
@@ -190,7 +190,7 @@ const mockOrders: Order[] = [
         productId: 'PROD-003',
         productName: 'Hải sản đông lạnh',
         quantity: 80,
-        unit: 'kg',
+        unit: 'tấn',
         weight: 80,
         volume: 1.2,
         specialRequirements: 'Đông lạnh -2°C'
@@ -219,7 +219,7 @@ const mockOrders: Order[] = [
         productId: 'PROD-004',
         productName: 'Thực phẩm khô',
         quantity: 200,
-        unit: 'kg',
+        unit: 'tấn',
         weight: 200,
         volume: 2.5
       }
@@ -798,138 +798,136 @@ export function OutboundDelivery() {
                   phối
                 </DialogDescription>
               </DialogHeader>
-              <div className='grid gap-4 py-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='warehouse'>Kho xuất</Label>
-                  <Select
-                    value={formData.warehouseId}
-                    onValueChange={handleWarehouseChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Chọn kho xuất' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {warehouseOptions.map((warehouse) => (
-                        <SelectItem
-                          key={warehouse.id}
-                          value={warehouse.id}
-                          label={warehouse.name}
-                        >
-                          <div className='text-muted-foreground text-sm'>
-                            {warehouse.address}
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='truck'>Chọn xe tải</Label>
-                  <Select
-                    value={selectedTruckId}
-                    onValueChange={handleTruckChange}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder='Chọn xe tải khả dụng' />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mockTrucks
-                        .filter((truck) => truck.status === 'available')
-                        .map((truck) => (
-                          <SelectItem
-                            key={truck.id}
-                            value={truck.id}
-                            label={`${truck.licenseNumber} - ${truck.model}`}
-                          >
-                            <div className='text-muted-foreground text-sm'>
-                              Tải trọng: {truck.capacity}kg | Thể tích:{' '}
-                              {truck.volume}m³
-                            </div>
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {selectedTruckId && (
-                  <Card className='bg-muted/20 mt-2'>
-                    <CardHeader className='pb-3'>
-                      <CardTitle className='text-sm'>
-                        Thông tin xe đã chọn
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {(() => {
-                        const selectedTruck = mockTrucks.find(
-                          (t) => t.id === selectedTruckId
-                        );
-                        if (!selectedTruck) return null;
-                        return (
-                          <div className='grid gap-4 text-sm sm:grid-cols-2'>
-                            <div className='flex items-center gap-2'>
-                              <IconTruck className='h-4 w-4' />
-                              <span className='font-medium'>Biển số:</span>
-                              {selectedTruck.licenseNumber}
-                            </div>
-                            <div>
-                              <span className='font-medium'>Model:</span>{' '}
-                              {selectedTruck.model}
-                            </div>
-                            <div>
-                              <span className='font-medium'>Tải trọng:</span>{' '}
-                              {selectedTruck.capacity}kg
-                            </div>
-                            <div>
-                              <span className='font-medium'>Thể tích:</span>{' '}
-                              {selectedTruck.volume}m³
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </CardContent>
-                  </Card>
-                )}
-
-                <div className='space-y-2'>
-                  <Label>Chọn đơn hàng</Label>
-                  <div className='max-h-40 overflow-y-auto rounded-lg border p-4'>
+              <div className='space-y-2'>
+                <Label>Chọn đơn xuất hàng</Label>
+                <Select
+                  value={selectedOrders[0]?.id || ''}
+                  onValueChange={(value) => {
+                    const selectedOrder = mockOrders.find(
+                      (order) => order.id === value
+                    );
+                    if (selectedOrder) {
+                      // Tìm delivery mẫu từ mock data
+                      const mockDelivery = deliveries.find(
+                        (d) => d.orders[0]?.id === value
+                      );
+                      if (mockDelivery) {
+                        setFormData({
+                          ...formData,
+                          warehouseId: mockDelivery.warehouseId,
+                          warehouseName: mockDelivery.warehouseName,
+                          warehouseAddress: mockDelivery.warehouseAddress,
+                          truckId: mockDelivery.truckId,
+                          truck: mockDelivery.truck,
+                          orders: [selectedOrder],
+                          totalWeight: selectedOrder.totalWeight,
+                          totalVolume: selectedOrder.totalVolume,
+                          totalValue: selectedOrder.totalValue,
+                          departureTime: mockDelivery.departureTime,
+                          estimatedArrival: mockDelivery.estimatedArrival,
+                          priorityLevel: mockDelivery.priorityLevel,
+                          specialHandling: mockDelivery.specialHandling,
+                          notes: mockDelivery.notes,
+                          route: mockDelivery.route
+                        });
+                        setSelectedOrders([selectedOrder]);
+                        setSelectedTruckId(mockDelivery.truckId);
+                      }
+                    } else {
+                      setSelectedOrders([]);
+                      setSelectedTruckId('');
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder='Chọn đơn xuất hàng' />
+                  </SelectTrigger>
+                  <SelectContent>
                     {mockOrders
                       .filter((order) => order.status === 'confirmed')
                       .map((order) => (
-                        <div
-                          key={order.id}
-                          className='mb-2 flex items-center space-x-3 rounded border p-2'
-                        >
-                          <input
-                            type='checkbox'
-                            checked={selectedOrders.some(
-                              (o) => o.id === order.id
-                            )}
-                            onChange={(e) =>
-                              handleOrderSelection(order, e.target.checked)
-                            }
-                            className='rounded'
-                          />
-                          <div className='flex-1'>
+                        <SelectItem key={order.id} value={order.id}>
+                          <div>
                             <div className='font-medium'>
                               {order.customerName}
                             </div>
-                            <div className='text-muted-foreground text-sm'>
-                              {order.items
-                                .map((item) => item.productName)
-                                .join(', ')}{' '}
-                              - {order.totalWeight}kg
-                            </div>
                           </div>
-                        </div>
+                        </SelectItem>
                       ))}
-                  </div>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className='grid gap-4 py-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='warehouse'>Kho xuất</Label>
+                  <Input value={formData.warehouseName} disabled readOnly />
                 </div>
 
-                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                <div className='space-y-2'>
+                  <Label htmlFor='truck'>Xe tải</Label>
+                  <Input
+                    value={
+                      formData.truck
+                        ? `${formData.truck.licenseNumber} - ${formData.truck.model}`
+                        : ''
+                    }
+                    disabled
+                    readOnly
+                  />
+                </div>
+
+                <div className='grid grid-cols-3 gap-4'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='productType'>Sản phẩm</Label>
+                    <Input
+                      id='productType'
+                      value={
+                        formData.orders?.[0]?.items
+                          .map((item) => item.productName)
+                          .join(', ') || ''
+                      }
+                      disabled
+                      readOnly
+                    />
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='quantity'>Số lượng</Label>
+                    <Input
+                      id='quantity'
+                      type='number'
+                      value={`${formData.totalWeight}`}
+                      disabled
+                      readOnly
+                    />
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='unit'>Đơn vị</Label>
+                    <Input
+                      id='unit'
+                      value={formData.orders?.[0]?.items[0]?.unit || ''}
+                      disabled
+                      readOnly
+                    />
+                  </div>
+                  {/* <div className='space-y-2'>
+                    <Label htmlFor='unit'>Đơn giá</Label>
+                    <Input
+                      id='estimatedValue'
+                      value={formData.estimatedValue}
+                      disabled
+                      readOnly
+                    />
+                  </div> */}
+                </div>
+
+                <div className='grid grid-cols-2 gap-4'>
                   <div className='space-y-2'>
                     <Label htmlFor='departureTime'>Thời gian khởi hành</Label>
+                    {/* <Input
+                      value={formData.departureTime ? formatDateTime(formData.departureTime) : ''}
+                      disabled
+                      readOnly
+                    /> */}
                     <DateTimePicker
                       value={formData.departureTime}
                       onChange={(v: string) =>
@@ -942,12 +940,17 @@ export function OutboundDelivery() {
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='estimatedArrival'>Dự kiến giao hàng</Label>
+                    {/* <Input
+                      value={formData.estimatedArrival ? formatDateTime(formData.estimatedArrival) : ''}
+                      disabled
+                      readOnly
+                    /> */}
                     <DateTimePicker
-                      value={formData.estimatedArrival}
+                      value={formData.departureTime}
                       onChange={(v: string) =>
                         setFormData({
                           ...formData,
-                          estimatedArrival: v
+                          departureTime: v
                         })
                       }
                     />
@@ -969,10 +972,9 @@ export function OutboundDelivery() {
                       placeholder='Ví dụ: Bảo quản lạnh -2°C'
                     />
                   </div>
-                  <div className='flex items-center space-x-2 pt-6'>
-                    <div className='text-muted-foreground text-sm'>
-                      Chữ ký xác nhận sẽ được xử lý theo từng đơn hàng
-                    </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='priority'>Mức độ ưu tiên</Label>
+                    <Input value={formData.priorityLevel} disabled readOnly />
                   </div>
                 </div>
 
