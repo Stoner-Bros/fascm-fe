@@ -1,12 +1,21 @@
-import { auth } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
+import { LandingHeader } from '@/components/landing/header';
+import { HeroSection } from '@/components/landing/hero-section';
+import { AboutSection } from '@/components/landing/about-section';
+import { FeaturesSection } from '@/components/landing/features-section';
+import { CTASection } from '@/components/landing/cta-section';
+import { LandingFooter } from '@/components/landing/footer';
 
-export default async function Page() {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return redirect('/auth/sign-in');
-  } else {
-    redirect('/consignee/home');
-  }
+export default function LandingPage() {
+  return (
+    <div className='min-h-screen'>
+      <LandingHeader />
+      <main>
+        <HeroSection />
+        <AboutSection />
+        <FeaturesSection />
+        <CTASection />
+      </main>
+      <LandingFooter />
+    </div>
+  );
 }

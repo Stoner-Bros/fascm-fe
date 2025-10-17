@@ -39,6 +39,15 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Agricultural Theme Colors */
+  --agri-primary: #2e7d32;
+  --agri-primary-light: #81c784;
+  --agri-primary-dark: #1b5e20;
+  --agri-secondary: #f9a825;
+  --agri-secondary-light: #fbc02d;
+  --agri-background: #fafafa;
+  --agri-text: #333333;
 }
 
 .dark {
@@ -73,6 +82,15 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.439 0 0);
+
+  /* Agricultural Theme Colors - Dark Mode */
+  --agri-primary: #4caf50;
+  --agri-primary-light: #a5d6a7;
+  --agri-primary-dark: #2e7d32;
+  --agri-secondary: #ffd54f;
+  --agri-secondary-light: #ffe082;
+  --agri-background: #1a1a1a;
+  --agri-text: #e0e0e0;
 }
 
 @theme inline {
@@ -111,6 +129,15 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Agricultural Theme Classes */
+  --color-agri-primary: var(--agri-primary);
+  --color-agri-primary-light: var(--agri-primary-light);
+  --color-agri-primary-dark: var(--agri-primary-dark);
+  --color-agri-secondary: var(--agri-secondary);
+  --color-agri-secondary-light: var(--agri-secondary-light);
+  --color-agri-background: var(--agri-background);
+  --color-agri-text: var(--agri-text);
 }
 
 @layer base {
@@ -119,6 +146,9 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  html {
+    scroll-behavior: smooth;
   }
 }
 

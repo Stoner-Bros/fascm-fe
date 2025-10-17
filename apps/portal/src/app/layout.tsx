@@ -16,7 +16,7 @@ const META_THEME_COLORS = {
 };
 
 export const metadata: Metadata = {
-  title: 'AgriChain - Quản lý Chuỗi Cung Ứng Nông Sản Minh Bạch',
+  title: 'FASCM - Quản lý Chuỗi Cung Ứng Nông Sản Minh Bạch',
   description:
     'Hệ thống quản lý chuỗi cung ứng nông sản với công nghệ IoT và Blockchain'
 };
