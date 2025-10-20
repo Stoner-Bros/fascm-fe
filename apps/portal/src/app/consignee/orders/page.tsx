@@ -15,12 +15,11 @@ import {
   IconPlus,
   IconSearch,
   IconEye,
-  IconEdit,
   IconX,
-  IconPackage,
   IconClock,
   IconTruck,
-  IconCheck
+  IconCheck,
+  IconRefresh
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useState } from 'react';
@@ -59,83 +58,88 @@ import {
   AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 
-// Mock data for harvest batches
-const mockBatches = [
+// Mock data for orders
+const mockOrders = [
   {
-    id: 'HB-001',
-    product: 'Organic Tomatoes',
+    id: 'ORD-001',
+    items: 'Organic Tomatoes, Fresh Carrots',
+    itemCount: 2,
+    totalAmount: 2000,
+    quantity: '800 kg',
+    orderDate: '2025-10-19',
+    status: 'Pending',
+    supplier: 'Green Valley Farm'
+  },
+  {
+    id: 'ORD-002',
+    items: 'Green Lettuce, Cucumbers',
+    itemCount: 2,
+    totalAmount: 1250,
     quantity: '500 kg',
-    harvestDate: '2025-10-19',
-    status: 'Pending Pickup',
-    location: 'Warehouse A',
-    price: '$1,250'
+    orderDate: '2025-10-18',
+    status: 'In Delivery',
+    supplier: 'Fresh Greens Co'
   },
   {
-    id: 'HB-002',
-    product: 'Fresh Carrots',
-    quantity: '300 kg',
-    harvestDate: '2025-10-18',
-    status: 'In Transit',
-    location: 'Warehouse B',
-    price: '$750'
-  },
-  {
-    id: 'HB-003',
-    product: 'Green Lettuce',
-    quantity: '200 kg',
-    harvestDate: '2025-10-17',
+    id: 'ORD-003',
+    items: 'Bell Peppers, Onions',
+    itemCount: 2,
+    totalAmount: 1500,
+    quantity: '600 kg',
+    orderDate: '2025-10-17',
     status: 'Delivered',
-    location: 'Warehouse A',
-    price: '$400'
+    supplier: 'Rainbow Farms'
   },
   {
-    id: 'HB-004',
-    product: 'Cucumbers',
-    quantity: '400 kg',
-    harvestDate: '2025-10-16',
-    status: 'Pending Pickup',
-    location: 'Warehouse C',
-    price: '$800'
+    id: 'ORD-004',
+    items: 'Fresh Carrots',
+    itemCount: 1,
+    totalAmount: 540,
+    quantity: '300 kg',
+    orderDate: '2025-10-16',
+    status: 'Pending',
+    supplier: 'Sunny Fields'
   },
   {
-    id: 'HB-005',
-    product: 'Bell Peppers',
+    id: 'ORD-005',
+    items: 'Organic Tomatoes',
+    itemCount: 1,
+    totalAmount: 625,
     quantity: '250 kg',
-    harvestDate: '2025-10-15',
+    orderDate: '2025-10-15',
     status: 'Cancelled',
-    location: 'Warehouse A',
-    price: '$625'
+    supplier: 'Green Valley Farm'
   }
 ];
 
-export default function HarvestBatchesPage() {
+export default function OrdersPage() {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [batches, setBatches] = useState(mockBatches);
+  const [orders, setOrders] = useState(mockOrders);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Pending Pickup':
+      case 'Pending':
         return <IconClock className='h-4 w-4' />;
-      case 'In Transit':
+      case 'In Delivery':
         return <IconTruck className='h-4 w-4' />;
       case 'Delivered':
         return <IconCheck className='h-4 w-4' />;
       case 'Cancelled':
         return <IconX className='h-4 w-4' />;
       default:
-        return <IconPackage className='h-4 w-4' />;
+        return <IconClock className='h-4 w-4' />;
     }
   };
 
   const getStatusVariant = (status: string) => {
     switch (status) {
-      case 'Pending Pickup':
+      case 'Pending':
         return 'outline';
-      case 'In Transit':
+      case 'In Delivery':
         return 'secondary';
       case 'Delivered':
         return 'default';
@@ -146,45 +150,53 @@ export default function HarvestBatchesPage() {
     }
   };
 
-  const handleCancelBatch = (batchId: string) => {
-    setSelectedBatchId(batchId);
+  const handleCancelOrder = (orderId: string) => {
+    setSelectedOrderId(orderId);
     setCancelDialogOpen(true);
   };
 
-  const confirmCancelBatch = () => {
-    if (selectedBatchId) {
-      // TODO: Implement API call to cancel batch
-      setBatches((prev) =>
-        prev.map((batch) =>
-          batch.id === selectedBatchId
-            ? { ...batch, status: 'Cancelled' }
-            : batch
+  const confirmCancelOrder = () => {
+    if (selectedOrderId) {
+      // TODO: Implement API call to cancel order
+      setOrders((prev) =>
+        prev.map((order) =>
+          order.id === selectedOrderId
+            ? { ...order, status: 'Cancelled' }
+            : order
         )
       );
       toast({
-        title: 'Batch Cancelled',
-        description: `Harvest batch ${selectedBatchId} has been cancelled.`
+        title: 'Order Cancelled',
+        description: `Order ${selectedOrderId} has been cancelled.`
       });
     }
     setCancelDialogOpen(false);
-    setSelectedBatchId(null);
+    setSelectedOrderId(null);
   };
 
-  const filteredBatches = batches.filter((batch) => {
+  const handleReorder = (orderId: string) => {
+    toast({
+      title: 'Reorder Created',
+      description: `Creating a new order based on ${orderId}...`
+    });
+    // TODO: Implement reorder functionality
+  };
+
+  const filteredOrders = orders.filter((order) => {
     const matchesSearch =
-      batch.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      batch.product.toLowerCase().includes(searchQuery.toLowerCase());
+      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.items.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.supplier.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus =
-      statusFilter === 'all' || batch.status === statusFilter;
+      statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   const statusCounts = {
-    all: batches.length,
-    'Pending Pickup': batches.filter((b) => b.status === 'Pending Pickup')
-      .length,
-    'In Transit': batches.filter((b) => b.status === 'In Transit').length,
-    Delivered: batches.filter((b) => b.status === 'Delivered').length
+    all: orders.length,
+    Pending: orders.filter((o) => o.status === 'Pending').length,
+    'In Delivery': orders.filter((o) => o.status === 'In Delivery').length,
+    Delivered: orders.filter((o) => o.status === 'Delivered').length
   };
 
   return (
@@ -192,17 +204,15 @@ export default function HarvestBatchesPage() {
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
           <div>
-            <h2 className='text-3xl font-bold tracking-tight'>
-              Harvest Batches
-            </h2>
+            <h2 className='text-3xl font-bold tracking-tight'>Orders</h2>
             <p className='text-muted-foreground'>
-              Manage and track your harvest batches
+              Manage and track your orders
             </p>
           </div>
-          <Link href='/supplier/harvest-batches/new'>
+          <Link href='/consignee/orders/new'>
             <Button>
               <IconPlus className='mr-2 h-4 w-4' />
-              New Batch
+              New Order
             </Button>
           </Link>
         </div>
@@ -214,35 +224,33 @@ export default function HarvestBatchesPage() {
             onClick={() => setStatusFilter('all')}
           >
             <CardHeader className='pb-3'>
-              <CardDescription>Total Batches</CardDescription>
+              <CardDescription>Total Orders</CardDescription>
               <CardTitle className='text-3xl'>{statusCounts.all}</CardTitle>
             </CardHeader>
           </Card>
           <Card
             className='hover:border-primary cursor-pointer'
-            onClick={() => setStatusFilter('Pending Pickup')}
+            onClick={() => setStatusFilter('Pending')}
           >
             <CardHeader className='pb-3'>
               <CardDescription className='flex items-center gap-2'>
                 <IconClock className='h-4 w-4' />
-                Pending Pickup
+                Pending
               </CardDescription>
-              <CardTitle className='text-3xl'>
-                {statusCounts['Pending Pickup']}
-              </CardTitle>
+              <CardTitle className='text-3xl'>{statusCounts.Pending}</CardTitle>
             </CardHeader>
           </Card>
           <Card
             className='hover:border-primary cursor-pointer'
-            onClick={() => setStatusFilter('In Transit')}
+            onClick={() => setStatusFilter('In Delivery')}
           >
             <CardHeader className='pb-3'>
               <CardDescription className='flex items-center gap-2'>
                 <IconTruck className='h-4 w-4' />
-                In Transit
+                In Delivery
               </CardDescription>
               <CardTitle className='text-3xl'>
-                {statusCounts['In Transit']}
+                {statusCounts['In Delivery']}
               </CardTitle>
             </CardHeader>
           </Card>
@@ -262,7 +270,7 @@ export default function HarvestBatchesPage() {
           </Card>
         </div>
 
-        {/* Filters and Search */}
+        {/* Orders Table */}
         <Card>
           <CardHeader>
             <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
@@ -270,7 +278,7 @@ export default function HarvestBatchesPage() {
                 <div className='relative flex-1'>
                   <IconSearch className='text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4' />
                   <Input
-                    placeholder='Search by ID or product...'
+                    placeholder='Search by ID, items, or supplier...'
                     className='pl-8'
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -282,10 +290,8 @@ export default function HarvestBatchesPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value='all'>All Status</SelectItem>
-                    <SelectItem value='Pending Pickup'>
-                      Pending Pickup
-                    </SelectItem>
-                    <SelectItem value='In Transit'>In Transit</SelectItem>
+                    <SelectItem value='Pending'>Pending</SelectItem>
+                    <SelectItem value='In Delivery'>In Delivery</SelectItem>
                     <SelectItem value='Delivered'>Delivered</SelectItem>
                     <SelectItem value='Cancelled'>Cancelled</SelectItem>
                   </SelectContent>
@@ -298,41 +304,50 @@ export default function HarvestBatchesPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Batch ID</TableHead>
-                    <TableHead>Product</TableHead>
+                    <TableHead>Order ID</TableHead>
+                    <TableHead>Items</TableHead>
+                    <TableHead>Supplier</TableHead>
                     <TableHead>Quantity</TableHead>
-                    <TableHead>Harvest Date</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Price</TableHead>
+                    <TableHead>Order Date</TableHead>
+                    <TableHead>Amount</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className='text-right'>Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredBatches.length === 0 ? (
+                  {filteredOrders.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className='text-center'>
-                        No harvest batches found
+                        No orders found
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filteredBatches.map((batch) => (
-                      <TableRow key={batch.id}>
+                    filteredOrders.map((order) => (
+                      <TableRow key={order.id}>
                         <TableCell className='font-medium'>
-                          {batch.id}
+                          {order.id}
                         </TableCell>
-                        <TableCell>{batch.product}</TableCell>
-                        <TableCell>{batch.quantity}</TableCell>
-                        <TableCell>{batch.harvestDate}</TableCell>
-                        <TableCell>{batch.location}</TableCell>
-                        <TableCell>{batch.price}</TableCell>
+                        <TableCell>
+                          <div>
+                            <p className='text-sm'>{order.items}</p>
+                            <p className='text-muted-foreground text-xs'>
+                              {order.itemCount} item(s)
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>{order.supplier}</TableCell>
+                        <TableCell>{order.quantity}</TableCell>
+                        <TableCell>{order.orderDate}</TableCell>
+                        <TableCell className='font-medium'>
+                          ${order.totalAmount}
+                        </TableCell>
                         <TableCell>
                           <Badge
-                            variant={getStatusVariant(batch.status)}
+                            variant={getStatusVariant(order.status)}
                             className='flex w-fit items-center gap-1'
                           >
-                            {getStatusIcon(batch.status)}
-                            {batch.status}
+                            {getStatusIcon(order.status)}
+                            {order.status}
                           </Badge>
                         </TableCell>
                         <TableCell className='text-right'>
@@ -347,32 +362,27 @@ export default function HarvestBatchesPage() {
                               <DropdownMenuSeparator />
                               <DropdownMenuItem asChild>
                                 <Link
-                                  href={`/supplier/harvest-batches/${batch.id}`}
+                                  href={`/consignee/orders/${order.id}`}
                                   className='flex items-center'
                                 >
                                   <IconEye className='mr-2 h-4 w-4' />
                                   View Details
                                 </Link>
                               </DropdownMenuItem>
-                              {batch.status === 'Pending Pickup' && (
-                                <>
-                                  <DropdownMenuItem asChild>
-                                    <Link
-                                      href={`/supplier/harvest-batches/${batch.id}/edit`}
-                                      className='flex items-center'
-                                    >
-                                      <IconEdit className='mr-2 h-4 w-4' />
-                                      Edit
-                                    </Link>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleCancelBatch(batch.id)}
-                                    className='text-destructive'
-                                  >
-                                    <IconX className='mr-2 h-4 w-4' />
-                                    Cancel Batch
-                                  </DropdownMenuItem>
-                                </>
+                              <DropdownMenuItem
+                                onClick={() => handleReorder(order.id)}
+                              >
+                                <IconRefresh className='mr-2 h-4 w-4' />
+                                Reorder
+                              </DropdownMenuItem>
+                              {order.status === 'Pending' && (
+                                <DropdownMenuItem
+                                  onClick={() => handleCancelOrder(order.id)}
+                                  className='text-destructive'
+                                >
+                                  <IconX className='mr-2 h-4 w-4' />
+                                  Cancel Order
+                                </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -391,16 +401,16 @@ export default function HarvestBatchesPage() {
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Harvest Batch?</AlertDialogTitle>
+            <AlertDialogTitle>Cancel Order?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will cancel the harvest batch{' '}
-              <strong>{selectedBatchId}</strong>. This cannot be undone.
+              This action will cancel order <strong>{selectedOrderId}</strong>.
+              This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>No, Keep It</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmCancelBatch}>
-              Yes, Cancel Batch
+            <AlertDialogAction onClick={confirmCancelOrder}>
+              Yes, Cancel Order
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

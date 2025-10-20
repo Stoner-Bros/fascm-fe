@@ -6,8 +6,8 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
-  title: 'Supplier Dashboard',
-  description: ''
+  title: 'FASCM - Supplier',
+  description: 'Supplier dashboard for FASCM'
 };
 
 export default async function SupplierLayout({

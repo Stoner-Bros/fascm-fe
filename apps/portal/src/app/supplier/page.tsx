@@ -1,12 +1,13 @@
-import { auth } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 
 export default async function Dashboard() {
-  const { userId } = await auth();
+  // const { userId } = await auth();
 
-  if (!userId) {
-    return redirect('/auth/sign-in');
-  } else {
-    redirect('/supplier/harvest-batches');
-  }
+  // if (!userId) {
+  //   return redirect('/auth/sign-in');
+  // } else {
+  //   redirect('/supplier/dashboard');
+  // }
+
+  redirect('/supplier/dashboard');
 }

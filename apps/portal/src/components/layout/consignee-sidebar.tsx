@@ -29,7 +29,7 @@ import {
   SidebarRail
 } from '@/components/ui/sidebar';
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
-import { supplierNavItems } from '@/constants/data';
+import { consigneeNavItems } from '@/constants/data';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import { SignOutButton, useUser } from '@clerk/nextjs';
 import {
@@ -39,26 +39,28 @@ import {
   IconCreditCard,
   IconLogout,
   IconPhotoUp,
-  IconUserCircle
+  IconUserCircle,
+  IconBuilding
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
 import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
+
 export const company = {
-  name: 'Acme Inc',
+  name: 'Retail Corp',
   logo: IconPhotoUp,
-  plan: 'Enterprise'
+  plan: 'Business'
 };
 
 const tenants = [
-  { id: '1', name: 'Acme Inc' },
-  { id: '2', name: 'Beta Corp' },
-  { id: '3', name: 'Gamma Ltd' }
+  { id: '1', name: 'Main Store' },
+  { id: '2', name: 'Branch Store A' },
+  { id: '3', name: 'Branch Store B' }
 ];
 
-export default function SupplierSidebar() {
+export default function ConsigneeSidebar() {
   const pathname = usePathname();
   const { isOpen } = useMediaQuery();
   const { user } = useUser();
@@ -86,7 +88,7 @@ export default function SupplierSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>Overview</SidebarGroupLabel>
           <SidebarMenu>
-            {supplierNavItems.map((item) => {
+            {consigneeNavItems.map((item) => {
               const Icon = item.icon ? Icons[item.icon] : Icons.logo;
               return item?.items && item?.items?.length > 0 ? (
                 <Collapsible
@@ -188,16 +190,22 @@ export default function SupplierSidebar() {
 
                 <DropdownMenuGroup>
                   <DropdownMenuItem
-                    onClick={() => router.push('/supplier/profile')}
+                    onClick={() => router.push('/consignee/profile')}
                   >
                     <IconUserCircle className='mr-2 h-4 w-4' />
                     Profile
                   </DropdownMenuItem>
                   <DropdownMenuItem
-                    onClick={() => router.push('/supplier/profile/farm')}
+                    onClick={() => router.push('/consignee/profile/business')}
+                  >
+                    <IconBuilding className='mr-2 h-4 w-4' />
+                    Business Information
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => router.push('/consignee/payments')}
                   >
                     <IconCreditCard className='mr-2 h-4 w-4' />
-                    Farm Information
+                    Payments
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <IconBell className='mr-2 h-4 w-4' />

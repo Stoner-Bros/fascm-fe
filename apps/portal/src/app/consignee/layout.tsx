@@ -1,16 +1,34 @@
-import ConsigneeFooter from '@/features/consignee/components/consignee-footer';
-import ConsigneeHeader from '@/features/consignee/components/consignee-header';
+import KBar from '@/components/kbar';
+import ConsigneeSidebar from '@/components/layout/consignee-sidebar';
+import Header from '@/components/layout/header';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 
-export default function ConsigneeLayout({
+export const metadata: Metadata = {
+  title: 'FASCM - Consignee',
+  description: 'Consignee dashboard for FASCM'
+};
+
+export default async function ConsigneeLayout({
   children
 }: {
   children: React.ReactNode;
 }) {
+  // Persisting the sidebar state in the cookie.
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get('sidebar_state')?.value === 'true';
   return (
-    <div className='flex min-h-screen flex-col'>
-      <ConsigneeHeader />
-      <main className='flex-1'>{children}</main>
-      <ConsigneeFooter />
-    </div>
+    <KBar>
+      <SidebarProvider defaultOpen={defaultOpen}>
+        <ConsigneeSidebar />
+        <SidebarInset>
+          <Header />
+          {/* page main content */}
+          {children}
+          {/* page main content ends */}
+        </SidebarInset>
+      </SidebarProvider>
+    </KBar>
   );
 }
