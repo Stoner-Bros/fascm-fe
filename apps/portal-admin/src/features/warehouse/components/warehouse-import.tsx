@@ -34,7 +34,6 @@ import {
 } from '@/components/ui/tooltip';
 import {
   IconPackageImport,
-  IconBrain,
   IconShield,
   IconAlertTriangle,
   IconCheck,
@@ -45,8 +44,7 @@ import {
   IconUser,
   IconMapPin,
   IconBarcode,
-  IconBuilding,
-  IconUpload
+  IconBuilding
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import type { Warehouse, Area, Product, Supplier } from '@/types/inventory';
@@ -409,17 +407,6 @@ const mockSuppliers: Supplier[] = [
   }
 ];
 
-const mockAIAnalysis = {
-  riskLevel: 'Thấp',
-  predictedShelfLife: '15 ngày',
-  qualityScore: 92,
-  recommendations: [
-    'Duy trì nhiệt độ 16-20°C',
-    'Kiểm tra độ ẩm định kỳ',
-    'Tách riêng sản phẩm có dấu hiệu hư hỏng'
-  ]
-};
-
 export function WarehouseImport() {
   // Form states từ stock-entry-form
   const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(
@@ -454,7 +441,6 @@ export function WarehouseImport() {
   const [quantity, setQuantity] = useState('');
   const [supplier, setSupplier] = useState('');
   const [notes, setNotes] = useState('');
-  const [isScanning, setIsScanning] = useState(false);
   const [importItems, setImportItems] = useState<any[]>([]);
 
   // Enhanced validation and tracking states
@@ -465,9 +451,9 @@ export function WarehouseImport() {
   const [qualityGrade, setQualityGrade] = useState('');
   const [certifications, setCertifications] = useState<string[]>([]);
   const [photos, setPhotos] = useState<string[]>([]);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [currentStep, setCurrentStep] = useState(1);
-  const [isValidating, setIsValidating] = useState(false);
+  const [, setValidationErrors] = useState<string[]>([]);
+  const [, setCurrentStep] = useState(1);
+  const [, setIsValidating] = useState(false);
 
   // Xử lý thay đổi kho
   const handleWarehouseChange = (warehouseId: string) => {
@@ -1198,67 +1184,6 @@ export function WarehouseImport() {
                     </Button>
                   </div>
                 </Form>
-              </CardContent>
-            </Card>
-
-            {/* AI Analysis */}
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <IconBrain className='h-5 w-5 text-purple-600' />
-                  Phân tích AI
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='flex items-center justify-between'>
-                  <span className='text-sm font-medium'>Mức độ rủi ro:</span>
-                  <Badge
-                    variant={
-                      mockAIAnalysis.riskLevel === 'Thấp'
-                        ? 'default'
-                        : 'destructive'
-                    }
-                  >
-                    {mockAIAnalysis.riskLevel}
-                  </Badge>
-                </div>
-
-                <div className='flex items-center justify-between'>
-                  <span className='text-sm font-medium'>Thời hạn dự kiến:</span>
-                  <span className='text-sm'>
-                    {mockAIAnalysis.predictedShelfLife}
-                  </span>
-                </div>
-
-                <div className='space-y-2'>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-sm font-medium'>
-                      Điểm chất lượng:
-                    </span>
-                    <span className='text-sm font-bold'>
-                      {mockAIAnalysis.qualityScore}/100
-                    </span>
-                  </div>
-                  <Progress
-                    value={mockAIAnalysis.qualityScore}
-                    className='h-2'
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <span className='text-sm font-medium'>Khuyến nghị:</span>
-                  <ul className='space-y-1'>
-                    {mockAIAnalysis.recommendations.map((rec, index) => (
-                      <li
-                        key={index}
-                        className='text-muted-foreground flex items-start gap-2 text-xs'
-                      >
-                        <IconCheck className='mt-0.5 h-3 w-3 flex-shrink-0 text-green-500' />
-                        {rec}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
               </CardContent>
             </Card>
           </div>
