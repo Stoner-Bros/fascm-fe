@@ -152,7 +152,7 @@ const mockConsignees: Consignee[] = [
   },
   {
     id: 'CUST-003',
-    name: 'Kho bãi Miềm Tây',
+    name: 'Kho bãi Miền Tây',
     address: '789 Quốc lộ 1A, Cần Thơ',
     contact: '0292345678',
     type: 'distributor'
@@ -263,7 +263,7 @@ const mockOrders: Order[] = [
   {
     id: 'ORD-2024-004',
     customerId: 'CUST-003',
-    customerName: 'Kho bãi Miềm Tây',
+    customerName: 'Kho bãi Miền Tây',
     customerAddress: '789 Quốc lộ 1A, Cần Thơ',
     customerContact: '0292345678',
     customerType: 'distributor',
