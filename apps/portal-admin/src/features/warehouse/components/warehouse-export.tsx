@@ -81,13 +81,13 @@ interface Order {
   updatedAt: string;
 }
 
-// Main form schema - updated for order selection
+// Main form schema - updated for new flow: orders -> area -> confirmation
 const exportFormSchema = z.object({
-  areaId: z.string().min(1, 'Vui lòng chọn khu vực'),
-  consigneeId: z.string().min(1, 'Vui lòng chọn người nhận'),
   selectedOrders: z
     .array(z.string())
     .min(1, 'Vui lòng chọn ít nhất một đơn hàng'),
+  areaId: z.string().min(1, 'Vui lòng chọn khu vực'),
+  consigneeId: z.string().optional(), // Made optional since we can skip consignee selection
   notes: z.string().optional()
 });
 
@@ -295,7 +295,9 @@ export function WarehouseExport() {
   const [selectedConsignee, setSelectedConsignee] = useState<Consignee | null>(
     null
   );
-  const [availableOrders, setAvailableOrders] = useState<Order[]>([]);
+  const [availableOrders, setAvailableOrders] = useState<Order[]>(
+    mockOrders.filter((order) => order.status === 'confirmed')
+  ); // Initialize with all confirmed orders
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [scanMode, setScanMode] = useState<boolean>(false);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
@@ -323,24 +325,18 @@ export function WarehouseExport() {
   const steps = [
     {
       id: 1,
-      title: 'Chọn khu vực',
-      icon: IconMapPin,
-      description: 'Chọn khu vực kho xuất hàng'
-    },
-    {
-      id: 2,
-      title: 'Chọn người nhận',
-      icon: IconUser,
-      description: 'Chọn khách hàng nhận hàng'
-    },
-    {
-      id: 3,
       title: 'Chọn đơn hàng',
       icon: IconClipboardList,
       description: 'Chọn các đơn hàng cần xuất'
     },
     {
-      id: 4,
+      id: 2,
+      title: 'Chọn khu vực',
+      icon: IconMapPin,
+      description: 'Chọn khu vực kho xuất hàng'
+    },
+    {
+      id: 3,
       title: 'Xác nhận',
       icon: IconCheck,
       description: 'Xem lại và xác nhận xuất kho'
@@ -351,46 +347,14 @@ export function WarehouseExport() {
   const form = useForm<ExportFormData>({
     resolver: zodResolver(exportFormSchema),
     defaultValues: {
+      selectedOrders: [],
       areaId: '',
       consigneeId: '',
-      selectedOrders: [],
       notes: ''
     }
   });
 
-  // Handle area selection
-  const handleAreaChange = (areaId: string) => {
-    const area = mockWarehouse.areas.find((a: any) => a.id === areaId);
-    setSelectedArea(area);
-    setCurrentStep(2);
-    // Reset subsequent selections
-    setSelectedConsignee(null);
-    setAvailableOrders([]);
-    setSelectedOrderIds([]);
-    form.setValue('consigneeId', '');
-    form.setValue('selectedOrders', []);
-  };
-
-  // Handle consignee selection
-  const handleConsigneeChange = (consigneeId: string) => {
-    const consignee = mockConsignees.find((c) => c.id === consigneeId);
-    setSelectedConsignee(consignee || null);
-
-    if (consignee) {
-      // Filter orders for selected consignee
-      const ordersForConsignee = mockOrders.filter(
-        (order) =>
-          order.customerId === consigneeId && order.status === 'confirmed'
-      );
-      setAvailableOrders(ordersForConsignee);
-      setCurrentStep(3);
-    }
-
-    setSelectedOrderIds([]);
-    form.setValue('selectedOrders', []);
-  };
-
-  // Handle order selection
+  // Handle order selection - now the first step
   const handleOrderSelection = (orderId: string, checked: boolean) => {
     let updatedSelectedOrders: string[];
 
@@ -404,8 +368,25 @@ export function WarehouseExport() {
     form.setValue('selectedOrders', updatedSelectedOrders);
 
     if (updatedSelectedOrders.length > 0) {
-      setCurrentStep(4);
+      setCurrentStep(2); // Move to area selection
+    } else {
+      setCurrentStep(1); // Stay on order selection if no orders selected
     }
+  };
+
+  // Handle area selection - now the second step
+  const handleAreaChange = (areaId: string) => {
+    const area = mockWarehouse.areas.find((a: any) => a.id === areaId);
+    setSelectedArea(area);
+    setCurrentStep(3); // Move to confirmation step
+    form.setValue('areaId', areaId);
+  };
+
+  // Handle consignee selection - now optional
+  const handleConsigneeChange = (consigneeId: string) => {
+    const consignee = mockConsignees.find((c) => c.id === consigneeId);
+    setSelectedConsignee(consignee || null);
+    form.setValue('consigneeId', consigneeId);
   };
 
   // Get priority badge
@@ -731,12 +712,130 @@ export function WarehouseExport() {
               onSubmit={form.handleSubmit(handleSubmit)}
               className='space-y-6'
             >
-              {/* Step 1: Area Selection - Card Based */}
+              {/* Step 1: Orders Selection - Card Based */}
               {currentStep >= 1 && (
                 <div className='space-y-4'>
                   <h3 className='flex items-center gap-2 text-lg font-semibold'>
+                    <IconClipboardList className='h-5 w-5' />
+                    Bước 1: Chọn đơn hàng
+                  </h3>
+                  <FormField
+                    control={form.control}
+                    name='selectedOrders'
+                    render={() => (
+                      <FormItem>
+                        <div className='space-y-3'>
+                          {availableOrders.map((order) => (
+                            <Card key={order.id} className='p-4'>
+                              <div className='flex items-start gap-3'>
+                                <Checkbox
+                                  checked={selectedOrderIds.includes(order.id)}
+                                  onCheckedChange={(checked) =>
+                                    handleOrderSelection(
+                                      order.id,
+                                      checked as boolean
+                                    )
+                                  }
+                                />
+                                <div className='flex-1 space-y-2'>
+                                  <div className='flex items-center justify-between'>
+                                    <div className='flex items-center gap-2'>
+                                      <Badge variant='outline'>
+                                        {order.id}
+                                      </Badge>
+                                      {getPriorityBadge(order.priority)}
+                                      {order.requiresSignature && (
+                                        <Badge variant='secondary'>
+                                          Cần chữ ký
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className='text-muted-foreground text-sm'>
+                                      {new Date(
+                                        order.deliveryDate
+                                      ).toLocaleDateString('vi-VN')}
+                                    </div>
+                                  </div>
+
+                                  <div className='grid grid-cols-2 gap-4 text-sm md:grid-cols-4'>
+                                    <div>
+                                      <span className='text-muted-foreground'>
+                                        Khách hàng:
+                                      </span>
+                                      <div className='font-medium'>
+                                        {order.customerName}
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <span className='text-muted-foreground'>
+                                        Loại:
+                                      </span>
+                                    </div>
+                                    <div>
+                                      <span className='text-muted-foreground'>
+                                        Khối lượng:
+                                      </span>
+                                      <div className='flex items-center gap-1'>
+                                        <IconWeight className='h-4 w-4' />
+                                        {order.totalWeight} kg
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <span className='text-muted-foreground'>
+                                        Thể tích:
+                                      </span>
+                                      <div className='flex items-center gap-1'>
+                                        <IconCube className='h-4 w-4' />
+                                        {order.totalVolume} m³
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className='text-muted-foreground text-sm'>
+                                    <div className='flex items-start gap-2'>
+                                      <IconMapPin className='mt-0.5 h-4 w-4 flex-shrink-0' />
+                                      <span className='line-clamp-1'>
+                                        {order.customerAddress}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Order Items */}
+                                  <div className='mt-3 space-y-2'>
+                                    <div className='text-sm font-medium'>
+                                      Sản phẩm:
+                                    </div>
+                                    <div className='space-y-1'>
+                                      {order.items.map((item) => (
+                                        <div
+                                          key={item.id}
+                                          className='flex items-center justify-between rounded bg-gray-50 p-2 text-sm dark:bg-gray-800'
+                                        >
+                                          <span>{item.productName}</span>
+                                          <span className='text-muted-foreground'>
+                                            {item.quantity} {item.unit}
+                                          </span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </Card>
+                          ))}
+                        </div>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              {/* Step 2: Area Selection - Card Based */}
+              {currentStep >= 2 && selectedOrderIds.length > 0 && (
+                <div className='space-y-4'>
+                  <h3 className='flex items-center gap-2 text-lg font-semibold'>
                     <IconMapPin className='h-5 w-5' />
-                    Bước 1: Chọn khu vực kho
+                    Bước 2: Chọn khu vực kho
                   </h3>
                   <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
                     {mockWarehouse.areas.map((area: any) => {
@@ -807,190 +906,79 @@ export function WarehouseExport() {
                 </div>
               )}
 
-              {/* Step 2: Consignee Selection - Card Based */}
-              {currentStep >= 2 && selectedArea && (
-                <div className='space-y-4'>
-                  <h3 className='flex items-center gap-2 text-lg font-semibold'>
-                    <IconUser className='h-5 w-5' />
-                    Bước 2: Chọn người nhận
-                  </h3>
-                  <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                    {mockConsignees.map((consignee) => {
-                      const isSelected = selectedConsignee?.id === consignee.id;
-
-                      return (
-                        <Card
-                          key={consignee.id}
-                          className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
-                            isSelected
-                              ? 'bg-blue-50 ring-2 ring-blue-500 dark:bg-gray-700'
-                              : 'hover:bg-gray-50 dark:hover:bg-gray-700'
-                          }`}
-                          onClick={() => {
-                            handleConsigneeChange(consignee.id);
-                            form.setValue('consigneeId', consignee.id);
-                          }}
-                        >
-                          <CardContent className='p-4'>
-                            <div className='mb-3 flex items-center justify-between'>
-                              <div className='flex items-center gap-2'>
-                                <IconUser
-                                  className={`h-5 w-5 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}
-                                />
-                                <span className='font-medium'>
-                                  {consignee.name}
-                                </span>
-                                <Badge variant='outline' className='t text-xs'>
-                                  {getCustomerTypeLabel(consignee.type)}
-                                </Badge>
-                              </div>
-                              {isSelected && (
-                                <IconCheck className='h-5 w-5 text-blue-600' />
-                              )}
-                            </div>
-
-                            <div className='space-y-2 text-sm text-gray-600 dark:text-white'>
-                              <div className='flex items-start gap-2'>
-                                <IconMapPin className='mt-0.5 h-4 w-4 flex-shrink-0' />
-                                <span className='line-clamp-2'>
-                                  {consignee.address}
-                                </span>
-                              </div>
-                              <div className='flex items-center gap-2'>
-                                <IconPhone className='h-4 w-4 flex-shrink-0' />
-                                <span>{consignee.contact}</span>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-
-              {/* Step 3: Orders Selection - Card Based */}
+              {/* Step 3: Confirmation with Optional Consignee Selection */}
               {currentStep >= 3 &&
-                selectedConsignee &&
-                availableOrders.length > 0 && (
-                  <div className='space-y-4'>
-                    <h3 className='flex items-center gap-2 text-lg font-semibold'>
-                      <IconClipboardList className='h-5 w-5' />
-                      Bước 3: Chọn đơn hàng
-                    </h3>
-                    <FormField
-                      control={form.control}
-                      name='selectedOrders'
-                      render={() => (
-                        <FormItem>
-                          <div className='space-y-3'>
-                            {availableOrders.map((order) => (
-                              <Card key={order.id} className='p-4'>
-                                <div className='flex items-start gap-3'>
-                                  <Checkbox
-                                    checked={selectedOrderIds.includes(
-                                      order.id
-                                    )}
-                                    onCheckedChange={(checked) =>
-                                      handleOrderSelection(
-                                        order.id,
-                                        checked as boolean
-                                      )
-                                    }
-                                  />
-                                  <div className='flex-1 space-y-2'>
-                                    <div className='flex items-center justify-between'>
-                                      <div className='flex items-center gap-2'>
-                                        <Badge variant='outline'>
-                                          {order.id}
-                                        </Badge>
-                                        {getPriorityBadge(order.priority)}
-                                        {order.requiresSignature && (
-                                          <Badge variant='secondary'>
-                                            Cần chữ ký
-                                          </Badge>
-                                        )}
-                                      </div>
-                                      <div className='text-muted-foreground text-sm'>
-                                        {new Date(
-                                          order.deliveryDate
-                                        ).toLocaleDateString('vi-VN')}
-                                      </div>
-                                    </div>
-
-                                    <div className='grid grid-cols-2 gap-4 text-sm md:grid-cols-4'>
-                                      <div className='flex items-center gap-1'>
-                                        <IconPackage className='h-4 w-4' />
-                                        <span>
-                                          {order.items.length} sản phẩm
-                                        </span>
-                                      </div>
-                                      <div className='flex items-center gap-1'>
-                                        <IconWeight className='h-4 w-4' />
-                                        <span>{order.totalWeight} kg</span>
-                                      </div>
-                                      <div className='flex items-center gap-1'>
-                                        <IconCube className='h-4 w-4' />
-                                        <span>{order.totalVolume} m³</span>
-                                      </div>
-                                    </div>
-
-                                    <div className='space-y-1'>
-                                      <div className='text-sm font-medium'>
-                                        Sản phẩm:
-                                      </div>
-                                      <div className='text-muted-foreground text-sm'>
-                                        {order.items.map((item, index) => (
-                                          <span key={item.id}>
-                                            {item.productName} ({item.quantity}{' '}
-                                            {item.unit})
-                                            {index < order.items.length - 1 &&
-                                              ', '}
-                                          </span>
-                                        ))}
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                              </Card>
-                            ))}
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                )}
-
-              {/* No Orders Message */}
-              {currentStep >= 3 &&
-                selectedConsignee &&
-                availableOrders.length === 0 && (
-                  <div className='space-y-4'>
-                    <h3 className='flex items-center gap-2 text-lg font-semibold'>
-                      <IconClipboardList className='h-5 w-5' />
-                      Bước 3: Chọn đơn hàng
-                    </h3>
-                    <Card className='p-6 text-center'>
-                      <div className='flex flex-col items-center gap-2'>
-                        <IconAlertTriangle className='text-muted-foreground h-8 w-8' />
-                        <p className='text-muted-foreground'>
-                          Không có đơn hàng nào đã xác nhận cho người nhận này
-                        </p>
-                      </div>
-                    </Card>
-                  </div>
-                )}
-
-              {/* Step 4: Review Dashboard */}
-              {currentStep >= 4 &&
-                selectedConsignee &&
+                selectedArea &&
                 selectedOrderIds.length > 0 && (
                   <div className='space-y-6'>
                     <h3 className='flex items-center gap-2 text-lg font-semibold'>
                       <IconCheck className='h-5 w-5' />
-                      Bước 4: Xem lại thông tin xuất kho
+                      Bước 3: Xác nhận và tùy chọn người nhận
                     </h3>
+
+                    {/* Optional Consignee Selection */}
+                    <div className='space-y-4'>
+                      <h4 className='flex items-center gap-2 text-base font-medium text-gray-700'>
+                        <IconUser className='h-4 w-4' />
+                        Chọn người nhận (tùy chọn)
+                      </h4>
+                      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                        {mockConsignees.map((consignee) => {
+                          const isSelected =
+                            selectedConsignee?.id === consignee.id;
+
+                          return (
+                            <Card
+                              key={consignee.id}
+                              className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+                                isSelected
+                                  ? 'bg-blue-50 ring-2 ring-blue-500 dark:bg-gray-700'
+                                  : 'hover:bg-gray-50 dark:hover:bg-gray-700'
+                              }`}
+                              onClick={() => {
+                                handleConsigneeChange(consignee.id);
+                                form.setValue('consigneeId', consignee.id);
+                              }}
+                            >
+                              <CardContent className='p-4'>
+                                <div className='mb-3 flex items-center justify-between'>
+                                  <div className='flex items-center gap-2'>
+                                    <IconUser
+                                      className={`h-5 w-5 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}
+                                    />
+                                    <span className='font-medium'>
+                                      {consignee.name}
+                                    </span>
+                                    <Badge
+                                      variant='outline'
+                                      className='t text-xs'
+                                    >
+                                      {getCustomerTypeLabel(consignee.type)}
+                                    </Badge>
+                                  </div>
+                                  {isSelected && (
+                                    <IconCheck className='h-5 w-5 text-blue-600' />
+                                  )}
+                                </div>
+
+                                <div className='space-y-2 text-sm text-gray-600 dark:text-white'>
+                                  <div className='flex items-start gap-2'>
+                                    <IconMapPin className='mt-0.5 h-4 w-4 flex-shrink-0' />
+                                    <span className='line-clamp-2'>
+                                      {consignee.address}
+                                    </span>
+                                  </div>
+                                  <div className='flex items-center gap-2'>
+                                    <IconPhone className='h-4 w-4 flex-shrink-0' />
+                                    <span>{consignee.contact}</span>
+                                  </div>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
+                      </div>
+                    </div>
 
                     {/* Review Summary Cards */}
                     <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
@@ -1207,8 +1195,8 @@ export function WarehouseExport() {
                 )}
 
               {/* Submit Buttons */}
-              {currentStep >= 4 &&
-                selectedConsignee &&
+              {currentStep >= 3 &&
+                selectedArea &&
                 selectedOrderIds.length > 0 && (
                   <div className='flex gap-2 border-t pt-4'>
                     <Button type='submit' disabled={isSubmitting}>
@@ -1222,7 +1210,11 @@ export function WarehouseExport() {
                         form.reset();
                         setSelectedArea(null);
                         setSelectedConsignee(null);
-                        setAvailableOrders([]);
+                        setAvailableOrders(
+                          mockOrders.filter(
+                            (order) => order.status === 'confirmed'
+                          )
+                        );
                         setSelectedOrderIds([]);
                         setCurrentStep(1);
                       }}
