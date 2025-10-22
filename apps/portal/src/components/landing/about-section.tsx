@@ -111,7 +111,7 @@ export function AboutSection() {
                   </div>
                 </div>
                 <div className='text-center'>
-                  <div className='text-agri-primary mb-2 text-4xl font-bold'>
+                  <div className='text-agri-primary mb-2 text-4xl font-bold whitespace-nowrap'>
                     Real-time
                   </div>
                   <div className='text-muted-foreground text-sm'>Updates</div>
