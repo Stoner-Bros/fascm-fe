@@ -64,6 +64,12 @@ export function LandingHeader() {
             >
               Features
             </Link>
+            <Link
+              href='#tracking'
+              className='text-foreground hover:text-agri-primary font-medium transition-colors'
+            >
+              Tracking
+            </Link>
             <Link href='/auth/sign-in'>
               <Button
                 variant='outline'
@@ -128,6 +134,13 @@ export function LandingHeader() {
                 onClick={closeMobileMenu}
               >
                 Features
+              </Link>
+              <Link
+                href='#tracking'
+                className='text-foreground hover:text-agri-primary py-2 font-medium transition-colors'
+                onClick={closeMobileMenu}
+              >
+                Tracking
               </Link>
               <Link href='/auth/sign-in' onClick={closeMobileMenu}>
                 <Button

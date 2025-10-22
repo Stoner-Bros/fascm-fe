@@ -58,7 +58,7 @@ export function HeroSection() {
                 <Button
                   size='lg'
                   variant='outline'
-                  className='hover:text-agri-primary border-2 border-white px-8 py-6 text-lg font-semibold text-white shadow-lg transition-all hover:bg-white hover:shadow-xl'
+                  className='hover:text-agri-primary border-2 border-white bg-transparent px-8 py-6 text-lg font-semibold text-white shadow-lg transition-all hover:bg-white hover:shadow-xl'
                 >
                   <ShoppingCart className='mr-2 h-5 w-5' />
                   Sign In as Consignee

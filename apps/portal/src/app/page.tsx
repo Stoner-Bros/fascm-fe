@@ -4,6 +4,7 @@ import { AboutSection } from '@/components/landing/about-section';
 import { FeaturesSection } from '@/components/landing/features-section';
 import { CTASection } from '@/components/landing/cta-section';
 import { LandingFooter } from '@/components/landing/footer';
+import { TrackingSection } from '@/components/landing';
 
 export default function LandingPage() {
   return (
@@ -13,6 +14,7 @@ export default function LandingPage() {
         <HeroSection />
         <AboutSection />
         <FeaturesSection />
+        <TrackingSection />
         <CTASection />
       </main>
       <LandingFooter />
