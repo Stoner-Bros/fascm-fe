@@ -62,53 +62,43 @@ import {
 const mockOrders = [
   {
     id: 'ORD-001',
-    items: 'Organic Tomatoes, Fresh Carrots',
+    items: 'Gạo ST25 Organic, Gạo Jasmine',
     itemCount: 2,
-    totalAmount: 2000,
+    totalAmount: 33000000,
     quantity: '800 kg',
-    orderDate: '2025-10-19',
+    orderDate: '2024-04-01',
     status: 'Pending',
-    supplier: 'Green Valley Farm'
+    supplier: 'Công ty TNHH Nông sản Đồng Tháp'
   },
   {
     id: 'ORD-002',
-    items: 'Green Lettuce, Cucumbers',
-    itemCount: 2,
-    totalAmount: 1250,
-    quantity: '500 kg',
-    orderDate: '2025-10-18',
+    items: 'Cà chua cherry organic, Xà lách xoăn, Cải bó xôi baby',
+    itemCount: 3,
+    totalAmount: 14375000,
+    quantity: '225 kg',
+    orderDate: '2024-04-05',
     status: 'In Delivery',
-    supplier: 'Fresh Greens Co'
+    supplier: 'Trang trại Rau sạch Đà Lạt'
   },
   {
     id: 'ORD-003',
-    items: 'Bell Peppers, Onions',
+    items: 'Tôm sú tươi size 20-30, Cua biển tươi',
     itemCount: 2,
-    totalAmount: 1500,
-    quantity: '600 kg',
-    orderDate: '2025-10-17',
+    totalAmount: 14250000,
+    quantity: '35 kg',
+    orderDate: '2024-04-01',
     status: 'Delivered',
-    supplier: 'Rainbow Farms'
+    supplier: 'Công ty CP Thủy sản Cà Mau'
   },
   {
     id: 'ORD-004',
-    items: 'Fresh Carrots',
-    itemCount: 1,
-    totalAmount: 540,
-    quantity: '300 kg',
-    orderDate: '2025-10-16',
-    status: 'Pending',
-    supplier: 'Sunny Fields'
-  },
-  {
-    id: 'ORD-005',
-    items: 'Organic Tomatoes',
-    itemCount: 1,
-    totalAmount: 625,
-    quantity: '250 kg',
-    orderDate: '2025-10-15',
+    items: 'Xoài cát Hòa Lộc, Bưởi da xanh',
+    itemCount: 2,
+    totalAmount: 17500000,
+    quantity: '200 kg + 100 trái',
+    orderDate: '2024-04-02',
     status: 'Cancelled',
-    supplier: 'Green Valley Farm'
+    supplier: 'Hợp tác xã Trái cây Tiền Giang'
   }
 ];
 
