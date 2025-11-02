@@ -5,8 +5,10 @@ import { useInView } from 'react-intersection-observer';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { ArrowRight, Leaf, ShoppingCart } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export function CTASection() {
+  const t = useTranslations('Landing.cta');
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.2
@@ -23,11 +25,10 @@ export function CTASection() {
           className='text-center'
         >
           <h2 className='text-agri-primary-dark dark:text-agri-primary-light mb-6 text-3xl font-bold lg:text-5xl'>
-            Ready to bring transparency to your supply chain?
+            {t('title')}
           </h2>
           <p className='text-agri-primary mx-auto mb-12 max-w-3xl text-lg lg:text-xl'>
-            Join hundreds of farmers and retailers already using FASCM to ensure
-            quality, traceability, and trust in every transaction.
+            {t('description')}
           </p>
 
           <div className='flex flex-col items-center justify-center gap-6 sm:flex-row'>
@@ -42,7 +43,7 @@ export function CTASection() {
                   className='group bg-agri-primary hover:bg-agri-primary-dark px-10 py-7 text-lg font-semibold text-white shadow-xl transition-all hover:shadow-2xl'
                 >
                   <Leaf className='mr-2 h-6 w-6' />
-                  Register as Supplier
+                  {t('registerSupplier')}
                   <ArrowRight className='ml-2 h-6 w-6 transition-transform group-hover:translate-x-1' />
                 </Button>
               </Link>
@@ -60,7 +61,7 @@ export function CTASection() {
                   className='group border-agri-primary bg-background text-agri-primary hover:bg-agri-primary border-3 px-10 py-7 text-lg font-semibold shadow-xl transition-all hover:text-white hover:shadow-2xl'
                 >
                   <ShoppingCart className='mr-2 h-6 w-6' />
-                  Register as Consignee
+                  {t('registerConsignee')}
                   <ArrowRight className='ml-2 h-6 w-6 transition-transform group-hover:translate-x-1' />
                 </Button>
               </Link>
@@ -74,12 +75,12 @@ export function CTASection() {
             className='text-agri-primary mt-12'
           >
             <p className='text-sm'>
-              Already have an account?{' '}
+              {t('alreadyAccount')}{' '}
               <Link
                 href='/auth/sign-in'
                 className='hover:text-agri-primary-dark font-bold underline'
               >
-                Sign in here
+                {t('signIn')}
               </Link>
             </p>
           </motion.div>

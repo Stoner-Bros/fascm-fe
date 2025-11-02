@@ -28,95 +28,89 @@ import {
   UserCheckIcon,
   Wheat
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface TimelineStep {
   id: number;
-  title: string;
-  description: string;
+  titleKey: string;
+  descriptionKey: string;
   icon: React.ElementType;
   icon2: React.ElementType;
   color: string;
 }
 
-const consigneeSteps: TimelineStep[] = [
-  {
-    id: 1,
-    title: 'Browse Products',
-    description:
-      'Explore fresh produce catalog created by managers with complete product information and availability.',
-    icon: IconSearch,
-    icon2: PackageSearch,
-    color: 'from-blue-500 to-blue-600'
-  },
-  {
-    id: 2,
-    title: 'Place Order Request',
-    description:
-      'Submit order requests to warehouse staff who will manage and process your orders.',
-    icon: IconShoppingCart,
-    icon2: ShoppingCart,
-    color: 'from-green-500 to-green-600'
-  },
-  {
-    id: 3,
-    title: 'Order Processing',
-    description:
-      'Warehouse staff processes your order and coordinates with suppliers for fulfillment.',
-    icon: IconUserCheck,
-    icon2: UserCheckIcon,
-    color: 'from-orange-500 to-orange-600'
-  },
-  {
-    id: 4,
-    title: 'Track & Receive',
-    description:
-      'Monitor order status and receive products with full traceability and quality verification.',
-    icon: IconPackage,
-    icon2: PackageIcon,
-    color: 'from-purple-500 to-purple-600'
-  }
-];
-
-const supplierSteps: TimelineStep[] = [
-  {
-    id: 1,
-    title: 'Receive Notifications',
-    description:
-      'Get notified when warehouse staff creates orders that require your products.',
-    icon: IconBell,
-    icon2: BellIcon,
-    color: 'from-blue-500 to-blue-600'
-  },
-  {
-    id: 2,
-    title: 'Review Orders',
-    description:
-      'Check order details, quantities, and delivery requirements from warehouse staff.',
-    icon: IconClipboardCheck,
-    icon2: ClipboardCheckIcon,
-    color: 'from-green-500 to-green-600'
-  },
-  {
-    id: 3,
-    title: 'Confirm Availability',
-    description:
-      'Confirm product availability and accept or decline orders based on your inventory.',
-    icon: IconCircleCheck,
-    icon2: CircleCheckIcon,
-    color: 'from-orange-500 to-orange-600'
-  },
-  {
-    id: 4,
-    title: 'Fulfill Order',
-    description:
-      'Prepare and deliver confirmed orders with proper documentation and quality assurance.',
-    icon: IconTruck,
-    icon2: TruckIcon,
-    color: 'from-purple-500 to-purple-600'
-  }
-];
-
 export function HowItWorksSection() {
+  const t = useTranslations('Landing.howItWorks');
+
+  const consigneeSteps: TimelineStep[] = [
+    {
+      id: 1,
+      titleKey: 'consignee.step1.title',
+      descriptionKey: 'consignee.step1.description',
+      icon: IconSearch,
+      icon2: PackageSearch,
+      color: 'from-blue-500 to-blue-600'
+    },
+    {
+      id: 2,
+      titleKey: 'consignee.step2.title',
+      descriptionKey: 'consignee.step2.description',
+      icon: IconShoppingCart,
+      icon2: ShoppingCart,
+      color: 'from-green-500 to-green-600'
+    },
+    {
+      id: 3,
+      titleKey: 'consignee.step3.title',
+      descriptionKey: 'consignee.step3.description',
+      icon: IconUserCheck,
+      icon2: UserCheckIcon,
+      color: 'from-orange-500 to-orange-600'
+    },
+    {
+      id: 4,
+      titleKey: 'consignee.step4.title',
+      descriptionKey: 'consignee.step4.description',
+      icon: IconPackage,
+      icon2: PackageIcon,
+      color: 'from-purple-500 to-purple-600'
+    }
+  ];
+
+  const supplierSteps: TimelineStep[] = [
+    {
+      id: 1,
+      titleKey: 'supplier.step1.title',
+      descriptionKey: 'supplier.step1.description',
+      icon: IconBell,
+      icon2: BellIcon,
+      color: 'from-blue-500 to-blue-600'
+    },
+    {
+      id: 2,
+      titleKey: 'supplier.step2.title',
+      descriptionKey: 'supplier.step2.description',
+      icon: IconClipboardCheck,
+      icon2: ClipboardCheckIcon,
+      color: 'from-green-500 to-green-600'
+    },
+    {
+      id: 3,
+      titleKey: 'supplier.step3.title',
+      descriptionKey: 'supplier.step3.description',
+      icon: IconCircleCheck,
+      icon2: CircleCheckIcon,
+      color: 'from-orange-500 to-orange-600'
+    },
+    {
+      id: 4,
+      titleKey: 'supplier.step4.title',
+      descriptionKey: 'supplier.step4.description',
+      icon: IconTruck,
+      icon2: TruckIcon,
+      color: 'from-purple-500 to-purple-600'
+    }
+  ];
   const [activeTab, setActiveTab] = useState<'consignee' | 'supplier'>(
     'consignee'
   );
@@ -140,12 +134,10 @@ export function HowItWorksSection() {
           className='mb-16 text-center'
         >
           <h2 className='mb-4 text-3xl font-bold text-gray-900 lg:text-4xl dark:text-white'>
-            How It Works
+            {t('title')}
           </h2>
           <p className='mx-auto max-w-2xl text-lg text-gray-600 dark:text-gray-300'>
-            Discover how FASCM works with our streamlined process. Managers
-            create products, warehouse staff manage orders, and suppliers
-            fulfill confirmed requests.
+            {t('description')}
           </p>
         </motion.div>
 
@@ -167,7 +159,7 @@ export function HowItWorksSection() {
               }`}
             >
               <IconShoppingCart className='h-4 w-4' />
-              I`m a Consignee
+              {t('tabs.consignee')}
             </Button>
             <Button
               variant={activeTab === 'supplier' ? 'default' : 'ghost'}
@@ -179,7 +171,7 @@ export function HowItWorksSection() {
               }`}
             >
               <IconWheat className='h-4 w-4' />
-              I`m a Supplier
+              {t('tabs.supplier')}
             </Button>
           </div>
         </motion.div>
@@ -222,10 +214,10 @@ export function HowItWorksSection() {
                             </div>
                             <div className='flex-1'>
                               <h3 className='mb-2 text-xl font-bold text-gray-900 dark:text-white'>
-                                {step.title}
+                                {t(step.titleKey)}
                               </h3>
                               <p className='text-gray-600 dark:text-gray-300'>
-                                {step.description}
+                                {t(step.descriptionKey)}
                               </p>
                             </div>
                           </div>
@@ -271,15 +263,15 @@ export function HowItWorksSection() {
                             <step.icon className='h-6 w-6 text-white' />
                           </div>
                           <Badge variant='secondary' className='mt-2 text-xs'>
-                            Step {step.id}
+                            {t('stepLabel')} {step.id}
                           </Badge>
                         </div>
                         <div className='flex-1'>
                           <h3 className='mb-2 text-lg font-bold text-gray-900 dark:text-white'>
-                            {step.title}
+                            {t(step.titleKey)}
                           </h3>
                           <p className='text-gray-600 dark:text-gray-300'>
-                            {step.description}
+                            {t(step.descriptionKey)}
                           </p>
                         </div>
                       </div>
@@ -304,13 +296,11 @@ export function HowItWorksSection() {
           className='mt-16 text-center'
         >
           <div className='rounded-2xl bg-gradient-to-r from-green-500 to-green-600 p-8 text-white'>
-            <h3 className='mb-4 text-2xl font-bold'>Ready to get started?</h3>
+            <h3 className='mb-4 text-2xl font-bold'>{t('cta.title')}</h3>
             <p className='mb-6 text-green-100'>
-              Join our platform to streamline your{' '}
               {activeTab === 'consignee'
-                ? 'procurement process'
-                : 'order fulfillment'}{' '}
-              with complete transparency and efficiency.
+                ? t('cta.descriptionConsignee')
+                : t('cta.descriptionSupplier')}
             </p>
             <Button
               size='lg'
@@ -320,12 +310,12 @@ export function HowItWorksSection() {
               {activeTab === 'consignee' ? (
                 <>
                   <ShoppingCart className='mr-2 h-5 w-5' />
-                  Start as Consignee
+                  {t('cta.buttonConsignee')}
                 </>
               ) : (
                 <>
                   <Wheat className='mr-2 h-5 w-5' />
-                  Start as Supplier
+                  {t('cta.buttonSupplier')}
                 </>
               )}
             </Button>

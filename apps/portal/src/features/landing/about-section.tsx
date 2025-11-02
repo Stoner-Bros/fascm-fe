@@ -3,8 +3,10 @@
 import { motion } from 'motion/react';
 import { useInView } from 'react-intersection-observer';
 import { Shield, Cpu, Package } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export function AboutSection() {
+  const t = useTranslations('Landing.about');
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.2
@@ -31,7 +33,7 @@ export function AboutSection() {
               >
                 <Shield className='mb-4 h-16 w-16' />
                 <h3 className='text-center text-xl font-bold'>
-                  Blockchain Security
+                  {t('cards.blockchain')}
                 </h3>
               </motion.div>
 
@@ -43,7 +45,7 @@ export function AboutSection() {
               >
                 <Cpu className='mb-4 h-16 w-16' />
                 <h3 className='text-center text-xl font-bold'>
-                  IoT Monitoring
+                  {t('cards.iot')}
                 </h3>
               </motion.div>
 
@@ -55,7 +57,7 @@ export function AboutSection() {
               >
                 <Package className='mb-4 h-16 w-16' />
                 <h3 className='text-center text-xl font-bold'>
-                  Supply Chain Tracking
+                  {t('cards.supplyChain')}
                 </h3>
               </motion.div>
             </div>
@@ -68,38 +70,31 @@ export function AboutSection() {
             transition={{ duration: 0.8, delay: 0.2 }}
           >
             <h2 className='text-agri-text mb-6 text-3xl leading-tight font-bold lg:text-4xl'>
-              Modernizing Vietnam&apos;s{' '}
-              <span className='text-agri-primary'>
-                Fresh Produce Supply Chain
-              </span>
+              {t('title')}{' '}
+              <span className='text-agri-primary'>{t('titleHighlight')}</span>
             </h2>
             <div className='text-agri-text space-y-6 text-lg leading-relaxed'>
               <p>
-                FASCM connects <strong>farmers</strong>,{' '}
-                <strong>distributors</strong>, and <strong>retailers</strong> in
-                one transparent ecosystem. By combining{' '}
+                {t('description1')} <strong>{t('farmers')}</strong>,{' '}
+                <strong>{t('distributors')}</strong>, {t('and')}{' '}
+                <strong>{t('retailers')}</strong> {t('description2')}{' '}
                 <span className='text-agri-primary font-semibold'>
-                  Blockchain
+                  {t('blockchain')}
                 </span>{' '}
-                and{' '}
+                {t('and')}{' '}
                 <span className='text-agri-secondary font-semibold'>
-                  IoT technologies
+                  {t('iotTechnologies')}
                 </span>
-                , it ensures real-time freshness monitoring, traceability, and
-                trustworthy transactions.
+                , {t('description3')}
               </p>
-              <p>
-                Our platform provides end-to-end visibility across the entire
-                supply chain, from harvest to retail, ensuring food safety,
-                reducing waste, and building trust between all stakeholders.
-              </p>
+              <p>{t('description4')}</p>
               <div className='grid grid-cols-3 gap-4 pt-6'>
                 <div className='text-center'>
                   <div className='text-agri-primary mb-2 text-4xl font-bold'>
                     100%
                   </div>
                   <div className='text-muted-foreground text-sm'>
-                    Traceability
+                    {t('stats.traceability')}
                   </div>
                 </div>
                 <div className='text-center'>
@@ -107,14 +102,16 @@ export function AboutSection() {
                     24/7
                   </div>
                   <div className='text-muted-foreground text-sm'>
-                    Monitoring
+                    {t('stats.monitoring')}
                   </div>
                 </div>
                 <div className='text-center'>
                   <div className='text-agri-primary mb-2 text-4xl font-bold whitespace-nowrap'>
                     Real-time
                   </div>
-                  <div className='text-muted-foreground text-sm'>Updates</div>
+                  <div className='text-muted-foreground text-sm'>
+                    {t('stats.updates')}
+                  </div>
                 </div>
               </div>
             </div>

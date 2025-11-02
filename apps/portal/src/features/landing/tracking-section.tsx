@@ -39,8 +39,10 @@ import {
   Minimize2,
   X
 } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export function TrackingSection() {
+  const t = useTranslations('Landing.tracking');
   const [batchCode, setBatchCode] = useState('');
   const [blockchainHash, setBlockchainHash] = useState('');
   const [showQRResult, setShowQRResult] = useState(false);
@@ -179,11 +181,10 @@ export function TrackingSection() {
           className='mb-16 text-center'
         >
           <h2 className='mb-4 text-4xl font-bold text-gray-900 dark:text-white'>
-            Tra cứu & Xác minh sản phẩm
+            {t('title')}
           </h2>
           <p className='mx-auto max-w-3xl text-xl text-gray-600 dark:text-gray-300'>
-            Nhập mã lô hoặc quét QR code để tra cứu thông tin chi tiết về sản
-            phẩm và xác minh trên blockchain
+            {t('description')}
           </p>
         </motion.div>
 
@@ -197,7 +198,7 @@ export function TrackingSection() {
           <div className='w-full'>
             <div className='mb-8 flex justify-center'>
               <div className='bg-primary text-primary-foreground rounded-lg px-6 py-3 text-lg font-medium'>
-                Tra cứu theo Mã lô
+                {t('tabLot')}
               </div>
             </div>
 
@@ -208,16 +209,16 @@ export function TrackingSection() {
                   <CardHeader>
                     <CardTitle className='flex items-center'>
                       <Search className='mr-2 h-5 w-5' />
-                      Tra cứu theo Mã lô
+                      {t('lotTracking.title')}
                     </CardTitle>
                     <CardDescription>
-                      Nhập mã lô sản phẩm để xem thông tin chi tiết
+                      {t('lotTracking.description')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className='space-y-4'>
                     <div className='flex space-x-2'>
                       <Input
-                        placeholder='Nhập mã lô (VD: LOT-2024-001)'
+                        placeholder={t('lotTracking.placeholder')}
                         value={batchCode}
                         onChange={(e) => setBatchCode(e.target.value)}
                       />
@@ -227,11 +228,11 @@ export function TrackingSection() {
                         className='cursor-pointer px-4 py-2'
                       >
                         <Search className='mr-2 h-4 w-4' />
-                        Tìm kiếm
+                        {t('lotTracking.search')}
                       </Button>
                     </div>
                     <div className='text-sm text-gray-600 dark:text-gray-400'>
-                      Hoặc quét QR code để tra cứu nhanh
+                      {t('lotTracking.orScan')}
                     </div>
                     <Button
                       onClick={handleQRScan}
@@ -239,7 +240,7 @@ export function TrackingSection() {
                       className='w-full'
                     >
                       <QrCode className='mr-2 h-4 w-4' />
-                      Quét QR Code (Demo)
+                      {t('lotTracking.scanButton')}
                     </Button>
                   </CardContent>
                 </Card>
@@ -248,15 +249,15 @@ export function TrackingSection() {
                   <CardHeader>
                     <CardTitle className='flex items-center'>
                       <Database className='mr-2 h-5 w-5' />
-                      Xác minh Blockchain
+                      {t('blockchain.title')}
                     </CardTitle>
                     <CardDescription>
-                      Nhập transaction hash để xác minh trên blockchain
+                      {t('blockchain.description')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className='space-y-4'>
                     <Input
-                      placeholder='Nhập transaction hash'
+                      placeholder={t('blockchain.placeholder')}
                       className='font-mono text-sm'
                       value={blockchainHash}
                       onChange={(e) => setBlockchainHash(e.target.value)}
@@ -268,10 +269,10 @@ export function TrackingSection() {
                       onClick={handleBlockchainVerify}
                     >
                       <Database className='mr-2 h-4 w-4' />
-                      Kiểm tra trên Blockchain
+                      {t('blockchain.button')}
                     </Button>
                     <div className='text-sm text-gray-600 dark:text-gray-400'>
-                      <h3>Demo: 0x1234567890abcdef1234567890abcdef12345678</h3>
+                      <h3>{t('blockchain.demo')}</h3>
                     </div>
                   </CardContent>
                 </Card>
@@ -284,7 +285,7 @@ export function TrackingSection() {
                     <div className='flex items-center justify-between'>
                       <CardTitle className='flex items-center text-green-800 dark:text-green-200'>
                         <CheckCircle className='mr-2 h-5 w-5' />
-                        Kết quả tra cứu theo Mã lô
+                        {t('lotTracking.resultTitle')}
                       </CardTitle>
                       <div className='flex items-center space-x-2'>
                         <Button
@@ -312,7 +313,7 @@ export function TrackingSection() {
                       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
                         <div className='space-y-2'>
                           <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
-                            Mã lô
+                            {t('lotResult.lotCode')}
                           </p>
                           <p className='font-semibold text-green-800 dark:text-green-300'>
                             {lotTrackingResult.lotCode}
@@ -320,7 +321,7 @@ export function TrackingSection() {
                         </div>
                         <div className='space-y-2'>
                           <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
-                            Sản phẩm
+                            {t('lotResult.product')}
                           </p>
                           <p className='font-semibold'>
                             {lotTrackingResult.productName}
@@ -328,7 +329,7 @@ export function TrackingSection() {
                         </div>
                         <div className='space-y-2'>
                           <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
-                            Ngày sản xuất
+                            {t('lotResult.productionDate')}
                           </p>
                           <p className='font-semibold'>
                             {lotTrackingResult.productionDate}
@@ -336,7 +337,7 @@ export function TrackingSection() {
                         </div>
                         <div className='space-y-2'>
                           <p className='text-sm font-medium text-gray-600 dark:text-gray-400'>
-                            Hạn sử dụng
+                            {t('lotResult.expiryDate')}
                           </p>
                           <p className='font-semibold'>
                             {lotTrackingResult.expiryDate}
@@ -348,7 +349,7 @@ export function TrackingSection() {
                       <div className='space-y-4'>
                         <div className='flex items-center justify-between'>
                           <h3 className='text-lg font-semibold dark:text-gray-200'>
-                            Chuỗi cung ứng
+                            {t('lotResult.supplyChain')}
                           </h3>
                           <div className='flex items-center space-x-2'>
                             <Progress
@@ -402,7 +403,7 @@ export function TrackingSection() {
                                             className='bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
                                           >
                                             <CheckCircle className='mr-1 h-3 w-3' />
-                                            Hoàn thành
+                                            {t('lotResult.status.completed')}
                                           </Badge>
                                         )}
                                         {step.status === 'in_progress' && (
@@ -411,7 +412,7 @@ export function TrackingSection() {
                                             className='bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
                                           >
                                             <Clock className='mr-1 h-3 w-3' />
-                                            Đang xử lý
+                                            {t('lotResult.status.inProgress')}
                                           </Badge>
                                         )}
                                       </div>
@@ -440,14 +441,14 @@ export function TrackingSection() {
                           <AccordionTrigger className='text-left'>
                             <div className='flex items-center dark:text-gray-200'>
                               <FileText className='mr-2 h-5 w-5' />
-                              Giấy chứng nhận & QR Code
+                              {t('lotResult.certificates')}
                             </div>
                           </AccordionTrigger>
                           <AccordionContent className='space-y-4'>
                             <div className='grid gap-4 md:grid-cols-2'>
                               <div className='space-y-3'>
                                 <h4 className='font-semibold dark:text-gray-200'>
-                                  Chứng nhận
+                                  {t('lotResult.certificatesTitle')}
                                 </h4>
                                 {lotTrackingResult.certificates.map(
                                   (cert: any, index: number) => (
@@ -475,14 +476,14 @@ export function TrackingSection() {
                               </div>
                               <div className='space-y-3'>
                                 <h4 className='font-semibold dark:text-gray-200'>
-                                  QR Code xác minh
+                                  {t('lotResult.qrTitle')}
                                 </h4>
                                 <div className='flex flex-col items-center space-y-2 rounded-lg border p-4 dark:border-gray-600 dark:bg-gray-800'>
                                   <div className='flex h-24 w-24 items-center justify-center rounded-lg bg-gray-100 dark:bg-gray-700'>
                                     <QrCode className='h-12 w-12 text-gray-600 dark:text-gray-300' />
                                   </div>
                                   <p className='text-center text-xs text-gray-600 dark:text-gray-400'>
-                                    Quét để xác minh nhanh
+                                    {t('lotResult.qrScan')}
                                   </p>
                                   <code className='rounded bg-gray-100 px-2 py-1 text-xs dark:bg-gray-700 dark:text-gray-200'>
                                     {lotTrackingResult.qrCode}
@@ -505,7 +506,7 @@ export function TrackingSection() {
                     <div className='flex items-center justify-between'>
                       <CardTitle className='flex items-center text-purple-800 dark:text-purple-300'>
                         <Database className='mr-2 h-5 w-5' />
-                        Kết quả xác thực Blockchain
+                        {t('blockchain.resultTitle')}
                       </CardTitle>
                       <div className='flex items-center space-x-2'>
                         <Button
@@ -534,22 +535,22 @@ export function TrackingSection() {
                           <CardHeader className='pb-3'>
                             <CardTitle className='flex items-center text-base text-gray-900 dark:text-gray-100'>
                               <CheckCircle className='mr-2 h-5 w-5 text-green-600' />
-                              Trạng thái giao dịch
+                              {t('blockchainResult.transactionStatus')}
                             </CardTitle>
                           </CardHeader>
                           <CardContent className='space-y-3'>
                             <div className='flex items-center justify-between'>
                               <span className='text-sm text-gray-600 dark:text-gray-400'>
-                                Trạng thái
+                                {t('blockchainResult.status')}
                               </span>
                               <Badge className='bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'>
                                 <CheckCircle className='mr-1 h-3 w-3' />
-                                Transaction Confirmed
+                                {t('blockchainResult.transactionConfirmed')}
                               </Badge>
                             </div>
                             <div className='flex items-center justify-between'>
                               <span className='text-sm text-gray-600 dark:text-gray-400'>
-                                Block
+                                {t('blockchainResult.block')}
                               </span>
                               <span className='font-mono text-sm text-gray-900 dark:text-gray-100'>
                                 #{blockchainVerifyResult.blockNumber}
@@ -557,10 +558,11 @@ export function TrackingSection() {
                             </div>
                             <div className='flex items-center justify-between'>
                               <span className='text-sm text-gray-600 dark:text-gray-400'>
-                                Xác nhận
+                                {t('blockchainResult.status')}
                               </span>
                               <span className='font-semibold text-green-600 dark:text-green-400'>
-                                {blockchainVerifyResult.confirmations} xác nhận
+                                {blockchainVerifyResult.confirmations}{' '}
+                                {t('blockchainResult.confirmations')}
                               </span>
                             </div>
                           </CardContent>
@@ -570,13 +572,13 @@ export function TrackingSection() {
                           <CardHeader className='pb-3'>
                             <CardTitle className='flex items-center text-base text-gray-900 dark:text-gray-100'>
                               <Hash className='mr-2 h-5 w-5 text-purple-600' />
-                              Thông tin Hash
+                              {t('blockchainResult.hashInfo')}
                             </CardTitle>
                           </CardHeader>
                           <CardContent className='space-y-3'>
                             <div className='space-y-1'>
                               <span className='text-sm text-gray-600 dark:text-gray-400'>
-                                Hash
+                                {t('blockchainResult.hash')}
                               </span>
                               <code className='block rounded bg-gray-100 p-2 font-mono text-xs break-all dark:bg-gray-800 dark:text-gray-200'>
                                 {blockchainVerifyResult.hash}
@@ -584,7 +586,7 @@ export function TrackingSection() {
                             </div>
                             <div className='flex items-center justify-between'>
                               <span className='text-sm text-gray-600 dark:text-gray-400'>
-                                Ngày ghi nhận
+                                {t('blockchainResult.recordDate')}
                               </span>
                               <span className='text-sm font-medium text-gray-900 dark:text-gray-100'>
                                 {blockchainVerifyResult.timestamp}
@@ -598,14 +600,14 @@ export function TrackingSection() {
                         <CardHeader className='pb-3'>
                           <CardTitle className='flex items-center text-base text-gray-900 dark:text-gray-100'>
                             <User className='mr-2 h-5 w-5 text-blue-600' />
-                            Bên ghi nhận
+                            {t('blockchainResult.recorder')}
                           </CardTitle>
                         </CardHeader>
                         <CardContent className='space-y-3'>
                           <div className='grid gap-4 md:grid-cols-2'>
                             <div className='flex items-center justify-between'>
                               <span className='text-sm text-gray-600 dark:text-gray-400'>
-                                Smart Contract
+                                {t('blockchainResult.smartContract')}
                               </span>
                               <span className='font-medium text-gray-900 dark:text-gray-100'>
                                 {blockchainVerifyResult.smartContract}
@@ -613,7 +615,7 @@ export function TrackingSection() {
                             </div>
                             <div className='flex items-center justify-between'>
                               <span className='text-sm text-gray-600 dark:text-gray-400'>
-                                Người ký
+                                {t('blockchainResult.signer')}
                               </span>
                               <span className='font-medium text-gray-900 dark:text-gray-100'>
                                 {blockchainVerifyResult.signer}

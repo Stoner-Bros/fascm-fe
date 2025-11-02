@@ -4,8 +4,10 @@ import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { motion } from 'motion/react';
 import { Leaf, Truck, ShoppingCart, Network } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export function HeroSection() {
+  const t = useTranslations('Landing.hero');
   return (
     <section
       id='home'
@@ -30,18 +32,21 @@ export function HeroSection() {
             className='text-white'
           >
             <h1 className='mb-6 text-4xl leading-tight font-bold lg:text-5xl xl:text-6xl'>
-              Connecting Farmers and Retailers in a{' '}
+              {t('title')}{' '}
               <span className='text-agri-primary-light'>
-                Transparent Supply Chain
+                {t('titleHighlight')}
               </span>
             </h1>
             <p className='mb-8 text-lg leading-relaxed text-gray-200 lg:text-xl'>
-              FASCM digitizes Vietnam&apos;s fresh produce ecosystem through{' '}
+              {t('description')}{' '}
               <span className='text-agri-secondary font-semibold'>
-                Blockchain
+                {t('blockchain')}
               </span>{' '}
-              and <span className='text-agri-secondary font-semibold'>IoT</span>{' '}
-              integration.
+              {t('and')}{' '}
+              <span className='text-agri-secondary font-semibold'>
+                {t('iot')}
+              </span>{' '}
+              {t('integration')}
             </p>
 
             <div className='flex flex-col gap-4 sm:flex-row'>
@@ -51,7 +56,7 @@ export function HeroSection() {
                   className='bg-agri-primary hover:bg-agri-primary-dark px-8 py-6 text-lg font-semibold text-white shadow-lg transition-all hover:shadow-xl'
                 >
                   <Leaf className='mr-2 h-5 w-5' />
-                  Sign In as Supplier
+                  {t('signInSupplier')}
                 </Button>
               </Link>
               <Link href='/auth/sign-in'>
@@ -61,7 +66,7 @@ export function HeroSection() {
                   className='hover:text-agri-primary border-2 border-white bg-transparent px-8 py-6 text-lg font-semibold text-white shadow-lg transition-all hover:bg-white hover:shadow-xl'
                 >
                   <ShoppingCart className='mr-2 h-5 w-5' />
-                  Sign In as Consignee
+                  {t('signInConsignee')}
                 </Button>
               </Link>
             </div>

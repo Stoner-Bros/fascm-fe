@@ -10,35 +10,34 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-
-const features = [
-  {
-    icon: Wheat,
-    title: 'Supplier Module',
-    description:
-      'Manage harvest batches, confirm pickup, and record product origin digitally.',
-    color: 'from-[#2E7D32] to-[#81C784]',
-    delay: 0.1
-  },
-  {
-    icon: ShoppingBasket,
-    title: 'Consignee Module',
-    description:
-      'View and order verified produce, track origin, and ensure freshness on arrival.',
-    color: 'from-[#F9A825] to-[#FBC02D]',
-    delay: 0.2
-  },
-  {
-    icon: Settings,
-    title: 'IoT & Blockchain',
-    description:
-      'Real-time monitoring of storage and transport with verified blockchain traceability.',
-    color: 'from-[#1976D2] to-[#42A5F5]',
-    delay: 0.3
-  }
-];
+import { useTranslations } from 'next-intl';
 
 export function FeaturesSection() {
+  const t = useTranslations('Landing.features');
+
+  const features = [
+    {
+      icon: Wheat,
+      titleKey: 'supplier.title',
+      descriptionKey: 'supplier.description',
+      color: 'from-[#2E7D32] to-[#81C784]',
+      delay: 0.1
+    },
+    {
+      icon: ShoppingBasket,
+      titleKey: 'consignee.title',
+      descriptionKey: 'consignee.description',
+      color: 'from-[#F9A825] to-[#FBC02D]',
+      delay: 0.2
+    },
+    {
+      icon: Settings,
+      titleKey: 'iotBlockchain.title',
+      descriptionKey: 'iotBlockchain.description',
+      color: 'from-[#1976D2] to-[#42A5F5]',
+      delay: 0.3
+    }
+  ];
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1
@@ -56,11 +55,10 @@ export function FeaturesSection() {
           className='mb-16 text-center'
         >
           <h2 className='text-foreground mb-4 text-3xl font-bold lg:text-4xl'>
-            Key Features by Role
+            {t('title')}
           </h2>
           <p className='text-muted-foreground mx-auto max-w-2xl text-lg'>
-            Digital transparency and traceability for every actor in the supply
-            chain.
+            {t('description')}
           </p>
         </motion.div>
 
@@ -68,7 +66,7 @@ export function FeaturesSection() {
         <div className='grid gap-8 md:grid-cols-2 lg:grid-cols-3'>
           {features.map((feature, index) => (
             <motion.div
-              key={feature.title}
+              key={feature.titleKey}
               initial={{ opacity: 0, y: 50 }}
               animate={inView ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.6, delay: feature.delay }}
@@ -81,12 +79,12 @@ export function FeaturesSection() {
                     <feature.icon className='h-8 w-8 text-white' />
                   </div>
                   <CardTitle className='text-foreground group-hover:text-agri-primary text-2xl font-bold transition-colors'>
-                    {feature.title}
+                    {t(feature.titleKey)}
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <CardDescription className='text-muted-foreground text-base leading-relaxed'>
-                    {feature.description}
+                    {t(feature.descriptionKey)}
                   </CardDescription>
                 </CardContent>
               </Card>
@@ -103,48 +101,48 @@ export function FeaturesSection() {
         >
           <div className='rounded-2xl bg-gradient-to-br from-green-50 to-green-100 p-8 dark:from-green-950 dark:to-green-900'>
             <h3 className='text-agri-primary-dark dark:text-agri-primary-light mb-4 text-xl font-bold'>
-              For Suppliers
+              {t('forSuppliers.title')}
             </h3>
             <ul className='text-agri-primary space-y-3'>
               <li className='flex items-start'>
                 <span className='mr-2'>✓</span>
-                <span>Digital harvest batch management</span>
+                <span>{t('forSuppliers.items.batch')}</span>
               </li>
               <li className='flex items-start'>
                 <span className='mr-2'>✓</span>
-                <span>QR code generation for products</span>
+                <span>{t('forSuppliers.items.qr')}</span>
               </li>
               <li className='flex items-start'>
                 <span className='mr-2'>✓</span>
-                <span>Real-time pickup confirmation</span>
+                <span>{t('forSuppliers.items.pickup')}</span>
               </li>
               <li className='flex items-start'>
                 <span className='mr-2'>✓</span>
-                <span>Blockchain-verified origin records</span>
+                <span>{t('forSuppliers.items.blockchain')}</span>
               </li>
             </ul>
           </div>
 
           <div className='rounded-2xl bg-gradient-to-br from-yellow-50 to-yellow-100 p-8 dark:from-yellow-950 dark:to-yellow-900'>
             <h3 className='mb-4 text-xl font-bold text-yellow-800 dark:text-yellow-200'>
-              For Consignees
+              {t('forConsignees.title')}
             </h3>
             <ul className='text-agri-secondary space-y-3'>
               <li className='flex items-start'>
                 <span className='mr-2'>✓</span>
-                <span>View verified supplier products</span>
+                <span>{t('forConsignees.items.view')}</span>
               </li>
               <li className='flex items-start'>
                 <span className='mr-2'>✓</span>
-                <span>Track freshness and quality metrics</span>
+                <span>{t('forConsignees.items.track')}</span>
               </li>
               <li className='flex items-start'>
                 <span className='mr-2'>✓</span>
-                <span>Scan QR codes for full traceability</span>
+                <span>{t('forConsignees.items.scan')}</span>
               </li>
               <li className='flex items-start'>
                 <span className='mr-2'>✓</span>
-                <span>Automated temperature monitoring alerts</span>
+                <span>{t('forConsignees.items.monitoring')}</span>
               </li>
             </ul>
           </div>

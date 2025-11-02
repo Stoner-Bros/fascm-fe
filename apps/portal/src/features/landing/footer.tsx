@@ -1,7 +1,11 @@
+'use client';
+
 import Link from 'next/link';
 import { Leaf, Mail, Phone, MapPin } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 export function LandingFooter() {
+  const t = useTranslations('Landing.footer');
   const currentYear = new Date().getFullYear();
 
   return (
@@ -15,25 +19,23 @@ export function LandingFooter() {
               <span className='text-2xl font-bold'>FASCM</span>
             </div>
             <p className='mb-4 leading-relaxed text-gray-300'>
-              Modernizing Vietnam&apos;s fresh produce supply chain through
-              Blockchain and IoT technologies for complete transparency and
-              traceability.
+              {t('description')}
             </p>
             <p className='text-sm text-gray-400'>
-              © {currentYear} FASCM Project. All rights reserved.
+              © {currentYear} {t('copyright')}
             </p>
           </div>
 
           {/* Quick Links Column */}
           <div>
-            <h3 className='mb-4 text-xl font-bold'>Quick Links</h3>
+            <h3 className='mb-4 text-xl font-bold'>{t('quickLinks')}</h3>
             <ul className='space-y-3'>
               <li>
                 <Link
                   href='#home'
                   className='flex items-center text-gray-300 transition-colors hover:text-white'
                 >
-                  <span className='mr-2'>→</span> Home
+                  <span className='mr-2'>→</span> {t('links.home')}
                 </Link>
               </li>
               <li>
@@ -41,7 +43,7 @@ export function LandingFooter() {
                   href='#about'
                   className='flex items-center text-gray-300 transition-colors hover:text-white'
                 >
-                  <span className='mr-2'>→</span> About
+                  <span className='mr-2'>→</span> {t('links.about')}
                 </Link>
               </li>
               <li>
@@ -49,7 +51,7 @@ export function LandingFooter() {
                   href='#features'
                   className='flex items-center text-gray-300 transition-colors hover:text-white'
                 >
-                  <span className='mr-2'>→</span> Features
+                  <span className='mr-2'>→</span> {t('links.features')}
                 </Link>
               </li>
               <li>
@@ -57,7 +59,7 @@ export function LandingFooter() {
                   href='/contact'
                   className='flex items-center text-gray-300 transition-colors hover:text-white'
                 >
-                  <span className='mr-2'>→</span> Contact
+                  <span className='mr-2'>→</span> {t('links.contact')}
                 </Link>
               </li>
               <li>
@@ -65,7 +67,7 @@ export function LandingFooter() {
                   href='/auth/sign-in'
                   className='flex items-center text-gray-300 transition-colors hover:text-white'
                 >
-                  <span className='mr-2'>→</span> Login
+                  <span className='mr-2'>→</span> {t('links.login')}
                 </Link>
               </li>
             </ul>
@@ -73,28 +75,30 @@ export function LandingFooter() {
 
           {/* Contact Info Column */}
           <div>
-            <h3 className='mb-4 text-xl font-bold'>Contact Information</h3>
+            <h3 className='mb-4 text-xl font-bold'>{t('contact.title')}</h3>
             <ul className='space-y-4'>
               <li className='flex items-start gap-3'>
                 <Mail className='text-agri-primary-light mt-0.5 h-5 w-5' />
                 <div>
                   <p className='text-gray-300'>fascm@fpt.edu.vn</p>
-                  <p className='text-sm text-gray-400'>support@fascm.vn</p>
+                  <p className='text-sm text-gray-400'>
+                    {t('contact.emailSupport')}
+                  </p>
                 </div>
               </li>
               <li className='flex items-start gap-3'>
                 <Phone className='text-agri-primary-light mt-0.5 h-5 w-5' />
                 <div>
-                  <p className='text-gray-300'>(+84) 123-456-789</p>
-                  <p className='text-sm text-gray-400'>Mon-Fri, 8AM-5PM</p>
+                  <p className='text-gray-300'>{t('contact.phone')}</p>
+                  <p className='text-sm text-gray-400'>{t('contact.hours')}</p>
                 </div>
               </li>
               <li className='flex items-start gap-3'>
                 <MapPin className='text-agri-primary-light mt-0.5 h-5 w-5' />
                 <div>
-                  <p className='text-gray-300'>FPT University</p>
+                  <p className='text-gray-300'>{t('contact.university')}</p>
                   <p className='text-sm text-gray-400'>
-                    SEP490 Capstone Project
+                    {t('contact.project')}
                   </p>
                 </div>
               </li>
@@ -105,10 +109,7 @@ export function LandingFooter() {
         {/* Bottom Bar */}
         <div className='border-agri-primary border-t pt-8'>
           <div className='text-center text-sm text-gray-400'>
-            <p>
-              Developed with 💚 by FPT University Students | Capstone Project
-              SEP490
-            </p>
+            <p>{t('developed')}</p>
           </div>
         </div>
       </div>

@@ -1,0 +1,247 @@
+{
+  "Landing": {
+    "header": {
+      "home": "Trang chủ",
+      "about": "Giới thiệu",
+      "features": "Tính năng",
+      "tracking": "Tra cứu",
+      "loginRegister": "Đăng nhập / Đăng ký"
+    },
+    "hero": {
+      "title": "Kết nối Nông dân và Nhà bán lẻ trong",
+      "titleHighlight": "Chuỗi cung ứng minh bạch",
+      "description": "FASCM số hóa hệ sinh thái nông sản tươi Việt Nam thông qua",
+      "blockchain": "Blockchain",
+      "and": "và",
+      "iot": "IoT",
+      "integration": "tích hợp.",
+      "signInSupplier": "Đăng nhập với tư cách Nhà cung cấp",
+      "signInConsignee": "Đăng nhập với tư cách Người nhận hàng"
+    },
+    "topProducts": {
+      "title": "Sản phẩm nổi bật",
+      "description": "Khám phá các sản phẩm nông nghiệp phổ biến nhất của chúng tôi",
+      "availableNow": "Có sẵn ngay",
+      "minOrder": "Đơn hàng tối thiểu:",
+      "products": {
+        "banana": {
+          "name": "Chuối",
+          "description": "Chuối tươi, chín và sẵn sàng để ăn"
+        },
+        "orange": {
+          "name": "Cam ngọt",
+          "description": "Cam ngọt tươi, mọng nước và sẵn sàng để ăn"
+        },
+        "pineapple": {
+          "name": "Dứa ngọt",
+          "description": "Dứa ngọt tươi, mọng nước và sẵn sàng để ăn"
+        },
+        "carrots": {
+          "name": "Cà rốt",
+          "description": "Cà rốt tươi, giòn và sẵn sàng để ăn"
+        },
+        "apple": {
+          "name": "Táo ngọt",
+          "description": "Táo ngọt tươi, mọng nước và sẵn sàng để ăn"
+        }
+      }
+    },
+    "about": {
+      "title": "Hiện đại hóa",
+      "titleHighlight": "Chuỗi cung ứng Nông sản tươi Việt Nam",
+      "description1": "FASCM kết nối",
+      "farmers": "nông dân",
+      "distributors": "nhà phân phối",
+      "retailers": "nhà bán lẻ",
+      "description2": "trong một hệ sinh thái minh bạch. Bằng cách kết hợp",
+      "blockchain": "Blockchain",
+      "and": "và",
+      "iotTechnologies": "công nghệ IoT",
+      "description3": "nó đảm bảo giám sát độ tươi theo thời gian thực, khả năng truy xuất nguồn gốc và các giao dịch đáng tin cậy.",
+      "description4": "Nền tảng của chúng tôi cung cấp khả năng hiển thị từ đầu đến cuối trên toàn bộ chuỗi cung ứng, từ thu hoạch đến bán lẻ, đảm bảo an toàn thực phẩm, giảm lãng phí và xây dựng niềm tin giữa tất cả các bên liên quan.",
+      "stats": {
+        "traceability": "Truy xuất nguồn gốc",
+        "monitoring": "Giám sát",
+        "updates": "Cập nhật"
+      },
+      "cards": {
+        "blockchain": "Bảo mật Blockchain",
+        "iot": "Giám sát IoT",
+        "supplyChain": "Theo dõi chuỗi cung ứng"
+      }
+    },
+    "features": {
+      "title": "Tính năng chính theo vai trò",
+      "description": "Tính minh bạch và khả năng truy xuất nguồn gốc kỹ thuật số cho mọi thành viên trong chuỗi cung ứng.",
+      "supplier": {
+        "title": "Mô-đun Nhà cung cấp",
+        "description": "Quản lý lô hàng thu hoạch, xác nhận lấy hàng và ghi lại nguồn gốc sản phẩm bằng kỹ thuật số."
+      },
+      "consignee": {
+        "title": "Mô-đun Người nhận hàng",
+        "description": "Xem và đặt hàng nông sản đã xác minh, theo dõi nguồn gốc và đảm bảo độ tươi khi nhận hàng."
+      },
+      "iotBlockchain": {
+        "title": "IoT & Blockchain",
+        "description": "Giám sát thời gian thực về lưu trữ và vận chuyển với khả năng truy xuất nguồn gốc blockchain đã xác minh."
+      },
+      "forSuppliers": {
+        "title": "Dành cho Nhà cung cấp",
+        "items": {
+          "batch": "Quản lý lô hàng thu hoạch kỹ thuật số",
+          "qr": "Tạo mã QR cho sản phẩm",
+          "pickup": "Xác nhận lấy hàng theo thời gian thực",
+          "blockchain": "Hồ sơ nguồn gốc được xác minh bằng Blockchain"
+        }
+      },
+      "forConsignees": {
+        "title": "Dành cho Người nhận hàng",
+        "items": {
+          "view": "Xem sản phẩm của nhà cung cấp đã xác minh",
+          "track": "Theo dõi độ tươi và chỉ số chất lượng",
+          "scan": "Quét mã QR để truy xuất nguồn gốc đầy đủ",
+          "monitoring": "Cảnh báo giám sát nhiệt độ tự động"
+        }
+      }
+    },
+    "howItWorks": {
+      "title": "Cách hoạt động",
+      "description": "Khám phá cách FASCM hoạt động với quy trình được tinh giản của chúng tôi. Người quản lý tạo sản phẩm, nhân viên kho quản lý đơn hàng và nhà cung cấp thực hiện các yêu cầu đã được xác nhận.",
+      "tabs": {
+        "consignee": "Tôi là Người nhận hàng",
+        "supplier": "Tôi là Nhà cung cấp"
+      },
+      "consignee": {
+        "step1": {
+          "title": "Duyệt sản phẩm",
+          "description": "Khám phá danh mục nông sản tươi được tạo bởi người quản lý với thông tin sản phẩm đầy đủ và tình trạng có sẵn."
+        },
+        "step2": {
+          "title": "Đặt yêu cầu đơn hàng",
+          "description": "Gửi yêu cầu đơn hàng đến nhân viên kho, người sẽ quản lý và xử lý đơn hàng của bạn."
+        },
+        "step3": {
+          "title": "Xử lý đơn hàng",
+          "description": "Nhân viên kho xử lý đơn hàng của bạn và phối hợp với nhà cung cấp để thực hiện."
+        },
+        "step4": {
+          "title": "Theo dõi & Nhận hàng",
+          "description": "Theo dõi trạng thái đơn hàng và nhận sản phẩm với khả năng truy xuất nguồn gốc đầy đủ và xác minh chất lượng."
+        }
+      },
+      "supplier": {
+        "step1": {
+          "title": "Nhận thông báo",
+          "description": "Nhận thông báo khi nhân viên kho tạo đơn hàng yêu cầu sản phẩm của bạn."
+        },
+        "step2": {
+          "title": "Xem xét đơn hàng",
+          "description": "Kiểm tra chi tiết đơn hàng, số lượng và yêu cầu giao hàng từ nhân viên kho."
+        },
+        "step3": {
+          "title": "Xác nhận tình trạng có sẵn",
+          "description": "Xác nhận tình trạng có sẵn sản phẩm và chấp nhận hoặc từ chối đơn hàng dựa trên hàng tồn kho của bạn."
+        },
+        "step4": {
+          "title": "Thực hiện đơn hàng",
+          "description": "Chuẩn bị và giao các đơn hàng đã được xác nhận với tài liệu phù hợp và đảm bảo chất lượng."
+        }
+      },
+      "cta": {
+        "title": "Sẵn sàng bắt đầu?",
+        "descriptionConsignee": "Tham gia nền tảng của chúng tôi để hợp lý hóa quy trình mua sắm của bạn với sự minh bạch và hiệu quả hoàn toàn.",
+        "descriptionSupplier": "Tham gia nền tảng của chúng tôi để hợp lý hóa việc thực hiện đơn hàng của bạn với sự minh bạch và hiệu quả hoàn toàn.",
+        "buttonConsignee": "Bắt đầu với tư cách Người nhận hàng",
+        "buttonSupplier": "Bắt đầu với tư cách Nhà cung cấp"
+      },
+      "stepLabel": "Bước"
+    },
+    "tracking": {
+      "title": "Tra cứu & Xác minh sản phẩm",
+      "description": "Nhập mã lô hoặc quét QR code để tra cứu thông tin chi tiết về sản phẩm và xác minh trên blockchain",
+      "tabLot": "Tra cứu theo Mã lô",
+      "lotTracking": {
+        "title": "Tra cứu theo Mã lô",
+        "description": "Nhập mã lô sản phẩm để xem thông tin chi tiết",
+        "placeholder": "Nhập mã lô (VD: LOT-2024-001)",
+        "search": "Tìm kiếm",
+        "orScan": "Hoặc quét QR code để tra cứu nhanh",
+        "scanButton": "Quét QR Code (Demo)",
+        "resultTitle": "Kết quả tra cứu theo Mã lô"
+      },
+      "blockchain": {
+        "title": "Xác minh Blockchain",
+        "description": "Nhập transaction hash để xác minh trên blockchain",
+        "placeholder": "Nhập transaction hash",
+        "button": "Kiểm tra trên Blockchain",
+        "demo": "Demo: 0x1234567890abcdef1234567890abcdef12345678",
+        "resultTitle": "Kết quả xác thực Blockchain"
+      },
+      "lotResult": {
+        "lotCode": "Mã lô",
+        "product": "Sản phẩm",
+        "productionDate": "Ngày sản xuất",
+        "expiryDate": "Hạn sử dụng",
+        "supplyChain": "Chuỗi cung ứng",
+        "stages": {
+          "planting": "Gieo trồng",
+          "harvesting": "Thu hoạch",
+          "processing": "Chế biến",
+          "shipping": "Vận chuyển",
+          "distribution": "Phân phối"
+        },
+        "status": {
+          "completed": "Hoàn thành",
+          "inProgress": "Đang xử lý",
+          "pending": "Đang chờ"
+        },
+        "certificates": "Giấy chứng nhận & QR Code",
+        "certificatesTitle": "Chứng nhận",
+        "qrTitle": "QR Code xác minh",
+        "qrScan": "Quét để xác minh nhanh"
+      },
+      "blockchainResult": {
+        "transactionStatus": "Trạng thái giao dịch",
+        "status": "Trạng thái",
+        "transactionConfirmed": "Transaction Confirmed",
+        "block": "Block",
+        "confirmations": "xác nhận",
+        "hashInfo": "Thông tin Hash",
+        "hash": "Hash",
+        "recordDate": "Ngày ghi nhận",
+        "recorder": "Bên ghi nhận",
+        "smartContract": "Smart Contract",
+        "signer": "Người ký"
+      }
+    },
+    "cta": {
+      "title": "Sẵn sàng mang lại sự minh bạch cho chuỗi cung ứng của bạn?",
+      "description": "Tham gia cùng hàng trăm nông dân và nhà bán lẻ đã sử dụng FASCM để đảm bảo chất lượng, khả năng truy xuất nguồn gốc và niềm tin trong mọi giao dịch.",
+      "registerSupplier": "Đăng ký với tư cách Nhà cung cấp",
+      "registerConsignee": "Đăng ký với tư cách Người nhận hàng",
+      "alreadyAccount": "Đã có tài khoản?",
+      "signIn": "Đăng nhập tại đây"
+    },
+    "footer": {
+      "description": "Hiện đại hóa chuỗi cung ứng nông sản tươi của Việt Nam thông qua công nghệ Blockchain và IoT để có sự minh bạch và truy xuất nguồn gốc hoàn toàn.",
+      "copyright": "Dự án FASCM. Đã đăng ký bản quyền.",
+      "quickLinks": "Liên kết nhanh",
+      "links": {
+        "home": "Trang chủ",
+        "about": "Giới thiệu",
+        "features": "Tính năng",
+        "contact": "Liên hệ",
+        "login": "Đăng nhập"
+      },
+      "contact": {
+        "title": "Thông tin liên hệ",
+        "emailSupport": "support@fascm.vn",
+        "phone": "(+84) 123-456-789",
+        "hours": "Thứ 2-6, 8 giờ sáng - 5 giờ chiều",
+        "university": "Đại học FPT",
+        "project": "Dự án Tốt nghiệp SEP490"
+      },
+      "developed": "Được phát triển với 💚 bởi Sinh viên Đại học FPT | Dự án Tốt nghiệp SEP490"
+    }
+  }
+}

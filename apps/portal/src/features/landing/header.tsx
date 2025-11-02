@@ -6,10 +6,31 @@ import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/layout/ThemeToggle/theme-toggle';
 import { cn } from '@/lib/utils';
 import { Leaf, Menu, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 
 export function LandingHeader() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [locale, setLocale] = useState<string>('');
+  const router = useRouter();
+
+  const t = useTranslations('Landing.header');
+
+  useEffect(() => {
+    const cookieLocale = document.cookie
+      .split('; ')
+      .find((row) => row.startsWith('NEXT_LOCALE='))
+      ?.split('=')[1];
+    if (cookieLocale) {
+      setLocale(cookieLocale);
+    } else {
+      const browserLocale = navigator.language.slice(0, 2);
+      setLocale(browserLocale);
+      document.cookie = `NEXT_LOCALE=${browserLocale}`;
+      router.refresh();
+    }
+  }, [router]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,6 +40,12 @@ export function LandingHeader() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  const handleLocaleChange = (locale: string) => {
+    setLocale(locale);
+    document.cookie = `NEXT_LOCALE=${locale}`;
+    router.refresh();
+  };
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
@@ -50,32 +77,32 @@ export function LandingHeader() {
               href='#home'
               className='text-foreground hover:text-agri-primary font-medium transition-colors'
             >
-              Home
+              {t('home')}
             </Link>
             <Link
               href='#about'
               className='text-foreground hover:text-agri-primary font-medium transition-colors'
             >
-              About
+              {t('about')}
             </Link>
             <Link
               href='#features'
               className='text-foreground hover:text-agri-primary font-medium transition-colors'
             >
-              Features
+              {t('features')}
             </Link>
             <Link
               href='#tracking'
               className='text-foreground hover:text-agri-primary font-medium transition-colors'
             >
-              Tracking
+              {t('tracking')}
             </Link>
             <Link href='/auth/sign-in'>
               <Button
                 variant='outline'
                 className='border-agri-primary text-agri-primary hover:bg-agri-primary hover:text-white'
               >
-                Login / Register
+                {t('loginRegister')}
               </Button>
             </Link>
 
@@ -84,11 +111,27 @@ export function LandingHeader() {
 
             {/* Language Selector */}
             <div className='border-border flex items-center gap-2 border-l pl-4'>
-              <button className='text-agri-primary text-sm font-medium'>
+              <button
+                onClick={() => handleLocaleChange('en')}
+                className={cn(
+                  'cursor-pointer text-sm font-medium transition-colors',
+                  locale === 'en'
+                    ? 'text-agri-primary'
+                    : 'text-muted-foreground hover:text-agri-primary'
+                )}
+              >
                 EN
               </button>
               <span className='text-muted-foreground'>|</span>
-              <button className='text-muted-foreground hover:text-agri-primary text-sm font-medium transition-colors'>
+              <button
+                onClick={() => handleLocaleChange('vi')}
+                className={cn(
+                  'cursor-pointer text-sm font-medium transition-colors',
+                  locale === 'vi'
+                    ? 'text-agri-primary'
+                    : 'text-muted-foreground hover:text-agri-primary'
+                )}
+              >
                 VN
               </button>
             </div>
@@ -119,45 +162,61 @@ export function LandingHeader() {
                 className='text-foreground hover:text-agri-primary py-2 font-medium transition-colors'
                 onClick={closeMobileMenu}
               >
-                Home
+                {t('home')}
               </Link>
               <Link
                 href='#about'
                 className='text-foreground hover:text-agri-primary py-2 font-medium transition-colors'
                 onClick={closeMobileMenu}
               >
-                About
+                {t('about')}
               </Link>
               <Link
                 href='#features'
                 className='text-foreground hover:text-agri-primary py-2 font-medium transition-colors'
                 onClick={closeMobileMenu}
               >
-                Features
+                {t('features')}
               </Link>
               <Link
                 href='#tracking'
                 className='text-foreground hover:text-agri-primary py-2 font-medium transition-colors'
                 onClick={closeMobileMenu}
               >
-                Tracking
+                {t('tracking')}
               </Link>
               <Link href='/auth/sign-in' onClick={closeMobileMenu}>
                 <Button
                   variant='outline'
                   className='border-agri-primary text-agri-primary hover:bg-agri-primary w-full hover:text-white'
                 >
-                  Login / Register
+                  {t('loginRegister')}
                 </Button>
               </Link>
 
               {/* Mobile Language Selector */}
               <div className='border-border flex items-center justify-center gap-4 border-t pt-4'>
-                <button className='text-agri-primary text-sm font-medium'>
+                <button
+                  onClick={() => handleLocaleChange('en')}
+                  className={cn(
+                    'text-sm font-medium transition-colors',
+                    locale === 'en'
+                      ? 'text-agri-primary'
+                      : 'text-muted-foreground hover:text-agri-primary'
+                  )}
+                >
                   EN
                 </button>
                 <span className='text-muted-foreground'>|</span>
-                <button className='text-muted-foreground hover:text-agri-primary text-sm font-medium transition-colors'>
+                <button
+                  onClick={() => handleLocaleChange('vi')}
+                  className={cn(
+                    'text-sm font-medium transition-colors',
+                    locale === 'vi'
+                      ? 'text-agri-primary'
+                      : 'text-muted-foreground hover:text-agri-primary'
+                  )}
+                >
                   VN
                 </button>
               </div>

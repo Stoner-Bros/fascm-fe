@@ -4,66 +4,68 @@ import { motion } from 'motion/react';
 import { useInView } from 'react-intersection-observer';
 import { Heart } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import { useTranslations } from 'next-intl';
 
 interface Product {
   id: string;
-  name: string;
+  nameKey: string;
   price: string;
   minOrder: string;
-  status: string;
-  description: string;
+  statusKey: string;
+  descriptionKey: string;
   image: string;
 }
 
 const topProducts: Product[] = [
   {
     id: '1',
-    name: 'Banana ',
+    nameKey: 'products.banana.name',
     price: '$3.00',
-    minOrder: 'Min order: 1kg',
-    status: 'Available Now',
-    description: 'Fresh Banana, ripe and ready to eat',
+    minOrder: '1kg',
+    statusKey: 'availableNow',
+    descriptionKey: 'products.banana.description',
     image: '/api/placeholder/300/200'
   },
   {
     id: '2',
-    name: 'Sweet Orange',
+    nameKey: 'products.orange.name',
     price: 'POE',
-    minOrder: 'Min order: 1tonne',
-    status: 'Available Now',
-    description: 'Fresh Sweet Orange, juicy and ready to eat',
+    minOrder: '1tonne',
+    statusKey: 'availableNow',
+    descriptionKey: 'products.orange.description',
     image: '/api/placeholder/300/200'
   },
   {
     id: '3',
-    name: 'Sweet Pineapple',
+    nameKey: 'products.pineapple.name',
     price: 'POE',
-    minOrder: 'Min order: 1tonne',
-    status: 'Available Now',
-    description: 'Fresh Sweet Pineapple, juicy and ready to eat',
+    minOrder: '1tonne',
+    statusKey: 'availableNow',
+    descriptionKey: 'products.pineapple.description',
     image: '/api/placeholder/300/200'
   },
   {
     id: '4',
-    name: 'Carrots',
+    nameKey: 'products.carrots.name',
     price: 'POE',
-    minOrder: 'Min order: 1120kg',
-    status: 'Available Now',
-    description: 'Fresh Carrots, crunchy and ready to eat',
+    minOrder: '1120kg',
+    statusKey: 'availableNow',
+    descriptionKey: 'products.carrots.description',
     image: '/api/placeholder/300/200'
   },
   {
     id: '5',
-    name: 'Sweet Apple',
+    nameKey: 'products.apple.name',
     price: 'POE',
-    minOrder: 'Min order: 1120kg',
-    status: 'Available Now',
-    description: 'Fresh Sweet Apple, juicy and ready to eat',
+    minOrder: '1120kg',
+    statusKey: 'availableNow',
+    descriptionKey: 'products.apple.description',
     image: '/api/placeholder/300/200'
   }
 ];
 
 export function TopProductsSection() {
+  const t = useTranslations('Landing.topProducts');
   const [ref, inView] = useInView({
     triggerOnce: true,
     threshold: 0.1
@@ -82,10 +84,10 @@ export function TopProductsSection() {
           <div className='mb-12 flex items-center justify-between'>
             <div className=''>
               <h2 className='text-3xl font-bold text-gray-900 lg:text-4xl dark:text-white'>
-                Top Products
+                {t('title')}
               </h2>
               <p className='mt-2 text-gray-600 dark:text-gray-300'>
-                Discover our most popular agricultural products
+                {t('description')}
               </p>
             </div>
           </div>
@@ -121,11 +123,11 @@ export function TopProductsSection() {
 
                   <CardContent className='flex h-[calc(100%-200px)] flex-col justify-between p-4'>
                     {/* Product Name */}
-                    <h3 className='font-semibold'>{product.name}</h3>
+                    <h3 className='font-semibold'>{t(product.nameKey)}</h3>
                     {/* Status */}
                     <div className='mb-2'>
                       <span className='inline-flex items-end rounded-full bg-green-100 px-2 py-1 text-xs font-medium text-green-800 dark:bg-green-800/50 dark:text-green-200'>
-                        {product.status}
+                        {t(product.statusKey)}
                       </span>
                     </div>
 
@@ -136,7 +138,7 @@ export function TopProductsSection() {
                           {product.price}
                         </span>
                         <span className='text-xs text-gray-500 dark:text-gray-400'>
-                          {product.minOrder}
+                          {t('minOrder')} {product.minOrder}
                         </span>
                       </div>
                     </div>
@@ -144,7 +146,7 @@ export function TopProductsSection() {
                     {/* Supplier Info */}
                     <div className='mt-auto space-y-1 border-t pt-3 dark:border-gray-600'>
                       <p className='text-sm font-medium text-gray-900 dark:text-white'>
-                        {product.description}
+                        {t(product.descriptionKey)}
                       </p>
                     </div>
                   </CardContent>

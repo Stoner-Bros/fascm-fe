@@ -1,0 +1,247 @@
+{
+  "Landing": {
+    "header": {
+      "home": "Home",
+      "about": "About",
+      "features": "Features",
+      "tracking": "Tracking",
+      "loginRegister": "Login / Register"
+    },
+    "hero": {
+      "title": "Connecting Farmers and Retailers in a",
+      "titleHighlight": "Transparent Supply Chain",
+      "description": "FASCM digitizes Vietnam's fresh produce ecosystem through",
+      "blockchain": "Blockchain",
+      "and": "and",
+      "iot": "IoT",
+      "integration": "integration.",
+      "signInSupplier": "Sign In as Supplier",
+      "signInConsignee": "Sign In as Consignee"
+    },
+    "topProducts": {
+      "title": "Top Products",
+      "description": "Discover our most popular agricultural products",
+      "availableNow": "Available Now",
+      "minOrder": "Min order:",
+      "products": {
+        "banana": {
+          "name": "Banana",
+          "description": "Fresh Banana, ripe and ready to eat"
+        },
+        "orange": {
+          "name": "Sweet Orange",
+          "description": "Fresh Sweet Orange, juicy and ready to eat"
+        },
+        "pineapple": {
+          "name": "Sweet Pineapple",
+          "description": "Fresh Sweet Pineapple, juicy and ready to eat"
+        },
+        "carrots": {
+          "name": "Carrots",
+          "description": "Fresh Carrots, crunchy and ready to eat"
+        },
+        "apple": {
+          "name": "Sweet Apple",
+          "description": "Fresh Sweet Apple, juicy and ready to eat"
+        }
+      }
+    },
+    "about": {
+      "title": "Modernizing Vietnam's",
+      "titleHighlight": "Fresh Produce Supply Chain",
+      "description1": "FASCM connects",
+      "farmers": "farmers",
+      "distributors": "distributors",
+      "retailers": "retailers",
+      "description2": "in one transparent ecosystem. By combining",
+      "blockchain": "Blockchain",
+      "and": "and",
+      "iotTechnologies": "IoT technologies",
+      "description3": "it ensures real-time freshness monitoring, traceability, and trustworthy transactions.",
+      "description4": "Our platform provides end-to-end visibility across the entire supply chain, from harvest to retail, ensuring food safety, reducing waste, and building trust between all stakeholders.",
+      "stats": {
+        "traceability": "Traceability",
+        "monitoring": "Monitoring",
+        "updates": "Updates"
+      },
+      "cards": {
+        "blockchain": "Blockchain Security",
+        "iot": "IoT Monitoring",
+        "supplyChain": "Supply Chain Tracking"
+      }
+    },
+    "features": {
+      "title": "Key Features by Role",
+      "description": "Digital transparency and traceability for every actor in the supply chain.",
+      "supplier": {
+        "title": "Supplier Module",
+        "description": "Manage harvest batches, confirm pickup, and record product origin digitally."
+      },
+      "consignee": {
+        "title": "Consignee Module",
+        "description": "View and order verified produce, track origin, and ensure freshness on arrival."
+      },
+      "iotBlockchain": {
+        "title": "IoT & Blockchain",
+        "description": "Real-time monitoring of storage and transport with verified blockchain traceability."
+      },
+      "forSuppliers": {
+        "title": "For Suppliers",
+        "items": {
+          "batch": "Digital harvest batch management",
+          "qr": "QR code generation for products",
+          "pickup": "Real-time pickup confirmation",
+          "blockchain": "Blockchain-verified origin records"
+        }
+      },
+      "forConsignees": {
+        "title": "For Consignees",
+        "items": {
+          "view": "View verified supplier products",
+          "track": "Track freshness and quality metrics",
+          "scan": "Scan QR codes for full traceability",
+          "monitoring": "Automated temperature monitoring alerts"
+        }
+      }
+    },
+    "howItWorks": {
+      "title": "How It Works",
+      "description": "Discover how FASCM works with our streamlined process. Managers create products, warehouse staff manage orders, and suppliers fulfill confirmed requests.",
+      "tabs": {
+        "consignee": "I'm a Consignee",
+        "supplier": "I'm a Supplier"
+      },
+      "consignee": {
+        "step1": {
+          "title": "Browse Products",
+          "description": "Explore fresh produce catalog created by managers with complete product information and availability."
+        },
+        "step2": {
+          "title": "Place Order Request",
+          "description": "Submit order requests to warehouse staff who will manage and process your orders."
+        },
+        "step3": {
+          "title": "Order Processing",
+          "description": "Warehouse staff processes your order and coordinates with suppliers for fulfillment."
+        },
+        "step4": {
+          "title": "Track & Receive",
+          "description": "Monitor order status and receive products with full traceability and quality verification."
+        }
+      },
+      "supplier": {
+        "step1": {
+          "title": "Receive Notifications",
+          "description": "Get notified when warehouse staff creates orders that require your products."
+        },
+        "step2": {
+          "title": "Review Orders",
+          "description": "Check order details, quantities, and delivery requirements from warehouse staff."
+        },
+        "step3": {
+          "title": "Confirm Availability",
+          "description": "Confirm product availability and accept or decline orders based on your inventory."
+        },
+        "step4": {
+          "title": "Fulfill Order",
+          "description": "Prepare and deliver confirmed orders with proper documentation and quality assurance."
+        }
+      },
+      "cta": {
+        "title": "Ready to get started?",
+        "descriptionConsignee": "Join our platform to streamline your procurement process with complete transparency and efficiency.",
+        "descriptionSupplier": "Join our platform to streamline your order fulfillment with complete transparency and efficiency.",
+        "buttonConsignee": "Start as Consignee",
+        "buttonSupplier": "Start as Supplier"
+      },
+      "stepLabel": "Step"
+    },
+    "tracking": {
+      "title": "Product Tracking & Verification",
+      "description": "Enter lot code or scan QR code to view detailed product information and verify on blockchain",
+      "tabLot": "Lot Code Tracking",
+      "lotTracking": {
+        "title": "Track by Lot Code",
+        "description": "Enter product lot code to view detailed information",
+        "placeholder": "Enter lot code (e.g., LOT-2024-001)",
+        "search": "Search",
+        "orScan": "Or scan QR code for quick tracking",
+        "scanButton": "Scan QR Code (Demo)",
+        "resultTitle": "Lot Code Tracking Results"
+      },
+      "blockchain": {
+        "title": "Blockchain Verification",
+        "description": "Enter transaction hash to verify on blockchain",
+        "placeholder": "Enter transaction hash",
+        "button": "Check on Blockchain",
+        "demo": "Demo: 0x1234567890abcdef1234567890abcdef12345678",
+        "resultTitle": "Blockchain Verification Results"
+      },
+      "lotResult": {
+        "lotCode": "Lot Code",
+        "product": "Product",
+        "productionDate": "Production Date",
+        "expiryDate": "Expiry Date",
+        "supplyChain": "Supply Chain",
+        "stages": {
+          "planting": "Planting",
+          "harvesting": "Harvesting",
+          "processing": "Processing",
+          "shipping": "Shipping",
+          "distribution": "Distribution"
+        },
+        "status": {
+          "completed": "Completed",
+          "inProgress": "In Progress",
+          "pending": "Pending"
+        },
+        "certificates": "Certificates & QR Code",
+        "certificatesTitle": "Certificates",
+        "qrTitle": "Verification QR Code",
+        "qrScan": "Scan to verify quickly"
+      },
+      "blockchainResult": {
+        "transactionStatus": "Transaction Status",
+        "status": "Status",
+        "transactionConfirmed": "Transaction Confirmed",
+        "block": "Block",
+        "confirmations": "confirmations",
+        "hashInfo": "Hash Information",
+        "hash": "Hash",
+        "recordDate": "Record Date",
+        "recorder": "Recorder",
+        "smartContract": "Smart Contract",
+        "signer": "Signer"
+      }
+    },
+    "cta": {
+      "title": "Ready to bring transparency to your supply chain?",
+      "description": "Join hundreds of farmers and retailers already using FASCM to ensure quality, traceability, and trust in every transaction.",
+      "registerSupplier": "Register as Supplier",
+      "registerConsignee": "Register as Consignee",
+      "alreadyAccount": "Already have an account?",
+      "signIn": "Sign in here"
+    },
+    "footer": {
+      "description": "Modernizing Vietnam's fresh produce supply chain through Blockchain and IoT technologies for complete transparency and traceability.",
+      "copyright": "FASCM Project. All rights reserved.",
+      "quickLinks": "Quick Links",
+      "links": {
+        "home": "Home",
+        "about": "About",
+        "features": "Features",
+        "contact": "Contact",
+        "login": "Login"
+      },
+      "contact": {
+        "title": "Contact Information",
+        "emailSupport": "support@fascm.vn",
+        "phone": "(+84) 123-456-789",
+        "hours": "Mon-Fri, 8AM-5PM",
+        "university": "FPT University",
+        "project": "SEP490 Capstone Project"
+      },
+      "developed": "Developed with 💚 by FPT University Students | Capstone Project SEP490"
+    }
+  }
+}
