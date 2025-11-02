@@ -9,17 +9,14 @@ import {
 } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import {
   IconTrendingUp,
   IconTrendingDown,
-  IconPackage,
-  IconClockHour4,
-  IconUser,
-  IconCalendar
+  IconClockHour4
 } from '@tabler/icons-react';
 import Link from 'next/link';
+import { WarehouseActivitiesTable } from './warehouse-activities-table';
 
 interface StockViewPageProps {}
 
@@ -32,115 +29,6 @@ export function StockViewPage({}: StockViewPageProps) {
     pendingExport: 8
   };
 
-  // Mock data cho tracking vận chuyển
-  // const activeDeliveries = [
-  //   {
-  //     id: '1',
-  //     orderId: 'ORD-001',
-  //     type: 'export', // xuất hàng
-  //     vehicle: 'Xe tải 001',
-  //     driver: 'Nguyễn Văn A',
-  //     destination: 'Siêu thị BigC Thăng Long',
-  //     progress: 65,
-  //     status: 'Đang vận chuyển',
-  //     currentLocation: 'Đường Nguyễn Trãi, Q.Thanh Xuân',
-  //     estimatedArrival: '14:30',
-  //     temperature: 16.8,
-  //     humidity: 62,
-  //     items: [
-  //       { name: 'Cà chua', quantity: 50, unit: 'kg' },
-  //       { name: 'Táo', quantity: 30, unit: 'kg' }
-  //     ]
-  //   },
-  //   {
-  //     id: '2',
-  //     orderId: 'ORD-002',
-  //     type: 'export', // xuất hàng
-  //     vehicle: 'Xe tải 002',
-  //     driver: 'Trần Văn B',
-  //     destination: 'Chợ Hà Đông',
-  //     progress: 25,
-  //     status: 'Đang vận chuyển',
-  //     currentLocation: 'Kho hàng - Chuẩn bị xuất phát',
-  //     estimatedArrival: '15:45',
-  //     temperature: 17.2,
-  //     humidity: 58,
-  //     items: [
-  //       { name: 'Gạo', quantity: 100, unit: 'kg' },
-  //       { name: 'Đậu xanh', quantity: 25, unit: 'kg' }
-  //     ]
-  //   },
-  //   {
-  //     id: '3',
-  //     orderId: 'IMP-001',
-  //     type: 'import', // nhập hàng
-  //     vehicle: 'Xe tải 003',
-  //     driver: 'Lê Thị C',
-  //     destination: 'Kho hàng chính',
-  //     progress: 80,
-  //     status: 'Sắp đến nơi',
-  //     currentLocation: 'Đường Xuân Thủy, Q.Cầu Giấy',
-  //     estimatedArrival: '14:15',
-  //     temperature: 16.5,
-  //     humidity: 65,
-  //     items: [
-  //       { name: 'Xà lách tươi', quantity: 200, unit: 'kg' },
-  //       { name: 'Cải thảo', quantity: 150, unit: 'kg' }
-  //     ]
-  //   }
-  // ];
-
-  const recentMovements = [
-    {
-      id: 1,
-      date: '15/01/2024',
-      time: '10:30',
-      item: 'Cà chua cherry',
-      type: 'inbound',
-      quantity: 150,
-      unit: 'kg',
-      staff: 'Nguyễn Văn A',
-      status: 'completed',
-      location: 'Khu A-01'
-    },
-    {
-      id: 2,
-      date: '15/01/2024',
-      time: '09:45',
-      item: 'Rau xà lách',
-      type: 'outbound',
-      quantity: 80,
-      unit: 'kg',
-      staff: 'Trần Thị B',
-      status: 'completed',
-      location: 'Khu B-03'
-    },
-    {
-      id: 3,
-      date: '15/01/2024',
-      time: '09:15',
-      item: 'Táo Fuji',
-      type: 'inbound',
-      quantity: 200,
-      unit: 'kg',
-      staff: 'Lê Văn C',
-      status: 'pending',
-      location: 'Khu C-02'
-    },
-    {
-      id: 4,
-      date: '15/01/2024',
-      time: '08:30',
-      item: 'Cải thảo',
-      type: 'outbound',
-      quantity: 120,
-      unit: 'kg',
-      staff: 'Phạm Thị D',
-      status: 'completed',
-      location: 'Khu A-05'
-    }
-  ];
-
   return (
     <PageContainer scrollable={true}>
       <div className='flex flex-1 flex-col space-y-6'>
@@ -151,12 +39,6 @@ export function StockViewPage({}: StockViewPageProps) {
             description='Theo dõi và quản lý các hoạt động xuất nhập kho nông sản'
           />
           <div className='flex gap-2'>
-            {/* <Button variant='outline' size='sm'>
-              <IconBarcode className='mr-2 h-4 w-4' /> Quét mã vạch
-            </Button>
-            <Button variant='outline' size='sm'>
-              <IconDownload className='mr-2 h-4 w-4' /> Xuất báo cáo
-            </Button> */}
             <Link
               href='/dashboard/warehouse/stock/import'
               className={cn(
@@ -243,7 +125,7 @@ export function StockViewPage({}: StockViewPageProps) {
         </div>
 
         {/* Bảng hoạt động gần đây */}
-        <Card>
+        {/* <Card>
           <CardHeader>
             <CardTitle>Hoạt động xuất nhập kho gần đây</CardTitle>
             <CardDescription>
@@ -317,7 +199,8 @@ export function StockViewPage({}: StockViewPageProps) {
               ))}
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
+        <WarehouseActivitiesTable />
       </div>
     </PageContainer>
   );

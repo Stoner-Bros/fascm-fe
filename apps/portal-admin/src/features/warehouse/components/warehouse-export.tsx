@@ -36,14 +36,7 @@ import {
 } from '@tabler/icons-react';
 import { toast } from 'sonner';
 
-// Type definitions for Consignee and Orders
-interface Consignee {
-  id: string;
-  name: string;
-  address: string;
-  contact: string;
-  type: 'supermarket' | 'restaurant' | 'distributor' | 'retailer';
-}
+// Type definitions for Orders
 
 interface OrderItem {
   id: string;
@@ -87,7 +80,6 @@ const exportFormSchema = z.object({
     .array(z.string())
     .min(1, 'Vui lòng chọn ít nhất một đơn hàng'),
   areaId: z.string().min(1, 'Vui lòng chọn khu vực'),
-  consigneeId: z.string().optional(), // Made optional since we can skip consignee selection
   notes: z.string().optional()
 });
 
@@ -133,38 +125,6 @@ const mockWarehouse = {
     }
   ]
 };
-
-// Mock consignees data
-const mockConsignees: Consignee[] = [
-  {
-    id: 'CUST-001',
-    name: 'Siêu thị BigC',
-    address: '123 Nguyễn Huệ, Quận 1, TP.HCM',
-    contact: '0281234567',
-    type: 'supermarket'
-  },
-  {
-    id: 'CUST-002',
-    name: 'Nhà hàng Hải Sản Tươi',
-    address: '456 Lê Văn Sỹ, Quận 3, TP.HCM',
-    contact: '0287654321',
-    type: 'restaurant'
-  },
-  {
-    id: 'CUST-003',
-    name: 'Kho bãi Miền Tây',
-    address: '789 Quốc lộ 1A, Cần Thơ',
-    contact: '0292345678',
-    type: 'distributor'
-  },
-  {
-    id: 'CUST-004',
-    name: 'Cửa hàng Thực phẩm Sạch',
-    address: '321 Trần Hưng Đạo, Quận 5, TP.HCM',
-    contact: '0283456789',
-    type: 'retailer'
-  }
-];
 
 // Mock orders data
 const mockOrders: Order[] = [
@@ -292,9 +252,6 @@ const mockOrders: Order[] = [
 export function WarehouseExport() {
   // State management
   const [selectedArea, setSelectedArea] = useState<any>(null);
-  const [selectedConsignee, setSelectedConsignee] = useState<Consignee | null>(
-    null
-  );
   const [availableOrders, setAvailableOrders] = useState<Order[]>(
     mockOrders.filter((order) => order.status === 'confirmed')
   ); // Initialize with all confirmed orders
@@ -331,15 +288,9 @@ export function WarehouseExport() {
     },
     {
       id: 2,
-      title: 'Chọn khu vực',
+      title: 'Chọn khu vực & Xác nhận',
       icon: IconMapPin,
-      description: 'Chọn khu vực kho xuất hàng'
-    },
-    {
-      id: 3,
-      title: 'Xác nhận',
-      icon: IconCheck,
-      description: 'Xem lại và xác nhận xuất kho'
+      description: 'Chọn khu vực kho và xác nhận xuất hàng'
     }
   ];
 
@@ -349,7 +300,6 @@ export function WarehouseExport() {
     defaultValues: {
       selectedOrders: [],
       areaId: '',
-      consigneeId: '',
       notes: ''
     }
   });
@@ -374,19 +324,12 @@ export function WarehouseExport() {
     }
   };
 
-  // Handle area selection - now the second step
+  // Handle area selection - now the final step
   const handleAreaChange = (areaId: string) => {
     const area = mockWarehouse.areas.find((a: any) => a.id === areaId);
     setSelectedArea(area);
-    setCurrentStep(3); // Move to confirmation step
+    setCurrentStep(2); // Move to final step (confirmation)
     form.setValue('areaId', areaId);
-  };
-
-  // Handle consignee selection - now optional
-  const handleConsigneeChange = (consigneeId: string) => {
-    const consignee = mockConsignees.find((c) => c.id === consigneeId);
-    setSelectedConsignee(consignee || null);
-    form.setValue('consigneeId', consigneeId);
   };
 
   // Get priority badge
@@ -402,22 +345,6 @@ export function WarehouseExport() {
         return <Badge variant='outline'>Thấp</Badge>;
       default:
         return null;
-    }
-  };
-
-  // Get customer type label
-  const getCustomerTypeLabel = (type: Consignee['type']) => {
-    switch (type) {
-      case 'supermarket':
-        return 'Siêu thị';
-      case 'restaurant':
-        return 'Nhà hàng';
-      case 'distributor':
-        return 'Nhà phân phối';
-      case 'retailer':
-        return 'Cửa hàng bán lẻ';
-      default:
-        return type;
     }
   };
 
@@ -454,16 +381,27 @@ export function WarehouseExport() {
 
       const totals = calculateTotals();
 
+      // Get customer info from the first order (assuming all orders are for the same customer)
+      // In a real scenario, you might want to group orders by customer
+      const firstOrder = selectedOrders[0];
+      const customerInfo = {
+        id: firstOrder.customerId,
+        name: firstOrder.customerName,
+        address: firstOrder.customerAddress,
+        contact: firstOrder.customerContact,
+        type: firstOrder.customerType
+      };
+
       const newExportOrder = {
         id: `EXP-${Date.now()}`,
         warehouseId: mockWarehouse.id,
         warehouseName: mockWarehouse.name,
         areaId: selectedArea.id,
         areaName: selectedArea.name,
-        consigneeId: data.consigneeId,
-        consigneeName: selectedConsignee?.name,
-        consigneeAddress: selectedConsignee?.address,
-        consigneeContact: selectedConsignee?.contact,
+        customerId: customerInfo.id,
+        customerName: customerInfo.name,
+        customerAddress: customerInfo.address,
+        customerContact: customerInfo.contact,
         orders: selectedOrders,
         totalOrders: totals.totalOrders,
         totalWeight: totals.totalWeight,
@@ -480,7 +418,6 @@ export function WarehouseExport() {
       // Reset form
       form.reset();
       setSelectedArea(null);
-      setSelectedConsignee(null);
       setAvailableOrders([]);
       setSelectedOrderIds([]);
 
@@ -544,7 +481,7 @@ export function WarehouseExport() {
                         </h3>
                         <p className='mb-4 text-sm text-blue-700'>
                           Quét mã QR trên đơn hàng để tự động tải thông tin
-                          consignee và order
+                          order
                         </p>
                         <Button
                           variant='outline'
@@ -552,24 +489,15 @@ export function WarehouseExport() {
                           onClick={() => {
                             // Simulate QR scan - in real app would open camera
                             const mockScannedOrder = mockOrders[0];
-                            const mockConsignee = mockConsignees.find(
-                              (c) => c.id === mockScannedOrder.customerId
-                            );
 
-                            if (mockConsignee) {
-                              // Auto-fill form based on scanned QR
-                              form.setValue('consigneeId', mockConsignee.id);
-                              handleConsigneeChange(mockConsignee.id);
+                            // Auto-select the scanned order
+                            setTimeout(() => {
+                              handleOrderSelection(mockScannedOrder.id, true);
+                              setCurrentStep(2);
+                            }, 500);
 
-                              // Auto-select the scanned order
-                              setTimeout(() => {
-                                handleOrderSelection(mockScannedOrder.id, true);
-                                setCurrentStep(4);
-                              }, 500);
-
-                              setScanMode(false);
-                              toast.success('Đã quét thành công đơn hàng!');
-                            }
+                            setScanMode(false);
+                            toast.success('Đã quét thành công đơn hàng!');
                           }}
                         >
                           <IconScan className='mr-2 h-4 w-4' />
@@ -906,79 +834,15 @@ export function WarehouseExport() {
                 </div>
               )}
 
-              {/* Step 3: Confirmation with Optional Consignee Selection */}
-              {currentStep >= 3 &&
+              {/* Step 2: Confirmation */}
+              {currentStep >= 2 &&
                 selectedArea &&
                 selectedOrderIds.length > 0 && (
                   <div className='space-y-6'>
                     <h3 className='flex items-center gap-2 text-lg font-semibold'>
                       <IconCheck className='h-5 w-5' />
-                      Bước 3: Xác nhận và tùy chọn người nhận
+                      Bước 2: Xác nhận thông tin xuất kho
                     </h3>
-
-                    {/* Optional Consignee Selection */}
-                    <div className='space-y-4'>
-                      <h4 className='flex items-center gap-2 text-base font-medium text-gray-700'>
-                        <IconUser className='h-4 w-4' />
-                        Chọn người nhận (tùy chọn)
-                      </h4>
-                      <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                        {mockConsignees.map((consignee) => {
-                          const isSelected =
-                            selectedConsignee?.id === consignee.id;
-
-                          return (
-                            <Card
-                              key={consignee.id}
-                              className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
-                                isSelected
-                                  ? 'bg-blue-50 ring-2 ring-blue-500 dark:bg-gray-700'
-                                  : 'hover:bg-gray-50 dark:hover:bg-gray-700'
-                              }`}
-                              onClick={() => {
-                                handleConsigneeChange(consignee.id);
-                                form.setValue('consigneeId', consignee.id);
-                              }}
-                            >
-                              <CardContent className='p-4'>
-                                <div className='mb-3 flex items-center justify-between'>
-                                  <div className='flex items-center gap-2'>
-                                    <IconUser
-                                      className={`h-5 w-5 ${isSelected ? 'text-blue-600' : 'text-gray-600'}`}
-                                    />
-                                    <span className='font-medium'>
-                                      {consignee.name}
-                                    </span>
-                                    <Badge
-                                      variant='outline'
-                                      className='t text-xs'
-                                    >
-                                      {getCustomerTypeLabel(consignee.type)}
-                                    </Badge>
-                                  </div>
-                                  {isSelected && (
-                                    <IconCheck className='h-5 w-5 text-blue-600' />
-                                  )}
-                                </div>
-
-                                <div className='space-y-2 text-sm text-gray-600 dark:text-white'>
-                                  <div className='flex items-start gap-2'>
-                                    <IconMapPin className='mt-0.5 h-4 w-4 flex-shrink-0' />
-                                    <span className='line-clamp-2'>
-                                      {consignee.address}
-                                    </span>
-                                  </div>
-                                  <div className='flex items-center gap-2'>
-                                    <IconPhone className='h-4 w-4 flex-shrink-0' />
-                                    <span>{consignee.contact}</span>
-                                  </div>
-                                </div>
-                              </CardContent>
-                            </Card>
-                          );
-                        })}
-                      </div>
-                    </div>
 
                     {/* Review Summary Cards */}
                     <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
@@ -1003,33 +867,6 @@ export function WarehouseExport() {
                               value={(selectedArea?.capacity || 0) / 8}
                               className='h-2'
                             />
-                          </div>
-                        </CardContent>
-                      </Card>
-
-                      {/* Consignee Info */}
-                      <Card>
-                        <CardHeader className='pb-3'>
-                          <CardTitle className='flex items-center gap-2 text-sm'>
-                            <IconUser className='h-4 w-4' />
-                            Người nhận
-                          </CardTitle>
-                        </CardHeader>
-                        <CardContent className='pt-0'>
-                          <div className='space-y-2'>
-                            <p className='font-medium'>
-                              {selectedConsignee?.name}
-                            </p>
-                            <div className='flex items-center gap-2 text-sm text-gray-600'>
-                              <IconMapPin className='h-4 w-4' />
-                              <span className='line-clamp-2'>
-                                {selectedConsignee?.address}
-                              </span>
-                            </div>
-                            <div className='flex items-center gap-2 text-sm text-gray-600'>
-                              <IconPhone className='h-4 w-4' />
-                              <span>{selectedConsignee?.contact}</span>
-                            </div>
                           </div>
                         </CardContent>
                       </Card>
@@ -1209,7 +1046,6 @@ export function WarehouseExport() {
                       onClick={() => {
                         form.reset();
                         setSelectedArea(null);
-                        setSelectedConsignee(null);
                         setAvailableOrders(
                           mockOrders.filter(
                             (order) => order.status === 'confirmed'
@@ -1241,14 +1077,14 @@ export function WarehouseExport() {
                       <div className='flex items-center gap-2'>
                         <Badge variant='outline'>{order.id}</Badge>
                         <span className='font-medium'>
-                          {order.consigneeName}
+                          {order.customerName}
                         </span>
                       </div>
                       <Badge>{order.status}</Badge>
                     </div>
                     <div className='text-muted-foreground space-y-1 text-sm'>
                       <p>Khu vực: {order.areaName}</p>
-                      <p>Địa chỉ: {order.consigneeAddress}</p>
+                      <p>Địa chỉ: {order.customerAddress}</p>
                       <p>
                         Đơn hàng: {order.totalOrders} đơn, {order.totalItems}{' '}
                         sản phẩm
