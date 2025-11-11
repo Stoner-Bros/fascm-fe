@@ -133,7 +133,7 @@ export function TopProductsSection() {
 
                     {/* Price and Min Order */}
                     <div className='mb-3 space-y-1'>
-                      <div className='flex items-center justify-between'>
+                      <div className='flex items-center justify-between gap-2'>
                         <span className='text-lg font-bold text-gray-900 dark:text-white'>
                           {product.price}
                         </span>
