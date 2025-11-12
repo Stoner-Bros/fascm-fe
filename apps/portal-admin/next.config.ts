@@ -1,3 +1,6 @@
+const createNextIntlPlugin = require('next-intl/plugin');
+
+const withNextIntl = createNextIntlPlugin();
 import type { NextConfig } from 'next';
 import { withSentryConfig } from '@sentry/nextjs';
 
@@ -54,4 +57,4 @@ if (!process.env.NEXT_PUBLIC_SENTRY_DISABLED) {
 }
 
 const nextConfig = configWithPlugins;
-export default nextConfig;
+export default withNextIntl(nextConfig);

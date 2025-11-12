@@ -9,6 +9,8 @@ import NextTopLoader from 'nextjs-toploader';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import './globals.css';
 import './theme.css';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
 
 const META_THEME_COLORS = {
   light: '#ffffff',
@@ -33,8 +35,11 @@ export default async function RootLayout({
   const activeThemeValue = cookieStore.get('active_theme')?.value;
   const isScaled = activeThemeValue?.endsWith('-scaled');
 
+  const messages = await getMessages();
+  const locale = await getLocale();
+
   return (
-    <html lang='en' suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -56,21 +61,23 @@ export default async function RootLayout({
           fontVariables
         )}
       >
-        <NextTopLoader showSpinner={false} />
-        <NuqsAdapter>
-          <ThemeProvider
-            attribute='class'
-            defaultTheme='system'
-            enableSystem
-            disableTransitionOnChange
-            enableColorScheme
-          >
-            <Providers activeThemeValue={activeThemeValue as string}>
-              <Toaster />
-              {children}
-            </Providers>
-          </ThemeProvider>
-        </NuqsAdapter>
+        <NextIntlClientProvider messages={messages}>
+          <NextTopLoader showSpinner={false} />
+          <NuqsAdapter>
+            <ThemeProvider
+              attribute='class'
+              defaultTheme='system'
+              enableSystem
+              disableTransitionOnChange
+              enableColorScheme
+            >
+              <Providers activeThemeValue={activeThemeValue as string}>
+                <Toaster />
+                {children}
+              </Providers>
+            </ThemeProvider>
+          </NuqsAdapter>
+        </NextIntlClientProvider>
       </body>
     </html>
   );
