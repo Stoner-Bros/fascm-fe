@@ -47,6 +47,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
 import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
+import { useTranslations } from 'next-intl';
 export const company = {
   name: 'Acme Inc',
   logo: IconPhotoUp,
@@ -64,7 +65,9 @@ export default function AppSidebar() {
   const { isOpen } = useMediaQuery();
   const { user } = useUser();
   const router = useRouter();
-  const handleSwitchTenant = (_tenantId: string) => {
+  const t = useTranslations('Sidebar');
+
+  const handleSwitchTenant = () => {
     // Tenant switching functionality would be implemented here
   };
 
@@ -73,6 +76,27 @@ export default function AppSidebar() {
   React.useEffect(() => {
     // Side effects based on sidebar state changes
   }, [isOpen]);
+
+  // Translation map for nav items
+  const getTranslatedTitle = (title: string): string => {
+    const translationMap: { [key: string]: string } = {
+      Dashboard: t('dashboard'),
+      Order: t('order'),
+      Warehouse: t('warehouse'),
+      'Stock Management': t('stockManagement'),
+      'IoT Device': t('iotDevice'),
+      Delivery: t('delivery'),
+      Inbound: t('inbound'),
+      Outbound: t('outbound'),
+      Truck: t('truck'),
+      Product: t('product'),
+      Account: t('account'),
+      Profile: t('profile'),
+      Login: t('login'),
+      Kanban: t('kanban')
+    };
+    return translationMap[title] || title;
+  };
 
   return (
     <Sidebar collapsible='icon'>
@@ -85,10 +109,11 @@ export default function AppSidebar() {
       </SidebarHeader>
       <SidebarContent className='overflow-x-hidden'>
         <SidebarGroup>
-          <SidebarGroupLabel>Overview</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('overview')}</SidebarGroupLabel>
           <SidebarMenu>
             {navItems.map((item) => {
               const Icon = item.icon ? Icons[item.icon] : Icons.logo;
+              const translatedTitle = getTranslatedTitle(item.title);
               return item?.items && item?.items?.length > 0 ? (
                 <Collapsible
                   key={item.title}
@@ -99,7 +124,7 @@ export default function AppSidebar() {
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton
-                        tooltip={item.title}
+                        tooltip={translatedTitle}
                         isActive={pathname === item.url}
                         onClick={(e) => {
                           if (item.url && item.url !== '#') {
@@ -109,7 +134,7 @@ export default function AppSidebar() {
                         }}
                       >
                         {item.icon && <Icon />}
-                        <span>{item.title}</span>
+                        <span>{translatedTitle}</span>
                         <IconChevronRight className='ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
@@ -122,7 +147,7 @@ export default function AppSidebar() {
                               isActive={pathname === subItem.url}
                             >
                               <Link href={subItem.url}>
-                                <span>{subItem.title}</span>
+                                <span>{getTranslatedTitle(subItem.title)}</span>
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
@@ -135,12 +160,12 @@ export default function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    tooltip={item.title}
+                    tooltip={translatedTitle}
                     isActive={pathname === item.url}
                   >
                     <Link href={item.url}>
                       <Icon />
-                      <span>{item.title}</span>
+                      <span>{translatedTitle}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -192,21 +217,23 @@ export default function AppSidebar() {
                     onClick={() => router.push('/dashboard/profile')}
                   >
                     <IconUserCircle className='mr-2 h-4 w-4' />
-                    Profile
+                    {t('userMenu.profile')}
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <IconCreditCard className='mr-2 h-4 w-4' />
-                    Billing
+                    {t('userMenu.billing')}
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <IconBell className='mr-2 h-4 w-4' />
-                    Notifications
+                    {t('userMenu.notifications')}
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <IconLogout className='mr-2 h-4 w-4' />
-                  <SignOutButton redirectUrl='/auth/sign-in' />
+                  <SignOutButton redirectUrl='/auth/sign-in'>
+                    {t('userMenu.logout')}
+                  </SignOutButton>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

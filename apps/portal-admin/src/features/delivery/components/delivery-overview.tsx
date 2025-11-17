@@ -17,8 +17,10 @@ import {
   IconTruck
 } from '@tabler/icons-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 
 export function DeliveryOverview() {
+  const t = useTranslations('Delivery');
   const deliveryStats = {
     inbound: {
       total: 15,
@@ -41,12 +43,9 @@ export function DeliveryOverview() {
         <div>
           <h1 className='flex items-center gap-2 text-3xl font-bold tracking-tight'>
             <IconTruck className='h-8 w-8 text-blue-600' />
-            Quản lý Vận chuyển
+            {t('title')}
           </h1>
-          <p className='text-muted-foreground'>
-            Tổng quan và quản lý các đợt vận chuyển với hệ thống xe tải thông
-            minh
-          </p>
+          <p className='text-muted-foreground'>{t('description')}</p>
         </div>
       </div>
 
@@ -54,7 +53,9 @@ export function DeliveryOverview() {
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Tổng Inbound</CardTitle>
+            <CardTitle className='text-sm font-medium'>
+              {t('stats.totalInbound')}
+            </CardTitle>
             <IconHome className='text-muted-foreground h-4 w-4' />
           </CardHeader>
           <CardContent>
@@ -62,22 +63,7 @@ export function DeliveryOverview() {
               {deliveryStats.inbound.total}
             </div>
             <p className='text-muted-foreground text-xs'>
-              vận chuyển vườn → kho
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Tổng Outbound</CardTitle>
-            <IconBuilding className='text-muted-foreground h-4 w-4' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>
-              {deliveryStats.outbound.total}
-            </div>
-            <p className='text-muted-foreground text-xs'>
-              vận chuyển kho → phân phối
+              {t('stats.farmToWarehouse')}
             </p>
           </CardContent>
         </Card>
@@ -85,7 +71,24 @@ export function DeliveryOverview() {
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>
-              Đang vận chuyển
+              {t('stats.totalOutbound')}
+            </CardTitle>
+            <IconBuilding className='text-muted-foreground h-4 w-4' />
+          </CardHeader>
+          <CardContent>
+            <div className='text-2xl font-bold'>
+              {deliveryStats.outbound.total}
+            </div>
+            <p className='text-muted-foreground text-xs'>
+              {t('stats.warehouseToDistribution')}
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
+            <CardTitle className='text-sm font-medium'>
+              {t('stats.inTransit')}
             </CardTitle>
             <IconActivity className='h-4 w-4 text-blue-600' />
           </CardHeader>
@@ -95,21 +98,25 @@ export function DeliveryOverview() {
                 deliveryStats.outbound.inTransit}
             </div>
             <p className='text-muted-foreground text-xs'>
-              tổng cộng trên đường
+              {t('stats.totalOnRoad')}
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Chậm trễ</CardTitle>
+            <CardTitle className='text-sm font-medium'>
+              {t('stats.delayed')}
+            </CardTitle>
             <IconClock className='h-4 w-4 text-red-600' />
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold text-red-600'>
               {deliveryStats.inbound.delayed + deliveryStats.outbound.delayed}
             </div>
-            <p className='text-muted-foreground text-xs'>cần xử lý gấp</p>
+            <p className='text-muted-foreground text-xs'>
+              {t('stats.needsUrgentAction')}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -125,17 +132,17 @@ export function DeliveryOverview() {
                   <IconHome className='h-6 w-6 text-green-600' />
                 </div>
                 <div>
-                  <CardTitle className='text-xl'>Nhập kho (Inbound)</CardTitle>
-                  <CardDescription>
-                    Vận chuyển từ vườn về kho (không giới hạn tải trọng)
-                  </CardDescription>
+                  <CardTitle className='text-xl'>
+                    {t('inbound.title')}
+                  </CardTitle>
+                  <CardDescription>{t('inbound.subtitle')}</CardDescription>
                 </div>
               </div>
               <Badge
                 variant='outline'
                 className='border-green-200 bg-green-50 text-green-700'
               >
-                {deliveryStats.inbound.inTransit} đang chuyển
+                {deliveryStats.inbound.inTransit} {t('inbound.inTransitBadge')}
               </Badge>
             </div>
           </CardHeader>
@@ -145,25 +152,31 @@ export function DeliveryOverview() {
                 <div className='text-lg font-bold text-green-600'>
                   {deliveryStats.inbound.completed}
                 </div>
-                <div className='text-muted-foreground text-xs'>Hoàn thành</div>
+                <div className='text-muted-foreground text-xs'>
+                  {t('status.completed')}
+                </div>
               </div>
               <div>
                 <div className='text-lg font-bold text-blue-600'>
                   {deliveryStats.inbound.inTransit}
                 </div>
-                <div className='text-muted-foreground text-xs'>Đang chuyển</div>
+                <div className='text-muted-foreground text-xs'>
+                  {t('status.inTransit')}
+                </div>
               </div>
               <div>
                 <div className='text-lg font-bold text-red-600'>
                   {deliveryStats.inbound.delayed}
                 </div>
-                <div className='text-muted-foreground text-xs'>Chậm trễ</div>
+                <div className='text-muted-foreground text-xs'>
+                  {t('status.delayed')}
+                </div>
               </div>
             </div>
             <div className='pt-2'>
               <Link href='/dashboard/delivery/inbound'>
                 <Button className='w-full'>
-                  Quản lý Inbound
+                  {t('inbound.manage')}
                   <IconArrowRight className='ml-2 h-4 w-4' />
                 </Button>
               </Link>
@@ -180,18 +193,18 @@ export function DeliveryOverview() {
                   <IconBuilding className='h-6 w-6 text-blue-600' />
                 </div>
                 <div>
-                  <CardTitle className='text-xl'>Xuất kho (Outbound)</CardTitle>
-                  <CardDescription>
-                    Vận chuyển từ kho ra phân phối (kiểm soát tải trọng & đa đơn
-                    hàng)
-                  </CardDescription>
+                  <CardTitle className='text-xl'>
+                    {t('outbound.title')}
+                  </CardTitle>
+                  <CardDescription>{t('outbound.subtitle')}</CardDescription>
                 </div>
               </div>
               <Badge
                 variant='outline'
                 className='border-blue-200 bg-blue-50 text-blue-700'
               >
-                {deliveryStats.outbound.inTransit} đang chuyển
+                {deliveryStats.outbound.inTransit}{' '}
+                {t('outbound.inTransitBadge')}
               </Badge>
             </div>
           </CardHeader>
@@ -201,25 +214,31 @@ export function DeliveryOverview() {
                 <div className='text-lg font-bold text-green-600'>
                   {deliveryStats.outbound.completed}
                 </div>
-                <div className='text-muted-foreground text-xs'>Hoàn thành</div>
+                <div className='text-muted-foreground text-xs'>
+                  {t('status.completed')}
+                </div>
               </div>
               <div>
                 <div className='text-lg font-bold text-blue-600'>
                   {deliveryStats.outbound.inTransit}
                 </div>
-                <div className='text-muted-foreground text-xs'>Đang chuyển</div>
+                <div className='text-muted-foreground text-xs'>
+                  {t('status.inTransit')}
+                </div>
               </div>
               <div>
                 <div className='text-lg font-bold text-red-600'>
                   {deliveryStats.outbound.delayed}
                 </div>
-                <div className='text-muted-foreground text-xs'>Chậm trễ</div>
+                <div className='text-muted-foreground text-xs'>
+                  {t('status.delayed')}
+                </div>
               </div>
             </div>
             <div className='pt-2'>
               <Link href='/dashboard/delivery/outbound'>
                 <Button className='w-full' variant='outline'>
-                  Quản lý Outbound
+                  {t('outbound.manage')}
                   <IconArrowRight className='ml-2 h-4 w-4' />
                 </Button>
               </Link>
@@ -231,53 +250,48 @@ export function DeliveryOverview() {
       {/* Recent Activities */}
       <Card>
         <CardHeader>
-          <CardTitle>Hoạt động gần đây</CardTitle>
-          <CardDescription>Các sự kiện và cập nhật mới nhất</CardDescription>
+          <CardTitle>{t('recentActivities.title')}</CardTitle>
+          <CardDescription>{t('recentActivities.description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className='space-y-4'>
             <div className='flex items-center gap-3 rounded-lg border-l-4 border-green-500 bg-green-50 p-3'>
               <IconHome className='h-5 w-5 text-green-600' />
               <div className='flex-1'>
-                <p className='font-medium'>Inbound IN-2024-001 đã hoàn thành</p>
+                <p className='font-medium'>{t('recentActivities.activity1')}</p>
                 <p className='text-muted-foreground text-sm'>
-                  500kg rau lá tươi từ Vườn Organic A đã được nhập kho thành
-                  công bằng xe HY-29A-12345 (2 nhân viên)
+                  {t('recentActivities.activity1Details')}
                 </p>
               </div>
               <span className='text-muted-foreground text-xs'>
-                2 phút trước
+                {t('recentActivities.timeAgo.minutes', { count: 2 })}
               </span>
             </div>
 
             <div className='flex items-center gap-3 rounded-lg border-l-4 border-blue-500 bg-blue-50 p-3'>
               <IconBuilding className='h-5 w-5 text-blue-600' />
               <div className='flex-1'>
-                <p className='font-medium'>
-                  Outbound OUT-2024-015 đang vận chuyển
-                </p>
+                <p className='font-medium'>{t('recentActivities.activity2')}</p>
                 <p className='text-muted-foreground text-sm'>
-                  Xe HN-30B-67890 chở 3 đơn hàng (total: 150kg) đang đến khách
-                  hàng đầu tiên - nhiệt độ -2°C
+                  {t('recentActivities.activity2Details')}
                 </p>
               </div>
               <span className='text-muted-foreground text-xs'>
-                15 phút trước
+                {t('recentActivities.timeAgo.minutes', { count: 15 })}
               </span>
             </div>
 
             <div className='flex items-center gap-3 rounded-lg border-l-4 border-red-500 bg-red-50 p-3'>
               <IconClock className='h-5 w-5 text-red-600' />
               <div className='flex-1'>
-                <p className='font-medium'>
-                  Cảnh báo: Inbound IN-2024-003 chậm trễ
-                </p>
+                <p className='font-medium'>{t('recentActivities.activity3')}</p>
                 <p className='text-muted-foreground text-sm'>
-                  Xe HY-29A-12345 từ Vườn B bị ùn tắc, GPS hiện tại: 15km/h -
-                  trễ 1h so với dự kiến
+                  {t('recentActivities.activity3Details')}
                 </p>
               </div>
-              <span className='text-muted-foreground text-xs'>1 giờ trước</span>
+              <span className='text-muted-foreground text-xs'>
+                {t('recentActivities.timeAgo.hour')}
+              </span>
             </div>
           </div>
         </CardContent>

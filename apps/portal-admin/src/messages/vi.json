@@ -1,0 +1,71 @@
+{
+  "Sidebar": {
+    "overview": "Tổng quan",
+    "dashboard": "Bảng điều khiển",
+    "order": "Đơn hàng",
+    "warehouse": "Kho hàng",
+    "stockManagement": "Quản lý tồn kho",
+    "iotDevice": "Thiết bị IoT",
+    "delivery": "Giao hàng",
+    "inbound": "Nhập kho",
+    "outbound": "Xuất kho",
+    "truck": "Xe tải",
+    "product": "Sản phẩm",
+    "account": "Tài khoản",
+    "profile": "Hồ sơ",
+    "login": "Đăng nhập",
+    "kanban": "Bảng Kanban",
+    "userMenu": {
+      "profile": "Hồ sơ",
+      "billing": "Thanh toán",
+      "notifications": "Thông báo",
+      "logout": "Đăng xuất"
+    }
+  },
+  "Delivery": {
+    "title": "Quản lý Vận chuyển",
+    "description": "Tổng quan và quản lý các đợt vận chuyển với hệ thống xe tải thông minh",
+    "stats": {
+      "totalInbound": "Tổng Inbound",
+      "totalOutbound": "Tổng Outbound",
+      "inTransit": "Đang vận chuyển",
+      "delayed": "Chậm trễ",
+      "farmToWarehouse": "vận chuyển vườn → kho",
+      "warehouseToDistribution": "vận chuyển kho → phân phối",
+      "totalOnRoad": "tổng cộng trên đường",
+      "needsUrgentAction": "cần xử lý gấp"
+    },
+    "inbound": {
+      "title": "Nhập kho (Inbound)",
+      "subtitle": "Vận chuyển từ vườn về kho (không giới hạn tải trọng)",
+      "inTransitBadge": "đang chuyển",
+      "manage": "Quản lý Inbound"
+    },
+    "outbound": {
+      "title": "Xuất kho (Outbound)",
+      "subtitle": "Vận chuyển từ kho ra phân phối (kiểm soát tải trọng & đa đơn hàng)",
+      "inTransitBadge": "đang chuyển",
+      "manage": "Quản lý Outbound"
+    },
+    "status": {
+      "completed": "Hoàn thành",
+      "inTransit": "Đang chuyển",
+      "delayed": "Chậm trễ"
+    },
+    "recentActivities": {
+      "title": "Hoạt động gần đây",
+      "description": "Các sự kiện và cập nhật mới nhất",
+      "activity1": "Inbound IN-2024-001 đã hoàn thành",
+      "activity1Details": "500kg rau lá tươi từ Vườn Organic A đã được nhập kho thành công bằng xe HY-29A-12345 (2 nhân viên)",
+      "activity2": "Outbound OUT-2024-015 đang vận chuyển",
+      "activity2Details": "Xe HN-30B-67890 chở 3 đơn hàng (total: 150kg) đang đến khách hàng đầu tiên - nhiệt độ -2°C",
+      "activity3": "Cảnh báo: Inbound IN-2024-003 chậm trễ",
+      "activity3Details": "Xe HY-29A-12345 từ Vườn B bị ùn tắc, GPS hiện tại: 15km/h - trễ 1h so với dự kiến",
+      "timeAgo": {
+        "minutes": "{count} phút trước",
+        "hour": "1 giờ trước",
+        "hours": "{count} giờ trước"
+      }
+    }
+  }
+}

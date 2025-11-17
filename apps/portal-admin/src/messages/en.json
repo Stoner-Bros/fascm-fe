@@ -1,0 +1,71 @@
+{
+  "Sidebar": {
+    "overview": "Overview",
+    "dashboard": "Dashboard",
+    "order": "Order",
+    "warehouse": "Warehouse",
+    "stockManagement": "Stock Management",
+    "iotDevice": "IoT Device",
+    "delivery": "Delivery",
+    "inbound": "Inbound",
+    "outbound": "Outbound",
+    "truck": "Truck",
+    "product": "Product",
+    "account": "Account",
+    "profile": "Profile",
+    "login": "Login",
+    "kanban": "Kanban",
+    "userMenu": {
+      "profile": "Profile",
+      "billing": "Billing",
+      "notifications": "Notifications",
+      "logout": "Log out"
+    }
+  },
+  "Delivery": {
+    "title": "Delivery Management",
+    "description": "Overview and management of deliveries with smart truck system",
+    "stats": {
+      "totalInbound": "Total Inbound",
+      "totalOutbound": "Total Outbound",
+      "inTransit": "In Transit",
+      "delayed": "Delayed",
+      "farmToWarehouse": "farm → warehouse deliveries",
+      "warehouseToDistribution": "warehouse → distribution deliveries",
+      "totalOnRoad": "total on road",
+      "needsUrgentAction": "needs urgent action"
+    },
+    "inbound": {
+      "title": "Inbound Delivery",
+      "subtitle": "Transport from farm to warehouse (no weight limit)",
+      "inTransitBadge": "in transit",
+      "manage": "Manage Inbound"
+    },
+    "outbound": {
+      "title": "Outbound Delivery",
+      "subtitle": "Transport from warehouse to distribution (weight control & multi-orders)",
+      "inTransitBadge": "in transit",
+      "manage": "Manage Outbound"
+    },
+    "status": {
+      "completed": "Completed",
+      "inTransit": "In Transit",
+      "delayed": "Delayed"
+    },
+    "recentActivities": {
+      "title": "Recent Activities",
+      "description": "Latest events and updates",
+      "activity1": "Inbound IN-2024-001 completed",
+      "activity1Details": "500kg fresh vegetables from Organic Farm A successfully warehoused by truck HY-29A-12345 (2 staff)",
+      "activity2": "Outbound OUT-2024-015 in transit",
+      "activity2Details": "Truck HN-30B-67890 carrying 3 orders (total: 150kg) heading to first customer - temperature -2°C",
+      "activity3": "Warning: Inbound IN-2024-003 delayed",
+      "activity3Details": "Truck HY-29A-12345 from Farm B stuck in traffic, current GPS: 15km/h - 1h behind schedule",
+      "timeAgo": {
+        "minutes": "{count} minutes ago",
+        "hour": "1 hour ago",
+        "hours": "{count} hours ago"
+      }
+    }
+  }
+}
