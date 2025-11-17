@@ -39,7 +39,8 @@ import {
   IconBrandStorj,
   IconHistory,
   IconMap,
-  IconBuilding
+  IconBuilding,
+  IconLogout
 } from '@tabler/icons-react';
 
 export type Icon = React.ComponentType<IconProps>;
@@ -48,6 +49,7 @@ export const Icons = {
   dashboard: IconLayoutDashboard,
   logo: IconCommand,
   login: IconLogin,
+  logout: IconLogout,
   close: IconX,
   product: IconShoppingBag,
   spinner: IconLoader2,

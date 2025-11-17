@@ -97,7 +97,7 @@ export function LandingHeader() {
             >
               {t('tracking')}
             </Link>
-            <Link href='/auth/sign-in'>
+            <Link href='/auth/login'>
               <Button
                 variant='outline'
                 className='border-agri-primary text-agri-primary hover:bg-agri-primary hover:text-white'

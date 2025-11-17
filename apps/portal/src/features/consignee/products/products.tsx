@@ -19,132 +19,122 @@ import {
   IconFilter,
   IconX
 } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
-// Mock fresh product data (no organic field)
-const mockProducts = [
-  {
-    id: 'PROD-001',
-    name: 'Tomatoes',
-    category: 'Vegetables',
-    supplier: 'Green Valley Farm',
-    price: 2.5,
-    unit: 'kg',
-    stock: 500,
-    quality: 'Grade A',
-    image: '/placeholder-product.jpg'
-  },
-  {
-    id: 'PROD-002',
-    name: 'Bananas',
-    category: 'Fruits',
-    supplier: 'Sunny Fields',
-    price: 1.6,
-    unit: 'kg',
-    stock: 450,
-    quality: 'Grade A',
-    image: '/placeholder-product.jpg'
-  },
-  {
-    id: 'PROD-003',
-    name: 'Green Lettuce',
-    category: 'Leafy Greens',
-    supplier: 'Fresh Greens Co',
-    price: 1.5,
-    unit: 'kg',
-    stock: 200,
-    quality: 'Grade A',
-    image: '/placeholder-product.jpg'
-  },
-  {
-    id: 'PROD-004',
-    name: 'Cucumbers',
-    category: 'Vegetables',
-    supplier: 'Green Valley Farm',
-    price: 2.0,
-    unit: 'kg',
-    stock: 400,
-    quality: 'Grade A',
-    image: '/placeholder-product.jpg'
-  },
-  {
-    id: 'PROD-005',
-    name: 'Bell Peppers',
-    category: 'Vegetables',
-    supplier: 'Rainbow Farms',
-    price: 3.5,
-    unit: 'kg',
-    stock: 250,
-    quality: 'Grade A',
-    image: '/placeholder-product.jpg'
-  },
-  {
-    id: 'PROD-006',
-    name: 'Onions',
-    category: 'Vegetables',
-    supplier: 'Valley Produce',
-    price: 1.2,
-    unit: 'kg',
-    stock: 600,
-    quality: 'Grade A',
-    image: '/placeholder-product.jpg'
-  }
-];
+import { fetchProducts } from '@/components/api/products';
+import { fetchCategories } from '@/components/api/categories';
+import { getApiBase } from '@/components/api/client';
+import { Product } from '../types/product';
+import { Category } from '@/components/api/categories';
+import router from 'next/router';
 
 export default function ConsigneeProductsFeature() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState([0, 10]);
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const categories = [
-    'Banana',
-    'Tomato',
-    'Vegetables',
-    'Leafy Greens',
-    'Fruits',
-    'Herbs'
-  ];
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    setError(null);
+    console.log('[UI] Using API base', getApiBase());
 
-  const filteredProducts = mockProducts.filter((product) => {
-    const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.supplier.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      selectedCategories.length === 0 ||
-      selectedCategories.includes('all') ||
-      selectedCategories.some((cat) => {
-        const c = cat.toLowerCase();
-        if (c === 'banana' || c === 'tomato') {
-          return product.name.toLowerCase().includes(c);
-        }
-        return product.category === cat;
+    Promise.all([
+      fetchProducts({ page: 1, limit: 12 }),
+      fetchCategories({ page: 1, limit: 50 })
+    ])
+      .then(([productsRes, categoriesRes]) => {
+        if (!mounted) return;
+        setProducts(productsRes.data ?? []);
+        setCategories(categoriesRes.data ?? []);
+        console.log('[UI] Received products', {
+          count: productsRes.data?.length ?? 0,
+          hasNextPage: productsRes.hasNextPage
+        });
+        console.log('[UI] Received categories', {
+          count: categoriesRes.data?.length ?? 0,
+          hasNextPage: categoriesRes.hasNextPage
+        });
+      })
+      .catch((err) => {
+        if (!mounted) return;
+        setError(err?.message ?? 'Failed to load data');
+        console.error('[UI] Failed to load data', err);
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setLoading(false);
+        console.log('[UI] Finished loading data');
       });
-    const matchesPrice =
-      product.price >= priceRange[0] && product.price <= priceRange[1];
-    return matchesSearch && matchesCategory && matchesPrice;
-  });
 
-  const addCategory = (cat: string) => {
-    if (cat === 'all') {
-      setSelectedCategories(['all']);
-      return;
-    }
-    setSelectedCategories((prev) => {
-      const next = prev.filter((c) => c !== 'all');
-      if (!next.includes(cat)) next.push(cat);
-      return [...next];
-    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    setLoading(true);
+    fetchProducts({
+      page: 1,
+      limit: 12,
+      categoryIds: selectedCategoryIds
+    })
+      .then((res) => {
+        if (!mounted) return;
+        setProducts(res.data ?? []);
+      })
+      .catch((err) => {
+        if (!mounted) return;
+
+        setError(err?.message ?? 'Failed to load products');
+      })
+      .finally(() => {
+        if (!mounted) return;
+        setLoading(false);
+      });
+    return () => {
+      mounted = false;
+    };
+  }, [selectedCategoryIds]);
+
+  // Get category names for filtering - use englishName or vietnameseName
+  const getCategoryName = (category: Category) => {
+    return category.englishName || category.vietnameseName || 'Unknown';
   };
 
-  const removeCategory = (cat: string) => {
-    setSelectedCategories((prev) => prev.filter((c) => c !== cat));
+  const categoryOptions = categories.map((c) => ({
+    id: c.id,
+    name: getCategoryName(c)
+  }));
+
+  const filteredProducts = products.filter((product) => {
+    const matchesSearch =
+      (product.name ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (product.description ?? '')
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+    return matchesSearch;
+  });
+
+  const onSelectCategory = (id: string) => {
+    if (!id) return;
+    setSelectedCategoryIds((prev) =>
+      prev.includes(id) ? prev : [...prev, id]
+    );
+  };
+
+  const removeSelectedCategory = (id: string) => {
+    setSelectedCategoryIds((prev) => prev.filter((c) => c !== id));
   };
 
   return (
-    <PageContainer>
-      <div className='w-full space-y-6'>
+    <>
+      <div className='w-full space-y-6 px-4'>
         <div className='flex items-center justify-between'>
           <div>
             <h2 className='text-3xl font-bold tracking-tight'>
@@ -185,67 +175,56 @@ export default function ConsigneeProductsFeature() {
                       className='border-input bg-background ring-offset-background placeholder:text-muted-foreground focus:ring-ring inline-flex h-9 w-full items-center justify-between rounded-md border px-3 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
                       onChange={(e) => {
                         const value = e.target.value;
-                        if (value) addCategory(value);
-                        e.currentTarget.selectedIndex = 0;
+                        onSelectCategory(value);
                       }}
                     >
                       <option value=''>All Category</option>
-                      {categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
+                      {categoryOptions.map((cat) => (
+                        <option key={cat.id} value={cat.id}>
+                          {cat.name}
                         </option>
                       ))}
                     </select>
                   </div>
-                  {selectedCategories.length > 0 && (
+                  {selectedCategoryIds.length > 0 && (
                     <div className='flex flex-wrap gap-2'>
-                      {selectedCategories.map((cat) => (
-                        <Badge
-                          key={cat}
-                          variant='secondary'
-                          className='flex items-center gap-1'
-                        >
-                          {cat}
-                          <Button
-                            variant='ghost'
-                            size='icon'
-                            className='h-4 w-4 p-0'
-                            onClick={() => removeCategory(cat)}
-                            aria-label={`Remove ${cat}`}
+                      {selectedCategoryIds.map((id) => {
+                        const cat = categoryOptions.find((c) => c.id === id);
+                        return (
+                          <Badge
+                            key={id}
+                            variant='secondary'
+                            className='flex items-center gap-1'
                           >
-                            <IconX className='h-3 w-3' />
-                          </Button>
-                        </Badge>
-                      ))}
+                            {cat?.name ?? id}
+                            <Button
+                              variant='ghost'
+                              size='icon'
+                              className='h-4 w-4 p-0'
+                              onClick={() => removeSelectedCategory(id)}
+                              aria-label={`Remove ${cat?.name ?? id}`}
+                            >
+                              <IconX className='h-3 w-3' />
+                            </Button>
+                          </Badge>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
               </div>
 
-              <div className='space-y-2'>
-                <Label>
-                  Price Range: ${priceRange[0]} - ${priceRange[1]} / kg
-                </Label>
-                <Slider
-                  min={0}
-                  max={10}
-                  step={0.5}
-                  value={priceRange}
-                  onValueChange={setPriceRange}
-                  className='mt-2'
-                />
-              </div>
-
               <div className='text-muted-foreground mb-4 text-sm'>
-                Showing {filteredProducts.length} products
+                {loading
+                  ? 'Loading products…'
+                  : `Showing ${filteredProducts.length} products`}
               </div>
               <Button
                 variant='outline'
                 className='w-full'
                 onClick={() => {
                   setSearchQuery('');
-                  setSelectedCategories([]);
-                  setPriceRange([0, 10]);
+                  setSelectedCategoryIds([]);
                 }}
               >
                 Clear Filters
@@ -270,39 +249,57 @@ export default function ConsigneeProductsFeature() {
             ) : (
               <div className='grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'>
                 {filteredProducts.map((product) => (
-                  <Card key={product.id} className='overflow-hidden'>
+                  <Card
+                    key={product.id}
+                    className='flex h-full flex-col overflow-hidden'
+                  >
                     <div className='bg-muted flex aspect-video items-center justify-center'>
-                      <IconPackage className='text-muted-foreground h-12 w-12' />
+                      {product.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={product.image}
+                          alt={product.name ?? 'Product image'}
+                          className='h-[200px] w-[250px] object-cover'
+                        />
+                      ) : (
+                        <IconPackage className='text-muted-foreground h-[200px] w-[200px]' />
+                      )}
                     </div>
-                    <CardHeader>
+                    <CardHeader className='min-h-[80px]'>
                       <div className='flex items-start justify-between'>
                         <div className='flex-1'>
                           <CardTitle className='text-lg'>
                             {product.name}
                           </CardTitle>
-                          <CardDescription>{product.supplier}</CardDescription>
+                          <CardDescription className='max-h-12 overflow-hidden'>
+                            {product.description ?? '—'}
+                          </CardDescription>
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className='space-y-4'>
+                    <CardContent className='flex h-full flex-col space-y-4'>
                       <div className='flex items-center justify-between'>
                         <div>
-                          <p className='text-primary text-2xl font-bold'>
-                            ${product.price}
+                          <p className='text-sm font-bold'>
+                            {product.pricePerKg
+                              ? `${product.pricePerKg} VND/kg`
+                              : 'N/A'}
                           </p>
                           <p className='text-muted-foreground text-xs'>
-                            per {product.unit}
+                            Status: {product.status ?? 'N/A'}
                           </p>
                         </div>
                         <div className='text-right'>
-                          <Badge variant='outline'>{product.quality}</Badge>
                           <p className='text-muted-foreground mt-1 text-xs'>
-                            {product.stock} {product.unit} available
+                            Updated{' '}
+                            {new Date(
+                              product.updatedAt ?? new Date()
+                            ).toLocaleDateString()}
                           </p>
                         </div>
                       </div>
 
-                      <div className='flex gap-2'>
+                      <div className='mt-auto flex gap-2'>
                         <Link
                           href={`/consignee/products/${product.id}`}
                           className='flex-1'
@@ -328,6 +325,6 @@ export default function ConsigneeProductsFeature() {
           </div>
         </div>
       </div>
-    </PageContainer>
+    </>
   );
 }

@@ -173,6 +173,12 @@ export const consigneeNavItems: NavItem[] = [
         url: '/consignee/profile/business',
         icon: 'building',
         shortcut: ['b', 'i']
+      },
+      {
+        title: 'Logout',
+        shortcut: ['l', 'l'],
+        url: '/',
+        icon: 'logout'
       }
     ]
   }

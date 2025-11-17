@@ -33,15 +33,13 @@ type DeliveryBatch = {
   batchNo: number;
   status: 'Scheduled' | 'InTransit' | 'Delivered';
   paymentStatus: 'Unpaid' | 'PartiallyPaid' | 'Paid';
-  paymentMethod: 'Cash' | 'BankTransfer';
   scheduledDate: string; // ISO
   deliveredDate?: string; // ISO
   items: DeliveryItem[];
   amount: number; // VND
-  proofImages?: string[]; // URLs của hình ảnh chứng minh
 };
 
-export const mockDeliveries: DeliveryBatch[] = [
+const mockDeliveries: DeliveryBatch[] = [
   {
     id: 'DEL-001',
     orderId: 'ORD-1001',
@@ -49,18 +47,13 @@ export const mockDeliveries: DeliveryBatch[] = [
     batchNo: 1,
     status: 'Delivered',
     paymentStatus: 'PartiallyPaid',
-    paymentMethod: 'BankTransfer',
     scheduledDate: '2025-11-10',
     deliveredDate: '2025-11-10',
     items: [
       { productName: 'Tomatoes', uom: 'kg', qty: 120 },
       { productName: 'Bananas', uom: 'kg', qty: 80 }
     ],
-    amount: 6_000_000,
-    proofImages: [
-      'https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?q=80&w=600&auto=format&fit=crop',
-      'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=600&auto=format&fit=crop'
-    ]
+    amount: 6_000_000
   },
   {
     id: 'DEL-002',
@@ -69,16 +62,12 @@ export const mockDeliveries: DeliveryBatch[] = [
     batchNo: 2,
     status: 'InTransit',
     paymentStatus: 'Unpaid',
-    paymentMethod: 'Cash',
     scheduledDate: '2025-11-12',
     items: [
       { productName: 'Green Lettuce', uom: 'kg', qty: 50 },
       { productName: 'Cucumbers', uom: 'kg', qty: 100 }
     ],
-    amount: 3_400_000,
-    proofImages: [
-      'https://images.unsplash.com/photo-1501004318641-b39e6451bec6?q=80&w=600&auto=format&fit=crop'
-    ]
+    amount: 3_400_000
   },
   {
     id: 'DEL-003',
@@ -87,7 +76,6 @@ export const mockDeliveries: DeliveryBatch[] = [
     batchNo: 1,
     status: 'Scheduled',
     paymentStatus: 'Unpaid',
-    paymentMethod: 'BankTransfer',
     scheduledDate: '2025-11-13',
     items: [{ productName: 'Bell Peppers', uom: 'kg', qty: 60 }],
     amount: 1_920_000
@@ -110,16 +98,6 @@ export default function ConsigneeDeliveryFeature() {
   const unpaidAmount = mockDeliveries
     .filter((d) => d.paymentStatus !== 'Paid')
     .reduce((acc, d) => acc + d.amount, 0);
-
-  // Group deliveries by order to handle multiple orders each with multiple batches
-  const deliveriesByOrder = mockDeliveries.reduce(
-    (acc, d) => {
-      if (!acc[d.orderId]) acc[d.orderId] = [];
-      acc[d.orderId].push(d);
-      return acc;
-    },
-    {} as Record<string, DeliveryBatch[]>
-  );
 
   const badgeForStatus = (s: DeliveryBatch['status']) => {
     switch (s) {
@@ -197,83 +175,56 @@ export default function ConsigneeDeliveryFeature() {
             <CardTitle>Danh sách các đợt giao</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className='space-y-6'>
-              {Object.keys(deliveriesByOrder).map((orderId) => {
-                const group = deliveriesByOrder[orderId];
-                const orderRef = group[0]?.orderRef ?? orderId;
-                return (
-                  <div key={orderId}>
-                    <div className='mb-2 flex items-center justify-between'>
-                      <div className='text-sm font-medium'>
-                        Đơn hàng {orderRef} — {group.length} đợt giao
-                      </div>
-                      <Link
-                        href={`/consignee/orders/${orderId}`}
-                        className='text-primary text-sm hover:underline'
-                      >
-                        Xem đơn
-                      </Link>
-                    </div>
-                    <div className='rounded-md border'>
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Order</TableHead>
-                            <TableHead>Batch</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Payment</TableHead>
-                            <TableHead>Scheduled</TableHead>
-                            <TableHead>Delivered</TableHead>
-                            <TableHead>Items</TableHead>
-                            <TableHead>Amount</TableHead>
-                            <TableHead className='text-right'>Action</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {group.map((d) => (
-                            <TableRow key={d.id}>
-                              <TableCell>
-                                <Link
-                                  href={`/consignee/orders/${d.orderId}`}
-                                  className='font-medium hover:underline'
-                                >
-                                  {d.orderRef}
-                                </Link>
-                              </TableCell>
-                              <TableCell>#{d.batchNo}</TableCell>
-                              <TableCell>{badgeForStatus(d.status)}</TableCell>
-                              <TableCell>
-                                {badgeForPayment(d.paymentStatus)}
-                              </TableCell>
-                              <TableCell>{d.scheduledDate}</TableCell>
-                              <TableCell>{d.deliveredDate ?? '-'}</TableCell>
-                              <TableCell>
-                                <ul className='text-muted-foreground text-sm'>
-                                  {d.items.map((it, idx) => (
-                                    <li key={idx}>
-                                      {it.productName} — {it.qty} {it.uom}
-                                    </li>
-                                  ))}
-                                </ul>
-                              </TableCell>
-                              <TableCell>
-                                {formatCurrencyVND(d.amount)}
-                              </TableCell>
-                              <TableCell className='text-right'>
-                                <Link href={`/consignee/deliveries/${d.id}`}>
-                                  <Button variant='outline' size='sm'>
-                                    Xem
-                                  </Button>
-                                </Link>
-                              </TableCell>
-                            </TableRow>
+            <div className='rounded-md border'>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Order</TableHead>
+                    <TableHead>Batch</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Payment</TableHead>
+                    <TableHead>Scheduled</TableHead>
+                    <TableHead>Delivered</TableHead>
+                    <TableHead>Items</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead className='text-right'>Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {mockDeliveries.map((d) => (
+                    <TableRow key={d.id}>
+                      <TableCell>
+                        <Link
+                          href={`/consignee/orders/${d.orderId}`}
+                          className='font-medium hover:underline'
+                        >
+                          {d.orderRef}
+                        </Link>
+                      </TableCell>
+                      <TableCell>#{d.batchNo}</TableCell>
+                      <TableCell>{badgeForStatus(d.status)}</TableCell>
+                      <TableCell>{badgeForPayment(d.paymentStatus)}</TableCell>
+                      <TableCell>{d.scheduledDate}</TableCell>
+                      <TableCell>{d.deliveredDate ?? '-'}</TableCell>
+                      <TableCell>
+                        <ul className='text-muted-foreground text-sm'>
+                          {d.items.map((it, idx) => (
+                            <li key={idx}>
+                              {it.productName} — {it.qty} {it.uom}
+                            </li>
                           ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  </div>
-                );
-              })}
+                        </ul>
+                      </TableCell>
+                      <TableCell>{formatCurrencyVND(d.amount)}</TableCell>
+                      <TableCell className='text-right'>
+                        <Button variant='outline' size='sm'>
+                          Xem
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>

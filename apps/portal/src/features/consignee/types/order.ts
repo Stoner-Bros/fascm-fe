@@ -1,53 +1,61 @@
-export type OrderStatus = 'pending' | 'indelivery' | 'delivered' | 'cancel';
+import { Product } from './product';
 
-export interface OrderItem {
-  id: string;
-  product: string;
-  quantity: number;
-  unit: string;
-  pricePerUnit: number;
-  totalPrice: number;
-}
-
-export interface OrderDetail {
-  id: string;
-  orderNumber: string;
-  status: OrderStatus;
-  supplier: {
+export type Order = {
+  totalVolume?: number | null;
+  totalMass?: number | null;
+  totalPayment?: number | null;
+  vatAmount?: number | null;
+  totalAmount?: number | null;
+  taxRate?: number | null;
+  orderDate?: string | null;
+  orderUrl?: string | null;
+  payment?: { id: string } | null;
+  orderSchedule?: {
     id: string;
-    name: string;
-    email: string;
-    phone: string;
-    address: string;
-  };
-  consignee: {
-    id: string;
-    name: string;
-    email: string;
-    phone: string;
-  };
-  items: OrderItem[];
-  deliveryAddress: string;
-  deliveryDate: string;
-  orderDate: string;
-  totalAmount: number;
-  notes?: string;
-  trackingInfo?: {
-    currentLocation?: string;
-    estimatedDelivery?: string;
-    deliveryProgress?: number;
-  };
-  statusHistory: {
-    status: OrderStatus;
-    timestamp: string;
-    note?: string;
-  }[];
-}
+    status?: OrderScheduleStatus;
+    description?: string | null;
+    orderDate?: string | null;
+  } | null;
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
+export type OrderScheduleStatus = 'IN_PROGRESS' | 'CONFIRMED' | 'CANCELLED';
+export type CreateOrderRequest = {
+  id?: string | null;
+  totalVolume?: number | null;
+  totalMass?: number | null;
+  totalPayment?: number | null;
+  vatAmount?: number | null;
+  totalAmount?: number | null;
+  taxRate?: number | null;
+  orderDate?: string | null;
+  orderUrl?: string | null;
+  payment?: { id: string } | null;
+  orderSchedule?: { id: string } | null;
+};
+export type OrderDetail = {
+  taxRate?: number | null;
+  amount?: number | null;
+  unitPrice?: number | null;
+  quantity?: number | null;
+  unit?: string | null;
+  product?: Product | null;
+  order?: Order | null;
+  id: string;
+  createdAt: Date;
+  updatedAt: Date;
+};
 
-export interface OrderSummary {
-  totalItems: number;
-  totalAmount: number;
-  subtotal: number;
-  tax: number;
-  shippingFee: number;
-}
+export type OrderRef = { id: string };
+export type ProductRef = { id: string };
+
+export type CreateOrderDetailRequest = {
+  taxRate?: number | null;
+  amount?: number | null;
+  unitPrice?: number | null;
+  quantity?: number | null;
+  unit?: string | null;
+  product?: ProductRef | null;
+  order?: OrderRef | null;
+};

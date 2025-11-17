@@ -5,35 +5,32 @@ import { useParams, useRouter } from 'next/navigation';
 import PageContainer from '@/components/layout/page-container';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
-import {
-  IconArrowLeft,
-  IconTruck,
-  IconPackage,
-  IconCheck,
-  IconX,
-  IconClock,
-  IconMapPin,
-  IconPhone,
-  IconMail,
-  IconCalendar,
-  IconFileText,
-  IconEdit,
-  IconTrash
-} from '@tabler/icons-react';
-import { OrderDetail, OrderService } from '@/features/consignee';
+import { IconArrowLeft, IconPackage, IconFileText } from '@tabler/icons-react';
+import { Order, OrderDetail, OrderService } from '@/features/consignee';
+import { fetchOrderById } from '@/components/api/orders';
+import { fetchOrderDetails } from '@/components/api/order-details';
 
 export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
-  const [order, setOrder] = useState<OrderDetail | null>(null);
+  const [order, setOrder] = useState<Order | null>(null);
+  const [details, setDetails] = useState<OrderDetail[]>([]);
   const [loading, setLoading] = useState(true);
 
   const orderId = params.id as string;
+
+  const statusClasses = (s?: string) => {
+    const k = String(s ?? '').toUpperCase();
+    if (k === 'IN_PROGRESS') return 'bg-blue-100 text-blue-700';
+    if (k === 'CONFIRMED') return 'bg-yellow-100 text-yellow-700';
+    if (k === 'CANCELLED') return 'bg-red-100 text-red-700';
+    if (k === 'COMPLETED') return 'bg-green-100 text-green-700';
+    if (k === 'SCHEDULED') return 'bg-yellow-100 text-yellow-700';
+    return 'bg-gray-100 text-gray-700';
+  };
 
   useEffect(() => {
     const fetchOrderDetail = async () => {
@@ -41,7 +38,10 @@ export default function OrderDetailPage() {
 
       try {
         setLoading(true);
-        const orderData = await OrderService.getOrderDetail(orderId);
+        const [orderData, detailsRes] = await Promise.all([
+          fetchOrderById(orderId),
+          fetchOrderDetails({ orderId, page: 1, limit: 100 })
+        ]);
         if (!orderData) {
           toast({
             title: 'Không tìm thấy đơn hàng',
@@ -52,6 +52,7 @@ export default function OrderDetailPage() {
         }
 
         setOrder(orderData);
+        setDetails(detailsRes.data ?? []);
       } catch (error) {
         toast({
           title: 'Lỗi tải dữ liệu',
@@ -66,16 +67,7 @@ export default function OrderDetailPage() {
     fetchOrderDetail();
   }, [orderId]);
 
-  const handleCancelOrder = () => {
-    toast({
-      title: 'Hủy đơn hàng',
-      description: 'Chức năng hủy đơn hàng sẽ được triển khai sau.'
-    });
-  };
-
-  const handleEditOrder = () => {
-    router.push(`/consignee/orders/${orderId}/edit`);
-  };
+  const totalAmount = Number(order?.totalAmount ?? 0) || 0;
 
   if (loading) {
     return (
@@ -114,15 +106,11 @@ export default function OrderDetailPage() {
     );
   }
 
-  const summary = OrderService.calculateOrderSummary(order);
-  const statusColor = OrderService.getStatusColor(order.status);
-  const statusText = OrderService.getStatusText(order.status);
-
   return (
     <PageContainer scrollable>
       <div className='space-y-6'>
         {/* Header */}
-        <div className='flex items-center justify-between'>
+        <div className='grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-4'>
           <div className='flex items-center space-x-4'>
             <Button
               variant='outline'
@@ -134,110 +122,36 @@ export default function OrderDetailPage() {
             </Button>
             <div>
               <h1 className='text-2xl font-bold'>Chi tiết đơn hàng</h1>
-              <p className='text-muted-foreground'>
-                Mã đơn hàng: {order.orderNumber}
-              </p>
+              <div className='flex items-center gap-2'>
+                <p className='text-muted-foreground'>Mã đơn hàng: {order.id}</p>
+                <span
+                  className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${statusClasses(order.orderSchedule?.status)}`}
+                >
+                  {order.orderSchedule?.status ?? '-'}
+                </span>
+              </div>
             </div>
           </div>
-          <div className='flex items-center space-x-2'>
-            <Badge className={statusColor}>
-              {order.status === 'pending' && (
-                <IconClock className='mr-1 h-3 w-3' />
+          <div className='text-right md:justify-self-end'>
+            <p className='text-sm'>
+              Ngày đặt:{' '}
+              {order.orderDate ? OrderService.formatDate(order.orderDate) : '-'}
+            </p>
+            <p className='font-medium'>
+              Tổng tiền:{' '}
+              {OrderService.formatCurrency(
+                Number(
+                  order.totalPayment ??
+                    Number(order.totalAmount ?? 0) +
+                      Number(order.vatAmount ?? 0)
+                )
               )}
-              {order.status === 'indelivery' && (
-                <IconTruck className='mr-1 h-3 w-3' />
-              )}
-              {order.status === 'delivered' && (
-                <IconCheck className='mr-1 h-3 w-3' />
-              )}
-              {order.status === 'cancel' && <IconX className='mr-1 h-3 w-3' />}
-              {statusText}
-            </Badge>
+            </p>
           </div>
         </div>
 
         <div className='grid gap-6 lg:grid-cols-3'>
-          {/* Main Content */}
           <div className='space-y-6 lg:col-span-2'>
-            {/* Order Status & Tracking */}
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center'>
-                  <IconTruck className='mr-2 h-5 w-5' />
-                  Trạng thái đơn hàng
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                {order.trackingInfo && order.status === 'indelivery' && (
-                  <div className='space-y-3'>
-                    <div className='flex items-center justify-between'>
-                      <span className='text-sm font-medium'>
-                        Tiến độ giao hàng
-                      </span>
-                      <span className='text-muted-foreground text-sm'>
-                        {order.trackingInfo.deliveryProgress}%
-                      </span>
-                    </div>
-                    <Progress value={order.trackingInfo.deliveryProgress} />
-                    <div className='text-muted-foreground flex items-center text-sm'>
-                      <IconMapPin className='mr-1 h-4 w-4' />
-                      {order.trackingInfo.currentLocation}
-                    </div>
-                    {order.trackingInfo.estimatedDelivery && (
-                      <div className='text-muted-foreground flex items-center text-sm'>
-                        <IconCalendar className='mr-1 h-4 w-4' />
-                        Dự kiến giao:{' '}
-                        {OrderService.formatDate(
-                          order.trackingInfo.estimatedDelivery
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Status History */}
-                <div className='space-y-3'>
-                  <h4 className='font-medium'>Lịch sử trạng thái</h4>
-                  <div className='space-y-2'>
-                    {order.statusHistory.map((history, index) => (
-                      <div
-                        key={index}
-                        className='flex items-start space-x-3 text-sm'
-                      >
-                        <div
-                          className={`mt-2 h-2 w-2 rounded-full ${
-                            history.status === 'delivered'
-                              ? 'bg-green-500'
-                              : history.status === 'indelivery'
-                                ? 'bg-blue-500'
-                                : history.status === 'cancel'
-                                  ? 'bg-red-500'
-                                  : 'bg-yellow-500'
-                          }`}
-                        />
-                        <div className='flex-1'>
-                          <div className='flex items-center justify-between'>
-                            <span className='font-medium'>
-                              {OrderService.getStatusText(history.status)}
-                            </span>
-                            <span className='text-muted-foreground'>
-                              {OrderService.formatDate(history.timestamp)}
-                            </span>
-                          </div>
-                          {history.note && (
-                            <p className='text-muted-foreground mt-1'>
-                              {history.note}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Order Items */}
             <Card>
               <CardHeader>
                 <CardTitle className='flex items-center'>
@@ -247,23 +161,46 @@ export default function OrderDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className='space-y-4'>
-                  {order.items.map((item, index) => (
+                  {details.map((item, index) => (
                     <div key={item.id}>
-                      <div className='flex items-center justify-between'>
+                      <div className='flex items-center justify-between gap-4'>
+                        <div className='flex h-12 w-12 items-center justify-center rounded-md border'>
+                          <img
+                            src={item.product?.image ?? ''}
+                            alt={item.product?.name ?? item.product?.id ?? '-'}
+                            className='h-full w-full rounded-md object-cover'
+                          />
+                        </div>
                         <div className='flex-1'>
-                          <h4 className='font-medium'>{item.product}</h4>
+                          <h4 className='font-medium'>
+                            {item.product?.name ?? item.product?.id ?? '-'}
+                          </h4>
                           <p className='text-muted-foreground text-sm'>
-                            {item.quantity} {item.unit} ×{' '}
-                            {OrderService.formatCurrency(item.pricePerUnit)}
+                            {item.quantity ?? 0} {item.unit ?? ''} ×{' '}
+                            {OrderService.formatCurrency(item.unitPrice ?? 0)}
                           </p>
                         </div>
                         <div className='text-right'>
                           <p className='font-medium'>
-                            {OrderService.formatCurrency(item.totalPrice)}
+                            {OrderService.formatCurrency(
+                              (Number.isFinite(item.quantity ?? 0)
+                                ? (item.quantity ?? 0)
+                                : 0) * (item.unitPrice ?? 0)
+                            )}
+                          </p>
+                          <p className='text-muted-foreground text-sm'>
+                            Gồm VAT:{' '}
+                            {OrderService.formatCurrency(
+                              (Number.isFinite(item.quantity ?? 0)
+                                ? (item.quantity ?? 0)
+                                : 0) *
+                                (item.unitPrice ?? 0) *
+                                (1 + Number(order?.taxRate ?? 5) / 100)
+                            )}
                           </p>
                         </div>
                       </div>
-                      {index < order.items.length - 1 && (
+                      {index < details.length - 1 && (
                         <Separator className='mt-4' />
                       )}
                     </div>
@@ -271,98 +208,100 @@ export default function OrderDetailPage() {
                 </div>
               </CardContent>
             </Card>
-
-            {/* Supplier Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center'>
-                  <IconFileText className='mr-2 h-5 w-5' />
-                  Thông tin nhà cung cấp
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-3'>
-                <div>
-                  <h4 className='font-medium'>{order.supplier.name}</h4>
-                  <p className='text-muted-foreground text-sm'>
-                    {order.supplier.address}
-                  </p>
-                </div>
-                <div className='flex items-center space-x-4 text-sm'>
-                  <div className='flex items-center'>
-                    <IconPhone className='mr-1 h-4 w-4' />
-                    {order.supplier.phone}
-                  </div>
-                  <div className='flex items-center'>
-                    <IconMail className='mr-1 h-4 w-4' />
-                    {order.supplier.email}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
 
           {/* Sidebar */}
           <div className='space-y-6'>
-            {/* Order Summary */}
             <Card>
               <CardHeader>
                 <CardTitle>Tóm tắt đơn hàng</CardTitle>
               </CardHeader>
               <CardContent className='space-y-3'>
                 <div className='flex justify-between text-sm'>
-                  <span>Tổng sản phẩm:</span>
-                  <span>{summary.totalItems} sản phẩm</span>
+                  <span>Tổng dòng:</span>
+                  <span>{details.length}</span>
                 </div>
                 <div className='flex justify-between text-sm'>
                   <span>Tạm tính:</span>
-                  <span>{OrderService.formatCurrency(summary.subtotal)}</span>
-                </div>
-                <div className='flex justify-between text-sm'>
-                  <span>Thuế VAT (10%):</span>
-                  <span>{OrderService.formatCurrency(summary.tax)}</span>
-                </div>
-                <div className='flex justify-between text-sm'>
-                  <span>Phí vận chuyển:</span>
                   <span>
-                    {summary.shippingFee === 0
-                      ? 'Miễn phí'
-                      : OrderService.formatCurrency(summary.shippingFee)}
+                    {OrderService.formatCurrency(
+                      details.reduce(
+                        (sum, it) =>
+                          sum +
+                          (Number.isFinite(it.quantity ?? 0)
+                            ? (it.quantity ?? 0)
+                            : 0) *
+                            (it.unitPrice ?? 0),
+                        0
+                      )
+                    )}
+                  </span>
+                </div>
+                <div className='flex justify-between text-sm'>
+                  <span>Thuế suất:</span>
+                  <span>{Number(order?.taxRate ?? 5)}%</span>
+                </div>
+                <div className='flex justify-between text-sm'>
+                  <span>VAT:</span>
+                  <span>
+                    {OrderService.formatCurrency(
+                      Number(order?.vatAmount ?? 0) ||
+                        Number(order?.totalAmount ?? 0) *
+                          (Number(order?.taxRate ?? 5) / 100)
+                    )}
                   </span>
                 </div>
                 <Separator />
                 <div className='flex justify-between font-medium'>
                   <span>Tổng cộng:</span>
-                  <span>{OrderService.formatCurrency(order.totalAmount)}</span>
+                  <span>
+                    {OrderService.formatCurrency(
+                      Number(
+                        order?.totalPayment ??
+                          Number(order?.totalAmount ?? 0) +
+                            Number(order?.vatAmount ?? 0)
+                      )
+                    )}
+                  </span>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Order Information */}
             <Card>
               <CardHeader>
                 <CardTitle>Thông tin đơn hàng</CardTitle>
               </CardHeader>
               <CardContent className='space-y-3 text-sm'>
+                <div className='flex items-center justify-between'>
+                  <span className='text-muted-foreground'>
+                    Trạng thái lịch:
+                  </span>
+                  <span
+                    className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${statusClasses(order.orderSchedule?.status)}`}
+                  >
+                    {order.orderSchedule?.status ?? '-'}
+                  </span>
+                </div>
                 <div className='flex justify-between'>
-                  <span className='text-muted-foreground'>Ngày đặt hàng:</span>
-                  <span>{OrderService.formatDate(order.orderDate)}</span>
+                  <span className='text-muted-foreground'>Mô tả lịch:</span>
+                  <span>{order.orderSchedule?.description ?? '-'}</span>
                 </div>
                 <div className='flex justify-between'>
                   <span className='text-muted-foreground'>Ngày giao hàng:</span>
-                  <span>{OrderService.formatDate(order.deliveryDate)}</span>
-                </div>
-                <div>
-                  <span className='text-muted-foreground'>
-                    Địa chỉ giao hàng:
+                  <span>
+                    {order.orderSchedule?.orderDate
+                      ? OrderService.formatDate(order.orderSchedule.orderDate)
+                      : '-'}
                   </span>
-                  <p className='mt-1'>{order.deliveryAddress}</p>
                 </div>
-                {order.notes && (
-                  <div>
-                    <span className='text-muted-foreground'>Ghi chú:</span>
-                    <p className='mt-1'>{order.notes}</p>
-                  </div>
-                )}
+                <div className='flex justify-between'>
+                  <span className='text-muted-foreground'>Ngày đặt hàng:</span>
+                  <span>
+                    {order.orderDate
+                      ? OrderService.formatDate(order.orderDate)
+                      : '-'}
+                  </span>
+                </div>
               </CardContent>
             </Card>
 
@@ -372,26 +311,6 @@ export default function OrderDetailPage() {
                 <CardTitle>Thao tác</CardTitle>
               </CardHeader>
               <CardContent className='space-y-2'>
-                {OrderService.canModifyOrder(order.status) && (
-                  <Button
-                    variant='outline'
-                    className='w-full'
-                    onClick={handleEditOrder}
-                  >
-                    <IconEdit className='mr-2 h-4 w-4' />
-                    Chỉnh sửa đơn hàng
-                  </Button>
-                )}
-                {OrderService.canCancelOrder(order.status) && (
-                  <Button
-                    variant='destructive'
-                    className='w-full'
-                    onClick={handleCancelOrder}
-                  >
-                    <IconTrash className='mr-2 h-4 w-4' />
-                    Hủy đơn hàng
-                  </Button>
-                )}
                 <Button
                   variant='outline'
                   className='w-full'

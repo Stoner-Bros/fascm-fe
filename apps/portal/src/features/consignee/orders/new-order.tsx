@@ -10,6 +10,7 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -26,125 +27,100 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import { IconInfoCircle, IconPlus, IconTrash } from '@tabler/icons-react';
-import { useState } from 'react';
-
-type SupplierOption = {
-  id: string;
-  name: string;
-  pricePerUnit?: number; // VND per unit (tham khảo)
-};
-
-type Product = {
-  id: string;
-  name: string;
-  stock: number;
-  unit: string;
-  imageUrl: string;
-  suppliers: SupplierOption[];
-};
-
-const mockProducts: Product[] = [
-  {
-    id: 'PROD-001',
-    name: 'Tomatoes',
-    stock: 500,
-    unit: 'kg',
-    imageUrl:
-      'https://images.unsplash.com/photo-1546093713-0f792f6f9fcd?q=80&w=400&auto=format&fit=crop',
-    suppliers: [
-      { id: 'SUP-001', name: 'FreshCo Farm', pricePerUnit: 23000 },
-      { id: 'SUP-002', name: 'Vega Fields', pricePerUnit: 24000 },
-      { id: 'SUP-003', name: 'SunRise Co', pricePerUnit: 22500 }
-    ]
-  },
-  {
-    id: 'PROD-002',
-    name: 'Bananas',
-    stock: 450,
-    unit: 'kg',
-    imageUrl:
-      'https://images.unsplash.com/photo-1574226516831-e1dff420e43e?q=80&w=400&auto=format&fit=crop',
-    suppliers: [
-      { id: 'SUP-004', name: 'Sunrise Orchard', pricePerUnit: 18000 },
-      { id: 'SUP-005', name: 'Tropicana Grove', pricePerUnit: 18500 }
-    ]
-  },
-  {
-    id: 'PROD-003',
-    name: 'Green Lettuce',
-    stock: 200,
-    unit: 'kg',
-    imageUrl:
-      'https://images.unsplash.com/photo-1567306226416-28f0efdc88ce?q=80&w=400&auto=format&fit=crop',
-    suppliers: [
-      { id: 'SUP-006', name: 'GreenLeaf Growers', pricePerUnit: 27000 },
-      { id: 'SUP-007', name: 'Leafy Farm', pricePerUnit: 26500 }
-    ]
-  },
-  {
-    id: 'PROD-004',
-    name: 'Cucumbers',
-    stock: 400,
-    unit: 'kg',
-    imageUrl:
-      'https://images.unsplash.com/photo-1511690652776-0d4c84b3e2b0?q=80&w=400&auto=format&fit=crop',
-    suppliers: [
-      { id: 'SUP-008', name: 'RiverSide Fields', pricePerUnit: 20000 }
-    ]
-  },
-  {
-    id: 'PROD-005',
-    name: 'Bell Peppers',
-    stock: 250,
-    unit: 'kg',
-    imageUrl:
-      'https://images.unsplash.com/photo-1511690743696-35b0f0c38b59?q=80&w=400&auto=format&fit=crop',
-    suppliers: [
-      { id: 'SUP-009', name: 'ColorFarm', pricePerUnit: 32000 },
-      { id: 'SUP-010', name: 'Rainbow Crops', pricePerUnit: 31500 }
-    ]
-  },
-  {
-    id: 'PROD-006',
-    name: 'Onions',
-    stock: 600,
-    unit: 'kg',
-    imageUrl:
-      'https://images.unsplash.com/photo-1551218370-330a0de78f36?q=80&w=400&auto=format&fit=crop',
-    suppliers: [
-      { id: 'SUP-011', name: 'GoldenRoot', pricePerUnit: 15000 },
-      { id: 'SUP-012', name: 'Rooty Farm', pricePerUnit: 15500 }
-    ]
-  }
-];
+import {
+  IconInfoCircle,
+  IconLoader2,
+  IconPlus,
+  IconTrash
+} from '@tabler/icons-react';
+import { useEffect, useRef, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { createOrder } from '@/components/api/orders';
+import { createOrderSchedule } from '@/components/api/order-schedules';
+import { createOrderDetail } from '@/components/api/order-details';
+import { fetchProducts } from '@/components/api/products';
+import { Product } from '../types/product';
+import { CreateOrderRequest, CreateOrderDetailRequest } from '../types/order';
 
 type OrderLine = {
   productId?: string;
-  productName?: string;
-  stock?: number;
+  quantity: number;
   unit?: string;
-  imageUrl?: string;
-  supplierId?: string;
-  supplierName?: string;
-  pricePerUnit?: number;
-  qty: number;
-  notes: string;
+  unitPrice?: number;
 };
 
 export default function ConsigneeNewOrderFeature() {
   const { toast } = useToast();
-  const [lines, setLines] = useState<OrderLine[]>([{ qty: 0, notes: '' }]);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [lines, setLines] = useState<OrderLine[]>([{ quantity: 0 }]);
+  const [submitting, setSubmitting] = useState(false);
+  const [products, setProducts] = useState<Product[]>([]);
+  const didFetchRef = useRef(false);
+  const didPrefillRef = useRef(false);
+  const [scheduleDescription, setScheduleDescription] = useState('');
+  const SCHEDULE_STATUS = 'IN_PROGRESS';
+  const [scheduleDate, setScheduleDate] = useState(() => {
+    const d = new Date();
+    const yyyy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}`;
+  });
+  const [scheduleHour, setScheduleHour] = useState<number>(() => {
+    const d = new Date();
+    return d.getHours();
+  });
 
-  const findProduct = (id: string) => mockProducts.find((p) => p.id === id);
-  const findSupplier = (productId?: string, supplierId?: string) => {
-    if (!productId || !supplierId) return undefined;
-    const product = findProduct(productId);
-    return product?.suppliers.find((s) => s.id === supplierId);
-  };
+  useEffect(() => {
+    if (didFetchRef.current) return;
+    didFetchRef.current = true;
+    fetchProducts({ page: 1, limit: 50 })
+      .then((res) => {
+        const data = Array.isArray(res?.data) ? res.data : [];
+        const mapped: Product[] = data.map((p: any) => ({
+          id: p.id,
+          name: p.name ?? undefined,
+          image: p.image ?? null,
+          pricePerKg:
+            typeof p.pricePerKg === 'number'
+              ? p.pricePerKg
+              : Number(p.pricePerKg) || null
+        }));
+        setProducts(mapped);
+      })
+      .catch((err) => {
+        if (err?.status === 401) {
+          router.push('/auth/login');
+          return;
+        }
+        toast({
+          title: 'Lỗi tải sản phẩm',
+          description: 'Không thể tải danh sách sản phẩm'
+        });
+      });
+  }, [router]);
 
+  useEffect(() => {
+    const pid = searchParams.get('product');
+    if (!pid) return;
+    const selected = products.find((p) => p.id === pid);
+    if (!selected) return; // chờ sản phẩm tải xong
+    if (didPrefillRef.current) return;
+    setLines([
+      {
+        productId: pid,
+        quantity: 1,
+        unit: 'kg',
+        unitPrice: Number(selected.pricePerKg ?? 0)
+      }
+    ]);
+    didPrefillRef.current = true;
+  }, [searchParams, products]);
+
+  const findProduct = (id: string) => products.find((p) => p.id === id);
   const addLine = () => {
-    setLines((prev) => [...prev, { qty: 0, notes: '' }]);
+    setLines((prev) => [...prev, { quantity: 0 }]);
   };
 
   const removeLine = (index: number) => {
@@ -152,68 +128,68 @@ export default function ConsigneeNewOrderFeature() {
   };
 
   const setProductForLine = (index: number, productId: string) => {
-    const product = findProduct(productId);
     setLines((prev) => {
       const next = [...prev];
+      const selected = products.find((p) => p.id === productId);
       next[index] = {
         ...next[index],
         productId,
-        productName: product?.name,
-        stock: product?.stock,
-        unit: product?.unit,
-        imageUrl: product?.imageUrl,
-        // reset supplier when product changes
-        supplierId: undefined,
-        supplierName: undefined,
-        pricePerUnit: undefined
+        unitPrice: Number(selected?.pricePerKg ?? 0)
       };
       return next;
     });
   };
 
-  const setSupplierForLine = (index: number, supplierId: string) => {
+  const setQtyForLine = (index: number, quantity: number) => {
     setLines((prev) => {
       const next = [...prev];
-      const line = next[index];
-      const supplier = findSupplier(line.productId, supplierId);
-      next[index] = {
-        ...line,
-        supplierId,
-        supplierName: supplier?.name,
-        pricePerUnit: supplier?.pricePerUnit
-      };
+      next[index] = { ...next[index], quantity };
       return next;
     });
   };
 
-  const setQtyForLine = (index: number, qty: number) => {
+  const setUnitForLine = (index: number, unit: string) => {
     setLines((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], qty };
+      next[index] = { ...next[index], unit };
       return next;
     });
   };
 
-  const setNotesForLine = (index: number, notes: string) => {
+  const setUnitPriceForLine = (index: number, unitPrice: number) => {
     setLines((prev) => {
       const next = [...prev];
-      next[index] = { ...next[index], notes };
+      next[index] = { ...next[index], unitPrice };
       return next;
     });
+  };
+
+  const normalizeUnit = (u?: string) => (u ?? '').toLowerCase().trim();
+  const computeMassKg = (line: OrderLine) => {
+    const u = normalizeUnit(line.unit);
+    const q = Number.isFinite(line.quantity) ? line.quantity : 0;
+    if (u.includes('kg')) return q;
+    if (u.includes('tấn') || u.includes('ton') || u === 't') return q * 1000;
+    return 0;
+  };
+  const computeVolumeLiters = (line: OrderLine) => {
+    const u = normalizeUnit(line.unit);
+    const q = Number.isFinite(line.quantity) ? line.quantity : 0;
+    if (u === 'l' || u.includes('lit')) return q;
+    if (u === 'ml') return q / 1000;
+    if (u.includes('m3')) return q * 1000;
+    if (u.includes('kg')) return q;
+    if (u.includes('tấn') || u.includes('ton') || u === 't') return q * 1000;
+    return 0;
   };
 
   const lineError = (line: OrderLine) => {
     if (!line.productId) return 'Chọn sản phẩm';
-    const product = line.productId ? findProduct(line.productId) : undefined;
-    if (product && product.suppliers.length > 0 && !line.supplierId) {
-      return 'Chọn nhà cung cấp';
-    }
-    if (line.qty <= 0) return 'Số lượng phải > 0';
-    if (line.stock != null && line.qty > line.stock) return 'Vượt tồn kho';
+    if (line.quantity <= 0) return 'Số lượng phải > 0';
     return null;
   };
 
-  const submitOrder = () => {
+  const submitOrder = async () => {
     const errors = lines.map(lineError).filter(Boolean);
     if (errors.length > 0) {
       toast({
@@ -222,11 +198,78 @@ export default function ConsigneeNewOrderFeature() {
       });
       return;
     }
-    // TODO: call API to create order
-    toast({
-      title: 'Tạo đơn hàng thành công',
-      description: `${lines.length} dòng đã được lưu (mock).`
-    });
+    setSubmitting(true);
+    try {
+      const totalAmount = lines.reduce(
+        (acc, l) =>
+          acc +
+          (Number.isFinite(l.quantity) ? l.quantity : 0) * (l.unitPrice ?? 0),
+        0
+      );
+      const taxRate = 5;
+      const vatAmount = totalAmount * (taxRate / 100);
+      const toInt = (n: number) => Math.round(n);
+      const totalMass = lines.reduce((acc, l) => acc + computeMassKg(l), 0);
+      const totalVolume = lines.reduce(
+        (acc, l) => acc + computeVolumeLiters(l),
+        0
+      );
+      const schedule = await createOrderSchedule({
+        description: scheduleDescription,
+        status: SCHEDULE_STATUS,
+        orderDate: new Date(
+          `${scheduleDate}T${String(scheduleHour).padStart(2, '0')}:00`
+        ).toISOString()
+      });
+
+      const orderPayload: CreateOrderRequest = {
+        totalAmount: toInt(totalAmount),
+        taxRate,
+        vatAmount: toInt(vatAmount),
+        totalPayment: toInt(totalAmount + vatAmount),
+        totalVolume,
+        totalMass,
+        orderDate: new Date().toISOString(),
+        orderUrl: '',
+        orderSchedule: { id: schedule.id }
+      };
+      const order = await createOrder(orderPayload);
+      for (const l of lines) {
+        const qty = Number.isFinite(l.quantity) ? l.quantity : 0;
+        const base = qty * (l.unitPrice ?? 0);
+        const gross = base * (1 + taxRate / 100);
+        const detailPayload: CreateOrderDetailRequest = {
+          order: { id: order.id },
+          product: l.productId ? { id: l.productId } : null,
+          quantity: qty,
+          unitPrice: l.unitPrice ?? 0,
+          unit: l.unit ?? '',
+          amount: toInt(gross),
+          taxRate: taxRate
+        };
+        await createOrderDetail(detailPayload);
+      }
+      toast({
+        title: 'Tạo đơn hàng thành công',
+        description: `${lines.length} dòng đã được lưu.`
+      });
+      router.push(`/consignee/orders`);
+    } catch (err: any) {
+      if (err?.status === 401) {
+        router.push('/auth/login');
+        return;
+      }
+      const message =
+        typeof err?.message === 'string'
+          ? err.message
+          : 'Vui lòng thử lại sau.';
+      toast({
+        title: 'Lỗi khi tạo đơn hàng',
+        description: message
+      });
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -242,6 +285,54 @@ export default function ConsigneeNewOrderFeature() {
         {/* Order lines form */}
         <Card>
           <CardHeader>
+            <CardTitle>Thông tin lịch đặt hàng</CardTitle>
+            <CardDescription>
+              Nhập thông tin để tạo Order Schedule
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+              <div className='space-y-2'>
+                <Label>Mô tả</Label>
+                <Input
+                  type='text'
+                  value={scheduleDescription}
+                  onChange={(e) => setScheduleDescription(e.target.value)}
+                  placeholder='Mô tả lịch đặt hàng'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label>Ngày lịch</Label>
+                <Input
+                  type='date'
+                  value={scheduleDate}
+                  onChange={(e) => setScheduleDate(e.target.value)}
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label>Giờ (24 giờ)</Label>
+                <Select
+                  value={String(scheduleHour)}
+                  onValueChange={(v) => setScheduleHour(Number(v))}
+                >
+                  <SelectTrigger className='w-[140px]'>
+                    <SelectValue placeholder='Chọn giờ' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 24 }).map((_, i) => (
+                      <SelectItem key={i} value={String(i)}>
+                        {String(i).padStart(2, '0')} giờ
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <div className='flex items-center justify-between'>
               <CardTitle>Danh sách sản phẩm đặt mua</CardTitle>
               <Button onClick={addLine}>
@@ -255,10 +346,8 @@ export default function ConsigneeNewOrderFeature() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Product</TableHead>
-                    <TableHead>Supplier</TableHead>
-                    <TableHead>Price (tham khảo)</TableHead>
-                    <TableHead>Stock</TableHead>
-                    <TableHead>UoM</TableHead>
+                    <TableHead>Unit</TableHead>
+                    <TableHead>Unit Price</TableHead>
                     <TableHead>Order Qty</TableHead>
                     <TableHead className='text-right'>Action</TableHead>
                   </TableRow>
@@ -280,11 +369,11 @@ export default function ConsigneeNewOrderFeature() {
                         <TableRow key={idx}>
                           <TableCell>
                             <div className='flex items-center gap-3'>
-                              {line.imageUrl ? (
+                              {selectedProduct?.image ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
-                                  src={line.imageUrl}
-                                  alt={line.productName ?? 'Product'}
+                                  src={selectedProduct.image}
+                                  alt={selectedProduct?.name ?? 'Product'}
                                   className='h-10 w-10 rounded object-cover'
                                 />
                               ) : (
@@ -300,7 +389,7 @@ export default function ConsigneeNewOrderFeature() {
                                   <SelectValue placeholder='Chọn sản phẩm' />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {mockProducts.map((p) => (
+                                  {(products ?? []).map((p) => (
                                     <SelectItem key={p.id} value={p.id}>
                                       {p.name}
                                     </SelectItem>
@@ -310,49 +399,39 @@ export default function ConsigneeNewOrderFeature() {
                             </div>
                           </TableCell>
                           <TableCell>
-                            <Select
-                              value={line.supplierId ?? ''}
-                              onValueChange={(val) =>
-                                setSupplierForLine(idx, val)
+                            <Input
+                              type='text'
+                              value={line.unit ?? ''}
+                              onChange={(e) =>
+                                setUnitForLine(idx, e.target.value)
                               }
-                            >
-                              <SelectTrigger
-                                className='w-[220px]'
-                                disabled={
-                                  !selectedProduct ||
-                                  (selectedProduct?.suppliers?.length ?? 0) ===
-                                    0
-                                }
-                              >
-                                <SelectValue placeholder='Chọn nhà cung cấp' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {(selectedProduct?.suppliers ?? []).map((s) => (
-                                  <SelectItem key={s.id} value={s.id}>
-                                    {s.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
+                              className='w-[120px]'
+                              placeholder='vd:Kg,Tấn'
+                            />
                           </TableCell>
-                          <TableCell>
-                            {typeof line.pricePerUnit === 'number'
-                              ? new Intl.NumberFormat('vi-VN', {
-                                  style: 'currency',
-                                  currency: 'VND'
-                                }).format(line.pricePerUnit) +
-                                ` / ${line.unit ?? ''}`
-                              : '-'}
-                          </TableCell>
-                          <TableCell className='font-medium'>
-                            {line.stock ?? '-'}
-                          </TableCell>
-                          <TableCell>{line.unit ?? '-'}</TableCell>
                           <TableCell>
                             <Input
                               type='number'
                               min={0}
-                              value={Number.isFinite(line.qty) ? line.qty : 0}
+                              value={
+                                Number.isFinite(line.unitPrice ?? 0)
+                                  ? (line.unitPrice ?? 0)
+                                  : 0
+                              }
+                              readOnly
+                              disabled
+                              className='w-[140px]'
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              type='number'
+                              min={0}
+                              value={
+                                Number.isFinite(line.quantity)
+                                  ? line.quantity
+                                  : 0
+                              }
                               onChange={(e) =>
                                 setQtyForLine(idx, Number(e.target.value))
                               }
@@ -401,7 +480,8 @@ export default function ConsigneeNewOrderFeature() {
                     </p>
                     <p className='text-xl font-semibold'>
                       {lines.reduce(
-                        (acc, l) => acc + (Number.isFinite(l.qty) ? l.qty : 0),
+                        (acc, l) =>
+                          acc + (Number.isFinite(l.quantity) ? l.quantity : 0),
                         0
                       )}
                     </p>
@@ -418,12 +498,52 @@ export default function ConsigneeNewOrderFeature() {
                         lines.reduce(
                           (acc, l) =>
                             acc +
-                            (Number.isFinite(l.qty) ? l.qty : 0) *
-                              (l.pricePerUnit ?? 0),
+                            (Number.isFinite(l.quantity) ? l.quantity : 0) *
+                              (l.unitPrice ?? 0),
                           0
                         )
                       )}
                     </p>
+                  </div>
+                </div>
+                <div className='mt-4 space-y-2'>
+                  <div className='flex justify-between text-sm'>
+                    <span>Thuế suất</span>
+                    <span>5%</span>
+                  </div>
+                  <div className='flex justify-between text-sm'>
+                    <span>VAT</span>
+                    <span>
+                      {new Intl.NumberFormat('vi-VN', {
+                        style: 'currency',
+                        currency: 'VND'
+                      }).format(
+                        lines.reduce(
+                          (acc, l) =>
+                            acc +
+                            (Number.isFinite(l.quantity) ? l.quantity : 0) *
+                              (l.unitPrice ?? 0),
+                          0
+                        ) * 0.05
+                      )}
+                    </span>
+                  </div>
+                  <div className='flex justify-between font-medium'>
+                    <span>Tổng cộng</span>
+                    <span>
+                      {new Intl.NumberFormat('vi-VN', {
+                        style: 'currency',
+                        currency: 'VND'
+                      }).format(
+                        lines.reduce(
+                          (acc, l) =>
+                            acc +
+                            (Number.isFinite(l.quantity) ? l.quantity : 0) *
+                              (l.unitPrice ?? 0),
+                          0
+                        ) * 1.05
+                      )}
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -432,11 +552,16 @@ export default function ConsigneeNewOrderFeature() {
             <div className='mt-4 flex items-center justify-end gap-2'>
               <Button
                 variant='outline'
-                onClick={() => setLines([{ qty: 0, notes: '' }])}
+                onClick={() => setLines([{ quantity: 0 }])}
               >
                 Xóa tất cả dòng
               </Button>
-              <Button onClick={submitOrder}>Gửi đơn hàng</Button>
+              <Button onClick={submitOrder} disabled={submitting}>
+                {submitting && (
+                  <IconLoader2 className='mr-2 h-4 w-4 animate-spin' />
+                )}
+                Gửi đơn hàng
+              </Button>
             </div>
           </CardContent>
         </Card>
