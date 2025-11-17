@@ -3,21 +3,21 @@ import {
   AuthLoginResponse,
   AuthMeResponse
 } from '@/features/consignee/types/auth';
-import { fetchJSON } from './client';
+import { fetchJSON } from '../lib/client';
 
 // Simple token storage helpers
 export function setAccessToken(token: string | null) {
   if (typeof window === 'undefined') return;
   try {
-    if (token) window.localStorage.setItem('accessToken', token);
-    else window.localStorage.removeItem('accessToken');
+    if (token) window.localStorage.setItem('AT', token);
+    else window.localStorage.removeItem('AT');
   } catch {}
 }
 
 export function getAccessToken(): string | null {
   if (typeof window === 'undefined') return null;
   try {
-    return window.localStorage.getItem('accessToken');
+    return window.localStorage.getItem('AT');
   } catch {
     return null;
   }
@@ -26,15 +26,15 @@ export function getAccessToken(): string | null {
 export function setRefreshToken(token: string | null) {
   if (typeof window === 'undefined') return;
   try {
-    if (token) window.localStorage.setItem('refreshToken', token);
-    else window.localStorage.removeItem('refreshToken');
+    if (token) window.localStorage.setItem('RT', token);
+    else window.localStorage.removeItem('RT');
   } catch {}
 }
 
 export function getRefreshToken(): string | null {
   if (typeof window === 'undefined') return null;
   try {
-    return window.localStorage.getItem('refreshToken');
+    return window.localStorage.getItem('RT');
   } catch {
     return null;
   }

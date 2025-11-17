@@ -27,20 +27,15 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
-import {
-  IconInfoCircle,
-  IconLoader2,
-  IconPlus,
-  IconTrash
-} from '@tabler/icons-react';
+import { IconLoader2, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createOrder } from '@/components/api/orders';
-import { createOrderSchedule } from '@/components/api/order-schedules';
-import { createOrderDetail } from '@/components/api/order-details';
-import { fetchProducts } from '@/components/api/products';
 import { Product } from '../types/product';
 import { CreateOrderRequest, CreateOrderDetailRequest } from '../types/order';
+import { createOrder } from '@/services/order.service';
+import { fetchProducts } from '@/services/product.service';
+import { createOrderDetail } from '@/services/order-detail.service';
+import { createOrderSchedule } from '@/services/order-schedule.service';
 
 type OrderLine = {
   productId?: string;

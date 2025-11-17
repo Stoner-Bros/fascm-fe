@@ -1,6 +1,5 @@
 import { Product } from '@/features/consignee/types/product';
-import { Category } from './categories';
-import { fetchJSON } from './client';
+import { fetchJSON } from '../lib/client';
 
 export type InfinityPaginationResponse<T> = {
   data: T[];

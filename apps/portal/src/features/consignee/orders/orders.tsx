@@ -15,7 +15,6 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
-import { fetchMyOrders } from '@/components/api/orders';
 import { Order } from '../types/order';
 import { formatDate } from '@/lib/format';
 import { OrderService } from '@/features/consignee/services/order-service';
@@ -26,6 +25,8 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { fetchMyOrders } from '@/services/order.service';
+
 export default function ConsigneeOrdersFeature() {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');

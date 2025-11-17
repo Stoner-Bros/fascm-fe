@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card } from '@/components/ui/card';
-import type { AuthLoginRequest } from '@/features/consignee/types/auth';
+import { AuthLoginRequest } from '@/types/auth';
 import { login } from '@/services/auth.service';
 
 export default function LoginPage() {
@@ -24,10 +24,9 @@ export default function LoginPage() {
     setError(null);
     try {
       await login(form);
-      // get from env or config
+      // get from environment variable
       const dashboardPath =
-        process.env.NEXT_PUBLIC_CONSIGNEE_AFTER_SIGN_IN_URL ||
-        '/consignee/dashboard';
+        process.env.NEXT_PUBLIC_AFTER_SIGN_IN_URL || '/dashboard/overview';
       router.replace(dashboardPath);
     } catch (err: any) {
       setError(err?.message ?? 'Đăng nhập thất bại');
@@ -42,7 +41,9 @@ export default function LoginPage() {
       <Card className='w-full max-w-md border-white/20 bg-white/10 shadow-2xl backdrop-blur-xl'>
         <div className='p-8'>
           <div className='mb-6 text-center'>
-            <h1 className='text-2xl font-bold text-white'>FASCM Portal</h1>
+            <h1 className='text-2xl font-bold text-white'>
+              FASCM Portal Admin
+            </h1>
             <p className='mt-1 text-sm text-white/80'>Đăng nhập để tiếp tục</p>
           </div>
           <form onSubmit={onSubmit} className='space-y-4'>

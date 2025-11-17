@@ -1,5 +1,7 @@
+import { refresh } from '@/services/auth.service';
+
 export type FetchOptions = {
-  method?: 'GET' | 'POST' | 'PATCH' | 'DELETE';
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   headers?: Record<string, string>;
   body?: unknown;
   cache?: RequestCache;
@@ -11,9 +13,9 @@ export type FetchOptions = {
 };
 
 export function getApiBase(): string {
-  const base = process.env.NEXT_PUBLIC_API_BASE?.trim();
+  const base = process.env.NEXT_PUBLIC_API_URL?.trim() + '/api/v1';
   // Default to local Nest backend with global prefix and version
-  return base && base.length > 0 ? base : 'http://localhost:3000/api/v1';
+  return base && base.length > 0 ? base : 'http://localhost:8080/api/v1';
 }
 
 export async function fetchJSON<T>(
@@ -30,7 +32,7 @@ export async function fetchJSON<T>(
     let accessToken: string | null = null;
     if (typeof window !== 'undefined' && useAuth) {
       try {
-        accessToken = window.localStorage.getItem('accessToken');
+        accessToken = window.localStorage.getItem('ADAT');
       } catch (e) {
         console.warn('[API] Unable to read accessToken from localStorage', e);
       }
@@ -63,6 +65,12 @@ export async function fetchJSON<T>(
       details ?? ''
     );
     if (res.status === 401) {
+      // Call refresh token logic could be placed here
+      const newTokens = await refresh();
+      if (newTokens) {
+        return fetchJSON<T>(path, options);
+      }
+
       // Explicit unauthorized handling for consumers to react (e.g., redirect to login)
       const err = new Error('Unauthorized');
       // @ts-expect-error augment status

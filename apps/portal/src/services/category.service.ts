@@ -1,4 +1,4 @@
-import { fetchJSON } from './client';
+import { fetchJSON } from '../lib/client';
 
 export type Category = {
   id: string;

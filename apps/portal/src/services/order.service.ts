@@ -1,6 +1,6 @@
 import { CreateOrderRequest, Order } from '@/features/consignee';
-import { fetchJSON } from './client';
-import type { InfinityPaginationResponse } from './products';
+import { fetchJSON } from '../lib/client';
+import type { InfinityPaginationResponse } from './product.service';
 
 export async function createOrder(body: CreateOrderRequest) {
   return fetchJSON<Order>('/orders', { method: 'POST', body });

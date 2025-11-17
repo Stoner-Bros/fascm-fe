@@ -9,8 +9,8 @@ import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import { IconArrowLeft, IconPackage, IconFileText } from '@tabler/icons-react';
 import { Order, OrderDetail, OrderService } from '@/features/consignee';
-import { fetchOrderById } from '@/components/api/orders';
-import { fetchOrderDetails } from '@/components/api/order-details';
+import { fetchOrderById } from '@/services/order.service';
+import { fetchOrderDetails } from '@/services/order-detail.service';
 
 export default function OrderDetailPage() {
   const params = useParams();

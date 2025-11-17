@@ -1,6 +1,6 @@
 import { CreateOrderDetailRequest, OrderDetail } from '@/features/consignee';
-import { fetchJSON } from './client';
-import type { InfinityPaginationResponse } from './products';
+import { fetchJSON } from '../lib/client';
+import type { InfinityPaginationResponse } from './product.service';
 
 export async function createOrderDetail(body: CreateOrderDetailRequest) {
   return fetchJSON<OrderDetail>('/order-details', { method: 'POST', body });

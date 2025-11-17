@@ -20,10 +20,10 @@ import {
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { fetchProductById } from '@/components/api/products';
 import { Badge } from '@/components/ui/badge';
 import { Product } from '@/features/consignee/types/product';
 import { OrderService } from '@/features/consignee/services/order-service';
+import { fetchProductById } from '@/services/product.service';
 export default function ProductDetailPage() {
   const router = useRouter();
   const params = useParams();

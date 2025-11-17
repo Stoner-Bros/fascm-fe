@@ -22,12 +22,10 @@ import {
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Label } from '@/components/ui/label';
-import { fetchProducts } from '@/components/api/products';
-import { fetchCategories } from '@/components/api/categories';
-import { getApiBase } from '@/components/api/client';
 import { Product } from '../types/product';
-import { Category } from '@/components/api/categories';
-import router from 'next/router';
+import { fetchProducts } from '@/services/product.service';
+import { Category, fetchCategories } from '@/services/category.service';
+import { getApiBase } from '@/lib/client';
 
 export default function ConsigneeProductsFeature() {
   const [searchQuery, setSearchQuery] = useState('');
