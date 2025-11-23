@@ -4,8 +4,8 @@ import type {
   CreateHarvestTicketDto,
   UpdateHarvestTicketDto,
   FindAllHarvestTicketsDto
-} from '../types/harvest-ticket';
-import type { InfinityPaginationResponse } from '../types/common';
+} from '../features/supplier/types/harvest-ticket';
+import type { InfinityPaginationResponse } from '../features/supplier/types/common';
 
 export async function createHarvestTicket(body: CreateHarvestTicketDto) {
   return fetchJSON<HarvestTicket>('/harvest-tickets', {

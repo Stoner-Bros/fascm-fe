@@ -4,8 +4,8 @@ import type {
   CreateHarvestDetailDto,
   UpdateHarvestDetailDto,
   FindAllHarvestDetailsDto
-} from '../types/harvest-detail';
-import type { InfinityPaginationResponse } from '../types/common';
+} from '../features/supplier/types/harvest-detail';
+import type { InfinityPaginationResponse } from '../features/supplier/types/common';
 
 export async function createHarvestDetail(body: CreateHarvestDetailDto) {
   return fetchJSON<HarvestDetail>('/harvest-details', {

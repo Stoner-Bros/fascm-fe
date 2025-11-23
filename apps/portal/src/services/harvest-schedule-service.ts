@@ -4,8 +4,8 @@ import type {
   CreateHarvestScheduleDto,
   UpdateHarvestScheduleDto,
   FindAllHarvestSchedulesDto
-} from '../types/harvest-schedule';
-import type { InfinityPaginationResponse } from '../types/common';
+} from '../features/supplier/types/harvest-schedule';
+import type { InfinityPaginationResponse } from '../features/supplier/types/common';
 
 export async function createHarvestSchedule(body: CreateHarvestScheduleDto) {
   return fetchJSON<HarvestSchedule>('/harvest-schedules', {

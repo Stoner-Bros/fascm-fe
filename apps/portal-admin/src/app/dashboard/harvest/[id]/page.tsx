@@ -30,12 +30,12 @@ import {
   fetchHarvestScheduleById,
   confirmHarvestSchedule,
   completeHarvestSchedule
-} from '@/app/dashboard/services/harvest-schedule-service';
+} from '@/services/harvest-schedule-service';
 import {
   fetchHarvestTickets,
   fetchHarvestTicketInvoice
-} from '@/app/dashboard/services/harvest-ticket-service';
-import { fetchHarvestDetailsByHarvestTicketId } from '@/app/dashboard/services/harvest-detail-service';
+} from '@/services/harvest-ticket-service';
+import { fetchHarvestDetailsByHarvestTicketId } from '@/services/harvest-detail-service';
 import type { HarvestSchedule } from '@/types/harvest-schedule';
 import type { HarvestDetail } from '@/types/harvest-detail';
 import { format } from 'date-fns';
