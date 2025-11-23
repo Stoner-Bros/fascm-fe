@@ -12,13 +12,19 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { useUser } from '@clerk/nextjs';
 import { IconEdit, IconMail, IconPhone, IconUser } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 
 export default function ConsigneeProfilePage() {
-  const { user } = useUser();
+  const { user } = {
+    user: {
+      firstName: 'John',
+      lastName: 'Doe',
+      emailAddresses: [{ emailAddress: 'john.doe@example.com' }],
+      phoneNumbers: [{ phoneNumber: '+1 (555) 123-4567' }]
+    }
+  };
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({

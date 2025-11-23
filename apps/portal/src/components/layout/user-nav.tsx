@@ -10,10 +10,15 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
-import { SignOutButton, useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 export function UserNav() {
-  const { user } = useUser();
+  const { user } = {
+    user: {
+      firstName: 'Alice',
+      lastName: 'Johnson',
+      emailAddresses: [{ emailAddress: 'alice.johnson@example.com' }]
+    }
+  };
   const router = useRouter();
   if (user) {
     return (
@@ -31,8 +36,8 @@ export function UserNav() {
         >
           <DropdownMenuLabel className='font-normal'>
             <div className='flex flex-col space-y-1'>
-              <p className='text-sm font-medium leading-none'>
-                {user.fullName}
+              <p className='text-sm leading-none font-medium'>
+                {`${user.firstName} ${user.lastName}`}
               </p>
               <p className='text-muted-foreground text-xs leading-none'>
                 {user.emailAddresses[0].emailAddress}
@@ -54,9 +59,7 @@ export function UserNav() {
             </DropdownMenuItem> */}
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            <SignOutButton redirectUrl='/consignee'>Đăng xuất</SignOutButton>
-          </DropdownMenuItem>
+          <DropdownMenuItem>Đăng xuất</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     );

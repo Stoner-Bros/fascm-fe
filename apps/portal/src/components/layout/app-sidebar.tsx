@@ -31,7 +31,6 @@ import {
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
 import { navItems } from '@/constants/data';
 import { useMediaQuery } from '@/hooks/use-media-query';
-import { useUser } from '@clerk/nextjs';
 import {
   IconBell,
   IconChevronRight,
@@ -41,7 +40,6 @@ import {
   IconPhotoUp,
   IconUserCircle
 } from '@tabler/icons-react';
-import { SignOutButton } from '@clerk/nextjs';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
@@ -62,7 +60,13 @@ const tenants = [
 export default function AppSidebar() {
   const pathname = usePathname();
   const { isOpen } = useMediaQuery();
-  const { user } = useUser();
+  const { user } = {
+    user: {
+      firstName: 'John',
+      lastName: 'Doe',
+      emailAddresses: [{ emailAddress: 'john.doe@example.com' }]
+    }
+  };
   const router = useRouter();
   const handleSwitchTenant = (_tenantId: string) => {
     // Tenant switching functionality would be implemented here

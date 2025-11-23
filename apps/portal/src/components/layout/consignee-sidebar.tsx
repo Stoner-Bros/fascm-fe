@@ -31,7 +31,6 @@ import {
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
 import { consigneeNavItems } from '@/constants/data';
 import { useMediaQuery } from '@/hooks/use-media-query';
-import { SignOutButton, useUser } from '@clerk/nextjs';
 import {
   IconBell,
   IconChevronRight,
@@ -63,7 +62,13 @@ const tenants = [
 export default function ConsigneeSidebar() {
   const pathname = usePathname();
   const { isOpen } = useMediaQuery();
-  const { user } = useUser();
+  const { user } = {
+    user: {
+      firstName: 'Jane',
+      lastName: 'Smith',
+      emailAddresses: [{ emailAddress: 'jane.smith@example.com' }]
+    }
+  };
   const router = useRouter();
   const handleSwitchTenant = (_tenantId: string) => {
     // Tenant switching functionality would be implemented here
@@ -215,7 +220,7 @@ export default function ConsigneeSidebar() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <IconLogout className='mr-2 h-4 w-4' />
-                  <SignOutButton redirectUrl='/auth/sign-in' />
+                  Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

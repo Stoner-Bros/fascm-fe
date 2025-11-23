@@ -31,7 +31,6 @@ import {
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
 import { supplierNavItems } from '@/constants/data';
 import { useMediaQuery } from '@/hooks/use-media-query';
-import { SignOutButton, useUser } from '@clerk/nextjs';
 import {
   IconBell,
   IconChevronRight,
@@ -61,7 +60,14 @@ const tenants = [
 export default function SupplierSidebar() {
   const pathname = usePathname();
   const { isOpen } = useMediaQuery();
-  const { user } = useUser();
+  const { user } = {
+    user: {
+      firstName: 'John',
+      lastName: 'Doe',
+      emailAddresses: [{ emailAddress: 'john.doe@example.com' }],
+      phoneNumbers: [{ phoneNumber: '+1 (555) 123-4567' }]
+    }
+  };
   const router = useRouter();
   const handleSwitchTenant = (_tenantId: string) => {
     // Tenant switching functionality would be implemented here
@@ -207,7 +213,7 @@ export default function SupplierSidebar() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <IconLogout className='mr-2 h-4 w-4' />
-                  <SignOutButton redirectUrl='/auth/sign-in' />
+                  Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
