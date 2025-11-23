@@ -1,7 +1,5 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
-import { useParams, useRouter } from 'next/navigation';
 import PageContainer from '@/components/layout/page-container';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -14,32 +12,31 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { fetchHarvestDetailsByHarvestTicketId } from '@/services/harvest-detail.service';
+import {
+  completeHarvestSchedule,
+  confirmHarvestSchedule,
+  fetchHarvestScheduleById
+} from '@/services/harvest-schedule.service';
+import {
+  fetchHarvestTicketInvoice,
+  fetchHarvestTickets
+} from '@/services/harvest-ticket.service';
+import type { HarvestDetail } from '@/types/harvest-detail';
+import type { HarvestSchedule } from '@/types/harvest-schedule';
 import {
   IconArrowLeft,
-  IconCheck,
-  IconX,
-  IconEdit,
-  IconTrash,
   IconCalendar,
-  IconUser,
+  IconCheck,
+  IconDownload,
   IconFileText,
-  IconDownload
+  IconUser,
+  IconX
 } from '@tabler/icons-react';
-import Link from 'next/link';
-import {
-  fetchHarvestScheduleById,
-  confirmHarvestSchedule,
-  completeHarvestSchedule
-} from '@/services/harvest-schedule-service';
-import {
-  fetchHarvestTickets,
-  fetchHarvestTicketInvoice
-} from '@/services/harvest-ticket-service';
-import { fetchHarvestDetailsByHarvestTicketId } from '@/services/harvest-detail-service';
-import type { HarvestSchedule } from '@/types/harvest-schedule';
-import type { HarvestDetail } from '@/types/harvest-detail';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 type DetailRow = {

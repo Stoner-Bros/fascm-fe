@@ -2,13 +2,7 @@ import KBar from '@/components/kbar';
 import ConsigneeSidebar from '@/components/layout/consignee-sidebar';
 import Header from '@/components/layout/header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
-
-export const metadata: Metadata = {
-  title: 'FASCM - Consignee',
-  description: 'Consignee dashboard for FASCM'
-};
 
 export default async function ConsigneeLayout({
   children

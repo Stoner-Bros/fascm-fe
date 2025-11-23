@@ -31,6 +31,7 @@ import {
   createHarvestDetail,
   fetchMySupplier
 } from '@/features/supplier';
+import { DateTimePicker } from '@/components/date-time-picker';
 
 type HarvestDetailForm = {
   productId: string;
@@ -320,13 +321,15 @@ export default function NewHarvestBatchPage() {
                     Harvest Date & Time{' '}
                     <span className='text-destructive'>*</span>
                   </Label>
-                  <Input
-                    id='harvestDate'
-                    name='harvestDate'
-                    type='datetime-local'
+                  <DateTimePicker
                     value={scheduleData.harvestDate}
-                    onChange={handleScheduleChange}
-                    required
+                    onChange={(value) =>
+                      setScheduleData((prev) => ({
+                        ...prev,
+                        harvestDate: value
+                      }))
+                    }
+                    placeholder='Select harvest date and time'
                   />
                 </div>
 

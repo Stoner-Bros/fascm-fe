@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import PageContainer from '@/components/layout/page-container';
-import { fetchHarvestSchedules } from '@/services/harvest-schedule-service';
+import { fetchHarvestSchedules } from '@/services/harvest-schedule.service';
 import type { HarvestSchedule } from '@/types/harvest-schedule';
 import { HarvestScheduleList } from '@/features/harvest/components/harvest-schedule-list';
 import { Skeleton } from '@/components/ui/skeleton';
