@@ -35,3 +35,5 @@ export async function fetchProducts({
 export async function fetchProductById(id: string) {
   return fetchJSON<Product>(`/products/${id}`);
 }
+
+export { Product };
