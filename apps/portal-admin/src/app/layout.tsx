@@ -18,8 +18,9 @@ const META_THEME_COLORS = {
 };
 
 export const metadata: Metadata = {
-  title: 'Next Shadcn',
-  description: 'Basic dashboard with Next.js and Shadcn'
+  title: 'FASCM - Quản lý Chuỗi Cung Ứng Nông Sản Minh Bạch',
+  description:
+    'Hệ thống quản lý chuỗi cung ứng nông sản với công nghệ IoT và Blockchain'
 };
 
 export const viewport: Viewport = {

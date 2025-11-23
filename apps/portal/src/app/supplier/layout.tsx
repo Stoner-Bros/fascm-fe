@@ -2,14 +2,7 @@ import KBar from '@/components/kbar';
 import SupplierSidebar from '@/components/layout/supplier-sidebar';
 import Header from '@/components/layout/header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
-import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
-
-export const metadata: Metadata = {
-  title: 'FASCM - Supplier',
-  description: 'Supplier dashboard for FASCM'
-};
-
 export default async function SupplierLayout({
   children
 }: {
