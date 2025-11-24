@@ -43,3 +43,5 @@ export * from './supplier';
 export * from './harvest-schedule';
 export * from './harvest-ticket';
 export * from './harvest-detail';
+export * from './inbound-batch';
+export * from './import-ticket';

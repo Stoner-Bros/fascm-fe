@@ -54,6 +54,12 @@ export const navItems: NavItem[] = [
         url: '/dashboard/warehouse/iot-devices',
         icon: 'iotDevice',
         shortcut: ['w', 'a']
+      },
+      {
+        title: 'Import Tickets',
+        url: '/dashboard/warehouse/import-tickets',
+        icon: 'warehouse',
+        shortcut: ['w', 't']
       }
     ]
   },
