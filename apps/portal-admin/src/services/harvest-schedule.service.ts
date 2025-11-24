@@ -52,11 +52,16 @@ export async function deleteHarvestSchedule(id: string) {
 
 export async function confirmHarvestSchedule(
   id: string,
-  status: 'approved' | 'rejected'
+  status: 'approved' | 'rejected',
+  reason?: string
 ) {
+  const body: { status: string; reason?: string } = { status };
+  if (status === 'rejected' && reason) {
+    body.reason = reason;
+  }
   return fetchJSON<HarvestSchedule>(`/harvest-schedules/${id}/confirm`, {
     method: 'PATCH',
-    body: { status }
+    body
   });
 }
 

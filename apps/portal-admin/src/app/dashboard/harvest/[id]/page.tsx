@@ -12,6 +12,16 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import { fetchHarvestDetailsByHarvestTicketId } from '@/services/harvest-detail.service';
 import {
   completeHarvestSchedule,
@@ -31,7 +41,8 @@ import {
   IconDownload,
   IconFileText,
   IconUser,
-  IconX
+  IconX,
+  IconInfoCircle
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -61,6 +72,8 @@ export default function HarvestScheduleDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [invoiceLoading, setInvoiceLoading] = useState(false);
+  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -311,16 +324,30 @@ export default function HarvestScheduleDetailPage() {
     }
   };
 
+  const handleRejectClick = () => {
+    setRejectDialogOpen(true);
+    setRejectReason('');
+  };
+
   const handleReject = async () => {
     if (!harvestSchedule) return;
+    if (!rejectReason.trim()) {
+      toast.error('Vui lòng nhập lý do từ chối', {
+        description: 'Lý do từ chối là bắt buộc.'
+      });
+      return;
+    }
     try {
       setActionLoading(true);
       const updated = await confirmHarvestSchedule(
         harvestSchedule.id,
-        'rejected'
+        'rejected',
+        rejectReason.trim()
       );
       setHarvestSchedule(updated);
       setError(null);
+      setRejectDialogOpen(false);
+      setRejectReason('');
       toast.error('Đã từ chối lịch thu hoạch', {
         description: `Lịch thu hoạch ${harvestSchedule.id} đã bị từ chối.`
       });
@@ -503,6 +530,28 @@ export default function HarvestScheduleDetailPage() {
                   </p>
                 </div>
 
+                {normalizeStatus(harvestSchedule.status) === 'REJECTED' &&
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  (harvestSchedule as any)?.reason && (
+                    <>
+                      <Separator />
+                      <div>
+                        <p className='text-muted-foreground mb-2 flex items-center gap-2 text-sm'>
+                          <IconInfoCircle className='h-4 w-4' />
+                          Lý do từ chối
+                        </p>
+                        <div className='rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950'>
+                          <p className='text-sm text-red-800 dark:text-red-200'>
+                            {
+                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                              (harvestSchedule as any)?.reason
+                            }
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  )}
+
                 {harvestSchedule.supplierId && (
                   <>
                     <Separator />
@@ -649,7 +698,7 @@ export default function HarvestScheduleDetailPage() {
                     <Button
                       className='w-full justify-start'
                       variant='destructive'
-                      onClick={handleReject}
+                      onClick={handleRejectClick}
                       disabled={actionLoading}
                     >
                       <IconX className='mr-2 h-4 w-4' />
@@ -758,6 +807,53 @@ export default function HarvestScheduleDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Reject Reason Dialog */}
+      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Từ chối lịch thu hoạch</DialogTitle>
+            <DialogDescription>
+              Vui lòng nhập lý do từ chối lịch thu hoạch này. Lý do này sẽ được
+              gửi đến supplier.
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4 py-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='rejectReason'>
+                Lý do từ chối <span className='text-destructive'>*</span>
+              </Label>
+              <Textarea
+                id='rejectReason'
+                placeholder='Nhập lý do từ chối...'
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                rows={4}
+                required
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => {
+                setRejectDialogOpen(false);
+                setRejectReason('');
+              }}
+              disabled={actionLoading}
+            >
+              Hủy
+            </Button>
+            <Button
+              variant='destructive'
+              onClick={handleReject}
+              disabled={actionLoading || !rejectReason.trim()}
+            >
+              {actionLoading ? 'Đang xử lý...' : 'Xác nhận từ chối'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }

@@ -20,7 +20,8 @@ import {
   IconPackage,
   IconClock,
   IconTruck,
-  IconCheck
+  IconCheck,
+  IconInfoCircle
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
@@ -514,6 +515,52 @@ export default function SupplierHarvestBatchesFeature() {
                                     Cancel Batch
                                   </DropdownMenuItem>
                                 </>
+                              )}
+                              {batch.status.toUpperCase() === 'REJECTED' && (
+                                <DropdownMenuItem
+                                  onClick={async () => {
+                                    try {
+                                      // Fetch schedule để lấy reason
+                                      const res = await fetchHarvestSchedules({
+                                        page: 1,
+                                        limit: 100
+                                      });
+                                      const schedule = res.data?.find(
+                                        (s) => s.id === batch.id
+                                      );
+                                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                      const reason = (schedule as any)?.reason;
+                                      if (reason) {
+                                        toast({
+                                          title: 'Lý do từ chối',
+                                          description: reason,
+                                          variant: 'default'
+                                        });
+                                      } else {
+                                        toast({
+                                          title: 'Lý do từ chối',
+                                          description:
+                                            'Không có lý do được cung cấp.',
+                                          variant: 'default'
+                                        });
+                                      }
+                                    } catch (err) {
+                                      console.error(
+                                        'Error fetching reason:',
+                                        err
+                                      );
+                                      toast({
+                                        title: 'Error',
+                                        description:
+                                          'Không thể tải lý do từ chối.',
+                                        variant: 'destructive'
+                                      });
+                                    }
+                                  }}
+                                >
+                                  <IconInfoCircle className='mr-2 h-4 w-4' />
+                                  Xem lý do từ chối
+                                </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
                           </DropdownMenu>
