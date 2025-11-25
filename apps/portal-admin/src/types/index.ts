@@ -40,6 +40,7 @@ export * from './inventory';
 export * from './delivery';
 export * from './common';
 export * from './supplier';
+export * from './product';
 export * from './harvest-schedule';
 export * from './harvest-ticket';
 export * from './harvest-detail';

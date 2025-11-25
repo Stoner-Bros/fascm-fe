@@ -1,6 +1,7 @@
 'use client';
 
 import PageContainer from '@/components/layout/page-container';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -9,18 +10,8 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import {
-  IconSearch,
-  IconPlus,
-  IconEye,
-  IconLeaf,
-  IconFilter,
-  IconEdit
-} from '@tabler/icons-react';
-import { useState } from 'react';
-import Link from 'next/link';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -28,101 +19,100 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
-
-// Mock product data
-const mockProducts = [
-  {
-    id: 'PROD-001',
-    name: 'Organic Tomatoes',
-    category: 'Vegetables',
-    supplier: 'Green Valley Farm',
-    price: 2.5,
-    unit: 'kg',
-    stock: 500,
-    quality: 'Premium',
-    organic: true,
-    image: '/placeholder-product.jpg'
-  },
-  {
-    id: 'PROD-002',
-    name: 'Fresh Carrots',
-    category: 'Vegetables',
-    supplier: 'Sunny Fields',
-    price: 1.8,
-    unit: 'kg',
-    stock: 300,
-    quality: 'Grade A',
-    organic: true,
-    image: '/placeholder-product.jpg'
-  },
-  {
-    id: 'PROD-003',
-    name: 'Green Lettuce',
-    category: 'Leafy Greens',
-    supplier: 'Fresh Greens Co',
-    price: 1.5,
-    unit: 'kg',
-    stock: 200,
-    quality: 'Premium',
-    organic: false,
-    image: '/placeholder-product.jpg'
-  },
-  {
-    id: 'PROD-004',
-    name: 'Cucumbers',
-    category: 'Vegetables',
-    supplier: 'Green Valley Farm',
-    price: 2.0,
-    unit: 'kg',
-    stock: 400,
-    quality: 'Grade A',
-    organic: true,
-    image: '/placeholder-product.jpg'
-  },
-  {
-    id: 'PROD-005',
-    name: 'Bell Peppers',
-    category: 'Vegetables',
-    supplier: 'Rainbow Farms',
-    price: 3.5,
-    unit: 'kg',
-    stock: 250,
-    quality: 'Premium',
-    organic: true,
-    image: '/placeholder-product.jpg'
-  },
-  {
-    id: 'PROD-006',
-    name: 'Onions',
-    category: 'Vegetables',
-    supplier: 'Valley Produce',
-    price: 1.2,
-    unit: 'kg',
-    stock: 600,
-    quality: 'Standard',
-    organic: false,
-    image: '/placeholder-product.jpg'
-  }
-];
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/use-toast';
+import { fetchCategories } from '@/services/category.service';
+import { deleteProduct, fetchProducts } from '@/services/product.service';
+import type { Category, Product } from '@/types/product';
+import {
+  IconEdit,
+  IconEye,
+  IconFilter,
+  IconLeaf,
+  IconPlus,
+  IconSearch,
+  IconTrash
+} from '@tabler/icons-react';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
 export default function ProductsPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [priceRange, setPriceRange] = useState([0, 10]);
-  const [organicOnly, setOrganicOnly] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasNextPage, setHasNextPage] = useState(false);
+  const { toast } = useToast();
 
-  const filteredProducts = mockProducts.filter((product) => {
+  // Load categories
+  useEffect(() => {
+    async function loadCategories() {
+      try {
+        const response = await fetchCategories({ page: 1, limit: 100 });
+        setCategories(response.data);
+      } catch (err: any) {
+        console.error('Error loading categories:', err);
+      }
+    }
+    loadCategories();
+  }, []);
+
+  // Load products
+  useEffect(() => {
+    async function loadProducts() {
+      try {
+        setLoading(true);
+        const response = await fetchProducts({
+          page,
+          limit: 12,
+          categoryId: categoryFilter !== 'all' ? categoryFilter : undefined
+        });
+        setProducts(response.data);
+        setHasNextPage(response.hasNextPage);
+        setError(null);
+      } catch (err: any) {
+        setError(err?.message ?? 'Failed to load products');
+        console.error('Error loading products:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadProducts();
+  }, [page, categoryFilter]);
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this product?')) {
+      return;
+    }
+
+    try {
+      await deleteProduct(id);
+      toast({
+        title: 'Success',
+        description: 'Product deleted successfully'
+      });
+      // Reload products
+      setProducts(products.filter((p) => p.id !== id));
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err?.message ?? 'Failed to delete product',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const filteredProducts = products.filter((product) => {
     const matchesSearch =
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.supplier.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory =
-      categoryFilter === 'all' || product.category === categoryFilter;
-    const matchesPrice =
-      product.price >= priceRange[0] && product.price <= priceRange[1];
-    const matchesOrganic = !organicOnly || product.organic;
-    return matchesSearch && matchesCategory && matchesPrice && matchesOrganic;
+      product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.categoryId?.name
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase());
+    return matchesSearch;
   });
 
   return (
@@ -138,7 +128,7 @@ export default function ProductsPage() {
           <Link href='/dashboard/product/new'>
             <Button>
               <IconPlus className='mr-2 h-4 w-4' />
-              Add New
+              Add New Product
             </Button>
           </Link>
         </div>
@@ -158,45 +148,20 @@ export default function ProductsPage() {
                 <Select
                   value={categoryFilter}
                   onValueChange={setCategoryFilter}
+                  disabled={loading}
                 >
                   <SelectTrigger>
-                    <SelectValue />
+                    <SelectValue placeholder='All Categories' />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value='all'>All Categories</SelectItem>
-                    <SelectItem value='Vegetables'>Vegetables</SelectItem>
-                    <SelectItem value='Leafy Greens'>Leafy Greens</SelectItem>
-                    <SelectItem value='Fruits'>Fruits</SelectItem>
-                    <SelectItem value='Herbs'>Herbs</SelectItem>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.id}>
+                        {category.name || 'Unnamed Category'}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
-              </div>
-
-              <div className='space-y-2'>
-                <Label>
-                  Price Range: ${priceRange[0]} - ${priceRange[1]} / kg
-                </Label>
-                <Slider
-                  min={0}
-                  max={10}
-                  step={0.5}
-                  value={priceRange}
-                  onValueChange={setPriceRange}
-                  className='mt-2'
-                />
-              </div>
-
-              <div className='flex items-center space-x-2'>
-                <input
-                  type='checkbox'
-                  id='organic'
-                  checked={organicOnly}
-                  onChange={(e) => setOrganicOnly(e.target.checked)}
-                  className='h-4 w-4'
-                />
-                <Label htmlFor='organic' className='cursor-pointer'>
-                  Organic Only
-                </Label>
               </div>
 
               <Button
@@ -205,8 +170,7 @@ export default function ProductsPage() {
                 onClick={() => {
                   setSearchQuery('');
                   setCategoryFilter('all');
-                  setPriceRange([0, 10]);
-                  setOrganicOnly(false);
+                  setPage(1);
                 }}
               >
                 Clear Filters
@@ -221,92 +185,183 @@ export default function ProductsPage() {
                 <div className='relative'>
                   <IconSearch className='text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4' />
                   <Input
-                    placeholder='Search products by name or supplier...'
+                    placeholder='Search products by name, category, or description...'
                     className='pl-8'
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    disabled={loading}
                   />
                 </div>
               </CardHeader>
             </Card>
 
-            <div className='text-muted-foreground mb-4 text-sm'>
-              Showing {filteredProducts.length} products
-            </div>
-
-            {filteredProducts.length === 0 ? (
+            {loading ? (
+              <div className='space-y-4'>
+                <Skeleton className='h-12 w-full' />
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'>
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <Card key={i} className='overflow-hidden'>
+                      <Skeleton className='aspect-video w-full' />
+                      <CardHeader>
+                        <Skeleton className='h-6 w-3/4' />
+                        <Skeleton className='h-4 w-1/2' />
+                      </CardHeader>
+                      <CardContent>
+                        <Skeleton className='h-20 w-full' />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            ) : error ? (
               <Card>
                 <CardContent className='flex flex-col items-center justify-center py-12'>
-                  <IconSearch className='text-muted-foreground mb-4 h-12 w-12' />
-                  <h3 className='mb-2 text-lg font-semibold'>
-                    No Products Found
-                  </h3>
-                  <p className='text-muted-foreground mb-4'>
-                    Try adjusting your search or filters
-                  </p>
+                  <div className='rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200'>
+                    <p className='font-medium'>Error: {error}</p>
+                  </div>
                 </CardContent>
               </Card>
             ) : (
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'>
-                {filteredProducts.map((product) => (
-                  <Card key={product.id} className='overflow-hidden'>
-                    <div className='bg-muted flex aspect-video items-center justify-center'>
-                      <IconLeaf className='text-muted-foreground h-12 w-12' />
-                    </div>
-                    <CardHeader>
-                      <div className='flex items-start justify-between'>
-                        <div className='flex-1'>
-                          <CardTitle className='text-lg'>
-                            {product.name}
-                          </CardTitle>
-                          <CardDescription>{product.supplier}</CardDescription>
-                        </div>
-                        {product.organic && (
-                          <Badge variant='secondary' className='bg-green-100'>
-                            <IconLeaf className='mr-1 h-3 w-3' />
-                            Organic
-                          </Badge>
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className='space-y-4'>
-                      <div className='flex items-center justify-between'>
-                        <div>
-                          <p className='text-primary text-2xl font-bold'>
-                            ${product.price}
-                          </p>
-                          <p className='text-muted-foreground text-xs'>
-                            per {product.unit}
-                          </p>
-                        </div>
-                        <div className='text-right'>
-                          <Badge variant='outline'>{product.quality}</Badge>
-                          <p className='text-muted-foreground mt-1 text-xs'>
-                            {product.stock} {product.unit} available
-                          </p>
-                        </div>
-                      </div>
+              <>
+                <div className='text-muted-foreground mb-4 text-sm'>
+                  Showing {filteredProducts.length} product(s)
+                </div>
 
-                      <div className='flex gap-2'>
-                        <Link
-                          href={`/dashboard/product/${product.id}`}
-                          className='flex-1'
-                        >
-                          <Button variant='outline' className='w-full'>
-                            <IconEye className='mr-2 h-4 w-4' />
-                            View Details
-                          </Button>
-                        </Link>
-                        <Link href={`/dashboard/product/${product.id}`}>
-                          <Button>
-                            <IconEdit className='h-4 w-4' />
-                          </Button>
-                        </Link>
-                      </div>
+                {filteredProducts.length === 0 ? (
+                  <Card>
+                    <CardContent className='flex flex-col items-center justify-center py-12'>
+                      <IconSearch className='text-muted-foreground mb-4 h-12 w-12' />
+                      <h3 className='mb-2 text-lg font-semibold'>
+                        No Products Found
+                      </h3>
+                      <p className='text-muted-foreground mb-4'>
+                        Try adjusting your search or filters
+                      </p>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
+                ) : (
+                  <>
+                    <div className='grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3'>
+                      {filteredProducts.map((product) => (
+                        <Card key={product.id} className='overflow-hidden'>
+                          {product.image ? (
+                            <div className='bg-muted flex aspect-video items-center justify-center'>
+                              <img
+                                src={product.image}
+                                alt={product.name || 'Product'}
+                                className='h-full w-full object-cover'
+                              />
+                            </div>
+                          ) : (
+                            <div className='bg-muted flex aspect-video items-center justify-center'>
+                              <IconLeaf className='text-muted-foreground h-12 w-12' />
+                            </div>
+                          )}
+                          <CardHeader>
+                            <div className='flex items-start justify-between'>
+                              <div className='flex-1'>
+                                <CardTitle className='text-lg'>
+                                  {product.name || 'Unnamed Product'}
+                                </CardTitle>
+                                <CardDescription>
+                                  {product.categoryId?.name || 'No category'}
+                                </CardDescription>
+                              </div>
+                              {product.status && (
+                                <Badge
+                                  variant={
+                                    product.status === 'active'
+                                      ? 'default'
+                                      : 'secondary'
+                                  }
+                                >
+                                  {product.status}
+                                </Badge>
+                              )}
+                            </div>
+                          </CardHeader>
+                          <CardContent className='space-y-4'>
+                            <div className='space-y-2'>
+                              {product.pricePerKg && (
+                                <div className='flex items-baseline gap-2'>
+                                  <p className='text-primary text-2xl font-bold'>
+                                    ${product.pricePerKg.toFixed(2)}
+                                  </p>
+                                  <p className='text-muted-foreground text-xs'>
+                                    per kg
+                                  </p>
+                                </div>
+                              )}
+                              {product.description && (
+                                <p className='text-muted-foreground line-clamp-2 text-sm'>
+                                  {product.description}
+                                </p>
+                              )}
+                              {(product.storageTemperatureRange ||
+                                product.storageHumidityRange) && (
+                                <div className='text-muted-foreground space-y-1 text-xs'>
+                                  {product.storageTemperatureRange && (
+                                    <p>🌡️ {product.storageTemperatureRange}</p>
+                                  )}
+                                  {product.storageHumidityRange && (
+                                    <p>💧 {product.storageHumidityRange}</p>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+
+                            <div className='flex gap-2'>
+                              <Link
+                                href={`/dashboard/product/${product.id}`}
+                                className='flex-1'
+                              >
+                                <Button variant='outline' className='w-full'>
+                                  <IconEye className='mr-2 h-4 w-4' />
+                                  View
+                                </Button>
+                              </Link>
+                              <Link href={`/dashboard/product/${product.id}`}>
+                                <Button variant='secondary'>
+                                  <IconEdit className='h-4 w-4' />
+                                </Button>
+                              </Link>
+                              <Button
+                                variant='destructive'
+                                onClick={() => handleDelete(product.id)}
+                              >
+                                <IconTrash className='h-4 w-4' />
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+
+                    {/* Pagination */}
+                    {(page > 1 || hasNextPage) && (
+                      <div className='flex items-center justify-center gap-2 pt-4'>
+                        <Button
+                          variant='outline'
+                          onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          disabled={page === 1 || loading}
+                        >
+                          Previous
+                        </Button>
+                        <span className='text-muted-foreground text-sm'>
+                          Page {page}
+                        </span>
+                        <Button
+                          variant='outline'
+                          onClick={() => setPage((p) => p + 1)}
+                          disabled={!hasNextPage || loading}
+                        >
+                          Next
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
             )}
           </div>
         </div>
