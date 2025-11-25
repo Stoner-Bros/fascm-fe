@@ -93,6 +93,14 @@ export const navItems: NavItem[] = [
     items: [] // No child items
   },
   {
+    title: 'Category',
+    url: '/dashboard/category',
+    icon: 'tag',
+    shortcut: ['c', 'c'],
+    isActive: false,
+    items: [] // No child items
+  },
+  {
     title: 'Account',
     url: '/dashboard/profile', // Navigate to profile page
     icon: 'billing',

@@ -11,62 +11,107 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/use-toast';
+import { deleteProduct, fetchProductById } from '@/services/product.service';
+import type { Product } from '@/types/product';
 import {
   IconArrowLeft,
-  IconCertificate,
-  IconLeaf,
-  IconMapPin,
+  IconDroplet,
   IconEdit,
+  IconLeaf,
+  IconTemperature,
   IconTrash
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-
-// Mock data - in real app, fetch based on ID
-const mockProductData = {
-  id: 'PROD-001',
-  name: 'Organic Tomatoes',
-  category: 'Vegetables',
-  supplier: {
-    name: 'Green Valley Farm',
-    location: '123 Farm Road, Rural Area',
-    rating: 4.8,
-    certifications: ['Organic Certified', 'GAP Certified']
-  },
-  price: 2.5,
-  unit: 'kg',
-  stock: 500,
-  quality: 'Premium',
-  organic: true,
-  description:
-    'Fresh, vine-ripened organic tomatoes grown using sustainable farming practices. These tomatoes are hand-picked at peak ripeness to ensure maximum flavor and nutritional value. Perfect for salads, cooking, or eating fresh.',
-  specifications: {
-    variety: 'Roma',
-    size: 'Medium to Large',
-    color: 'Deep Red',
-    shelfLife: '5-7 days',
-    harvestSeason: 'Summer',
-    storageTemp: '12-15°C'
-  },
-  nutritionalInfo: {
-    calories: '18 per 100g',
-    vitamins: 'Rich in Vitamin C, Vitamin K',
-    minerals: 'Potassium, Folate',
-    fiber: '1.2g per 100g'
-  },
-  recentHarvests: [
-    { date: '2025-10-19', quantity: '500 kg', batchId: 'HB-001' },
-    { date: '2025-10-15', quantity: '450 kg', batchId: 'HB-089' },
-    { date: '2025-10-12', quantity: '520 kg', batchId: 'HB-078' }
-  ]
-};
+import { useEffect, useState } from 'react';
 
 export default function ProductDetailPage() {
   const router = useRouter();
   const params = useParams();
-  const productId = params.productId;
+  const productId = params.productId as string;
+  const { toast } = useToast();
 
-  const product = mockProductData;
+  const [product, setProduct] = useState<Product | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadProduct() {
+      // Skip loading for 'new' route
+      if (productId === 'new') {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const data = await fetchProductById(productId);
+        setProduct(data);
+        setError(null);
+      } catch (err: any) {
+        setError(err?.message ?? 'Failed to load product');
+        console.error('Error loading product:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (productId) {
+      loadProduct();
+    }
+  }, [productId]);
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this product?')) {
+      return;
+    }
+
+    try {
+      await deleteProduct(productId);
+      toast({
+        title: 'Success',
+        description: 'Product deleted successfully'
+      });
+      router.push('/dashboard/product');
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err?.message ?? 'Failed to delete product',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <div className='w-full space-y-6'>
+          <Skeleton className='h-12 w-full' />
+          <Skeleton className='h-96 w-full' />
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (error || !product) {
+    return (
+      <PageContainer>
+        <div className='w-full space-y-6'>
+          <div className='rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200'>
+            <p className='font-medium'>Error: {error || 'Product not found'}</p>
+          </div>
+          <Link href='/dashboard/product'>
+            <Button variant='outline'>
+              <IconArrowLeft className='mr-2 h-4 w-4' />
+              Back to Products
+            </Button>
+          </Link>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
@@ -90,7 +135,7 @@ export default function ProductDetailPage() {
                 Edit Product
               </Button>
             </Link>
-            <Button variant='destructive'>
+            <Button variant='destructive' onClick={handleDelete}>
               <IconTrash className='mr-2 h-4 w-4' />
               Delete
             </Button>
@@ -104,9 +149,17 @@ export default function ProductDetailPage() {
             {/* Product Image */}
             <Card>
               <CardContent className='p-0'>
-                <div className='bg-muted flex aspect-video items-center justify-center'>
-                  <IconLeaf className='text-muted-foreground h-24 w-24' />
-                </div>
+                {product.image ? (
+                  <img
+                    src={product.image}
+                    alt={product.name || 'Product'}
+                    className='aspect-video w-full object-cover'
+                  />
+                ) : (
+                  <div className='bg-muted flex aspect-video items-center justify-center'>
+                    <IconLeaf className='text-muted-foreground h-24 w-24' />
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -115,89 +168,95 @@ export default function ProductDetailPage() {
               <CardHeader>
                 <div className='flex items-start justify-between'>
                   <div>
-                    <CardTitle className='text-2xl'>{product.name}</CardTitle>
-                    <CardDescription>{product.category}</CardDescription>
+                    <CardTitle className='text-2xl'>
+                      {product.name || 'Unnamed Product'}
+                    </CardTitle>
+                    <CardDescription>
+                      {product.categoryId?.name || 'No category'}
+                    </CardDescription>
                   </div>
-                  {product.organic && (
-                    <Badge className='bg-green-100'>
-                      <IconLeaf className='mr-1 h-3 w-3' />
-                      Organic
+                  {product.status && (
+                    <Badge
+                      variant={
+                        product.status === 'active' ? 'default' : 'secondary'
+                      }
+                    >
+                      {product.status}
                     </Badge>
                   )}
                 </div>
               </CardHeader>
               <CardContent className='space-y-4'>
-                <div>
-                  <h3 className='mb-2 font-semibold'>Description</h3>
-                  <p className='text-muted-foreground text-sm'>
-                    {product.description}
-                  </p>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <h3 className='mb-3 font-semibold'>Specifications</h3>
-                  <div className='grid grid-cols-2 gap-3'>
-                    {Object.entries(product.specifications).map(
-                      ([key, value]) => (
-                        <div key={key}>
-                          <p className='text-muted-foreground text-xs capitalize'>
-                            {key.replace(/([A-Z])/g, ' $1').trim()}
-                          </p>
-                          <p className='text-sm font-medium'>{value}</p>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <h3 className='mb-3 font-semibold'>
-                    Nutritional Information
-                  </h3>
-                  <div className='grid grid-cols-2 gap-3'>
-                    {Object.entries(product.nutritionalInfo).map(
-                      ([key, value]) => (
-                        <div key={key}>
-                          <p className='text-muted-foreground text-xs capitalize'>
-                            {key.replace(/([A-Z])/g, ' $1').trim()}
-                          </p>
-                          <p className='text-sm font-medium'>{value}</p>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Recent Harvests */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Harvests</CardTitle>
-                <CardDescription>
-                  Latest harvest batches available
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className='space-y-3'>
-                  {product.recentHarvests.map((harvest, index) => (
-                    <div
-                      key={index}
-                      className='flex items-center justify-between rounded-lg border p-3'
-                    >
-                      <div>
-                        <p className='text-sm font-medium'>{harvest.batchId}</p>
-                        <p className='text-muted-foreground text-xs'>
-                          {harvest.date}
-                        </p>
-                      </div>
-                      <p className='text-sm font-medium'>{harvest.quantity}</p>
+                {product.description && (
+                  <>
+                    <div>
+                      <h3 className='mb-2 font-semibold'>Description</h3>
+                      <p className='text-muted-foreground text-sm'>
+                        {product.description}
+                      </p>
                     </div>
-                  ))}
+                    <Separator />
+                  </>
+                )}
+
+                <div>
+                  <h3 className='mb-3 font-semibold'>Storage Conditions</h3>
+                  <div className='space-y-3'>
+                    {product.storageTemperatureRange && (
+                      <div className='flex items-start gap-3 rounded-lg border p-3'>
+                        <IconTemperature className='text-primary mt-0.5 h-5 w-5' />
+                        <div>
+                          <p className='text-muted-foreground text-xs'>
+                            Temperature Range
+                          </p>
+                          <p className='text-sm font-medium'>
+                            {product.storageTemperatureRange}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {product.storageHumidityRange && (
+                      <div className='flex items-start gap-3 rounded-lg border p-3'>
+                        <IconDroplet className='text-primary mt-0.5 h-5 w-5' />
+                        <div>
+                          <p className='text-muted-foreground text-xs'>
+                            Humidity Range
+                          </p>
+                          <p className='text-sm font-medium'>
+                            {product.storageHumidityRange}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {!product.storageTemperatureRange &&
+                      !product.storageHumidityRange && (
+                        <p className='text-muted-foreground text-sm'>
+                          No storage conditions specified
+                        </p>
+                      )}
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div>
+                  <h3 className='mb-3 font-semibold'>Product Information</h3>
+                  <div className='grid grid-cols-2 gap-3'>
+                    <div>
+                      <p className='text-muted-foreground text-xs'>Created</p>
+                      <p className='text-sm font-medium'>
+                        {new Date(product.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div>
+                      <p className='text-muted-foreground text-xs'>
+                        Last Updated
+                      </p>
+                      <p className='text-sm font-medium'>
+                        {new Date(product.updatedAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -212,67 +271,44 @@ export default function ProductDetailPage() {
               </CardHeader>
               <CardContent>
                 <div className='space-y-4'>
-                  <div>
-                    <p className='text-primary text-4xl font-bold'>
-                      ${product.price}
-                    </p>
+                  {product.pricePerKg ? (
+                    <>
+                      <div>
+                        <p className='text-primary text-4xl font-bold'>
+                          ${product.pricePerKg.toFixed(2)}
+                        </p>
+                        <p className='text-muted-foreground text-sm'>per kg</p>
+                      </div>
+                    </>
+                  ) : (
                     <p className='text-muted-foreground text-sm'>
-                      per {product.unit}
+                      No price set
                     </p>
-                  </div>
-                  <Separator />
-                  <div>
-                    <p className='text-muted-foreground text-sm'>
-                      Stock Available
-                    </p>
-                    <p className='text-xl font-semibold'>
-                      {product.stock} {product.unit}
-                    </p>
-                  </div>
-                  <div>
-                    <p className='text-muted-foreground text-sm'>
-                      Quality Grade
-                    </p>
-                    <Badge variant='secondary' className='mt-1'>
-                      {product.quality}
-                    </Badge>
-                  </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Supplier Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Supplier Information</CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-3'>
-                <div>
-                  <p className='text-sm font-medium'>{product.supplier.name}</p>
-                  <div className='text-muted-foreground mt-1 flex items-center gap-1 text-xs'>
-                    <IconMapPin className='h-3 w-3' />
-                    {product.supplier.location}
+            {/* Category Info */}
+            {product.categoryId && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Category Information</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-3'>
+                  <div>
+                    <p className='text-sm font-medium'>
+                      {product.categoryId.name || 'Unnamed Category'}
+                    </p>
+                    {product.categoryId.description && (
+                      <p className='text-muted-foreground mt-1 text-xs'>
+                        {product.categoryId.description}
+                      </p>
+                    )}
                   </div>
-                </div>
-                <Separator />
-                <div>
-                  <p className='text-muted-foreground mb-2 text-sm'>
-                    Certifications
-                  </p>
-                  <div className='flex flex-col gap-2'>
-                    {product.supplier.certifications.map((cert, index) => (
-                      <div
-                        key={index}
-                        className='flex items-center gap-2 text-xs'
-                      >
-                        <IconCertificate className='text-primary h-4 w-4' />
-                        <span>{cert}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Actions */}
             <Card>
@@ -290,15 +326,12 @@ export default function ProductDetailPage() {
                   </Button>
                 </Link>
                 <Button
-                  variant='outline'
+                  variant='destructive'
                   className='w-full justify-start'
-                  onClick={() => {
-                    // Handle duplicate action
-                    console.log('Duplicate product');
-                  }}
+                  onClick={handleDelete}
                 >
-                  <IconLeaf className='mr-2 h-4 w-4' />
-                  Duplicate Product
+                  <IconTrash className='mr-2 h-4 w-4' />
+                  Delete Product
                 </Button>
                 <Link href='/dashboard/product' className='block w-full'>
                   <Button variant='outline' className='w-full justify-start'>

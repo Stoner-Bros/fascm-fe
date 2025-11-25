@@ -86,5 +86,28 @@ export async function fetchJSON<T>(
   console.log(
     `[API] ${options.method ?? 'GET'} ${path} ${res.status} in ${duration}ms`
   );
+
+  // Check if response has content before parsing JSON
+  const contentType = res.headers.get('content-type');
+  const contentLength = res.headers.get('content-length');
+
+  // If no content or explicitly empty, return empty object for DELETE requests
+  if (
+    options.method === 'DELETE' ||
+    contentLength === '0' ||
+    (!contentType?.includes('application/json') &&
+      !contentType?.includes('text/json'))
+  ) {
+    const text = await res.text();
+    if (!text || text.trim() === '') {
+      return undefined as T;
+    }
+    try {
+      return JSON.parse(text);
+    } catch {
+      return undefined as T;
+    }
+  }
+
   return res.json();
 }
