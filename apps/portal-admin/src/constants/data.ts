@@ -37,6 +37,13 @@ export const navItems: NavItem[] = [
     isActive: true
   },
   {
+    title: 'Warehouse Manage',
+    url: '/dashboard/warehouse/manage',
+    icon: 'inventory',
+    shortcut: ['w', 'm'],
+    isActive: true
+  },
+  {
     title: 'Warehouse',
     url: '/dashboard/warehouse',
     icon: 'inventory',
@@ -54,6 +61,12 @@ export const navItems: NavItem[] = [
         url: '/dashboard/warehouse/iot-devices',
         icon: 'iotDevice',
         shortcut: ['w', 'a']
+      },
+      {
+        title: 'Batch Manage',
+        url: '/dashboard/warehouse/batches',
+        icon: 'inventory',
+        shortcut: ['w', 'b']
       },
       {
         title: 'Import Tickets',
