@@ -67,5 +67,23 @@
         "hours": "{count} hours ago"
       }
     }
+  },
+  "Auth": {
+    "signIn": {
+      "title": "Sign in to your account",
+      "description": "Enter your email and password to sign in",
+      "email": "Email",
+      "password": "Password",
+      "emailPlaceholder": "name@example.com",
+      "passwordPlaceholder": "Enter your password",
+      "signInButton": "Sign In",
+      "signingIn": "Signing in...",
+      "loginError": "Login failed. Please try again.",
+      "orSignInWith": "Or sign in with",
+      "agreement": "By clicking sign in, you agree to our",
+      "termsOfService": "Terms of Service",
+      "and": "and",
+      "privacyPolicy": "Privacy Policy"
+    }
   }
 }

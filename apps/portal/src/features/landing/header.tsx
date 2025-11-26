@@ -97,12 +97,12 @@ export function LandingHeader() {
             >
               {t('tracking')}
             </Link>
-            <Link href='/auth/login'>
+            <Link href='/auth/sign-in'>
               <Button
                 variant='outline'
                 className='border-agri-primary text-agri-primary hover:bg-agri-primary hover:text-white'
               >
-                {t('loginRegister')}
+                {t('login')}
               </Button>
             </Link>
 
@@ -190,7 +190,7 @@ export function LandingHeader() {
                   variant='outline'
                   className='border-agri-primary text-agri-primary hover:bg-agri-primary w-full hover:text-white'
                 >
-                  {t('loginRegister')}
+                  {t('login')}
                 </Button>
               </Link>
 
