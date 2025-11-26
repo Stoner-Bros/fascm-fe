@@ -1,8 +1,14 @@
 import {
   AuthLoginRequest,
   AuthLoginResponse,
-  AuthMeResponse
-} from '../types/auth';
+  AuthMeResponse,
+  AuthRegisterRequest,
+  AuthConfirmEmailRequest,
+  AuthForgotPasswordRequest,
+  AuthResetPasswordRequest,
+  AuthUpdateRequest,
+  RefreshResponse
+} from '@/types/auth';
 import { fetchJSON } from '../lib/client';
 
 // Simple token storage helpers
@@ -55,17 +61,104 @@ export async function me(): Promise<AuthMeResponse> {
   return fetchJSON<AuthMeResponse>('/auth/me', { method: 'GET' });
 }
 
-export async function refresh(): Promise<AuthLoginResponse | null> {
+export async function refresh(): Promise<RefreshResponse | null> {
   const rt = getRefreshToken();
   if (!rt) return null;
-  const res = await fetchJSON<AuthLoginResponse>('/auth/refresh', {
+  const res = await fetchJSON<RefreshResponse>('/auth/refresh', {
     method: 'POST',
-    body: { refreshToken: rt },
+    headers: {
+      Authorization: `Bearer ${rt}`
+    },
     auth: false
   });
   setAccessToken(res.token);
   setRefreshToken(res.refreshToken);
   return res;
+}
+
+export async function register(
+  req: AuthRegisterRequest
+): Promise<AuthMeResponse> {
+  // Nest route: POST /auth/email/register
+  return fetchJSON<AuthMeResponse>('/auth/email/register', {
+    method: 'POST',
+    body: req,
+    auth: false
+  });
+}
+
+export async function confirmEmail(
+  req: AuthConfirmEmailRequest
+): Promise<void> {
+  // Nest route: POST /auth/email/confirm
+  await fetchJSON<void>('/auth/email/confirm', {
+    method: 'POST',
+    body: req,
+    auth: false
+  });
+}
+
+export async function confirmNewEmail(
+  req: AuthConfirmEmailRequest
+): Promise<void> {
+  // Nest route: POST /auth/email/confirm/new
+  await fetchJSON<void>('/auth/email/confirm/new', {
+    method: 'POST',
+    body: req,
+    auth: false
+  });
+}
+
+export async function forgotPassword(
+  req: AuthForgotPasswordRequest
+): Promise<void> {
+  // Nest route: POST /auth/forgot/password
+  await fetchJSON<void>('/auth/forgot/password', {
+    method: 'POST',
+    body: req,
+    auth: false
+  });
+}
+
+export async function resetPassword(
+  req: AuthResetPasswordRequest
+): Promise<void> {
+  // Nest route: POST /auth/reset/password
+  await fetchJSON<void>('/auth/reset/password', {
+    method: 'POST',
+    body: req,
+    auth: false
+  });
+}
+
+export async function updateProfile(
+  req: AuthUpdateRequest
+): Promise<AuthMeResponse> {
+  // Nest route: PATCH /auth/me
+  return fetchJSON<AuthMeResponse>('/auth/me', {
+    method: 'PATCH',
+    body: req
+  });
+}
+
+export async function deleteAccount(): Promise<void> {
+  // Nest route: DELETE /auth/me
+  await fetchJSON<void>('/auth/me', {
+    method: 'DELETE'
+  });
+}
+
+export async function logoutServer(): Promise<void> {
+  // Nest route: POST /auth/logout
+  try {
+    await fetchJSON<void>('/auth/logout', {
+      method: 'POST'
+    });
+  } catch (error) {
+    // Continue with local logout even if server logout fails
+    console.warn('Server logout failed:', error);
+  }
+  logout();
 }
 
 export function logout() {

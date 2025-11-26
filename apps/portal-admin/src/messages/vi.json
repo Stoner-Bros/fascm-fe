@@ -67,5 +67,23 @@
         "hours": "{count} giờ trước"
       }
     }
+  },
+  "Auth": {
+    "signIn": {
+      "title": "Đăng nhập tài khoản",
+      "description": "Nhập email và mật khẩu để đăng nhập",
+      "email": "Email",
+      "password": "Mật khẩu",
+      "emailPlaceholder": "name@example.com",
+      "passwordPlaceholder": "Nhập mật khẩu",
+      "signInButton": "Đăng nhập",
+      "signingIn": "Đang đăng nhập...",
+      "loginError": "Đăng nhập thất bại. Vui lòng thử lại.",
+      "orSignInWith": "Hoặc đăng nhập với",
+      "agreement": "Bằng cách nhấp đăng nhập, bạn đồng ý với",
+      "termsOfService": "Điều khoản Dịch vụ",
+      "and": "và",
+      "privacyPolicy": "Chính sách Bảo mật"
+    }
   }
 }
