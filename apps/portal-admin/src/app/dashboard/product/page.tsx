@@ -146,7 +146,7 @@ export default function ProductsPage() {
               <div className='space-y-2'>
                 <Label>Category</Label>
                 <Select
-                  value={categoryFilter}
+                  value={categoryFilter === '' ? undefined : categoryFilter}
                   onValueChange={setCategoryFilter}
                   disabled={loading}
                 >
@@ -155,11 +155,16 @@ export default function ProductsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value='all'>All Categories</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name || 'Unnamed Category'}
-                      </SelectItem>
-                    ))}
+                    {categories
+                      .filter(
+                        (category) =>
+                          category.id && category.id.trim().length > 0
+                      )
+                      .map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name || 'Unnamed Category'}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>

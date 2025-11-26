@@ -55,7 +55,7 @@ function FormSelect<
           )}
           <Select
             onValueChange={field.onChange}
-            defaultValue={field.value}
+            value={field.value === '' ? undefined : field.value}
             disabled={disabled}
           >
             <FormControl>
@@ -64,15 +64,17 @@ function FormSelect<
               </SelectTrigger>
             </FormControl>
             <SelectContent>
-              {options.map((option) => (
-                <SelectItem
-                  key={option.value}
-                  value={option.value}
-                  disabled={option.disabled}
-                >
-                  {option.label}
-                </SelectItem>
-              ))}
+              {options
+                .filter((option) => String(option.value).length > 0)
+                .map((option) => (
+                  <SelectItem
+                    key={option.value}
+                    value={option.value}
+                    disabled={option.disabled}
+                  >
+                    {option.label}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
           {description && <FormDescription>{description}</FormDescription>}

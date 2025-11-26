@@ -124,7 +124,9 @@ export default function ProductDetailPage() {
                     <div className='space-y-2'>
                       <p className='text-muted-foreground text-sm'>Khoảng ẩm</p>
                       <Badge variant='secondary'>
-                        {product.storageHumidityRange ?? '—'}
+                        {`${product.minStorageHumidity ?? '—'} - ${
+                          product.maxStorageHumidity ?? '—'
+                        }`}
                       </Badge>
                     </div>
                     <div className='space-y-2'>
@@ -132,7 +134,9 @@ export default function ProductDetailPage() {
                         Khoảng nhiệt
                       </p>
                       <Badge variant='secondary'>
-                        {product.storageTemperatureRange ?? '—'}
+                        {`${product.minStorageTemperature ?? '—'} - ${
+                          product.maxStorageTemperature ?? '—'
+                        }`}
                       </Badge>
                     </div>
                   </div>

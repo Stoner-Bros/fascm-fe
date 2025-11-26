@@ -7,7 +7,17 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
-import { IconArrowLeft, IconPackage, IconFileText } from '@tabler/icons-react';
+import {
+  IconArrowLeft,
+  IconPackage,
+  IconFileText,
+  IconCar
+} from '@tabler/icons-react';
+import dynamic from 'next/dynamic';
+const DeliveryRouteSim = dynamic(
+  () => import('@/components/map/delivery-route-sim'),
+  { ssr: false }
+);
 import { Order, OrderDetail, OrderService } from '@/features/consignee';
 import { fetchOrderById } from '@/services/order.service';
 import { fetchOrderDetails } from '@/services/order-detail.service';
@@ -40,7 +50,7 @@ export default function OrderDetailPage() {
         setLoading(true);
         const [orderData, detailsRes] = await Promise.all([
           fetchOrderById(orderId),
-          fetchOrderDetails({ orderId, page: 1, limit: 100 })
+          fetchOrderDetails({ orderId, page: 1, limit: 10 })
         ]);
         if (!orderData) {
           toast({
@@ -68,6 +78,16 @@ export default function OrderDetailPage() {
   }, [orderId]);
 
   const totalAmount = Number(order?.totalAmount ?? 0) || 0;
+
+  const configStatus = (s?: string) => {
+    const k = String(s ?? '').toUpperCase();
+    if (k === 'IN_PROGRESS') return 'Đang thực hiện';
+    if (k === 'CONFIRMED') return 'Đã xác nhận';
+    if (k === 'CANCELLED') return 'Đã hủy';
+    if (k === 'COMPLETED') return 'Đã hoàn thành';
+    if (k === 'SCHEDULED') return 'Đã lên lịch';
+    return 'Chưa xác nhận';
+  };
 
   if (loading) {
     return (
@@ -127,7 +147,7 @@ export default function OrderDetailPage() {
                 <span
                   className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${statusClasses(order.orderSchedule?.status)}`}
                 >
-                  {order.orderSchedule?.status ?? '-'}
+                  {configStatus(order.orderSchedule?.status) ?? '-'}
                 </span>
               </div>
             </div>
@@ -206,6 +226,34 @@ export default function OrderDetailPage() {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className='flex items-center'>
+                  <IconCar className='mr-2 h-5 w-5' />
+                  Vận tải
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {order.orderSchedule?.consignee?.address ? (
+                  <DeliveryRouteSim
+                    cargo={`Khối lượng ${String(order.totalMass ?? '')} kg`}
+                    startAddress={'Trung tâm TP. Hồ Chí Minh'}
+                    endAddress={String(order.orderSchedule?.consignee?.address)}
+                    orderScheduleId={String(order.orderSchedule?.id ?? '')}
+                    productName={String(
+                      details?.[0]?.product?.name ??
+                        details?.[0]?.product?.id ??
+                        ''
+                    )}
+                  />
+                ) : (
+                  <div className='text-muted-foreground text-sm'>
+                    Chưa có địa chỉ giao hàng
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -301,6 +349,38 @@ export default function OrderDetailPage() {
                       ? OrderService.formatDate(order.orderDate)
                       : '-'}
                   </span>
+                </div>
+                <div className='mt-4 border-t pt-3'>
+                  <div className='mb-2 font-medium'>
+                    Thông tin địa chỉ giao hàng
+                  </div>
+                  <div className='flex justify-between'>
+                    <span className='text-muted-foreground'>Tổ chức:</span>
+                    <span>
+                      {order.orderSchedule?.consignee?.organizationName ?? '-'}
+                    </span>
+                  </div>
+                  <div className='flex justify-between'>
+                    <span className='text-muted-foreground'>Đại diện:</span>
+                    <span>
+                      {order.orderSchedule?.consignee?.representativeName ??
+                        '-'}
+                    </span>
+                  </div>
+                  <div className='flex justify-between'>
+                    <span className='text-muted-foreground'>Địa chỉ giao:</span>
+                    <span>
+                      {order.orderSchedule?.consignee?.address ?? '-'}
+                    </span>
+                  </div>
+                  <div className='flex justify-between'>
+                    <span className='text-muted-foreground'>
+                      Số điện thoại:
+                    </span>
+                    <span>
+                      {order.orderSchedule?.consignee?.contact ?? '-'}
+                    </span>
+                  </div>
                 </div>
               </CardContent>
             </Card>

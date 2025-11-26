@@ -19,6 +19,12 @@ import {
   TableRow
 } from '@/components/ui/table';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
+import { fetchMyOrders } from '@/services/order.service';
+import {
+  fetchDeliveriesByOrderSchedule,
+  type Delivery
+} from '@/services/delivery.service';
 
 type DeliveryItem = {
   productName: string;
@@ -39,48 +45,21 @@ type DeliveryBatch = {
   amount: number; // VND
 };
 
-const mockDeliveries: DeliveryBatch[] = [
-  {
-    id: 'DEL-001',
-    orderId: 'ORD-1001',
-    orderRef: 'ORD-1001',
-    batchNo: 1,
-    status: 'Delivered',
-    paymentStatus: 'PartiallyPaid',
-    scheduledDate: '2025-11-10',
-    deliveredDate: '2025-11-10',
-    items: [
-      { productName: 'Tomatoes', uom: 'kg', qty: 120 },
-      { productName: 'Bananas', uom: 'kg', qty: 80 }
-    ],
-    amount: 6_000_000
-  },
-  {
-    id: 'DEL-002',
-    orderId: 'ORD-1001',
-    orderRef: 'ORD-1001',
-    batchNo: 2,
-    status: 'InTransit',
-    paymentStatus: 'Unpaid',
-    scheduledDate: '2025-11-12',
-    items: [
-      { productName: 'Green Lettuce', uom: 'kg', qty: 50 },
-      { productName: 'Cucumbers', uom: 'kg', qty: 100 }
-    ],
-    amount: 3_400_000
-  },
-  {
-    id: 'DEL-003',
-    orderId: 'ORD-1002',
-    orderRef: 'ORD-1002',
-    batchNo: 1,
-    status: 'Scheduled',
-    paymentStatus: 'Unpaid',
-    scheduledDate: '2025-11-13',
-    items: [{ productName: 'Bell Peppers', uom: 'kg', qty: 60 }],
-    amount: 1_920_000
-  }
-];
+function mapDeliveryToRow(d: Delivery): {
+  id: string;
+  orderScheduleId: string;
+  status: string;
+  startTime?: string | null;
+  endTime?: string | null;
+} {
+  return {
+    id: d.id,
+    orderScheduleId: String(d.orderSchedule?.id ?? ''),
+    status: String(d.status ?? ''),
+    startTime: d.startTime ?? null,
+    endTime: d.endTime ?? null
+  };
+}
 
 function formatCurrencyVND(n: number) {
   return new Intl.NumberFormat('vi-VN', {
@@ -90,14 +69,38 @@ function formatCurrencyVND(n: number) {
 }
 
 export default function ConsigneeDeliveryFeature() {
-  const totalBatches = mockDeliveries.length;
-  const deliveredCount = mockDeliveries.filter(
-    (d) => d.status === 'Delivered'
-  ).length;
-  const totalAmount = mockDeliveries.reduce((acc, d) => acc + d.amount, 0);
-  const unpaidAmount = mockDeliveries
-    .filter((d) => d.paymentStatus !== 'Paid')
-    .reduce((acc, d) => acc + d.amount, 0);
+  const [rows, setRows] = useState<ReturnType<typeof mapDeliveryToRow>[]>([]);
+  const [loading, setLoading] = useState(false);
+  useEffect(() => {
+    let ignore = false;
+    setLoading(true);
+    fetchMyOrders({ page: 1, limit: 10 })
+      .then(async (res) => {
+        const scheduleIds = res.data
+          .map((o) => o.orderSchedule?.id)
+          .filter((id): id is string => !!id);
+        const deliveriesLists = await Promise.all(
+          scheduleIds.map((sid) =>
+            fetchDeliveriesByOrderSchedule({
+              orderScheduleId: sid,
+              page: 1,
+              limit: 10
+            })
+          )
+        );
+        const deliveries = deliveriesLists.flatMap((r) => r.data);
+        const mapped = deliveries.map(mapDeliveryToRow);
+        if (!ignore) setRows(mapped);
+      })
+      .finally(() => !ignore && setLoading(false));
+    return () => {
+      ignore = true;
+    };
+  }, []);
+  const totalBatches = rows.length;
+  const deliveredCount = rows.filter((d) => d.status === 'COMPLETED').length;
+  const totalAmount = 0;
+  const unpaidAmount = 0;
 
   const badgeForStatus = (s: DeliveryBatch['status']) => {
     switch (s) {
@@ -132,6 +135,13 @@ export default function ConsigneeDeliveryFeature() {
             <p className='text-muted-foreground'>
               Quản lý các đợt giao, thanh toán theo từng đợt.
             </p>
+          </div>
+          <div>
+            <Button asChild>
+              <Link href={'/consignee/deliveries/DEMO-RT-001/live'}>
+                Xem Demo Realtime
+              </Link>
+            </Button>
           </div>
         </div>
 
@@ -191,34 +201,24 @@ export default function ConsigneeDeliveryFeature() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {mockDeliveries.map((d) => (
+                  {rows.map((d) => (
                     <TableRow key={d.id}>
-                      <TableCell>
-                        <Link
-                          href={`/consignee/orders/${d.orderId}`}
-                          className='font-medium hover:underline'
-                        >
-                          {d.orderRef}
-                        </Link>
-                      </TableCell>
-                      <TableCell>#{d.batchNo}</TableCell>
-                      <TableCell>{badgeForStatus(d.status)}</TableCell>
-                      <TableCell>{badgeForPayment(d.paymentStatus)}</TableCell>
-                      <TableCell>{d.scheduledDate}</TableCell>
-                      <TableCell>{d.deliveredDate ?? '-'}</TableCell>
-                      <TableCell>
-                        <ul className='text-muted-foreground text-sm'>
-                          {d.items.map((it, idx) => (
-                            <li key={idx}>
-                              {it.productName} — {it.qty} {it.uom}
-                            </li>
-                          ))}
-                        </ul>
-                      </TableCell>
-                      <TableCell>{formatCurrencyVND(d.amount)}</TableCell>
-                      <TableCell className='text-right'>
-                        <Button variant='outline' size='sm'>
-                          Xem
+                      <TableCell>{d.orderScheduleId || '-'}</TableCell>
+                      <TableCell>{d.status || '-'}</TableCell>
+                      <TableCell>{d.startTime ?? '-'}</TableCell>
+                      <TableCell>{d.endTime ?? '-'}</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell className='space-x-2 text-right'>
+                        <Button asChild variant='outline' size='sm'>
+                          <Link href={`/consignee/deliveries/${d.id}`}>
+                            Xem
+                          </Link>
+                        </Button>
+                        <Button asChild size='sm'>
+                          <Link href={`/consignee/deliveries/${d.id}/live`}>
+                            Live
+                          </Link>
                         </Button>
                       </TableCell>
                     </TableRow>

@@ -24,8 +24,8 @@ const Form = ({
   className
 }: {
   children: React.ReactNode;
-  onSubmit: (data: any) => void;
-  form: UseFormReturn<any, any, undefined>;
+  onSubmit?: React.FormEventHandler<HTMLFormElement>;
+  form: UseFormReturn<any>;
   className?: string;
 }) => {
   return (

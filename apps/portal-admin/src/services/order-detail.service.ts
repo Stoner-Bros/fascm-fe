@@ -25,3 +25,19 @@ export async function fetchOrderDetails({
     `${BASE_PATH}?${params.toString()}`
   );
 }
+import type { OrderDetailBE } from '@/types/order';
+
+export async function fetchOrderDetailsByOrderId(
+  orderId: string,
+  page = 1,
+  limit = 50
+) {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+    orderId
+  });
+  return fetchJSON<InfinityPaginationResponse<OrderDetailBE>>(
+    `/order-details?${params.toString()}`
+  );
+}

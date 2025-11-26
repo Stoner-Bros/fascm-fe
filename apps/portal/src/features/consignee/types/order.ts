@@ -1,4 +1,5 @@
 import { Product } from './product';
+import { Consignee } from './consignee';
 
 export type Order = {
   totalVolume?: number | null;
@@ -15,6 +16,7 @@ export type Order = {
     status?: OrderScheduleStatus;
     description?: string | null;
     orderDate?: string | null;
+    consignee?: Consignee | null;
   } | null;
   id: string;
   createdAt: Date;

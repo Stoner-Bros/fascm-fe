@@ -166,7 +166,11 @@ export default function NewProductPage() {
                 <div className='space-y-2'>
                   <Label htmlFor='category'>Category</Label>
                   <Select
-                    value={formData.categoryId}
+                    value={
+                      formData.categoryId === ''
+                        ? undefined
+                        : formData.categoryId
+                    }
                     onValueChange={(value) =>
                       setFormData({ ...formData, categoryId: value })
                     }
@@ -175,11 +179,16 @@ export default function NewProductPage() {
                       <SelectValue placeholder='Select a category' />
                     </SelectTrigger>
                     <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem key={category.id} value={category.id}>
-                          {category.name || 'Unnamed Category'}
-                        </SelectItem>
-                      ))}
+                      {categories
+                        .filter(
+                          (category) =>
+                            category.id && category.id.trim().length > 0
+                        )
+                        .map((category) => (
+                          <SelectItem key={category.id} value={category.id}>
+                            {category.name || 'Unnamed Category'}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
