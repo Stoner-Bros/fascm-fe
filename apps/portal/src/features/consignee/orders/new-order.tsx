@@ -36,6 +36,12 @@ import { createOrder } from '@/services/order.service';
 import { fetchProducts } from '@/services/product.service';
 import { createOrderDetail } from '@/services/order-detail.service';
 import { createOrderSchedule } from '@/services/order-schedule.service';
+import {
+  fetchMyConsignee,
+  updateConsignee
+} from '@/services/consignee.service';
+import type { Consignee } from '@/features/consignee/types/consignee';
+import { AddressPickerMap } from '@/components/map/osrm-map';
 
 type OrderLine = {
   productId?: string;
@@ -66,6 +72,13 @@ export default function ConsigneeNewOrderFeature() {
     const d = new Date();
     return d.getHours();
   });
+  const [consignee, setConsignee] = useState<Consignee | null>(null);
+  const [deliveryAddress, setDeliveryAddress] = useState<string>('');
+  const [contact, setContact] = useState<string>('');
+  const [deliveryPos, setDeliveryPos] = useState<
+    { lat: number; lng: number } | undefined
+  >(undefined);
+  const [showMap, setShowMap] = useState<boolean>(false);
 
   useEffect(() => {
     if (didFetchRef.current) return;
@@ -94,22 +107,35 @@ export default function ConsigneeNewOrderFeature() {
           description: 'Không thể tải danh sách sản phẩm'
         });
       });
+    fetchMyConsignee()
+      .then((c) => {
+        setConsignee(c ?? null);
+        setDeliveryAddress(String(c?.address ?? ''));
+        setContact(String(c?.contact ?? ''));
+      })
+      .catch(() => {})
+      .finally(() => {});
   }, [router]);
 
   useEffect(() => {
-    const pid = searchParams.get('product');
-    if (!pid) return;
-    const selected = products.find((p) => p.id === pid);
-    if (!selected) return; // chờ sản phẩm tải xong
+    const params = new URLSearchParams(searchParams.toString());
+    const pids = params.getAll('product');
+    if (pids.length === 0) return;
     if (didPrefillRef.current) return;
-    setLines([
-      {
-        productId: pid,
-        quantity: 1,
-        unit: 'kg',
-        unitPrice: Number(selected.pricePerKg ?? 0)
-      }
-    ]);
+    const linesPrefill = pids
+      .map((pid) => {
+        const selected = products.find((p) => p.id === pid);
+        if (!selected) return null;
+        return {
+          productId: pid,
+          quantity: 1,
+          unit: 'kg',
+          unitPrice: Number(selected.pricePerKg ?? 0)
+        } as OrderLine;
+      })
+      .filter(Boolean) as OrderLine[];
+    if (linesPrefill.length === 0) return;
+    setLines(linesPrefill);
     didPrefillRef.current = true;
   }, [searchParams, products]);
 
@@ -209,12 +235,26 @@ export default function ConsigneeNewOrderFeature() {
         (acc, l) => acc + computeVolumeLiters(l),
         0
       );
+      if (consignee?.id) {
+        const payload: Record<string, any> = {};
+        if (deliveryAddress && deliveryAddress !== (consignee.address ?? '')) {
+          payload.address = deliveryAddress;
+        }
+        if (contact && contact !== (consignee.contact ?? '')) {
+          payload.contact = contact;
+        }
+        if (Object.keys(payload).length > 0) {
+          await updateConsignee(consignee.id, payload);
+          setConsignee({ ...consignee, ...(payload as any) });
+        }
+      }
       const schedule = await createOrderSchedule({
         description: scheduleDescription,
         status: SCHEDULE_STATUS,
         orderDate: new Date(
           `${scheduleDate}T${String(scheduleHour).padStart(2, '0')}:00`
-        ).toISOString()
+        ).toISOString(),
+        consignee: consignee?.id ? { id: consignee.id } : undefined
       });
 
       const orderPayload: CreateOrderRequest = {
@@ -321,6 +361,70 @@ export default function ConsigneeNewOrderFeature() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+            <div className='mt-4 rounded-md border p-4'>
+              <div className='mb-2 font-medium'>
+                Thông tin địa chỉ giao hàng
+              </div>
+              <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
+                <div>
+                  <Label>Tổ chức</Label>
+                  <Input
+                    value={String(consignee?.organizationName ?? '')}
+                    disabled
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <Label>Đại diện</Label>
+                  <Input
+                    value={String(consignee?.representativeName ?? '')}
+                    disabled
+                    readOnly
+                  />
+                </div>
+                <div>
+                  <Label>Địa chỉ giao</Label>
+                  <Input
+                    type='text'
+                    placeholder='Nhập địa chỉ giao hàng'
+                    value={deliveryAddress}
+                    onChange={(e) => setDeliveryAddress(e.target.value)}
+                  />
+                </div>
+                <div className='sm:col-span-2'>
+                  <div className='mb-2'>
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={() => setShowMap((v) => !v)}
+                    >
+                      {showMap ? 'Đóng bản đồ' : 'Chỉnh sửa trên bản đồ'}
+                    </Button>
+                  </div>
+                  {showMap && (
+                    <AddressPickerMap
+                      value={{
+                        position: deliveryPos,
+                        address: deliveryAddress
+                      }}
+                      onChange={(v) => {
+                        setDeliveryAddress(v.address);
+                        setDeliveryPos(v.position);
+                      }}
+                    />
+                  )}
+                </div>
+                <div>
+                  <Label>Contact</Label>
+                  <Input
+                    type='text'
+                    placeholder='Nhập thông tin liên hệ'
+                    value={contact}
+                    onChange={(e) => setContact(e.target.value)}
+                  />
+                </div>
               </div>
             </div>
           </CardContent>

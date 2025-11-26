@@ -9,8 +9,10 @@ export type Product = {
   description?: string | null;
   image?: string | null;
   status?: string | null;
-  storageHumidityRange?: string | null;
-  storageTemperatureRange?: string | null;
+  minStorageHumidity?: string | null;
+  minStorageTemperature?: string | null;
+  maxStorageHumidity?: string | null;
+  maxStorageTemperature?: string | null;
   pricePerKg?: number | null;
   createdAt?: string | Date;
   updatedAt?: string | Date;

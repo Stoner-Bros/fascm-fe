@@ -35,6 +35,9 @@ export default function ConsigneeOrdersFeature() {
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [orderDateFrom, setOrderDateFrom] = useState<string>('');
   const [orderDateTo, setOrderDateTo] = useState<string>('');
+  const [page, setPage] = useState<number>(1);
+  const LIMIT = 8;
+  const [hasNextPage, setHasNextPage] = useState<boolean>(false);
 
   const statusClasses = (s?: string) => {
     const k = String(s ?? '').toUpperCase();
@@ -48,10 +51,15 @@ export default function ConsigneeOrdersFeature() {
   useEffect(() => {
     let mounted = true;
     setLoading(true);
-    fetchMyOrders({ page: 1, limit: 50 })
+    fetchMyOrders({ page, limit: LIMIT })
       .then((res) => {
         if (!mounted) return;
-        setOrders(res.data ?? []);
+        const data = res.data ?? [];
+        const toTime = (o: Order) =>
+          new Date((o.orderDate as any) ?? (o.createdAt as any)).getTime();
+        const sorted = [...data].sort((a, b) => toTime(b) - toTime(a));
+        setOrders(sorted);
+        setHasNextPage(Boolean((res as any).hasNextPage));
       })
       .catch(() => {
         if (!mounted) return;
@@ -67,7 +75,7 @@ export default function ConsigneeOrdersFeature() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [page]);
 
   const inDateRange = (d?: string | null) => {
     if (!d) return true;
@@ -89,6 +97,7 @@ export default function ConsigneeOrdersFeature() {
     const matchDate = inDateRange(order.orderDate ?? null);
     return matchId && matchStatus && matchDate;
   });
+  const showNewest = false;
 
   return (
     <PageContainer>
@@ -209,6 +218,27 @@ export default function ConsigneeOrdersFeature() {
                   )}
                 </TableBody>
               </Table>
+            </div>
+            <div className='mt-3 flex items-center justify-between'>
+              <div className='text-muted-foreground text-sm'>Trang {page}</div>
+              <div className='flex gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  disabled={page <= 1 || loading}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  Trước
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  disabled={!hasNextPage || loading}
+                  onClick={() => setPage((p) => p + 1)}
+                >
+                  Sau
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>

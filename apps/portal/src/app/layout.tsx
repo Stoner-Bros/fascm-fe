@@ -53,6 +53,10 @@ export default async function RootLayout({
             `
           }}
         />
+        <script
+          src='https://cdn.socket.io/4.7.2/socket.io.min.js'
+          defer
+        ></script>
       </head>
       <body
         className={cn(

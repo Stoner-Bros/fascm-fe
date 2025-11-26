@@ -100,6 +100,12 @@ export const navItems: NavItem[] = [
         url: '/dashboard/delivery/truck',
         icon: 'delivery',
         shortcut: ['d', 't']
+      },
+      {
+        title: 'Realtime',
+        url: '/dashboard/delivery/realtime',
+        icon: 'delivery',
+        shortcut: ['d', 'r']
       }
     ]
   },
