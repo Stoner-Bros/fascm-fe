@@ -99,7 +99,7 @@ export default function ConsigneeNewOrderFeature() {
       })
       .catch((err) => {
         if (err?.status === 401) {
-          router.push('/auth/login');
+          router.push('/auth/sign-in');
           return;
         }
         toast({
@@ -291,7 +291,7 @@ export default function ConsigneeNewOrderFeature() {
       router.push(`/consignee/orders`);
     } catch (err: any) {
       if (err?.status === 401) {
-        router.push('/auth/login');
+        router.push('/auth/sign-in');
         return;
       }
       const message =

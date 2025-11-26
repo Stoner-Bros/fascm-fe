@@ -1,11 +1,11 @@
 {
-  "Landing": {
+    "Landing": {
     "header": {
       "home": "Home",
       "about": "About",
       "features": "Features",
       "tracking": "Tracking",
-      "loginRegister": "Login / Register"
+      "login": "Login"
     },
     "hero": {
       "title": "Connecting Farmers and Retailers in a",
@@ -242,6 +242,39 @@
         "project": "SEP490 Capstone Project"
       },
       "developed": "Developed with 💚 by FPT University Students | Capstone Project SEP490"
+    }
+  },
+  "Auth": {
+    "signIn": {
+      "title": "Sign in to your account",
+      "description": "Enter your email and password to sign in",
+      "email": "Email",
+      "password": "Password",
+      "emailPlaceholder": "name@example.com",
+      "passwordPlaceholder": "Enter your password",
+      "signInButton": "Sign In",
+      "signingIn": "Signing in...",
+      "loginError": "Login failed. Please try again.",
+      "orSignInWith": "Or sign in with",
+      "agreement": "By clicking sign in, you agree to our",
+      "termsOfService": "Terms of Service",
+      "and": "and",
+      "privacyPolicy": "Privacy Policy"
+    },
+    "confirmEmail": {
+      "title": "Email Confirmation",
+      "verifying": "Verifying your email...",
+      "success": {
+        "title": "Email confirmed successfully!",
+        "description": "You will be redirected to the login page in 3 seconds...",
+        "loginButton": "Login now"
+      },
+      "error": {
+        "title": "Email confirmation failed",
+        "noHash": "Hash not found in URL",
+        "homeButton": "Go to home",
+        "loginButton": "Go to login"
+      }
     }
   }
 }
