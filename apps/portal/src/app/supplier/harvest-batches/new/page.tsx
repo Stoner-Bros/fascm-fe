@@ -19,7 +19,12 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { IconArrowLeft, IconDeviceFloppy } from '@tabler/icons-react';
+import {
+  IconArrowLeft,
+  IconDeviceFloppy,
+  IconPlus,
+  IconMinus
+} from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/components/ui/use-toast';
@@ -57,7 +62,7 @@ export default function NewHarvestBatchPage() {
   const [harvestDetails, setHarvestDetails] = useState<HarvestDetailForm[]>([
     {
       productId: '',
-      quantity: 0,
+      quantity: 20, // Bắt đầu từ 20 (bội số của 20)
       unitPrice: 0,
       unit: 'kg'
     }
@@ -115,16 +120,52 @@ export default function NewHarvestBatchPage() {
     }));
   };
 
+  const getDefaultQuantity = (unit: string) => {
+    return unit === 'kg' ? 20 : 1;
+  };
+
+  const getQuantityStep = (unit: string) => {
+    return unit === 'kg' ? 20 : 1;
+  };
+
+  const getMinQuantity = (unit: string) => {
+    return unit === 'kg' ? 20 : 1;
+  };
+
   const addHarvestDetail = () => {
     setHarvestDetails((prev) => [
       ...prev,
       {
         productId: '',
-        quantity: 0,
+        quantity: getDefaultQuantity('kg'), // Mặc định kg
         unitPrice: 0,
         unit: 'kg'
       }
     ]);
+  };
+
+  const adjustQuantity = (index: number, delta: number) => {
+    setHarvestDetails((prev) =>
+      prev.map((detail, i) => {
+        if (i === index) {
+          const step = getQuantityStep(detail.unit);
+          const minQuantity = getMinQuantity(detail.unit);
+          const newQuantity = detail.quantity + delta;
+
+          if (detail.unit === 'kg') {
+            // Đảm bảo quantity >= 20 và là bội số của 20
+            const adjustedQuantity = Math.max(minQuantity, newQuantity);
+            const roundedQuantity = Math.round(adjustedQuantity / step) * step;
+            return { ...detail, quantity: roundedQuantity };
+          } else {
+            // Ta: tăng/giảm từng đơn vị, tối thiểu 1
+            const adjustedQuantity = Math.max(minQuantity, newQuantity);
+            return { ...detail, quantity: adjustedQuantity };
+          }
+        }
+        return detail;
+      })
+    );
   };
 
   const removeHarvestDetail = (index: number) => {
@@ -137,9 +178,17 @@ export default function NewHarvestBatchPage() {
     value: string | number
   ) => {
     setHarvestDetails((prev) =>
-      prev.map((detail, i) =>
-        i === index ? { ...detail, [field]: value } : detail
-      )
+      prev.map((detail, i) => {
+        if (i === index) {
+          const updated = { ...detail, [field]: value };
+          // Khi thay đổi unit, reset quantity về giá trị mặc định
+          if (field === 'unit') {
+            updated.quantity = getDefaultQuantity(String(value));
+          }
+          return updated;
+        }
+        return detail;
+      })
     );
   };
 
@@ -173,6 +222,34 @@ export default function NewHarvestBatchPage() {
           variant: 'destructive'
         });
         return;
+      }
+
+      // Validate quantity based on unit
+      const minQuantity = getMinQuantity(detail.unit);
+      const step = getQuantityStep(detail.unit);
+
+      if (detail.unit === 'kg') {
+        // kg: >= 20 và là bội số của 20
+        if (detail.quantity < minQuantity || detail.quantity % step !== 0) {
+          toast({
+            title: 'Validation Error',
+            description:
+              'Quantity must be at least 20 and a multiple of 20. Please use +/- buttons to adjust.',
+            variant: 'destructive'
+          });
+          return;
+        }
+      } else {
+        // ta: >= 1
+        if (detail.quantity < minQuantity) {
+          toast({
+            title: 'Validation Error',
+            description:
+              'Quantity must be at least 1. Please use +/- buttons to adjust.',
+            variant: 'destructive'
+          });
+          return;
+        }
       }
     }
 
@@ -422,13 +499,7 @@ export default function NewHarvestBatchPage() {
                                 <SelectItem value='kg'>
                                   Kilograms (kg)
                                 </SelectItem>
-                                <SelectItem value='g'>Grams (g)</SelectItem>
-                                <SelectItem value='lbs'>
-                                  Pounds (lbs)
-                                </SelectItem>
-                                <SelectItem value='tons'>Tons</SelectItem>
-                                <SelectItem value='pieces'>Pieces</SelectItem>
-                                <SelectItem value='boxes'>Boxes</SelectItem>
+                                <SelectItem value='ta'>Ta (ta)</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -440,21 +511,54 @@ export default function NewHarvestBatchPage() {
                               Quantity{' '}
                               <span className='text-destructive'>*</span>
                             </Label>
-                            <Input
-                              type='number'
-                              step='0.01'
-                              min='0'
-                              value={detail.quantity || ''}
-                              onChange={(e) =>
-                                updateHarvestDetail(
-                                  index,
-                                  'quantity',
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
-                              placeholder='0'
-                              required
-                            />
+                            <div className='flex items-center gap-2'>
+                              <Button
+                                type='button'
+                                variant='outline'
+                                size='icon'
+                                onClick={() =>
+                                  adjustQuantity(
+                                    index,
+                                    -getQuantityStep(detail.unit)
+                                  )
+                                }
+                                disabled={
+                                  detail.quantity <= getMinQuantity(detail.unit)
+                                }
+                                className='h-10 w-10'
+                              >
+                                <IconMinus className='h-4 w-4' />
+                              </Button>
+                              <Input
+                                type='text'
+                                value={
+                                  detail.quantity ||
+                                  getDefaultQuantity(detail.unit)
+                                }
+                                readOnly
+                                className='text-center'
+                                required
+                              />
+                              <Button
+                                type='button'
+                                variant='outline'
+                                size='icon'
+                                onClick={() =>
+                                  adjustQuantity(
+                                    index,
+                                    getQuantityStep(detail.unit)
+                                  )
+                                }
+                                className='h-10 w-10'
+                              >
+                                <IconPlus className='h-4 w-4' />
+                              </Button>
+                            </div>
+                            <p className='text-muted-foreground text-xs'>
+                              {detail.unit === 'kg'
+                                ? 'Minimum 20, must be a multiple of 20. Use +/- buttons to adjust.'
+                                : 'Minimum 1. Use +/- buttons to adjust.'}
+                            </p>
                           </div>
 
                           <div className='space-y-2'>
@@ -462,21 +566,27 @@ export default function NewHarvestBatchPage() {
                               Unit Price{' '}
                               <span className='text-destructive'>*</span>
                             </Label>
-                            <Input
-                              type='number'
-                              step='0.01'
-                              min='0'
-                              value={detail.unitPrice || ''}
-                              onChange={(e) =>
-                                updateHarvestDetail(
-                                  index,
-                                  'unitPrice',
-                                  parseFloat(e.target.value) || 0
-                                )
-                              }
-                              placeholder='0.00'
-                              required
-                            />
+                            <div className='relative'>
+                              <Input
+                                type='number'
+                                min='0'
+                                step='1'
+                                value={detail.unitPrice || ''}
+                                onChange={(e) =>
+                                  updateHarvestDetail(
+                                    index,
+                                    'unitPrice',
+                                    parseInt(e.target.value) || 0
+                                  )
+                                }
+                                placeholder='0'
+                                required
+                                className='pr-12'
+                              />
+                              <span className='text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-sm'>
+                                VND
+                              </span>
+                            </div>
                           </div>
                         </div>
                       </div>

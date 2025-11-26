@@ -27,7 +27,6 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/components/ui/use-toast';
 import {
   IconArchive,
@@ -35,7 +34,11 @@ import {
   IconRefresh,
   IconSearch
 } from '@tabler/icons-react';
-import { createBatch, fetchBatches } from '@/services/batch.service';
+import {
+  createBatch,
+  fetchBatches,
+  updateBatch
+} from '@/services/batch.service';
 import { fetchImportTickets } from '@/services/import-ticket.service';
 import { fetchOrderDetails } from '@/services/order-detail.service';
 import type { Batch } from '@/types/batch';
@@ -48,6 +51,8 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+
+const BATCH_CAPACITY_KG = 20;
 
 const defaultForm = {
   batchCode: '',
@@ -67,10 +72,14 @@ export function BatchManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [orderDetails, setOrderDetails] = useState<OrderDetail[]>([]);
   const [isLoadingOrderDetails, setIsLoadingOrderDetails] = useState(false);
   const [filters, setFilters] = useState({ search: '' });
   const [form, setForm] = useState(defaultForm);
+  const [assignForm, setAssignForm] = useState({ orderDetailId: '' });
+  const [selectedBatchForAssignment, setSelectedBatchForAssignment] =
+    useState<Batch | null>(null);
 
   const loadBatches = async () => {
     setIsLoading(true);
@@ -123,15 +132,34 @@ export function BatchManagement() {
   const resetForm = () => {
     setForm(defaultForm);
   };
+  const resetAssignForm = () => {
+    setAssignForm({ orderDetailId: '' });
+    setSelectedBatchForAssignment(null);
+  };
 
   const handleSelectOrderDetail = (orderDetailId: string) => {
     const detail = orderDetails.find((item) => item.id === orderDetailId);
+    const stats = orderDetailStats[orderDetailId];
+    const selectedProductId = detail?.product?.id;
+
+    // Reset importTicketId nếu ticket hiện tại không khớp product
+    let importTicketId = form.importTicketId;
+    if (importTicketId && selectedProductId) {
+      const currentTicket = importTickets.find((t) => t.id === importTicketId);
+      const ticketProductId = currentTicket?.inboundBatch?.product?.id;
+      if (ticketProductId !== selectedProductId) {
+        importTicketId = '';
+      }
+    }
+
     setForm((prev) => ({
       ...prev,
       orderDetailId,
-      productId: detail?.product?.id ?? prev.productId,
-      quantity: detail?.quantity ?? prev.quantity,
-      unit: detail?.unit ?? prev.unit
+      productId: selectedProductId ?? prev.productId,
+      quantity: stats?.remainingQuantity ?? detail?.quantity ?? prev.quantity,
+      unit: detail?.unit ?? prev.unit,
+      importTicketId,
+      batchCode: '' // Reset batch code khi đổi order detail
     }));
   };
 
@@ -146,6 +174,89 @@ export function BatchManagement() {
       importTicketId: ticketId,
       batchCode: derivedCode
     }));
+  };
+
+  const handleOpenAssignDialog = (batch: Batch) => {
+    setSelectedBatchForAssignment(batch);
+    setAssignForm({ orderDetailId: '' });
+    setIsAssignDialogOpen(true);
+  };
+
+  const handleAssignOrderDetail = async () => {
+    if (!selectedBatchForAssignment) return;
+    if (!assignForm.orderDetailId) {
+      toast({
+        variant: 'destructive',
+        title: 'Vui lòng chọn Order Detail'
+      });
+      return;
+    }
+
+    const detail = orderDetails.find(
+      (item) => item.id === assignForm.orderDetailId
+    );
+    if (!detail) {
+      toast({
+        variant: 'destructive',
+        title: 'Order Detail không hợp lệ'
+      });
+      return;
+    }
+
+    const detailProductId = detail.product?.id;
+    if (
+      detailProductId &&
+      detailProductId !== selectedBatchForAssignment.product?.id
+    ) {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi xác thực',
+        description: 'Product của Order Detail không khớp với batch này.'
+      });
+      return;
+    }
+
+    const remaining =
+      orderDetailStats[detail.id]?.remainingQuantity ??
+      Number(detail.quantity) ??
+      0;
+    const batchQuantity = Number(selectedBatchForAssignment.quantity) || 0;
+    if (detail.unit?.toLowerCase() === 'kg' && remaining < batchQuantity) {
+      toast({
+        variant: 'destructive',
+        title: 'Không đủ số lượng',
+        description: `Order Detail chỉ còn ${remaining} ${detail.unit}.`
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const updatedBatch = await updateBatch(selectedBatchForAssignment.id, {
+        orderDetail: { id: assignForm.orderDetailId }
+      });
+      setBatches((prev) =>
+        prev.map((batch) =>
+          batch.id === updatedBatch.id ? updatedBatch : batch
+        )
+      );
+      await loadBatches();
+      await loadOrderDetails();
+      toast({
+        title: 'Đã gắn Order Detail',
+        description: `Batch ${updatedBatch.batchCode} đã được cập nhật`
+      });
+      setIsAssignDialogOpen(false);
+      resetAssignForm();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Không thể cập nhật batch',
+        description: error instanceof Error ? error.message : undefined
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCreate = async () => {
@@ -173,29 +284,130 @@ export function BatchManagement() {
       return;
     }
 
+    // Validate product khớp giữa OrderDetail và ImportTicket
+    const selectedTicket = importTickets.find(
+      (t) => t.id === form.importTicketId
+    );
+    const ticketProductId = selectedTicket?.inboundBatch?.product?.id;
+    if (ticketProductId && ticketProductId !== form.productId) {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi xác thực',
+        description:
+          'Product của Import Ticket không khớp với Product của Order Detail. Vui lòng chọn lại.'
+      });
+      return;
+    }
+
+    const ticketMeta = availableImportTickets.find(
+      (ticket) => ticket.id === form.importTicketId
+    );
+    const remainingTicketBatches = ticketMeta?.remaining ?? 0;
+
+    if (remainingTicketBatches <= 0) {
+      toast({
+        variant: 'destructive',
+        title: 'Import ticket không còn batch khả dụng'
+      });
+      return;
+    }
+
+    const stats = orderDetailStats[form.orderDetailId];
+    const isKg = form.unit.toLowerCase() === 'kg';
+    const numericQuantity = Number(form.quantity) || 0;
+    const targetQuantity = isKg
+      ? (stats?.remainingQuantity ?? numericQuantity)
+      : numericQuantity;
+    let remainingQuantityForOrder = isKg ? targetQuantity : 0;
+    const batchesNeededForOrder = form.orderDetailId
+      ? isKg
+        ? Math.max(
+            Math.ceil((remainingQuantityForOrder || 0) / BATCH_CAPACITY_KG),
+            0
+          )
+        : 1
+      : 0;
+    const assignableBatches = Math.min(
+      batchesNeededForOrder,
+      remainingTicketBatches
+    );
+
+    const baseBatchCode =
+      selectedTicket?.inboundBatch?.batchCode ||
+      form.batchCode ||
+      selectedTicket?.id ||
+      'BATCH';
+    const initialUsage = importTicketUsage[form.importTicketId] ?? 0;
+
     try {
       setIsSubmitting(true);
-      const payload = {
-        batchCode: form.batchCode,
-        quantity: Number(form.quantity),
-        unit: form.unit,
-        volume: Number(form.volume),
-        product: { id: form.productId },
-        importTicket: { id: form.importTicketId },
-        ...(form.areaId ? { area: { id: form.areaId } } : {}),
-        ...(form.orderDetailId
-          ? { orderDetail: { id: form.orderDetailId } }
-          : {})
-      };
+      const payloads = Array.from({ length: remainingTicketBatches }).map(
+        (_, index) => {
+          const shouldAssignOrder =
+            index < assignableBatches && Boolean(form.orderDetailId);
 
-      const newBatch = await createBatch(payload);
-      setBatches((prev) => [newBatch, ...prev]);
+          let batchQuantity = Number(form.quantity) || 0;
+          if (isKg) {
+            batchQuantity = BATCH_CAPACITY_KG;
+            if (shouldAssignOrder) {
+              batchQuantity = Math.min(
+                remainingQuantityForOrder || BATCH_CAPACITY_KG,
+                BATCH_CAPACITY_KG
+              );
+              remainingQuantityForOrder =
+                (remainingQuantityForOrder || 0) - batchQuantity;
+            }
+          }
+
+          const batchCode = `${baseBatchCode}-${String(
+            initialUsage + index + 1
+          ).padStart(2, '0')}`;
+
+          return {
+            batchCode,
+            quantity: batchQuantity,
+            unit: form.unit,
+            volume: Number(form.volume),
+            product: { id: form.productId },
+            importTicket: { id: form.importTicketId },
+            ...(form.areaId ? { area: { id: form.areaId } } : {}),
+            ...(shouldAssignOrder && form.orderDetailId
+              ? { orderDetail: { id: form.orderDetailId } }
+              : {})
+          };
+        }
+      );
+
+      const createdBatches = await Promise.all(
+        payloads.map((payload) => createBatch(payload))
+      );
+      setBatches((prev) => [...createdBatches, ...prev]);
+
+      const assignedCount = createdBatches.filter(
+        (batch) => batch.orderDetail?.id
+      ).length;
+
       toast({
         title: 'Đã tạo batch',
-        description: `Batch ${newBatch.batchCode} đã được tạo thành công`
+        description: `Đã tạo ${createdBatches.length} batch, gắn ${assignedCount} batch cho Order Detail`
       });
-      resetForm();
-      setIsDialogOpen(false);
+
+      if (isKg && (remainingQuantityForOrder || 0) > 0) {
+        toast({
+          title: 'Chưa đủ số lượng',
+          description: `Order Detail còn thiếu khoảng ${remainingQuantityForOrder} ${form.unit}. Vui lòng chọn import ticket khác.`,
+          variant: 'default'
+        });
+        setForm((prev) => ({
+          ...prev,
+          quantity: remainingQuantityForOrder || prev.quantity,
+          importTicketId: '',
+          batchCode: ''
+        }));
+      } else {
+        resetForm();
+        setIsDialogOpen(false);
+      }
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -217,7 +429,34 @@ export function BatchManagement() {
     }, {});
   }, [batches]);
 
+  const orderDetailStats = useMemo(() => {
+    const assignedQuantity = batches.reduce<Record<string, number>>(
+      (acc, batch) => {
+        const id = batch.orderDetail?.id;
+        if (id) {
+          acc[id] = (acc[id] ?? 0) + (Number(batch.quantity) || 0);
+        }
+        return acc;
+      },
+      {}
+    );
+
+    return orderDetails.reduce<Record<string, { remainingQuantity: number }>>(
+      (acc, detail) => {
+        const total = Number(detail.quantity) || 0;
+        const used = assignedQuantity[detail.id] ?? 0;
+        acc[detail.id] = {
+          remainingQuantity: Math.max(total - used, 0)
+        };
+        return acc;
+      },
+      {}
+    );
+  }, [batches, orderDetails]);
+
   const availableImportTickets = useMemo(() => {
+    const selectedProductId = form.productId;
+
     return importTickets
       .map((ticket) => {
         const used = importTicketUsage[ticket.id] ?? 0;
@@ -228,8 +467,20 @@ export function BatchManagement() {
           used
         };
       })
-      .filter((ticket) => ticket.remaining > 0);
-  }, [importTickets, importTicketUsage]);
+      .filter((ticket) => {
+        // Lọc theo số batch còn lại
+        if (ticket.remaining <= 0) return false;
+
+        // Nếu đã chọn order detail (có productId), chỉ hiển thị ticket có product khớp
+        if (selectedProductId) {
+          const ticketProductId = ticket.inboundBatch?.product?.id;
+          return ticketProductId === selectedProductId;
+        }
+
+        // Nếu chưa chọn order detail, hiển thị tất cả
+        return true;
+      });
+  }, [importTickets, importTicketUsage, form.productId]);
 
   const filteredTickets = useMemo(() => {
     if (!filters.search) return batches;
@@ -252,18 +503,45 @@ export function BatchManagement() {
     [orderDetails, form.orderDetailId]
   );
 
-  const usedOrderDetailIds = useMemo(() => {
-    return new Set(
-      batches
-        .map((batch) => batch.orderDetail?.id)
-        .filter((id): id is string => Boolean(id))
-    );
-  }, [batches]);
-
   const availableOrderDetails = useMemo(
-    () => orderDetails.filter((detail) => !usedOrderDetailIds.has(detail.id)),
-    [orderDetails, usedOrderDetailIds]
+    () =>
+      orderDetails.filter((detail) => {
+        const stats = orderDetailStats[detail.id];
+        if (!stats) return true;
+        return stats.remainingQuantity > 0;
+      }),
+    [orderDetails, orderDetailStats]
   );
+
+  const assignedBatches = useMemo(
+    () => filteredTickets.filter((batch) => Boolean(batch.orderDetail?.id)),
+    [filteredTickets]
+  );
+
+  const unassignedBatches = useMemo(
+    () => filteredTickets.filter((batch) => !batch.orderDetail?.id),
+    [filteredTickets]
+  );
+
+  const assignableOrderDetails = useMemo(() => {
+    if (!selectedBatchForAssignment) {
+      return orderDetails.filter((detail) => {
+        const stats = orderDetailStats[detail.id];
+        return (stats?.remainingQuantity ?? Number(detail.quantity) ?? 0) > 0;
+      });
+    }
+    const batchProductId = selectedBatchForAssignment.product?.id;
+    return orderDetails.filter((detail) => {
+      const stats = orderDetailStats[detail.id];
+      const remaining =
+        stats?.remainingQuantity ?? Number(detail.quantity) ?? 0;
+      if (remaining <= 0) return false;
+      if (batchProductId) {
+        return detail.product?.id === batchProductId;
+      }
+      return true;
+    });
+  }, [orderDetails, orderDetailStats, selectedBatchForAssignment]);
 
   return (
     <div className='w-full space-y-6'>
@@ -384,20 +662,34 @@ export function BatchManagement() {
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableOrderDetails.map((detail) => (
-                        <SelectItem key={detail.id} value={detail.id}>
-                          {detail.id} •{' '}
-                          {detail.product?.name ||
-                            detail.product?.id ||
-                            'Không có sản phẩm'}
-                        </SelectItem>
-                      ))}
+                      {availableOrderDetails.map((detail) => {
+                        const stats = orderDetailStats[detail.id];
+                        const remainingLabel =
+                          stats && detail.unit?.toLowerCase() === 'kg'
+                            ? ` • còn ${stats.remainingQuantity} ${detail.unit}`
+                            : '';
+                        return (
+                          <SelectItem key={detail.id} value={detail.id}>
+                            {detail.id} •{' '}
+                            {detail.product?.name ||
+                              detail.product?.id ||
+                              'Không có sản phẩm'}
+                            {remainingLabel}
+                          </SelectItem>
+                        );
+                      })}
                     </SelectContent>
                   </Select>
                   {selectedOrderDetail ? (
                     <p className='text-muted-foreground text-xs'>
                       Số lượng: {selectedOrderDetail.quantity ?? '—'}{' '}
-                      {selectedOrderDetail.unit ?? ''}
+                      {selectedOrderDetail.unit ?? ''}{' '}
+                      {orderDetailStats[selectedOrderDetail.id]
+                        ?.remainingQuantity !== undefined
+                        ? `(Còn lại ${orderDetailStats[selectedOrderDetail.id]?.remainingQuantity} ${
+                            selectedOrderDetail.unit ?? ''
+                          })`
+                        : null}
                     </p>
                   ) : (
                     <p className='text-muted-foreground text-xs'>
@@ -419,13 +711,16 @@ export function BatchManagement() {
                   <Select
                     value={form.importTicketId}
                     onValueChange={handleSelectImportTicket}
+                    disabled={!form.productId}
                   >
                     <SelectTrigger>
                       <SelectValue
                         placeholder={
-                          availableImportTickets.length === 0
-                            ? 'Không còn import ticket khả dụng'
-                            : 'Chọn import ticket'
+                          !form.productId
+                            ? 'Vui lòng chọn Order Detail trước'
+                            : availableImportTickets.length === 0
+                              ? 'Không có import ticket khả dụng cho sản phẩm này'
+                              : 'Chọn import ticket'
                         }
                       />
                     </SelectTrigger>
@@ -439,7 +734,9 @@ export function BatchManagement() {
                     </SelectContent>
                   </Select>
                   <p className='text-muted-foreground text-xs'>
-                    Các import ticket đã đủ số batch sẽ không hiển thị.
+                    {!form.productId
+                      ? 'Vui lòng chọn Order Detail trước để hiển thị import ticket phù hợp.'
+                      : 'Chỉ hiển thị các import ticket có product khớp với Order Detail đã chọn.'}
                   </p>
                 </div>
                 {selectedImportTicket && (
@@ -505,9 +802,68 @@ export function BatchManagement() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Danh sách batches</CardTitle>
+          <CardTitle>Batch đã gắn Order Detail</CardTitle>
           <CardDescription>
-            Quản lý và theo dõi các batch trong kho.
+            Các batch đã được phân bổ cho đơn hàng.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className='w-full overflow-x-auto rounded-md border'>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Import Ticket</TableHead>
+                  <TableHead>Order Detail</TableHead>
+                  <TableHead>Product</TableHead>
+                  <TableHead>Khu vực</TableHead>
+                  <TableHead>Ngày tạo</TableHead>
+                  <TableHead>Thao tác</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className='text-center'>
+                      Đang tải dữ liệu...
+                    </TableCell>
+                  </TableRow>
+                ) : assignedBatches.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={6}
+                      className='text-muted-foreground text-center text-sm'
+                    >
+                      Chưa có batch nào được gắn Order Detail
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  assignedBatches.map((batch) => (
+                    <TableRow key={batch.id}>
+                      <TableCell className='font-medium'>{batch.id}</TableCell>
+                      <TableCell>{batch.importTicket?.id ?? '—'}</TableCell>
+                      <TableCell>{batch.orderDetail?.id ?? '—'}</TableCell>
+                      <TableCell>{batch.product?.id ?? '—'}</TableCell>
+                      <TableCell>{batch.area?.id ?? '—'}</TableCell>
+                      <TableCell className='text-muted-foreground text-sm'>
+                        {batch.createdAt
+                          ? new Date(batch.createdAt).toLocaleString('vi-VN')
+                          : '—'}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Batch chưa gắn Order Detail</CardTitle>
+          <CardDescription>
+            Batch còn trống để tiếp tục phân bổ cho đơn hàng khác.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -530,29 +886,36 @@ export function BatchManagement() {
                       Đang tải dữ liệu...
                     </TableCell>
                   </TableRow>
-                ) : filteredTickets.length === 0 ? (
+                ) : unassignedBatches.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={7}
                       className='text-muted-foreground text-center text-sm'
                     >
-                      Chưa có batch nào
+                      Không có batch trống
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredTickets.map((batch) => (
+                  unassignedBatches.map((batch) => (
                     <TableRow key={batch.id}>
                       <TableCell className='font-medium'>{batch.id}</TableCell>
                       <TableCell>{batch.importTicket?.id ?? '—'}</TableCell>
-                      <TableCell>
-                        {batch.orderDetail?.id ?? form.orderDetailId ?? '—'}
-                      </TableCell>
+                      <TableCell>{batch.orderDetail?.id ?? '—'}</TableCell>
                       <TableCell>{batch.product?.id ?? '—'}</TableCell>
                       <TableCell>{batch.area?.id ?? '—'}</TableCell>
                       <TableCell className='text-muted-foreground text-sm'>
                         {batch.createdAt
                           ? new Date(batch.createdAt).toLocaleString('vi-VN')
                           : '—'}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          size='sm'
+                          variant='outline'
+                          onClick={() => handleOpenAssignDialog(batch)}
+                        >
+                          Gắn Order Detail
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
@@ -562,6 +925,97 @@ export function BatchManagement() {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog
+        open={isAssignDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            resetAssignForm();
+          }
+          setIsAssignDialogOpen(open);
+        }}
+      >
+        <DialogContent className='max-w-md'>
+          <DialogHeader>
+            <DialogTitle>Gắn Order Detail cho batch</DialogTitle>
+            <DialogDescription>
+              Chọn Order Detail còn số lượng để gắn vào batch chưa có Order
+              Detail.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedBatchForAssignment ? (
+            <div className='space-y-4'>
+              <div className='rounded-md border p-3 text-sm'>
+                <p>
+                  <span className='font-medium'>Batch:</span>{' '}
+                  {selectedBatchForAssignment.batchCode}
+                </p>
+                <p>
+                  <span className='font-medium'>Số lượng:</span>{' '}
+                  {selectedBatchForAssignment.quantity}{' '}
+                  {selectedBatchForAssignment.unit}
+                </p>
+                <p>
+                  <span className='font-medium'>Product:</span>{' '}
+                  {selectedBatchForAssignment.product?.id ?? '—'}
+                </p>
+              </div>
+              <div className='space-y-2'>
+                <Label>Order Detail</Label>
+                <Select
+                  value={assignForm.orderDetailId}
+                  onValueChange={(value) =>
+                    setAssignForm({ orderDetailId: value })
+                  }
+                  disabled={assignableOrderDetails.length === 0}
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={
+                        assignableOrderDetails.length === 0
+                          ? 'Không còn Order Detail phù hợp'
+                          : 'Chọn Order Detail'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {assignableOrderDetails.map((detail) => {
+                      const stats = orderDetailStats[detail.id];
+                      const remainingLabel =
+                        stats?.remainingQuantity !== undefined
+                          ? ` • còn ${stats.remainingQuantity} ${detail.unit ?? ''}`
+                          : '';
+                      return (
+                        <SelectItem key={detail.id} value={detail.id}>
+                          {detail.id} •{' '}
+                          {detail.product?.name ||
+                            detail.product?.id ||
+                            'Không có sản phẩm'}
+                          {remainingLabel}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          ) : null}
+          <div className='flex justify-end gap-2 pt-2'>
+            <Button
+              variant='outline'
+              onClick={() => {
+                setIsAssignDialogOpen(false);
+                resetAssignForm();
+              }}
+            >
+              Hủy
+            </Button>
+            <Button onClick={handleAssignOrderDetail} disabled={isSubmitting}>
+              {isSubmitting ? 'Đang xử lý...' : 'Gắn Order Detail'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

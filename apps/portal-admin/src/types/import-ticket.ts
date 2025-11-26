@@ -6,6 +6,10 @@ export type ImportTicket = {
   inboundBatch?: {
     id: string;
     batchCode?: string;
+    product?: {
+      id: string;
+      name?: string;
+    };
   };
   createdAt?: string;
   updatedAt?: string;
