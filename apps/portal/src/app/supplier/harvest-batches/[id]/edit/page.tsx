@@ -194,9 +194,7 @@ export default function EditHarvestBatchPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value='kg'>Kilograms (kg)</SelectItem>
-                        <SelectItem value='lbs'>Pounds (lbs)</SelectItem>
-                        <SelectItem value='tons'>Tons</SelectItem>
-                        <SelectItem value='pieces'>Pieces</SelectItem>
+                        <SelectItem value='ta'>Ta (ta)</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>

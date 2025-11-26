@@ -181,6 +181,37 @@ export function ImportTicketManagement() {
     (batch) => batch.id === form.inboundBatch.id
   );
 
+  // Tính toán số batch dựa trên unit và quantity
+  const calculateNumberOfBatch = (batch: InboundBatch | undefined): number => {
+    if (!batch || !batch.quantity) return 1;
+
+    const quantity = Number(batch.quantity);
+    const unit = batch.unit?.toLowerCase();
+
+    if (unit === 'kg') {
+      // Nếu unit là kg: quantity / 20 (làm tròn lên để đảm bảo đủ batch)
+      return Math.max(1, Math.ceil(quantity / 20));
+    } else if (unit === 'ta') {
+      // Nếu unit là ta: quantity * 100 (đổi ra kg) / 20 (làm tròn lên)
+      return Math.max(1, Math.ceil((quantity * 100) / 20));
+    }
+
+    // Mặc định trả về 1 nếu không phải kg hoặc ta
+    return 1;
+  };
+
+  // Tự động tính numberOfBatch khi chọn inboundBatch
+  const handleInboundBatchChange = (value: string) => {
+    const selectedBatch = inboundBatches.find((batch) => batch.id === value);
+    const calculatedBatch = calculateNumberOfBatch(selectedBatch);
+
+    setForm((prev) => ({
+      ...prev,
+      inboundBatch: { id: value },
+      numberOfBatch: calculatedBatch
+    }));
+  };
+
   return (
     <div className='space-y-6'>
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
@@ -225,12 +256,7 @@ export function ImportTicketManagement() {
                   <Label htmlFor='inboundBatch'>Inbound Batch</Label>
                   <Select
                     value={form.inboundBatch.id}
-                    onValueChange={(value) =>
-                      setForm((prev) => ({
-                        ...prev,
-                        inboundBatch: { id: value }
-                      }))
-                    }
+                    onValueChange={handleInboundBatchChange}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder='Chọn inbound batch' />
@@ -269,13 +295,22 @@ export function ImportTicketManagement() {
                       type='number'
                       min={1}
                       value={form.numberOfBatch}
-                      onChange={(e) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          numberOfBatch: Number(e.target.value)
-                        }))
-                      }
+                      readOnly
+                      disabled
+                      className='bg-muted cursor-not-allowed'
                     />
+                    {selectedInboundBatch && (
+                      <p className='text-muted-foreground text-xs'>
+                        Tự động tính: {selectedInboundBatch.quantity}{' '}
+                        {selectedInboundBatch.unit}
+                        {selectedInboundBatch.unit?.toLowerCase() === 'kg'
+                          ? ' ÷ 20'
+                          : selectedInboundBatch.unit?.toLowerCase() === 'ta'
+                            ? ' × 100 ÷ 20'
+                            : ''}{' '}
+                        = {form.numberOfBatch} batch
+                      </p>
+                    )}
                   </div>
                   <div className='space-y-2'>
                     <Label htmlFor='percent'>Tỷ lệ hoàn thành (%)</Label>
