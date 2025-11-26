@@ -46,15 +46,3 @@ export type CreateSupplierDto = {
   address?: string;
   certifications?: string[];
 };
-
-export type UpdateSupplierDto = Partial<CreateSupplierDto>;
-
-export type FindAllSuppliersDto = {
-  page?: number;
-  limit?: number;
-};
-
-export type InfinityPaginationResponse<T> = {
-  data: T[];
-  hasNextPage: boolean;
-};

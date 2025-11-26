@@ -29,12 +29,13 @@ import {
   IconEye,
   IconFilter,
   IconLeaf,
-  IconPlus,
   IconSearch,
   IconTrash
 } from '@tabler/icons-react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { CreateProductDialog } from '../../../features/products/components/create-product-dialog';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -54,33 +55,34 @@ export default function ProductsPage() {
         const response = await fetchCategories({ page: 1, limit: 100 });
         setCategories(response.data);
       } catch (err: any) {
-        console.error('Error loading categories:', err);
+        // Error loading categories
       }
     }
     loadCategories();
   }, []);
 
   // Load products
-  useEffect(() => {
-    async function loadProducts() {
-      try {
-        setLoading(true);
-        const response = await fetchProducts({
-          page,
-          limit: 12,
-          categoryId: categoryFilter !== 'all' ? categoryFilter : undefined
-        });
-        setProducts(response.data);
-        setHasNextPage(response.hasNextPage);
-        setError(null);
-      } catch (err: any) {
-        setError(err?.message ?? 'Failed to load products');
-        console.error('Error loading products:', err);
-      } finally {
-        setLoading(false);
-      }
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await fetchProducts({
+        page,
+        limit: 12,
+        categoryId: categoryFilter !== 'all' ? categoryFilter : undefined
+      });
+      setProducts(response.data);
+      setHasNextPage(response.hasNextPage);
+      setError(null);
+    } catch (err: any) {
+      setError(err?.message ?? 'Failed to load products');
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, categoryFilter]);
 
   const handleDelete = async (id: string) => {
@@ -125,12 +127,7 @@ export default function ProductsPage() {
               Manage and browse all products
             </p>
           </div>
-          <Link href='/dashboard/product/new'>
-            <Button>
-              <IconPlus className='mr-2 h-4 w-4' />
-              Add New Product
-            </Button>
-          </Link>
+          <CreateProductDialog onSuccess={loadProducts} />
         </div>
 
         <div className='grid grid-cols-1 gap-6 lg:grid-cols-4'>
@@ -250,11 +247,12 @@ export default function ProductsPage() {
                       {filteredProducts.map((product) => (
                         <Card key={product.id} className='overflow-hidden'>
                           {product.image ? (
-                            <div className='bg-muted flex aspect-video items-center justify-center'>
-                              <img
+                            <div className='bg-muted relative flex aspect-video items-center justify-center overflow-hidden'>
+                              <Image
                                 src={product.image}
                                 alt={product.name || 'Product'}
-                                className='h-full w-full object-cover'
+                                fill
+                                className='object-cover'
                               />
                             </div>
                           ) : (
@@ -302,14 +300,25 @@ export default function ProductsPage() {
                                   {product.description}
                                 </p>
                               )}
-                              {(product.storageTemperatureRange ||
-                                product.storageHumidityRange) && (
+                              {(product.minStorageTemperature ||
+                                product.maxStorageTemperature ||
+                                product.minStorageHumidity ||
+                                product.maxStorageHumidity) && (
                                 <div className='text-muted-foreground space-y-1 text-xs'>
-                                  {product.storageTemperatureRange && (
-                                    <p>🌡️ {product.storageTemperatureRange}</p>
+                                  {(product.minStorageTemperature ||
+                                    product.maxStorageTemperature) && (
+                                    <p>
+                                      🌡️ {product.minStorageTemperature || '?'}
+                                      °C -{' '}
+                                      {product.maxStorageTemperature || '?'}°C
+                                    </p>
                                   )}
-                                  {product.storageHumidityRange && (
-                                    <p>💧 {product.storageHumidityRange}</p>
+                                  {(product.minStorageHumidity ||
+                                    product.maxStorageHumidity) && (
+                                    <p>
+                                      💧 {product.minStorageHumidity || '?'}% -{' '}
+                                      {product.maxStorageHumidity || '?'}%
+                                    </p>
                                   )}
                                 </div>
                               )}

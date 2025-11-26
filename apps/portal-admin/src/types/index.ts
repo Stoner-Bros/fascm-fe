@@ -36,7 +36,6 @@ export type SidebarNavItem = NavItemWithChildren;
 
 export * from './base-form';
 export * from './data-table';
-export * from './inventory';
 export * from './delivery';
 export * from './common';
 export * from './supplier';
@@ -52,3 +51,4 @@ export * from './manager';
 export * from './delivery-staff';
 export * from './batch';
 export * from './order-detail';
+export * from './file';

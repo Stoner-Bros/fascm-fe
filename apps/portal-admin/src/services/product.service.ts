@@ -49,3 +49,9 @@ export async function updateProduct(id: string, body: UpdateProductDto) {
 export async function deleteProduct(id: string) {
   return fetchJSON<void>(`/products/${id}`, { method: 'DELETE' });
 }
+
+export async function updateProductStatus(id: string) {
+  return fetchJSON<Product>(`/products/${id}/status`, {
+    method: 'PATCH'
+  });
+}

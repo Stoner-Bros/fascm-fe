@@ -14,8 +14,10 @@ export type Product = {
   image?: string | null;
   categoryId?: Category | null;
   status?: string | null;
-  storageHumidityRange?: string | null;
-  storageTemperatureRange?: string | null;
+  minStorageHumidity?: string | null;
+  maxStorageHumidity?: string | null;
+  minStorageTemperature?: string | null;
+  maxStorageTemperature?: string | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -26,9 +28,10 @@ export type CreateProductDto = {
   pricePerKg?: number | null;
   image?: string | null;
   categoryId?: { id: string } | null;
-  status?: string | null;
-  storageHumidityRange?: string | null;
-  storageTemperatureRange?: string | null;
+  minStorageHumidity?: string | null;
+  maxStorageHumidity?: string | null;
+  minStorageTemperature?: string | null;
+  maxStorageTemperature?: string | null;
 };
 
 export type UpdateProductDto = Partial<CreateProductDto>;

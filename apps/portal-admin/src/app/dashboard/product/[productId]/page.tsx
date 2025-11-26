@@ -202,7 +202,8 @@ export default function ProductDetailPage() {
                 <div>
                   <h3 className='mb-3 font-semibold'>Storage Conditions</h3>
                   <div className='space-y-3'>
-                    {product.storageTemperatureRange && (
+                    {(product.minStorageTemperature ||
+                      product.maxStorageTemperature) && (
                       <div className='flex items-start gap-3 rounded-lg border p-3'>
                         <IconTemperature className='text-primary mt-0.5 h-5 w-5' />
                         <div>
@@ -210,12 +211,14 @@ export default function ProductDetailPage() {
                             Temperature Range
                           </p>
                           <p className='text-sm font-medium'>
-                            {product.storageTemperatureRange}
+                            {product.minStorageTemperature || '?'} -{' '}
+                            {product.maxStorageTemperature || '?'}
                           </p>
                         </div>
                       </div>
                     )}
-                    {product.storageHumidityRange && (
+                    {(product.minStorageHumidity ||
+                      product.maxStorageHumidity) && (
                       <div className='flex items-start gap-3 rounded-lg border p-3'>
                         <IconDroplet className='text-primary mt-0.5 h-5 w-5' />
                         <div>
@@ -223,13 +226,16 @@ export default function ProductDetailPage() {
                             Humidity Range
                           </p>
                           <p className='text-sm font-medium'>
-                            {product.storageHumidityRange}
+                            {product.minStorageHumidity || '?'} -{' '}
+                            {product.maxStorageHumidity || '?'}
                           </p>
                         </div>
                       </div>
                     )}
-                    {!product.storageTemperatureRange &&
-                      !product.storageHumidityRange && (
+                    {!product.minStorageTemperature &&
+                      !product.maxStorageTemperature &&
+                      !product.minStorageHumidity &&
+                      !product.maxStorageHumidity && (
                         <p className='text-muted-foreground text-sm'>
                           No storage conditions specified
                         </p>
