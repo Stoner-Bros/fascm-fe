@@ -12,14 +12,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -42,6 +34,8 @@ import {
 } from '@/services/consignee.service';
 import type { Consignee } from '@/features/consignee/types/consignee';
 import { AddressPickerMap } from '@/components/map/osrm-map';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { Textarea } from '@/components/ui/textarea';
 
 type OrderLine = {
   productId?: string;
@@ -61,16 +55,14 @@ export default function ConsigneeNewOrderFeature() {
   const didPrefillRef = useRef(false);
   const [scheduleDescription, setScheduleDescription] = useState('');
   const SCHEDULE_STATUS = 'IN_PROGRESS';
-  const [scheduleDate, setScheduleDate] = useState(() => {
+  const [scheduleDateTime, setScheduleDateTime] = useState<string>(() => {
     const d = new Date();
     const yyyy = d.getFullYear();
     const mm = String(d.getMonth() + 1).padStart(2, '0');
     const dd = String(d.getDate()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}`;
-  });
-  const [scheduleHour, setScheduleHour] = useState<number>(() => {
-    const d = new Date();
-    return d.getHours();
+    const hh = String(d.getHours()).padStart(2, '0');
+    const min = String(d.getMinutes()).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
   });
   const [consignee, setConsignee] = useState<Consignee | null>(null);
   const [deliveryAddress, setDeliveryAddress] = useState<string>('');
@@ -115,7 +107,7 @@ export default function ConsigneeNewOrderFeature() {
       })
       .catch(() => {})
       .finally(() => {});
-  }, [router]);
+  }, [router, toast]);
 
   useEffect(() => {
     const params = new URLSearchParams(searchParams.toString());
@@ -173,14 +165,6 @@ export default function ConsigneeNewOrderFeature() {
     setLines((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], unit };
-      return next;
-    });
-  };
-
-  const setUnitPriceForLine = (index: number, unitPrice: number) => {
-    setLines((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], unitPrice };
       return next;
     });
   };
@@ -251,9 +235,7 @@ export default function ConsigneeNewOrderFeature() {
       const schedule = await createOrderSchedule({
         description: scheduleDescription,
         status: SCHEDULE_STATUS,
-        orderDate: new Date(
-          `${scheduleDate}T${String(scheduleHour).padStart(2, '0')}:00`
-        ).toISOString(),
+        orderDate: new Date(scheduleDateTime).toISOString(),
         consignee: consignee?.id ? { id: consignee.id } : undefined
       });
 
@@ -309,174 +291,190 @@ export default function ConsigneeNewOrderFeature() {
 
   return (
     <PageContainer>
-      <div className='w-full space-y-6'>
+      <div className='mx-auto w-full max-w-7xl space-y-6'>
         <div className='flex items-center justify-between'>
           <div>
             <h2 className='text-3xl font-bold tracking-tight'>Tạo đơn hàng</h2>
-            <p className='text-muted-foreground'>Đặt mua nhiều dòng sản phẩm</p>
+            <p className='text-muted-foreground'>
+              Điền thông tin để tạo đơn đặt hàng mới
+            </p>
           </div>
         </div>
 
-        {/* Order lines form */}
+        {/* Order Schedule Information */}
         <Card>
           <CardHeader>
             <CardTitle>Thông tin lịch đặt hàng</CardTitle>
             <CardDescription>
-              Nhập thông tin để tạo Order Schedule
+              Chọn ngày giờ và ghi chú cho đơn hàng của bạn
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
+          <CardContent className='space-y-6'>
+            <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
               <div className='space-y-2'>
-                <Label>Mô tả</Label>
-                <Input
-                  type='text'
+                <Label htmlFor='schedule-datetime'>
+                  Ngày & Giờ đặt hàng{' '}
+                  <span className='text-destructive'>*</span>
+                </Label>
+                <DateTimePicker
+                  value={scheduleDateTime}
+                  onChange={(value) => setScheduleDateTime(value)}
+                  placeholder='Chọn ngày và giờ'
+                />
+                <p className='text-muted-foreground text-xs'>
+                  Chọn thời gian mong muốn nhận hàng
+                </p>
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='schedule-description'>
+                  Mô tả lịch đặt hàng
+                </Label>
+                <Textarea
+                  id='schedule-description'
                   value={scheduleDescription}
                   onChange={(e) => setScheduleDescription(e.target.value)}
-                  placeholder='Mô tả lịch đặt hàng'
+                  placeholder='Nhập mô tả hoặc ghi chú cho đơn hàng...'
+                  rows={3}
+                  className='resize-none'
                 />
-              </div>
-              <div className='space-y-2'>
-                <Label>Ngày lịch</Label>
-                <Input
-                  type='date'
-                  value={scheduleDate}
-                  onChange={(e) => setScheduleDate(e.target.value)}
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label>Giờ (24 giờ)</Label>
-                <Select
-                  value={String(scheduleHour)}
-                  onValueChange={(v) => setScheduleHour(Number(v))}
-                >
-                  <SelectTrigger className='w-[140px]'>
-                    <SelectValue placeholder='Chọn giờ' />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 24 }).map((_, i) => (
-                      <SelectItem key={i} value={String(i)}>
-                        {String(i).padStart(2, '0')} giờ
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className='mt-4 rounded-md border p-4'>
-              <div className='mb-2 font-medium'>
-                Thông tin địa chỉ giao hàng
-              </div>
-              <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
-                <div>
-                  <Label>Tổ chức</Label>
-                  <Input
-                    value={String(consignee?.organizationName ?? '')}
-                    disabled
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <Label>Đại diện</Label>
-                  <Input
-                    value={String(consignee?.representativeName ?? '')}
-                    disabled
-                    readOnly
-                  />
-                </div>
-                <div>
-                  <Label>Địa chỉ giao</Label>
-                  <Input
-                    type='text'
-                    placeholder='Nhập địa chỉ giao hàng'
-                    value={deliveryAddress}
-                    onChange={(e) => setDeliveryAddress(e.target.value)}
-                  />
-                </div>
-                <div className='sm:col-span-2'>
-                  <div className='mb-2'>
-                    <Button
-                      variant='outline'
-                      size='sm'
-                      onClick={() => setShowMap((v) => !v)}
-                    >
-                      {showMap ? 'Đóng bản đồ' : 'Chỉnh sửa trên bản đồ'}
-                    </Button>
-                  </div>
-                  {showMap && (
-                    <AddressPickerMap
-                      value={{
-                        position: deliveryPos,
-                        address: deliveryAddress
-                      }}
-                      onChange={(v) => {
-                        setDeliveryAddress(v.address);
-                        setDeliveryPos(v.position);
-                      }}
-                    />
-                  )}
-                </div>
-                <div>
-                  <Label>Contact</Label>
-                  <Input
-                    type='text'
-                    placeholder='Nhập thông tin liên hệ'
-                    value={contact}
-                    onChange={(e) => setContact(e.target.value)}
-                  />
-                </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
+        {/* Delivery Information */}
         <Card>
           <CardHeader>
-            <div className='flex items-center justify-between'>
-              <CardTitle>Danh sách sản phẩm đặt mua</CardTitle>
-              <Button onClick={addLine}>
-                <IconPlus className='mr-2 h-4 w-4' /> Thêm dòng
+            <CardTitle>Thông tin giao hàng</CardTitle>
+            <CardDescription>
+              Địa chỉ và thông tin liên hệ nhận hàng
+            </CardDescription>
+          </CardHeader>
+          <CardContent className='space-y-6'>
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+              <div className='space-y-2'>
+                <Label>Tên tổ chức</Label>
+                <Input
+                  value={String(consignee?.organizationName ?? '')}
+                  disabled
+                  readOnly
+                  className='bg-muted'
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label>Người đại diện</Label>
+                <Input
+                  value={String(consignee?.representativeName ?? '')}
+                  disabled
+                  readOnly
+                  className='bg-muted'
+                />
+              </div>
+            </div>
+
+            <div className='space-y-2'>
+              <Label htmlFor='delivery-address'>
+                Địa chỉ giao hàng <span className='text-destructive'>*</span>
+              </Label>
+              <Input
+                id='delivery-address'
+                type='text'
+                placeholder='Nhập địa chỉ giao hàng chi tiết'
+                value={deliveryAddress}
+                onChange={(e) => setDeliveryAddress(e.target.value)}
+              />
+            </div>
+
+            <div className='space-y-3'>
+              <Button
+                type='button'
+                variant='outline'
+                size='sm'
+                onClick={() => setShowMap((v) => !v)}
+              >
+                {showMap ? 'Đóng bản đồ' : 'Chọn vị trí trên bản đồ'}
+              </Button>
+              {showMap && (
+                <div className='rounded-lg border p-2'>
+                  <AddressPickerMap
+                    value={{
+                      position: deliveryPos,
+                      address: deliveryAddress
+                    }}
+                    onChange={(v) => {
+                      setDeliveryAddress(v.address);
+                      setDeliveryPos(v.position);
+                    }}
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className='space-y-2'>
+              <Label htmlFor='contact'>Số điện thoại liên hệ</Label>
+              <Input
+                id='contact'
+                type='text'
+                placeholder='Nhập số điện thoại liên hệ'
+                value={contact}
+                onChange={(e) => setContact(e.target.value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Product Selection */}
+        <Card>
+          <CardHeader>
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+              <div>
+                <CardTitle>Danh sách sản phẩm đặt mua</CardTitle>
+                <CardDescription>
+                  Chọn sản phẩm và số lượng cần đặt
+                </CardDescription>
+              </div>
+              <Button onClick={addLine} size='sm'>
+                <IconPlus className='mr-2 h-4 w-4' /> Thêm sản phẩm
               </Button>
             </div>
           </CardHeader>
           <CardContent>
-            <div className='rounded-md border'>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product</TableHead>
-                    <TableHead>Unit</TableHead>
-                    <TableHead>Unit Price</TableHead>
-                    <TableHead>Order Qty</TableHead>
-                    <TableHead className='text-right'>Action</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {lines.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className='text-center'>
-                        Chưa có dòng nào
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    lines.map((line, idx) => {
-                      const err = lineError(line);
-                      const selectedProduct = line.productId
-                        ? findProduct(line.productId)
-                        : undefined;
-                      return (
-                        <TableRow key={idx}>
-                          <TableCell>
+            {lines.length === 0 ? (
+              <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-12'>
+                <p className='mb-4 text-lg'>Chưa có sản phẩm nào</p>
+                <Button onClick={addLine} variant='outline'>
+                  <IconPlus className='mr-2 h-4 w-4' /> Thêm sản phẩm đầu tiên
+                </Button>
+              </div>
+            ) : (
+              <div className='space-y-4'>
+                {lines.map((line, idx) => {
+                  const err = lineError(line);
+                  const selectedProduct = line.productId
+                    ? findProduct(line.productId)
+                    : undefined;
+                  return (
+                    <Card key={idx} className={err ? 'border-destructive' : ''}>
+                      <CardContent className='pt-6'>
+                        <div className='flex flex-col gap-4 sm:flex-row sm:items-start'>
+                          {/* Product Image & Select */}
+                          <div className='flex-1 space-y-2'>
+                            <Label>
+                              Sản phẩm{' '}
+                              <span className='text-destructive'>*</span>
+                            </Label>
                             <div className='flex items-center gap-3'>
                               {selectedProduct?.image ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
                                   src={selectedProduct.image}
                                   alt={selectedProduct?.name ?? 'Product'}
-                                  className='h-10 w-10 rounded object-cover'
+                                  className='h-14 w-14 rounded-md border object-cover'
                                 />
                               ) : (
-                                <div className='bg-muted h-10 w-10 rounded' />
+                                <div className='bg-muted flex h-14 w-14 items-center justify-center rounded-md border text-xs'>
+                                  Ảnh
+                                </div>
                               )}
                               <Select
                                 value={line.productId ?? ''}
@@ -484,7 +482,7 @@ export default function ConsigneeNewOrderFeature() {
                                   setProductForLine(idx, val)
                                 }
                               >
-                                <SelectTrigger className='w-[220px]'>
+                                <SelectTrigger className='flex-1'>
                                   <SelectValue placeholder='Chọn sản phẩm' />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -496,33 +494,27 @@ export default function ConsigneeNewOrderFeature() {
                                 </SelectContent>
                               </Select>
                             </div>
-                          </TableCell>
-                          <TableCell>
+                          </div>
+
+                          {/* Unit */}
+                          <div className='w-full space-y-2 sm:w-32'>
+                            <Label>Đơn vị</Label>
                             <Input
                               type='text'
                               value={line.unit ?? ''}
                               onChange={(e) =>
                                 setUnitForLine(idx, e.target.value)
                               }
-                              className='w-[120px]'
-                              placeholder='vd:Kg,Tấn'
+                              placeholder='Kg, Tấn...'
                             />
-                          </TableCell>
-                          <TableCell>
-                            <Input
-                              type='number'
-                              min={0}
-                              value={
-                                Number.isFinite(line.unitPrice ?? 0)
-                                  ? (line.unitPrice ?? 0)
-                                  : 0
-                              }
-                              readOnly
-                              disabled
-                              className='w-[140px]'
-                            />
-                          </TableCell>
-                          <TableCell>
+                          </div>
+
+                          {/* Quantity */}
+                          <div className='w-full space-y-2 sm:w-32'>
+                            <Label>
+                              Số lượng{' '}
+                              <span className='text-destructive'>*</span>
+                            </Label>
                             <Input
                               type='number'
                               min={0}
@@ -534,50 +526,86 @@ export default function ConsigneeNewOrderFeature() {
                               onChange={(e) =>
                                 setQtyForLine(idx, Number(e.target.value))
                               }
-                              className='w-[140px]'
+                              placeholder='0'
                             />
-                            {err && (
-                              <p className='text-destructive mt-1 text-xs'>
-                                {err}
-                              </p>
-                            )}
-                          </TableCell>
-                          <TableCell className='text-right'>
+                          </div>
+
+                          {/* Unit Price */}
+                          <div className='w-full space-y-2 sm:w-36'>
+                            <Label>Đơn giá</Label>
+                            <Input
+                              type='text'
+                              value={
+                                Number.isFinite(line.unitPrice ?? 0)
+                                  ? new Intl.NumberFormat('vi-VN').format(
+                                      line.unitPrice ?? 0
+                                    )
+                                  : '0'
+                              }
+                              readOnly
+                              disabled
+                              className='bg-muted'
+                            />
+                          </div>
+
+                          {/* Delete Button */}
+                          <div className='flex items-end'>
                             <Button
                               variant='ghost'
-                              size='sm'
+                              size='icon'
                               onClick={() => removeLine(idx)}
+                              className='text-destructive hover:bg-destructive hover:text-destructive-foreground'
                             >
                               <IconTrash className='h-4 w-4' />
                             </Button>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                          </div>
+                        </div>
+                        {err && (
+                          <p className='text-destructive mt-2 text-sm'>{err}</p>
+                        )}
+                        {selectedProduct && line.quantity > 0 && (
+                          <div className='bg-muted mt-4 rounded-md p-3'>
+                            <p className='text-sm font-medium'>
+                              Tổng:{' '}
+                              {new Intl.NumberFormat('vi-VN', {
+                                style: 'currency',
+                                currency: 'VND'
+                              }).format(line.quantity * (line.unitPrice ?? 0))}
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-            {/* Summary card */}
-            <Card className='mt-4'>
-              <CardHeader>
-                <CardTitle>Tổng quan đơn hàng</CardTitle>
-                <CardDescription>
-                  Thống kê nhanh số lượng và chi phí dự kiến
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+        {/* Order Summary */}
+        {lines.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Tổng quan đơn hàng</CardTitle>
+              <CardDescription>
+                Xem lại thông tin trước khi gửi đơn hàng
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className='space-y-4'>
                 <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-                  <div className='rounded-md border p-4'>
-                    <p className='text-muted-foreground text-sm'>Số dòng</p>
-                    <p className='text-xl font-semibold'>{lines.length}</p>
+                  <div className='bg-card rounded-lg border p-4'>
+                    <p className='text-muted-foreground text-sm font-medium'>
+                      Số sản phẩm
+                    </p>
+                    <p className='mt-2 text-2xl font-bold'>{lines.length}</p>
                   </div>
-                  <div className='rounded-md border p-4'>
-                    <p className='text-muted-foreground text-sm'>
+                  <div className='bg-card rounded-lg border p-4'>
+                    <p className='text-muted-foreground text-sm font-medium'>
                       Tổng số lượng
                     </p>
-                    <p className='text-xl font-semibold'>
+                    <p className='mt-2 text-2xl font-bold'>
                       {lines.reduce(
                         (acc, l) =>
                           acc + (Number.isFinite(l.quantity) ? l.quantity : 0),
@@ -585,85 +613,117 @@ export default function ConsigneeNewOrderFeature() {
                       )}
                     </p>
                   </div>
-                  <div className='rounded-md border p-4'>
-                    <p className='text-muted-foreground text-sm'>
-                      Chi phí dự kiến
+                  <div className='bg-card rounded-lg border p-4'>
+                    <p className='text-muted-foreground text-sm font-medium'>
+                      Tổng khối lượng
                     </p>
-                    <p className='text-xl font-semibold'>
-                      {new Intl.NumberFormat('vi-VN', {
-                        style: 'currency',
-                        currency: 'VND'
-                      }).format(
-                        lines.reduce(
-                          (acc, l) =>
-                            acc +
-                            (Number.isFinite(l.quantity) ? l.quantity : 0) *
-                              (l.unitPrice ?? 0),
-                          0
-                        )
-                      )}
+                    <p className='mt-2 text-2xl font-bold'>
+                      {lines
+                        .reduce((acc, l) => acc + computeMassKg(l), 0)
+                        .toFixed(2)}{' '}
+                      kg
                     </p>
                   </div>
                 </div>
-                <div className='mt-4 space-y-2'>
-                  <div className='flex justify-between text-sm'>
-                    <span>Thuế suất</span>
-                    <span>5%</span>
-                  </div>
-                  <div className='flex justify-between text-sm'>
-                    <span>VAT</span>
-                    <span>
-                      {new Intl.NumberFormat('vi-VN', {
-                        style: 'currency',
-                        currency: 'VND'
-                      }).format(
-                        lines.reduce(
-                          (acc, l) =>
-                            acc +
-                            (Number.isFinite(l.quantity) ? l.quantity : 0) *
-                              (l.unitPrice ?? 0),
-                          0
-                        ) * 0.05
-                      )}
-                    </span>
-                  </div>
-                  <div className='flex justify-between font-medium'>
-                    <span>Tổng cộng</span>
-                    <span>
-                      {new Intl.NumberFormat('vi-VN', {
-                        style: 'currency',
-                        currency: 'VND'
-                      }).format(
-                        lines.reduce(
-                          (acc, l) =>
-                            acc +
-                            (Number.isFinite(l.quantity) ? l.quantity : 0) *
-                              (l.unitPrice ?? 0),
-                          0
-                        ) * 1.05
-                      )}
-                    </span>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            <div className='mt-4 flex items-center justify-end gap-2'>
-              <Button
-                variant='outline'
-                onClick={() => setLines([{ quantity: 0 }])}
-              >
-                Xóa tất cả dòng
-              </Button>
-              <Button onClick={submitOrder} disabled={submitting}>
-                {submitting && (
-                  <IconLoader2 className='mr-2 h-4 w-4 animate-spin' />
-                )}
-                Gửi đơn hàng
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+                <div className='bg-muted rounded-lg p-4'>
+                  <div className='space-y-3'>
+                    <div className='flex justify-between text-sm'>
+                      <span className='text-muted-foreground'>Tạm tính</span>
+                      <span className='font-medium'>
+                        {new Intl.NumberFormat('vi-VN', {
+                          style: 'currency',
+                          currency: 'VND'
+                        }).format(
+                          lines.reduce(
+                            (acc, l) =>
+                              acc +
+                              (Number.isFinite(l.quantity) ? l.quantity : 0) *
+                                (l.unitPrice ?? 0),
+                            0
+                          )
+                        )}
+                      </span>
+                    </div>
+                    <div className='flex justify-between text-sm'>
+                      <span className='text-muted-foreground'>VAT (5%)</span>
+                      <span className='font-medium'>
+                        {new Intl.NumberFormat('vi-VN', {
+                          style: 'currency',
+                          currency: 'VND'
+                        }).format(
+                          lines.reduce(
+                            (acc, l) =>
+                              acc +
+                              (Number.isFinite(l.quantity) ? l.quantity : 0) *
+                                (l.unitPrice ?? 0),
+                            0
+                          ) * 0.05
+                        )}
+                      </span>
+                    </div>
+                    <div className='border-t pt-3'>
+                      <div className='flex justify-between'>
+                        <span className='text-lg font-semibold'>
+                          Tổng thanh toán
+                        </span>
+                        <span className='text-primary text-xl font-bold'>
+                          {new Intl.NumberFormat('vi-VN', {
+                            style: 'currency',
+                            currency: 'VND'
+                          }).format(
+                            lines.reduce(
+                              (acc, l) =>
+                                acc +
+                                (Number.isFinite(l.quantity) ? l.quantity : 0) *
+                                  (l.unitPrice ?? 0),
+                              0
+                            ) * 1.05
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Action Buttons */}
+        <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end'>
+          <Button
+            type='button'
+            variant='outline'
+            onClick={() => router.push('/consignee/orders')}
+            disabled={submitting}
+          >
+            Hủy bỏ
+          </Button>
+          {lines.length > 0 && (
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => setLines([{ quantity: 0 }])}
+              disabled={submitting}
+              className='text-destructive hover:text-destructive'
+            >
+              Xóa tất cả
+            </Button>
+          )}
+          <Button
+            type='button'
+            onClick={submitOrder}
+            disabled={submitting || lines.length === 0}
+            size='lg'
+            className='sm:min-w-[200px]'
+          >
+            {submitting && (
+              <IconLoader2 className='mr-2 h-4 w-4 animate-spin' />
+            )}
+            {submitting ? 'Đang xử lý...' : 'Gửi đơn hàng'}
+          </Button>
+        </div>
       </div>
     </PageContainer>
   );

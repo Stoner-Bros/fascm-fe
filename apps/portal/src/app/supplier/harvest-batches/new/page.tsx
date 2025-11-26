@@ -36,7 +36,7 @@ import {
   createHarvestDetail,
   fetchMySupplier
 } from '@/features/supplier';
-import { DateTimePicker } from '@/components/date-time-picker';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 
 type HarvestDetailForm = {
   productId: string;

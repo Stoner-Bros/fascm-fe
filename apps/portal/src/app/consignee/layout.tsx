@@ -16,7 +16,7 @@ export default async function ConsigneeLayout({
     <KBar>
       <SidebarProvider defaultOpen={defaultOpen}>
         <ConsigneeSidebar />
-        <SidebarInset>
+        <SidebarInset className='overflow-auto'>
           <Header />
           {/* page main content */}
           {children}

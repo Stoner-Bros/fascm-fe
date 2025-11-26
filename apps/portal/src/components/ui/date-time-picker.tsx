@@ -95,9 +95,9 @@ export function DateTimePicker({
         >
           <CalendarIcon className='mr-2 h-4 w-4' />
           {date ? (
-            format(date, 'MM/dd/yyyy hh:mm')
+            format(date, 'MM/dd/yyyy HH:mm')
           ) : (
-            <span>{placeholder ?? 'MM/DD/YYYY hh:mm'}</span>
+            <span>{placeholder ?? 'MM/DD/YYYY HH:mm'}</span>
           )}
         </Button>
       </PopoverTrigger>

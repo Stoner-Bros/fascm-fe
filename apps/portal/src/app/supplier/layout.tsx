@@ -15,7 +15,7 @@ export default async function SupplierLayout({
     <KBar>
       <SidebarProvider defaultOpen={defaultOpen}>
         <SupplierSidebar />
-        <SidebarInset>
+        <SidebarInset className='overflow-auto'>
           <Header />
           {/* page main content */}
           {children}
