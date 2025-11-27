@@ -2,6 +2,7 @@ export type ImportTicket = {
   id: string;
   numberOfBatch: number;
   percent: number;
+  realityQuantity: number;
   importDate: string;
   inboundBatch?: {
     id: string;
@@ -11,15 +12,21 @@ export type ImportTicket = {
       name?: string;
     };
   };
+  area?: {
+    id: string;
+    name?: string;
+  };
   createdAt?: string;
   updatedAt?: string;
 };
 
 export type CreateImportTicketDto = {
-  numberOfBatch: number;
-  percent: number;
+  realityQuantity: number;
   importDate: string;
   inboundBatch: {
+    id: string;
+  };
+  area?: {
     id: string;
   };
 };

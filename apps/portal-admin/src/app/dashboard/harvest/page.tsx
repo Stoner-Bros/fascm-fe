@@ -15,24 +15,58 @@ export default function HarvestPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function loadHarvestSchedules() {
+    let cancelled = false;
+    let intervalId: NodeJS.Timeout | null = null;
+
+    async function loadHarvestSchedules(isInitialLoad = false) {
+      if (cancelled) return;
+
       try {
-        setLoading(true);
+        if (isInitialLoad) {
+          setLoading(true);
+        }
         const response = await fetchHarvestSchedules({
           page: 1,
           limit: 100
         });
-        setHarvestSchedules(response.data);
+
+        if (cancelled) return;
+
+        // Luôn update state với array mới để đảm bảo component re-render
+        const newData = response.data || [];
+        // Tạo array mới để React detect được sự thay đổi
+        setHarvestSchedules([...newData]);
         setError(null);
       } catch (err: any) {
-        setError(err?.message ?? 'Không thể tải danh sách lịch thu hoạch');
+        if (cancelled) return;
+        // Chỉ hiển thị error khi load lần đầu
+        if (isInitialLoad) {
+          setError(err?.message ?? 'Không thể tải danh sách lịch thu hoạch');
+        }
         console.error('Error loading harvest schedules:', err);
       } finally {
-        setLoading(false);
+        if (!cancelled && isInitialLoad) {
+          setLoading(false);
+        }
       }
     }
 
-    loadHarvestSchedules();
+    // Load lần đầu ngay lập tức
+    loadHarvestSchedules(true);
+
+    // Polling để tự động cập nhật danh sách mỗi 3 giây (giảm thời gian để responsive hơn)
+    intervalId = setInterval(() => {
+      if (!cancelled) {
+        loadHarvestSchedules(false);
+      }
+    }, 3000); // 3 giây
+
+    return () => {
+      cancelled = true;
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
   }, []);
 
   return (

@@ -77,8 +77,6 @@ type HarvestBatchRow = {
   status: string;
 };
 
-/* ===== helper: để ngoài component, không bị tạo lại mỗi render ===== */
-
 const getStatusIcon = (status: string) => {
   const s = status?.toUpperCase();
   switch (s) {
@@ -145,10 +143,16 @@ export default function SupplierHarvestBatchesFeature() {
   */
   useEffect(() => {
     let cancelled = false;
+    let intervalId: NodeJS.Timeout | null = null;
 
-    const loadData = async () => {
-      setLoading(true);
+    const loadData = async (isInitialLoad = false) => {
+      if (cancelled) return;
+
       try {
+        if (isInitialLoad) {
+          setLoading(true);
+        }
+
         const schedulesRes = await fetchHarvestSchedules({
           page: 1,
           limit: 50
@@ -250,24 +254,42 @@ export default function SupplierHarvestBatchesFeature() {
         );
 
         if (cancelled) return;
-        setBatches(rows);
+
+        // Luôn tạo array mới để React detect được sự thay đổi
+        setBatches([...rows]);
       } catch (err) {
         if (cancelled) return;
         console.error('Failed to load harvest batches', err);
-        toast({
-          title: 'Error',
-          description: 'Failed to load harvest batches',
-          variant: 'destructive'
-        });
+        // Chỉ hiển thị error khi load lần đầu
+        if (isInitialLoad) {
+          toast({
+            title: 'Error',
+            description: 'Failed to load harvest batches',
+            variant: 'destructive'
+          });
+        }
       } finally {
-        if (!cancelled) setLoading(false);
+        if (!cancelled && isInitialLoad) {
+          setLoading(false);
+        }
       }
     };
 
-    void loadData();
+    // Load lần đầu ngay lập tức
+    loadData(true);
+
+    // Polling để tự động cập nhật danh sách mỗi 3 giây
+    intervalId = setInterval(() => {
+      if (!cancelled) {
+        loadData(false);
+      }
+    }, 3000); // 3 giây
 
     return () => {
       cancelled = true;
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // <--- chỉ mount 1 lần

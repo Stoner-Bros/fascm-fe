@@ -1,6 +1,8 @@
 import { Product } from '@/features/consignee/types/product';
 import { fetchJSON } from '../lib/client';
 
+export type { Product };
+
 export type InfinityPaginationResponse<T> = {
   data: T[];
   hasNextPage: boolean;

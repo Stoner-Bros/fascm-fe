@@ -120,24 +120,18 @@ export default function NewHarvestBatchPage() {
     }));
   };
 
-  const getDefaultQuantity = (unit: string) => {
-    return unit === 'kg' ? 20 : 1;
-  };
+  const getDefaultQuantity = () => 20;
 
-  const getQuantityStep = (unit: string) => {
-    return unit === 'kg' ? 20 : 1;
-  };
+  const getQuantityStep = () => 20;
 
-  const getMinQuantity = (unit: string) => {
-    return unit === 'kg' ? 20 : 1;
-  };
+  const getMinQuantity = () => 20;
 
   const addHarvestDetail = () => {
     setHarvestDetails((prev) => [
       ...prev,
       {
         productId: '',
-        quantity: getDefaultQuantity('kg'), // Mặc định kg
+        quantity: getDefaultQuantity(),
         unitPrice: 0,
         unit: 'kg'
       }
@@ -148,20 +142,13 @@ export default function NewHarvestBatchPage() {
     setHarvestDetails((prev) =>
       prev.map((detail, i) => {
         if (i === index) {
-          const step = getQuantityStep(detail.unit);
-          const minQuantity = getMinQuantity(detail.unit);
+          const step = getQuantityStep();
+          const minQuantity = getMinQuantity();
           const newQuantity = detail.quantity + delta;
-
-          if (detail.unit === 'kg') {
-            // Đảm bảo quantity >= 20 và là bội số của 20
-            const adjustedQuantity = Math.max(minQuantity, newQuantity);
-            const roundedQuantity = Math.round(adjustedQuantity / step) * step;
-            return { ...detail, quantity: roundedQuantity };
-          } else {
-            // Ta: tăng/giảm từng đơn vị, tối thiểu 1
-            const adjustedQuantity = Math.max(minQuantity, newQuantity);
-            return { ...detail, quantity: adjustedQuantity };
-          }
+          // Đảm bảo quantity >= 20 và là bội số của 20
+          const adjustedQuantity = Math.max(minQuantity, newQuantity);
+          const roundedQuantity = Math.round(adjustedQuantity / step) * step;
+          return { ...detail, quantity: roundedQuantity };
         }
         return detail;
       })
@@ -180,12 +167,7 @@ export default function NewHarvestBatchPage() {
     setHarvestDetails((prev) =>
       prev.map((detail, i) => {
         if (i === index) {
-          const updated = { ...detail, [field]: value };
-          // Khi thay đổi unit, reset quantity về giá trị mặc định
-          if (field === 'unit') {
-            updated.quantity = getDefaultQuantity(String(value));
-          }
-          return updated;
+          return { ...detail, [field]: value };
         }
         return detail;
       })
@@ -224,32 +206,18 @@ export default function NewHarvestBatchPage() {
         return;
       }
 
-      // Validate quantity based on unit
-      const minQuantity = getMinQuantity(detail.unit);
-      const step = getQuantityStep(detail.unit);
+      // Validate quantity: >= 20 và là bội số của 20
+      const minQuantity = getMinQuantity();
+      const step = getQuantityStep();
 
-      if (detail.unit === 'kg') {
-        // kg: >= 20 và là bội số của 20
-        if (detail.quantity < minQuantity || detail.quantity % step !== 0) {
-          toast({
-            title: 'Validation Error',
-            description:
-              'Quantity must be at least 20 and a multiple of 20. Please use +/- buttons to adjust.',
-            variant: 'destructive'
-          });
-          return;
-        }
-      } else {
-        // ta: >= 1
-        if (detail.quantity < minQuantity) {
-          toast({
-            title: 'Validation Error',
-            description:
-              'Quantity must be at least 1. Please use +/- buttons to adjust.',
-            variant: 'destructive'
-          });
-          return;
-        }
+      if (detail.quantity < minQuantity || detail.quantity % step !== 0) {
+        toast({
+          title: 'Validation Error',
+          description:
+            'Quantity must be at least 20 and a multiple of 20. Please use +/- buttons to adjust.',
+          variant: 'destructive'
+        });
+        return;
       }
     }
 
@@ -485,23 +453,12 @@ export default function NewHarvestBatchPage() {
                             <Label>
                               Unit <span className='text-destructive'>*</span>
                             </Label>
-                            <Select
-                              value={detail.unit}
-                              onValueChange={(value) =>
-                                updateHarvestDetail(index, 'unit', value)
-                              }
-                              required
-                            >
-                              <SelectTrigger>
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value='kg'>
-                                  Kilograms (kg)
-                                </SelectItem>
-                                <SelectItem value='ta'>Ta (ta)</SelectItem>
-                              </SelectContent>
-                            </Select>
+                            <Input
+                              value='kg'
+                              readOnly
+                              disabled
+                              className='bg-muted cursor-not-allowed'
+                            />
                           </div>
                         </div>
 
@@ -517,24 +474,16 @@ export default function NewHarvestBatchPage() {
                                 variant='outline'
                                 size='icon'
                                 onClick={() =>
-                                  adjustQuantity(
-                                    index,
-                                    -getQuantityStep(detail.unit)
-                                  )
+                                  adjustQuantity(index, -getQuantityStep())
                                 }
-                                disabled={
-                                  detail.quantity <= getMinQuantity(detail.unit)
-                                }
+                                disabled={detail.quantity <= getMinQuantity()}
                                 className='h-10 w-10'
                               >
                                 <IconMinus className='h-4 w-4' />
                               </Button>
                               <Input
                                 type='text'
-                                value={
-                                  detail.quantity ||
-                                  getDefaultQuantity(detail.unit)
-                                }
+                                value={detail.quantity || getDefaultQuantity()}
                                 readOnly
                                 className='text-center'
                                 required
@@ -544,10 +493,7 @@ export default function NewHarvestBatchPage() {
                                 variant='outline'
                                 size='icon'
                                 onClick={() =>
-                                  adjustQuantity(
-                                    index,
-                                    getQuantityStep(detail.unit)
-                                  )
+                                  adjustQuantity(index, getQuantityStep())
                                 }
                                 className='h-10 w-10'
                               >
@@ -555,9 +501,8 @@ export default function NewHarvestBatchPage() {
                               </Button>
                             </div>
                             <p className='text-muted-foreground text-xs'>
-                              {detail.unit === 'kg'
-                                ? 'Minimum 20, must be a multiple of 20. Use +/- buttons to adjust.'
-                                : 'Minimum 1. Use +/- buttons to adjust.'}
+                              Minimum 20, must be a multiple of 20. Use +/-
+                              buttons to adjust.
                             </p>
                           </div>
 
@@ -568,20 +513,27 @@ export default function NewHarvestBatchPage() {
                             </Label>
                             <div className='relative'>
                               <Input
-                                type='number'
-                                min='0'
-                                step='1'
+                                type='text'
+                                inputMode='numeric'
                                 value={detail.unitPrice || ''}
-                                onChange={(e) =>
-                                  updateHarvestDetail(
-                                    index,
-                                    'unitPrice',
-                                    parseInt(e.target.value) || 0
-                                  )
-                                }
+                                onChange={(e) => {
+                                  const value = e.target.value;
+                                  // Chỉ cho phép số
+                                  if (value === '' || /^\d+$/.test(value)) {
+                                    updateHarvestDetail(
+                                      index,
+                                      'unitPrice',
+                                      value === '' ? 0 : parseInt(value) || 0
+                                    );
+                                  }
+                                }}
+                                onWheel={(e) => {
+                                  // Prevent scroll wheel from changing value
+                                  e.currentTarget.blur();
+                                }}
                                 placeholder='0'
                                 required
-                                className='pr-12'
+                                className='pr-12 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
                               />
                               <span className='text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-sm'>
                                 VND

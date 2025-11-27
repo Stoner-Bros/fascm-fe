@@ -67,12 +67,6 @@ export const navItems: NavItem[] = [
         url: '/dashboard/warehouse/batches',
         icon: 'inventory',
         shortcut: ['w', 'b']
-      },
-      {
-        title: 'Import Tickets',
-        url: '/dashboard/warehouse/import-tickets',
-        icon: 'warehouse',
-        shortcut: ['w', 't']
       }
     ]
   },

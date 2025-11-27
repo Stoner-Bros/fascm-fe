@@ -32,17 +32,23 @@ import {
   IconArchive,
   IconPlus,
   IconRefresh,
-  IconSearch
+  IconSearch,
+  IconTicket
 } from '@tabler/icons-react';
 import {
   createBatch,
   fetchBatches,
   updateBatch
 } from '@/services/batch.service';
-import { fetchImportTickets } from '@/services/import-ticket.service';
+import {
+  createImportTicket,
+  fetchImportTickets
+} from '@/services/import-ticket.service';
+import { fetchInboundBatches } from '@/services/inbound-batch.service';
 import { fetchOrderDetails } from '@/services/order-detail.service';
 import type { Batch } from '@/types/batch';
 import type { ImportTicket } from '@/types/import-ticket';
+import type { InboundBatch } from '@/types/inbound-batch';
 import type { OrderDetail } from '@/types/order-detail';
 import {
   Select,
@@ -51,32 +57,33 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 
 const BATCH_CAPACITY_KG = 20;
 
-const defaultForm = {
-  batchCode: '',
-  quantity: 0,
-  unit: 'kg',
-  volume: 0,
-  productId: '',
-  importTicketId: '',
-  areaId: '',
-  orderDetailId: ''
+const defaultImportTicketForm = {
+  inboundBatchId: '',
+  realityQuantity: 0,
+  importDate: new Date().toISOString(),
+  areaId: ''
 };
 
 export function BatchManagement() {
   const { toast } = useToast();
   const [batches, setBatches] = useState<Batch[]>([]);
   const [importTickets, setImportTickets] = useState<ImportTicket[]>([]);
+  const [inboundBatches, setInboundBatches] = useState<InboundBatch[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isImportTicketDialogOpen, setIsImportTicketDialogOpen] =
+    useState(false);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [orderDetails, setOrderDetails] = useState<OrderDetail[]>([]);
   const [isLoadingOrderDetails, setIsLoadingOrderDetails] = useState(false);
   const [filters, setFilters] = useState({ search: '' });
-  const [form, setForm] = useState(defaultForm);
+  const [importTicketForm, setImportTicketForm] = useState(
+    defaultImportTicketForm
+  );
   const [assignForm, setAssignForm] = useState({ orderDetailId: '' });
   const [selectedBatchForAssignment, setSelectedBatchForAssignment] =
     useState<Batch | null>(null);
@@ -110,6 +117,15 @@ export function BatchManagement() {
     }
   };
 
+  const loadInboundBatches = async () => {
+    try {
+      const res = await fetchInboundBatches({ page: 1, limit: 100 });
+      setInboundBatches(res.data);
+    } catch (error) {
+      console.error('Unable to load inbound batches', error);
+    }
+  };
+
   const loadOrderDetails = async () => {
     setIsLoadingOrderDetails(true);
     try {
@@ -125,55 +141,18 @@ export function BatchManagement() {
   useEffect(() => {
     loadBatches();
     loadImportTickets();
+    loadInboundBatches();
     loadOrderDetails();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const resetForm = () => {
-    setForm(defaultForm);
+  const resetImportTicketForm = () => {
+    setImportTicketForm(defaultImportTicketForm);
   };
+
   const resetAssignForm = () => {
     setAssignForm({ orderDetailId: '' });
     setSelectedBatchForAssignment(null);
-  };
-
-  const handleSelectOrderDetail = (orderDetailId: string) => {
-    const detail = orderDetails.find((item) => item.id === orderDetailId);
-    const stats = orderDetailStats[orderDetailId];
-    const selectedProductId = detail?.product?.id;
-
-    // Reset importTicketId nếu ticket hiện tại không khớp product
-    let importTicketId = form.importTicketId;
-    if (importTicketId && selectedProductId) {
-      const currentTicket = importTickets.find((t) => t.id === importTicketId);
-      const ticketProductId = currentTicket?.inboundBatch?.product?.id;
-      if (ticketProductId !== selectedProductId) {
-        importTicketId = '';
-      }
-    }
-
-    setForm((prev) => ({
-      ...prev,
-      orderDetailId,
-      productId: selectedProductId ?? prev.productId,
-      quantity: stats?.remainingQuantity ?? detail?.quantity ?? prev.quantity,
-      unit: detail?.unit ?? prev.unit,
-      importTicketId,
-      batchCode: '' // Reset batch code khi đổi order detail
-    }));
-  };
-
-  const handleSelectImportTicket = (ticketId: string) => {
-    const ticket = importTickets.find((item) => item.id === ticketId);
-    const used = importTicketUsage[ticketId] ?? 0;
-    const derivedCode = ticket?.inboundBatch?.batchCode
-      ? `${ticket.inboundBatch.batchCode}-${String(used + 1).padStart(2, '0')}`
-      : form.batchCode;
-    setForm((prev) => ({
-      ...prev,
-      importTicketId: ticketId,
-      batchCode: derivedCode
-    }));
   };
 
   const handleOpenAssignDialog = (batch: Batch) => {
@@ -259,159 +238,92 @@ export function BatchManagement() {
     }
   };
 
-  const handleCreate = async () => {
-    if (!form.batchCode || !form.importTicketId) {
+  const handleCreateImportTicket = async () => {
+    if (!importTicketForm.inboundBatchId) {
       toast({
         variant: 'destructive',
-        title: 'Vui lòng chọn Import Ticket và Batch Code'
+        title: 'Vui lòng chọn Inbound Batch'
       });
       return;
     }
 
-    if (!form.orderDetailId) {
+    if (
+      !importTicketForm.realityQuantity ||
+      importTicketForm.realityQuantity <= 0
+    ) {
       toast({
         variant: 'destructive',
-        title: 'Vui lòng chọn Order Detail'
+        title: 'Vui lòng nhập số lượng thực tế lớn hơn 0'
       });
       return;
     }
 
-    if (!form.productId) {
+    if (!importTicketForm.importDate) {
       toast({
         variant: 'destructive',
-        title: 'Order Detail chưa có thông tin sản phẩm'
+        title: 'Vui lòng chọn ngày nhập kho'
       });
       return;
     }
-
-    // Validate product khớp giữa OrderDetail và ImportTicket
-    const selectedTicket = importTickets.find(
-      (t) => t.id === form.importTicketId
-    );
-    const ticketProductId = selectedTicket?.inboundBatch?.product?.id;
-    if (ticketProductId && ticketProductId !== form.productId) {
-      toast({
-        variant: 'destructive',
-        title: 'Lỗi xác thực',
-        description:
-          'Product của Import Ticket không khớp với Product của Order Detail. Vui lòng chọn lại.'
-      });
-      return;
-    }
-
-    const ticketMeta = availableImportTickets.find(
-      (ticket) => ticket.id === form.importTicketId
-    );
-    const remainingTicketBatches = ticketMeta?.remaining ?? 0;
-
-    if (remainingTicketBatches <= 0) {
-      toast({
-        variant: 'destructive',
-        title: 'Import ticket không còn batch khả dụng'
-      });
-      return;
-    }
-
-    const stats = orderDetailStats[form.orderDetailId];
-    const isKg = form.unit.toLowerCase() === 'kg';
-    const numericQuantity = Number(form.quantity) || 0;
-    const targetQuantity = isKg
-      ? (stats?.remainingQuantity ?? numericQuantity)
-      : numericQuantity;
-    let remainingQuantityForOrder = isKg ? targetQuantity : 0;
-    const batchesNeededForOrder = form.orderDetailId
-      ? isKg
-        ? Math.max(
-            Math.ceil((remainingQuantityForOrder || 0) / BATCH_CAPACITY_KG),
-            0
-          )
-        : 1
-      : 0;
-    const assignableBatches = Math.min(
-      batchesNeededForOrder,
-      remainingTicketBatches
-    );
-
-    const baseBatchCode =
-      selectedTicket?.inboundBatch?.batchCode ||
-      form.batchCode ||
-      selectedTicket?.id ||
-      'BATCH';
-    const initialUsage = importTicketUsage[form.importTicketId] ?? 0;
 
     try {
       setIsSubmitting(true);
-      const payloads = Array.from({ length: remainingTicketBatches }).map(
-        (_, index) => {
-          const shouldAssignOrder =
-            index < assignableBatches && Boolean(form.orderDetailId);
+      const payload = {
+        realityQuantity: Number(importTicketForm.realityQuantity),
+        importDate: importTicketForm.importDate,
+        inboundBatch: { id: importTicketForm.inboundBatchId },
+        ...(importTicketForm.areaId
+          ? { area: { id: importTicketForm.areaId } }
+          : {})
+      };
 
-          let batchQuantity = Number(form.quantity) || 0;
-          if (isKg) {
-            batchQuantity = BATCH_CAPACITY_KG;
-            if (shouldAssignOrder) {
-              batchQuantity = Math.min(
-                remainingQuantityForOrder || BATCH_CAPACITY_KG,
-                BATCH_CAPACITY_KG
-              );
-              remainingQuantityForOrder =
-                (remainingQuantityForOrder || 0) - batchQuantity;
-            }
-          }
+      const newTicket = await createImportTicket(payload);
+      setImportTickets((prev) => [newTicket, ...prev]);
 
-          const batchCode = `${baseBatchCode}-${String(
-            initialUsage + index + 1
-          ).padStart(2, '0')}`;
+      // Auto-create batches: realityQuantity / 20 batches, each 20kg
+      const numberOfBatches = Math.floor(
+        importTicketForm.realityQuantity / BATCH_CAPACITY_KG
+      );
+      const selectedInboundBatch = inboundBatches.find(
+        (b) => b.id === importTicketForm.inboundBatchId
+      );
 
-          return {
-            batchCode,
-            quantity: batchQuantity,
-            unit: form.unit,
-            volume: Number(form.volume),
-            product: { id: form.productId },
-            importTicket: { id: form.importTicketId },
-            ...(form.areaId ? { area: { id: form.areaId } } : {}),
-            ...(shouldAssignOrder && form.orderDetailId
-              ? { orderDetail: { id: form.orderDetailId } }
+      if (numberOfBatches > 0 && selectedInboundBatch?.product) {
+        const baseBatchCode =
+          selectedInboundBatch?.batchCode ||
+          selectedInboundBatch?.id ||
+          newTicket.id ||
+          'BATCH';
+        const batchPayloads = Array.from({ length: numberOfBatches }).map(
+          (_, index) => ({
+            batchCode: `${baseBatchCode}-${String(index + 1).padStart(2, '0')}`,
+            quantity: BATCH_CAPACITY_KG,
+            unit: 'kg',
+            importTicket: { id: newTicket.id },
+            product: { id: selectedInboundBatch.product.id },
+            ...(importTicketForm.areaId
+              ? { area: { id: importTicketForm.areaId } }
               : {})
-          };
-        }
-      );
+            // orderDetail is intentionally omitted (null)
+          })
+        );
 
-      const createdBatches = await Promise.all(
-        payloads.map((payload) => createBatch(payload))
-      );
-      setBatches((prev) => [...createdBatches, ...prev]);
-
-      const assignedCount = createdBatches.filter(
-        (batch) => batch.orderDetail?.id
-      ).length;
+        await Promise.all(batchPayloads.map((payload) => createBatch(payload)));
+      }
 
       toast({
-        title: 'Đã tạo batch',
-        description: `Đã tạo ${createdBatches.length} batch, gắn ${assignedCount} batch cho Order Detail`
+        title: 'Đã tạo import ticket',
+        description: `Ticket ${newTicket.id} đã được tạo và ${numberOfBatches} batch đã được tạo tự động`
       });
 
-      if (isKg && (remainingQuantityForOrder || 0) > 0) {
-        toast({
-          title: 'Chưa đủ số lượng',
-          description: `Order Detail còn thiếu khoảng ${remainingQuantityForOrder} ${form.unit}. Vui lòng chọn import ticket khác.`,
-          variant: 'default'
-        });
-        setForm((prev) => ({
-          ...prev,
-          quantity: remainingQuantityForOrder || prev.quantity,
-          importTicketId: '',
-          batchCode: ''
-        }));
-      } else {
-        resetForm();
-        setIsDialogOpen(false);
-      }
+      resetImportTicketForm();
+      setIsImportTicketDialogOpen(false);
+      await loadBatches();
+      await loadImportTickets();
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Không thể tạo batch',
+        title: 'Không thể tạo import ticket',
         description: error instanceof Error ? error.message : undefined
       });
     } finally {
@@ -454,74 +366,31 @@ export function BatchManagement() {
     );
   }, [batches, orderDetails]);
 
-  const availableImportTickets = useMemo(() => {
-    const selectedProductId = form.productId;
+  // Filter out inbound batches that already have import tickets
+  const availableInboundBatches = useMemo(() => {
+    const usedInboundBatchIds = new Set(
+      importTickets
+        .map((ticket) => ticket.inboundBatch?.id)
+        .filter((id): id is string => Boolean(id))
+    );
+    return inboundBatches.filter((batch) => !usedInboundBatchIds.has(batch.id));
+  }, [inboundBatches, importTickets]);
 
-    return importTickets
-      .map((ticket) => {
-        const used = importTicketUsage[ticket.id] ?? 0;
-        const remaining = Math.max((ticket.numberOfBatch ?? 1) - used, 0);
-        return {
-          ...ticket,
-          remaining,
-          used
-        };
-      })
-      .filter((ticket) => {
-        // Lọc theo số batch còn lại
-        if (ticket.remaining <= 0) return false;
+  const filteredBatches = useMemo(() => {
+    // Chỉ lấy những batch có batchCode
+    const batchesWithCode = batches.filter(
+      (batch) => batch.batchCode && batch.batchCode.trim() !== ''
+    );
 
-        // Nếu đã chọn order detail (có productId), chỉ hiển thị ticket có product khớp
-        if (selectedProductId) {
-          const ticketProductId = ticket.inboundBatch?.product?.id;
-          return ticketProductId === selectedProductId;
-        }
-
-        // Nếu chưa chọn order detail, hiển thị tất cả
-        return true;
-      });
-  }, [importTickets, importTicketUsage, form.productId]);
-
-  const filteredTickets = useMemo(() => {
-    if (!filters.search) return batches;
+    if (!filters.search) return batchesWithCode;
     const keyword = filters.search.toLowerCase();
-    return batches.filter(
+    return batchesWithCode.filter(
       (batch) =>
         batch.id.toLowerCase().includes(keyword) ||
         batch.batchCode.toLowerCase().includes(keyword) ||
         batch.product?.id?.toLowerCase().includes(keyword)
     );
   }, [batches, filters.search]);
-
-  const selectedImportTicket = useMemo(
-    () => importTickets.find((ticket) => ticket.id === form.importTicketId),
-    [importTickets, form.importTicketId]
-  );
-
-  const selectedOrderDetail = useMemo(
-    () => orderDetails.find((detail) => detail.id === form.orderDetailId),
-    [orderDetails, form.orderDetailId]
-  );
-
-  const availableOrderDetails = useMemo(
-    () =>
-      orderDetails.filter((detail) => {
-        const stats = orderDetailStats[detail.id];
-        if (!stats) return true;
-        return stats.remainingQuantity > 0;
-      }),
-    [orderDetails, orderDetailStats]
-  );
-
-  const assignedBatches = useMemo(
-    () => filteredTickets.filter((batch) => Boolean(batch.orderDetail?.id)),
-    [filteredTickets]
-  );
-
-  const unassignedBatches = useMemo(
-    () => filteredTickets.filter((batch) => !batch.orderDetail?.id),
-    [filteredTickets]
-  );
 
   const assignableOrderDetails = useMemo(() => {
     if (!selectedBatchForAssignment) {
@@ -543,16 +412,34 @@ export function BatchManagement() {
     });
   }, [orderDetails, orderDetailStats, selectedBatchForAssignment]);
 
+  const assignedBatches = useMemo(
+    () => filteredBatches.filter((batch) => Boolean(batch.orderDetail?.id)),
+    [filteredBatches]
+  );
+
+  const unassignedBatches = useMemo(
+    () => filteredBatches.filter((batch) => !batch.orderDetail?.id),
+    [filteredBatches]
+  );
+
+  const selectedInboundBatch = useMemo(
+    () =>
+      inboundBatches.find(
+        (batch) => batch.id === importTicketForm.inboundBatchId
+      ),
+    [inboundBatches, importTicketForm.inboundBatchId]
+  );
+
   return (
     <div className='w-full space-y-6'>
       <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
         <div>
           <h1 className='flex items-center gap-2 text-3xl font-bold tracking-tight'>
             <IconArchive className='h-8 w-8 text-emerald-600' />
-            Batch Manage
+            Batch Management
           </h1>
           <p className='text-muted-foreground'>
-            Tạo batch từ import ticket và quản lý thông tin batch.
+            Quản lý import tickets và batches trong kho.
           </p>
         </div>
         <div className='flex flex-wrap gap-2'>
@@ -561,216 +448,148 @@ export function BatchManagement() {
             Làm mới
           </Button>
           <Dialog
-            open={isDialogOpen}
+            open={isImportTicketDialogOpen}
             onOpenChange={(open) => {
-              if (!open) resetForm();
-              setIsDialogOpen(open);
+              if (!open) resetImportTicketForm();
+              setIsImportTicketDialogOpen(open);
             }}
           >
             <DialogTrigger asChild>
               <Button>
-                <IconPlus className='mr-2 h-4 w-4' />
-                Tạo batch
+                <IconTicket className='mr-2 h-4 w-4' />
+                Tạo Import Ticket
               </Button>
             </DialogTrigger>
             <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
               <DialogHeader>
-                <DialogTitle>Tạo batch</DialogTitle>
+                <DialogTitle>Tạo Import Ticket</DialogTitle>
                 <DialogDescription>
-                  Điền thông tin batch dựa trên import ticket và kho.
+                  Tạo import ticket và tự động tạo batches (mỗi batch 20kg).
                 </DialogDescription>
               </DialogHeader>
               <div className='space-y-4 py-4'>
                 <div className='space-y-2'>
-                  <Label htmlFor='batchCode'>Batch Code *</Label>
-                  <Input
-                    id='batchCode'
-                    value={form.batchCode}
-                    readOnly
-                    placeholder='Chọn import ticket để tự sinh'
-                  />
-                </div>
-                <div className='grid gap-4 md:grid-cols-2'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='quantity'>Số lượng *</Label>
-                    <Input
-                      id='quantity'
-                      type='number'
-                      min={0}
-                      value={form.quantity}
-                      onChange={(e) =>
-                        setForm({ ...form, quantity: Number(e.target.value) })
-                      }
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='unit'>Đơn vị *</Label>
-                    <Input
-                      id='unit'
-                      value={form.unit}
-                      onChange={(e) =>
-                        setForm({ ...form, unit: e.target.value })
-                      }
-                      placeholder='VD: kg'
-                    />
-                  </div>
-                </div>
-                <div className='grid gap-4 md:grid-cols-2'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='volume'>Thể tích</Label>
-                    <Input
-                      id='volume'
-                      type='number'
-                      min={0}
-                      value={form.volume}
-                      onChange={(e) =>
-                        setForm({ ...form, volume: Number(e.target.value) })
-                      }
-                    />
-                  </div>
-                  <div className='space-y-2'>
-                    <Label htmlFor='areaId'>Area ID (tùy chọn)</Label>
-                    <Input
-                      id='areaId'
-                      value={form.areaId}
-                      onChange={(e) =>
-                        setForm({ ...form, areaId: e.target.value })
-                      }
-                      placeholder='Nhập Area ID'
-                    />
-                  </div>
-                </div>
-                <div className='space-y-2'>
-                  <Label>Order Detail *</Label>
+                  <Label htmlFor='inboundBatch'>Inbound Batch *</Label>
                   <Select
-                    value={form.orderDetailId}
-                    onValueChange={handleSelectOrderDetail}
-                    disabled={
-                      isLoadingOrderDetails ||
-                      availableOrderDetails.length === 0
+                    value={importTicketForm.inboundBatchId}
+                    onValueChange={(value) =>
+                      setImportTicketForm((prev) => ({
+                        ...prev,
+                        inboundBatchId: value
+                      }))
                     }
+                    disabled={availableInboundBatches.length === 0}
                   >
                     <SelectTrigger>
                       <SelectValue
                         placeholder={
-                          isLoadingOrderDetails
-                            ? 'Đang tải order detail...'
-                            : availableOrderDetails.length === 0
-                              ? 'Không có order detail khả dụng'
-                              : 'Chọn order detail'
+                          availableInboundBatches.length === 0
+                            ? 'Không còn inbound batch khả dụng'
+                            : 'Chọn inbound batch'
                         }
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableOrderDetails.map((detail) => {
-                        const stats = orderDetailStats[detail.id];
-                        const remainingLabel =
-                          stats && detail.unit?.toLowerCase() === 'kg'
-                            ? ` • còn ${stats.remainingQuantity} ${detail.unit}`
-                            : '';
-                        return (
-                          <SelectItem key={detail.id} value={detail.id}>
-                            {detail.id} •{' '}
-                            {detail.product?.name ||
-                              detail.product?.id ||
-                              'Không có sản phẩm'}
-                            {remainingLabel}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                  {selectedOrderDetail ? (
-                    <p className='text-muted-foreground text-xs'>
-                      Số lượng: {selectedOrderDetail.quantity ?? '—'}{' '}
-                      {selectedOrderDetail.unit ?? ''}{' '}
-                      {orderDetailStats[selectedOrderDetail.id]
-                        ?.remainingQuantity !== undefined
-                        ? `(Còn lại ${orderDetailStats[selectedOrderDetail.id]?.remainingQuantity} ${
-                            selectedOrderDetail.unit ?? ''
-                          })`
-                        : null}
-                    </p>
-                  ) : (
-                    <p className='text-muted-foreground text-xs'>
-                      Chọn order detail để hệ thống tự điền sản phẩm.
-                    </p>
-                  )}
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='productId'>Product ID *</Label>
-                  <Input
-                    id='productId'
-                    value={form.productId}
-                    readOnly
-                    placeholder='Chọn order detail để tự điền'
-                  />
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='importTicketId'>Import Ticket *</Label>
-                  <Select
-                    value={form.importTicketId}
-                    onValueChange={handleSelectImportTicket}
-                    disabled={!form.productId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          !form.productId
-                            ? 'Vui lòng chọn Order Detail trước'
-                            : availableImportTickets.length === 0
-                              ? 'Không có import ticket khả dụng cho sản phẩm này'
-                              : 'Chọn import ticket'
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableImportTickets.map((ticket) => (
-                        <SelectItem key={ticket.id} value={ticket.id}>
-                          {ticket.id} • còn {ticket.remaining}/
-                          {ticket.numberOfBatch}
+                      {availableInboundBatches.map((batch) => (
+                        <SelectItem key={batch.id} value={batch.id}>
+                          {batch.id} •{' '}
+                          {batch.product?.name || batch.product?.id || '—'}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-                  <p className='text-muted-foreground text-xs'>
-                    {!form.productId
-                      ? 'Vui lòng chọn Order Detail trước để hiển thị import ticket phù hợp.'
-                      : 'Chỉ hiển thị các import ticket có product khớp với Order Detail đã chọn.'}
-                  </p>
+                  {availableInboundBatches.length === 0 && (
+                    <p className='text-muted-foreground text-xs'>
+                      Tất cả inbound batches đã được sử dụng để tạo import
+                      ticket.
+                    </p>
+                  )}
                 </div>
-                {selectedImportTicket && (
+                {selectedInboundBatch && (
                   <div className='rounded-md border border-dashed p-3 text-sm'>
-                    <p className='font-medium'>
-                      Import Ticket: {selectedImportTicket.id}
+                    <p className='font-semibold'>
+                      Batch ID: {selectedInboundBatch.id}
                     </p>
                     <p>
-                      Inbound Batch:{' '}
-                      {selectedImportTicket.inboundBatch?.id ?? 'Không có'}
+                      Sản phẩm:{' '}
+                      {selectedInboundBatch.product?.name ||
+                        selectedInboundBatch.product?.id ||
+                        '—'}
                     </p>
                     <p>
-                      Batch Code gợi ý:{' '}
-                      {selectedImportTicket.inboundBatch?.batchCode
-                        ? `${selectedImportTicket.inboundBatch.batchCode}-${String(
-                            (importTicketUsage[selectedImportTicket.id] ?? 0) +
-                              1
-                          ).padStart(2, '0')}`
-                        : 'Chưa xác định'}
+                      Số lượng: {selectedInboundBatch.quantity}{' '}
+                      {selectedInboundBatch.unit}
                     </p>
                   </div>
                 )}
-                {/* Order detail selection already handled above */}
+                <div className='space-y-2'>
+                  <Label htmlFor='realityQuantity'>
+                    Số lượng thực tế (kg) *
+                  </Label>
+                  <Input
+                    id='realityQuantity'
+                    type='number'
+                    min={0}
+                    step={0.01}
+                    value={importTicketForm.realityQuantity}
+                    onChange={(e) =>
+                      setImportTicketForm((prev) => ({
+                        ...prev,
+                        realityQuantity: Number(e.target.value)
+                      }))
+                    }
+                    placeholder='Nhập số lượng thực tế'
+                  />
+                  {importTicketForm.realityQuantity > 0 && (
+                    <p className='text-muted-foreground text-xs'>
+                      Sẽ tạo{' '}
+                      {Math.floor(
+                        importTicketForm.realityQuantity / BATCH_CAPACITY_KG
+                      )}{' '}
+                      batch (mỗi batch 20kg)
+                    </p>
+                  )}
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='areaId'>Area ID (tùy chọn)</Label>
+                  <Input
+                    id='areaId'
+                    value={importTicketForm.areaId}
+                    onChange={(e) =>
+                      setImportTicketForm((prev) => ({
+                        ...prev,
+                        areaId: e.target.value
+                      }))
+                    }
+                    placeholder='Nhập Area ID'
+                  />
+                </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='importDate'>Ngày nhập kho *</Label>
+                  <DateTimePicker
+                    value={importTicketForm.importDate}
+                    onChange={(value: string) =>
+                      setImportTicketForm((prev) => ({
+                        ...prev,
+                        importDate: value
+                      }))
+                    }
+                  />
+                </div>
               </div>
               <div className='flex justify-end gap-2'>
                 <Button
                   variant='outline'
-                  onClick={() => setIsDialogOpen(false)}
+                  onClick={() => setIsImportTicketDialogOpen(false)}
                   disabled={isSubmitting}
                 >
                   Hủy
                 </Button>
-                <Button onClick={handleCreate} disabled={isSubmitting}>
-                  {isSubmitting ? 'Đang xử lý...' : 'Tạo batch'}
+                <Button
+                  onClick={handleCreateImportTicket}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Đang xử lý...' : 'Tạo Import Ticket'}
                 </Button>
               </div>
             </DialogContent>
@@ -818,7 +637,6 @@ export function BatchManagement() {
                   <TableHead>Product</TableHead>
                   <TableHead>Khu vực</TableHead>
                   <TableHead>Ngày tạo</TableHead>
-                  <TableHead>Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -877,6 +695,7 @@ export function BatchManagement() {
                   <TableHead>Product</TableHead>
                   <TableHead>Khu vực</TableHead>
                   <TableHead>Ngày tạo</TableHead>
+                  <TableHead>Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
