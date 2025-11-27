@@ -10,7 +10,9 @@ import {
 export async function fetchDeliveries({
   page = 1,
   limit = 10,
-  orderScheduleId
+  orderScheduleId,
+  status,
+  sort = 'desc'
 }: FindAllDeliveriesDto = {}) {
   const params = new URLSearchParams({
     page: String(page),
@@ -18,6 +20,12 @@ export async function fetchDeliveries({
   });
   if (orderScheduleId) {
     params.append('orderScheduleId', orderScheduleId);
+  }
+  if (status) {
+    params.append('status', status);
+  }
+  if (sort) {
+    params.append('sort', sort);
   }
   return fetchJSON<InfinityPaginationResponse<Delivery>>(
     `/deliveries?${params.toString()}`

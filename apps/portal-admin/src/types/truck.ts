@@ -1,8 +1,4 @@
-export type IoTDevice = {
-  id: string;
-  deviceName?: string;
-  deviceType?: string;
-};
+import { IoTDeviceBE } from './iot-device';
 
 export type Truck = {
   id: string;
@@ -12,7 +8,7 @@ export type Truck = {
   licensePhoto?: string | null;
   licensePlate?: string | null;
   capacity?: number | null;
-  iotDevice?: IoTDevice[] | null;
+  iotDevice?: IoTDeviceBE[] | null;
   createdAt?: string;
   updatedAt?: string;
 };

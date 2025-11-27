@@ -24,9 +24,9 @@ const Polyline = dynamic(
 import type { Icon, Map as LeafletMap } from 'leaflet';
 import { io } from 'socket.io-client';
 import { useParams } from 'next/navigation';
-import { fetchDeliveryById, type Delivery } from '@/services/delivery.service';
+import { fetchDeliveryById } from '@/services/delivery.service';
 import PageContainer from '@/components/layout/page-container';
-
+import { Delivery } from '@/types';
 type LatLng = { lat: number; lng: number };
 
 function distanceSq(a: [number, number], b: LatLng) {

@@ -50,6 +50,10 @@ import type { Truck } from '@/types/truck';
 import type { Delivery } from '@/types/delivery';
 import { useToast } from '@/components/ui/use-toast';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { fetchInboundBatches } from '@/services/inbound-batch.service';
+import { fetchHarvestTickets } from '@/services/harvest-ticket.service';
+import { fetchHarvestDetailsByHarvestTicketId } from '@/services/harvest-detail.service';
+import type { InboundBatch } from '@/types/inbound-batch';
 
 function StatusBadge({ status }: { status?: string | null }) {
   if (!status) return <Badge variant='outline'>Unknown</Badge>;
@@ -93,6 +97,8 @@ export function InboundTruckAssignment() {
     useState<HarvestSchedule | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [inboundItems, setInboundItems] = useState<InboundBatch[]>([]);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
 
   const [assignmentForm, setAssignmentForm] = useState({
     truckId: '',
@@ -123,7 +129,8 @@ export function InboundTruckAssignment() {
     try {
       const res = await fetchHarvestSchedules({
         page: pagination.page,
-        limit: pagination.limit
+        limit: pagination.limit,
+        status: 'approved'
       });
       // Display all schedules without filtering by status or assignment
       setSchedules(res.data);
@@ -169,6 +176,53 @@ export function InboundTruckAssignment() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.page, deliveries]);
+
+  useEffect(() => {
+    const loadDetailProducts = async () => {
+      if (!isDetailDialogOpen || !selectedSchedule) return;
+      setIsDetailLoading(true);
+      try {
+        const ticketsRes = await fetchHarvestTickets({
+          page: 1,
+          limit: 1000
+        });
+        const matchedTickets = (ticketsRes.data || []).filter((t: any) => {
+          const ticketScheduleId =
+            t?.harvestScheduleId?.id ??
+            t?.harvestSchedule?.id ??
+            t?.harvestScheduleId ??
+            t?.scheduleId ??
+            '';
+          return String(ticketScheduleId) === String(selectedSchedule.id);
+        });
+        let detailIds: string[] = [];
+        if (matchedTickets.length > 0) {
+          const detailResponses = await Promise.all(
+            matchedTickets.map(async (t: any) => {
+              try {
+                const ds = await fetchHarvestDetailsByHarvestTicketId(t.id);
+                return ds ?? [];
+              } catch {
+                return [];
+              }
+            })
+          );
+          detailIds = detailResponses.flat().map((d) => d.id);
+        }
+        const inboundRes = await fetchInboundBatches({ page: 1, limit: 1000 });
+        const idSet = new Set(detailIds);
+        const filtered = (inboundRes.data || []).filter(
+          (b) => !!b.harvestDetail?.id && idSet.has(b.harvestDetail.id)
+        );
+        setInboundItems(filtered);
+      } catch {
+        setInboundItems([]);
+      } finally {
+        setIsDetailLoading(false);
+      }
+    };
+    loadDetailProducts();
+  }, [isDetailDialogOpen, selectedSchedule]);
 
   // Handle assign truck for inbound pickup
   const handleAssignTruck = async () => {
@@ -287,7 +341,7 @@ export function InboundTruckAssignment() {
                 ) : schedules.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className='text-center'>
-                      Không có lịch thu hoạch sẵn sàng
+                      Không có lịch thu hoạch
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -420,6 +474,61 @@ export function InboundTruckAssignment() {
         </CardContent>
       </Card>
 
+      {/* Deliveries List */}
+      <Card className='w-full'>
+        <CardHeader>
+          <CardTitle className='flex items-center gap-2'>
+            <IconTruckLoading className='h-5 w-5' />
+            Danh Sách Chuyến Inbound ({deliveries.length})
+          </CardTitle>
+          <CardDescription>
+            Hiển thị tất cả chuyến, bao gồm đã hoàn thành và đã hủy
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className='rounded-md border'>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Lịch thu hoạch</TableHead>
+                  <TableHead>Xe</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead>Khởi hành</TableHead>
+                  <TableHead>Kết thúc</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {deliveries.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className='text-center'>
+                      Không có chuyến inbound
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  deliveries.map((d) => (
+                    <TableRow key={d.id}>
+                      <TableCell className='font-mono text-sm'>
+                        {d.id}
+                      </TableCell>
+                      <TableCell className='font-mono text-sm'>
+                        {d.harvestSchedule?.id || '-'}
+                      </TableCell>
+                      <TableCell>
+                        {d.truck?.licensePlate || d.truck?.id || '-'}
+                      </TableCell>
+                      <TableCell>{d.status || '-'}</TableCell>
+                      <TableCell>{formatDate(d.startTime)}</TableCell>
+                      <TableCell>{formatDate(d.endTime)}</TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Detail Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
         <DialogContent className='max-w-3xl'>
@@ -456,6 +565,40 @@ export function InboundTruckAssignment() {
                   <Label className='text-muted-foreground'>Mô tả</Label>
                   <p>{selectedSchedule.description || 'Không có mô tả'}</p>
                 </div>
+              </div>
+              <div className='rounded-md border'>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Sản phẩm</TableHead>
+                      <TableHead>Số lượng</TableHead>
+                      <TableHead>Đơn vị</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isDetailLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className='text-center'>
+                          Đang tải...
+                        </TableCell>
+                      </TableRow>
+                    ) : inboundItems.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={3} className='text-center'>
+                          Không có sản phẩm
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      inboundItems.map((b) => (
+                        <TableRow key={b.id}>
+                          <TableCell>{b.product?.name || 'Vip'}</TableCell>
+                          <TableCell>{b.quantity}</TableCell>
+                          <TableCell>{b.unit}</TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             </div>
           )}
