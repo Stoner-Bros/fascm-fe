@@ -13,12 +13,24 @@ import {
   WifiOff
 } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter
+} from '@/components/ui/dialog';
+import { Settings } from 'lucide-react';
 
-const API_BASE_URL =
-  'https://robertson-copyright-mentor-discount.trycloudflare.com';
-const STREAM_URL = `${API_BASE_URL}/video_feed`;
+const DEFAULT_API_URL = 'https://quality-detection-system.trycloudflare.com';
 
 export default function QualityDetectionPage() {
+  const [apiBaseUrl, setApiBaseUrl] = useState(DEFAULT_API_URL);
+  const [tempApiUrl, setTempApiUrl] = useState(DEFAULT_API_URL);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isStreaming, setIsStreaming] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [hasError, setHasError] = useState(false);
@@ -32,12 +44,25 @@ export default function QualityDetectionPage() {
     undefined
   );
 
+  // Handle URL configuration
+  const handleSaveUrl = () => {
+    setApiBaseUrl(tempApiUrl);
+    setIsDialogOpen(false);
+  };
+
+  const handleDialogOpen = (open: boolean) => {
+    setIsDialogOpen(open);
+    if (open) {
+      setTempApiUrl(apiBaseUrl); // Reset temp URL to current value when opening
+    }
+  };
+
   // API functions
   const callStartEndpoint = async () => {
     setIsApiLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/start`, {
-        method: 'POST',
+      const response = await fetch(`${apiBaseUrl}/start`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json'
         }
@@ -52,7 +77,7 @@ export default function QualityDetectionPage() {
           setHasError(false);
           setConnectionStatus('connecting');
           if (imgRef.current) {
-            imgRef.current.src = `${STREAM_URL}?t=${Date.now()}`;
+            imgRef.current.src = `${apiBaseUrl}/video_feed?t=${Date.now()}`;
           }
         }
       } else {
@@ -68,8 +93,8 @@ export default function QualityDetectionPage() {
   const callStopEndpoint = async () => {
     setIsApiLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/stop`, {
-        method: 'POST',
+      const response = await fetch(`${apiBaseUrl}/stop`, {
+        method: 'GET',
         headers: {
           'Content-Type': 'application/json'
         }
@@ -124,7 +149,7 @@ export default function QualityDetectionPage() {
       setHasError(false);
       setConnectionStatus('connecting');
       if (imgRef.current) {
-        imgRef.current.src = `${STREAM_URL}?t=${Date.now()}`;
+        imgRef.current.src = `${apiBaseUrl}/video_feed?t=${Date.now()}`;
       }
     }
   };
@@ -134,7 +159,7 @@ export default function QualityDetectionPage() {
     setHasError(false);
     setConnectionStatus('connecting');
     if (imgRef.current) {
-      imgRef.current.src = `${STREAM_URL}?t=${Date.now()}`;
+      imgRef.current.src = `${apiBaseUrl}/video_feed?t=${Date.now()}`;
     }
   };
 
@@ -194,7 +219,59 @@ export default function QualityDetectionPage() {
         <h1 className='text-3xl font-bold text-gray-900'>
           Phát hiện chất lượng
         </h1>
-        {getStatusBadge()}
+        <div className='flex items-center space-x-3'>
+          {/* API Configuration Dialog */}
+          <Dialog open={isDialogOpen} onOpenChange={handleDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant='outline' size='sm'>
+                <Settings className='mr-2 h-4 w-4' />
+                Cấu hình API
+              </Button>
+            </DialogTrigger>
+            <DialogContent className='sm:max-w-md'>
+              <DialogHeader>
+                <DialogTitle>Cấu hình URL API</DialogTitle>
+              </DialogHeader>
+              <div className='space-y-4 py-4'>
+                <div>
+                  <Label htmlFor='api-url-dialog'>URL API cơ sở</Label>
+                  <Input
+                    id='api-url-dialog'
+                    type='url'
+                    value={tempApiUrl}
+                    onChange={(e) => setTempApiUrl(e.target.value)}
+                    placeholder='https://your-api-domain.com'
+                    className='mt-1'
+                  />
+                  <p className='mt-1 text-sm text-gray-500'>
+                    Nhập URL cơ sở cho API (ví dụ: https://example.ngrok.io)
+                  </p>
+                </div>
+                <div className='space-y-2'>
+                  <div className='rounded bg-gray-50 p-2 text-sm'>
+                    <strong>Stream:</strong> {tempApiUrl}/video_feed
+                  </div>
+                  <div className='rounded bg-green-50 p-2 text-sm'>
+                    <strong>Start:</strong> GET {tempApiUrl}/start
+                  </div>
+                  <div className='rounded bg-red-50 p-2 text-sm'>
+                    <strong>Stop:</strong> GET {tempApiUrl}/stop
+                  </div>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant='outline'
+                  onClick={() => setIsDialogOpen(false)}
+                >
+                  Hủy
+                </Button>
+                <Button onClick={handleSaveUrl}>Lưu</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          {getStatusBadge()}
+        </div>
       </div>
 
       <Card>
@@ -270,7 +347,7 @@ export default function QualityDetectionPage() {
               {isStreaming && (
                 <img
                   ref={imgRef}
-                  src={`${STREAM_URL}?t=${Date.now()}`}
+                  src={`${apiBaseUrl}/video_feed?t=${Date.now()}`}
                   alt='Video Stream'
                   className='h-full w-full object-contain'
                   onLoad={handleImageLoad}
@@ -330,24 +407,10 @@ export default function QualityDetectionPage() {
                   <span>
                     Stream URL:{' '}
                     <code className='rounded bg-gray-200 px-1 text-xs'>
-                      {STREAM_URL}
+                      {apiBaseUrl}/video_feed
                     </code>
                   </span>
                   <span>Định dạng: MJPEG</span>
-                </div>
-                <div className='flex items-center justify-between'>
-                  <span>
-                    Start API:{' '}
-                    <code className='rounded bg-green-100 px-1 text-xs'>
-                      POST {API_BASE_URL}/start
-                    </code>
-                  </span>
-                  <span>
-                    Stop API:{' '}
-                    <code className='rounded bg-red-100 px-1 text-xs'>
-                      POST {API_BASE_URL}/stop
-                    </code>
-                  </span>
                 </div>
               </div>
             </div>
