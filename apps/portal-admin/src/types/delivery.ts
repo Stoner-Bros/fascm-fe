@@ -1,79 +1,206 @@
-// Truck and Transport Staff definitions
+// ============================================================================
+// Core Delivery Types (aligned with backend API)
+// ============================================================================
+
+/**
+ * IoT Device type for truck monitoring
+ */
+export interface IoTDevice {
+  id: string;
+  deviceId?: string | null;
+  deviceType?: string | null;
+  status?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Truck type (aligned with backend)
+ */
+export interface Truck {
+  id: string;
+  licensePlate?: string | null;
+  model?: string | null;
+  capacity?: number | null;
+  status?: string | null;
+  currentLocation?: string | null;
+  licensePhoto?: string | null;
+  iotDevice?: IoTDevice[] | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Supplier type for harvest schedules
+ */
+export interface Supplier {
+  id: string;
+  name?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Harvest Schedule type (aligned with backend)
+ */
+export interface HarvestSchedule {
+  id: string;
+  description?: string | null;
+  status?: string | null;
+  harvestDate?: string | null;
+  reason?: string | null;
+  supplierId?: Supplier | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Consignee type for order schedules
+ */
+export interface Consignee {
+  id: string;
+  name?: string | null;
+  address?: string | null;
+  phone?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Order Schedule type (aligned with backend)
+ */
+export interface OrderSchedule {
+  id: string;
+  description?: string | null;
+  status?: string | null;
+  orderDate?: string | null;
+  consignee?: Consignee | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * Main Delivery type (aligned with backend API)
+ */
+export interface Delivery {
+  id: string;
+  startLat?: number | null;
+  startLng?: number | null;
+  endLat?: number | null;
+  endLng?: number | null;
+  startAddress?: string | null;
+  endAddress?: string | null;
+  status?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  truck?: Truck | null;
+  harvestSchedule?: HarvestSchedule | null;
+  orderSchedule?: OrderSchedule | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * DTO for creating a new delivery
+ */
+export interface CreateDeliveryDto {
+  startLat?: number | null;
+  startLng?: number | null;
+  endLat?: number | null;
+  endLng?: number | null;
+  startAddress?: string | null;
+  endAddress?: string | null;
+  status?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  truck?: { id: string } | null;
+  harvestSchedule?: { id: string } | null;
+  orderSchedule?: { id: string } | null;
+}
+
+/**
+ * DTO for updating a delivery
+ */
+export type UpdateDeliveryDto = Partial<CreateDeliveryDto>;
+
+/**
+ * DTO for querying deliveries with pagination and filters
+ */
+export interface FindAllDeliveriesDto {
+  page?: number;
+  limit?: number;
+  orderScheduleId?: string;
+}
+
+/**
+ * Pagination response wrapper
+ */
+export interface InfinityPaginationResponse<T> {
+  data: T[];
+  page: number;
+  limit: number;
+  hasNextPage: boolean;
+}
+
+// ============================================================================
+// Real-time Delivery Tracking (WebSocket)
+// ============================================================================
+
+/**
+ * Payload for starting a delivery tracking session
+ */
+export interface DeliveryStartPayload {
+  deliveryId: string;
+  orderId?: string;
+  startLat: number;
+  startLng: number;
+  startTime?: string;
+  route?: [number, number][];
+}
+
+/**
+ * Payload for updating delivery location
+ */
+export interface DeliveryUpdatePayload {
+  deliveryId: string;
+  lat: number;
+  lng: number;
+  speedKmh?: number;
+  headingDeg?: number;
+  timestamp?: string;
+}
+
+/**
+ * Payload for ending a delivery
+ */
+export interface DeliveryEndPayload {
+  deliveryId: string;
+  endLat: number;
+  endLng: number;
+  endTime?: string;
+}
+
+// ============================================================================
+// Legacy Types (for backward compatibility - consider migrating)
+// ============================================================================
+
+/**
+ * @deprecated Use Truck type instead
+ */
 export interface TransportStaff {
   id: string;
   name: string;
   phone: string;
   role: 'driver' | 'assistant' | 'supervisor';
   licenseNumber?: string;
-  experience: number; // years
+  experience: number;
 }
 
-export interface Truck {
-  id: string;
-  licenseNumber: string;
-  model: string;
-  capacity: number; // in kg
-  maxWeight: number; // in kg
-  volume: number; // in cubic meters
-  fuelType: 'diesel' | 'electric' | 'hybrid';
-  status: 'available' | 'in_use' | 'maintenance' | 'out_of_service';
-  gpsDevice: {
-    deviceId: string;
-    isActive: boolean;
-    lastUpdate: string;
-  };
-  environmentSensors: {
-    temperatureSensorId: string;
-    humiditySensorId: string;
-    isActive: boolean;
-    lastUpdate: string;
-  };
-  transportStaff: TransportStaff[];
-  maintenanceDate?: string;
-  registrationExpiry: string;
-}
-
-// Order definitions for outbound deliveries
-export interface OrderItem {
-  id: string;
-  productId: string;
-  productName: string;
-  quantity: number;
-  unit: string;
-  weight: number; // kg per item
-  volume: number; // cubic meters per item
-  specialRequirements?: string;
-}
-
-export interface Order {
-  id: string;
-  customerId: string;
-  customerName: string;
-  customerAddress: string;
-  customerContact: string;
-  customerType: 'supermarket' | 'restaurant' | 'distributor' | 'retailer';
-  items: OrderItem[];
-  totalWeight: number; // calculated from items
-  totalVolume: number; // calculated from items
-  totalValue: number;
-  deliveryDate: string;
-  priority: 'low' | 'medium' | 'high' | 'urgent';
-  specialHandling?: string;
-  requiresSignature: boolean;
-  status:
-    | 'pending'
-    | 'confirmed'
-    | 'packed'
-    | 'assigned'
-    | 'in_transit'
-    | 'delivered'
-    | 'cancelled';
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-// Real-time monitoring data
+/**
+ * @deprecated Legacy truck monitoring type
+ */
 export interface TruckMonitoring {
   truckId: string;
   location: {
@@ -83,17 +210,19 @@ export interface TruckMonitoring {
     timestamp: string;
   };
   environment: {
-    temperature: number; // Celsius
-    humidity: number; // percentage
+    temperature: number;
+    humidity: number;
     timestamp: string;
   };
-  speed: number; // km/h
-  fuel: number; // percentage or liters
+  speed: number;
+  fuel: number;
   isMoving: boolean;
   lastUpdate: string;
 }
 
-// Updated delivery interfaces
+/**
+ * @deprecated Legacy inbound delivery type
+ */
 export interface InboundDelivery {
   id: string;
   farmName: string;
@@ -125,6 +254,54 @@ export interface InboundDelivery {
   updatedAt: string;
 }
 
+/**
+ * @deprecated Legacy order item type
+ */
+export interface OrderItem {
+  id: string;
+  productId: string;
+  productName: string;
+  quantity: number;
+  unit: string;
+  weight: number;
+  volume: number;
+  specialRequirements?: string;
+}
+
+/**
+ * @deprecated Legacy order type
+ */
+export interface Order {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerAddress: string;
+  customerContact: string;
+  customerType: 'supermarket' | 'restaurant' | 'distributor' | 'retailer';
+  items: OrderItem[];
+  totalWeight: number;
+  totalVolume: number;
+  totalValue: number;
+  deliveryDate: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  specialHandling?: string;
+  requiresSignature: boolean;
+  status:
+    | 'pending'
+    | 'confirmed'
+    | 'packed'
+    | 'assigned'
+    | 'in_transit'
+    | 'delivered'
+    | 'cancelled';
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * @deprecated Legacy outbound delivery type
+ */
 export interface OutboundDelivery {
   id: string;
   warehouseId: string;
@@ -133,9 +310,9 @@ export interface OutboundDelivery {
   truckId: string;
   truck: Truck;
   orders: Order[];
-  totalWeight: number; // sum of all orders
-  totalVolume: number; // sum of all orders
-  totalValue: number; // sum of all orders
+  totalWeight: number;
+  totalVolume: number;
+  totalValue: number;
   departureTime: string;
   estimatedArrival: string;
   actualArrival?: string;
@@ -164,7 +341,9 @@ export interface OutboundDelivery {
   updatedAt: string;
 }
 
-// Validation errors for weight/capacity
+/**
+ * @deprecated Legacy validation type
+ */
 export interface WeightCapacityValidation {
   isValid: boolean;
   errors: {
@@ -181,7 +360,9 @@ export interface WeightCapacityValidation {
   }[];
 }
 
-// Fleet management
+/**
+ * @deprecated Legacy fleet stats type
+ */
 export interface FleetStats {
   totalTrucks: number;
   availableTrucks: number;

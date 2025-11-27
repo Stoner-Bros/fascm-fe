@@ -68,6 +68,92 @@
       }
     }
   },
+  "Truck": {
+    "title": "Truck Management",
+    "searchPlaceholder": "Search by license plate, model, location...",
+    "addTruck": "Add Truck",
+    "loading": "Loading data...",
+    "noTrucks": "No trucks found",
+    "noTrucksEmpty": "No trucks yet",
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "maintenance": "Maintenance",
+      "available": "Available",
+      "inUse": "In Use",
+      "outOfService": "Out of Service",
+      "unknown": "Unknown"
+    },
+    "fields": {
+      "licensePlate": "License Plate",
+      "model": "Model",
+      "capacity": "Capacity",
+      "currentLocation": "Current Location",
+      "status": "Status",
+      "licensePhoto": "License Photo",
+      "iotDevices": "IoT Devices"
+    },
+    "placeholders": {
+      "licensePlate": "e.g., 29A-12345",
+      "model": "e.g., Hyundai H350",
+      "capacity": "e.g., 2000",
+      "currentLocation": "e.g., Hanoi Warehouse",
+      "licensePhoto": "https://..."
+    },
+    "actions": {
+      "details": "Details",
+      "edit": "Edit",
+      "delete": "Delete",
+      "close": "Close",
+      "cancel": "Cancel",
+      "create": "Create Truck",
+      "update": "Update",
+      "creating": "Creating...",
+      "updating": "Updating..."
+    },
+    "dialog": {
+      "createTitle": "Add New Truck",
+      "createDescription": "Enter truck information to add to the system",
+      "editTitle": "Edit Truck",
+      "editDescription": "Update truck information {licensePlate}",
+      "detailsTitle": "Truck Details",
+      "basicInfo": "Basic Information",
+      "iotDevicesSection": "IoT Devices",
+      "noIotDevices": "No IoT devices yet",
+      "licensePhotoSection": "License Photo"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {page}"
+    },
+    "toast": {
+      "createSuccess": "Truck created",
+      "createSuccessDesc": "Truck {licensePlate} has been created successfully",
+      "createError": "Cannot create truck",
+      "updateSuccess": "Truck updated",
+      "updateSuccessDesc": "Truck {licensePlate} has been updated",
+      "updateError": "Cannot update truck",
+      "deleteSuccess": "Truck deleted",
+      "deleteSuccessDesc": "Truck {licensePlate} has been deleted",
+      "deleteError": "Cannot delete truck",
+      "loadError": "Cannot load truck list",
+      "fillRequired": "Please fill in all required fields",
+      "deleteConfirm": "Are you sure you want to delete truck {licensePlate}?",
+      "tryAgain": "Please try again"
+    },
+    "units": {
+      "kg": "kg",
+      "devices": "devices",
+      "device": "device"
+    },
+    "deleteModal": {
+      "title": "Are you sure?",
+      "description": "This action cannot be undone. This will permanently delete the truck.",
+      "cancel": "Cancel",
+      "confirm": "Delete"
+    }
+  },
   "Auth": {
     "signIn": {
       "title": "Sign in to your account",

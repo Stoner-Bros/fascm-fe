@@ -102,6 +102,12 @@ export const navItems: NavItem[] = [
         shortcut: ['d', 't']
       },
       {
+        title: 'Tracking',
+        url: '/dashboard/delivery/tracking',
+        icon: 'delivery',
+        shortcut: ['d', 'k']
+      },
+      {
         title: 'Realtime',
         url: '/dashboard/delivery/realtime',
         icon: 'delivery',

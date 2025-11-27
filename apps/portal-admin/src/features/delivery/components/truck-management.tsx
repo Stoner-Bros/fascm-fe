@@ -1,15 +1,7 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { Truck } from '@/types/delivery';
+import { useEffect, useState } from 'react';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import {
   Card,
@@ -23,361 +15,776 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription
+  DialogDescription,
+  DialogFooter
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/components/ui/use-toast';
 import {
   IconTruck,
   IconCpu,
   IconMapPin,
-  IconActivity,
-  IconUsers,
   IconWeight,
-  IconCube,
-  IconGasStation
+  IconPlus,
+  IconRefresh,
+  IconEdit,
+  IconTrash,
+  IconSearch
 } from '@tabler/icons-react';
+import {
+  createTruck,
+  fetchTrucks,
+  updateTruck,
+  deleteTruck
+} from '@/services/truck.service';
+import type { Truck, CreateTruckDto } from '@/types/truck';
+import { useTranslations } from 'next-intl';
+import { useDebounce } from '@/hooks/use-debounce';
 
-const mockTrucks: Truck[] = [
-  {
-    id: 'TRUCK-001',
-    licenseNumber: 'HY-29A-12345',
-    model: 'Hyundai H350 Refrigerated',
-    capacity: 2000,
-    maxWeight: 2500,
-    volume: 15.5,
-    fuelType: 'diesel',
-    status: 'available',
-    gpsDevice: {
-      deviceId: 'GPS-001',
-      isActive: true,
-      lastUpdate: new Date().toISOString()
-    },
-    environmentSensors: {
-      temperatureSensorId: 'TEMP-001',
-      humiditySensorId: 'HUM-001',
-      isActive: true,
-      lastUpdate: new Date().toISOString()
-    },
-    transportStaff: [
-      {
-        id: 'STAFF-001',
-        name: 'Nguyễn Văn A',
-        phone: '0987654321',
-        role: 'driver',
-        licenseNumber: 'B2-123456789',
-        experience: 5
-      }
-    ],
-    registrationExpiry: '2025-12-31'
-  },
-  {
-    id: 'TRUCK-002',
-    licenseNumber: 'HN-30B-67890',
-    model: 'Isuzu NPR Cooler Truck',
-    capacity: 1500,
-    maxWeight: 2000,
-    volume: 12.0,
-    fuelType: 'diesel',
-    status: 'maintenance',
-    gpsDevice: {
-      deviceId: 'GPS-002',
-      isActive: true,
-      lastUpdate: new Date().toISOString()
-    },
-    environmentSensors: {
-      temperatureSensorId: 'TEMP-002',
-      humiditySensorId: 'HUM-002',
-      isActive: false,
-      lastUpdate: new Date().toISOString()
-    },
-    transportStaff: [
-      {
-        id: 'STAFF-003',
-        name: 'Lê Văn C',
-        phone: '0965432109',
-        role: 'driver',
-        licenseNumber: 'C-987654321',
-        experience: 8
-      }
-    ],
-    registrationExpiry: '2025-08-15'
-  },
-  {
-    id: 'TRUCK-003',
-    licenseNumber: 'SG-51C-11223',
-    model: 'Hino 500 Series',
-    capacity: 5000,
-    maxWeight: 6500,
-    volume: 25.2,
-    fuelType: 'diesel',
-    status: 'in_use',
-    gpsDevice: {
-      deviceId: 'GPS-010',
-      isActive: true,
-      lastUpdate: new Date().toISOString()
-    },
-    environmentSensors: {
-      temperatureSensorId: 'TEMP-010',
-      humiditySensorId: 'HUM-010',
-      isActive: true,
-      lastUpdate: new Date().toISOString()
-    },
-    transportStaff: [],
-    registrationExpiry: '2026-02-10'
-  }
-];
+function StatusBadge({ status, t }: { status?: string | null; t: any }) {
+  if (!status) return <Badge variant='outline'>{t('status.unknown')}</Badge>;
 
-function StatusBadge({ status }: { status: Truck['status'] }) {
-  switch (status) {
-    case 'available':
-      return (
-        <Badge className='border-green-200 bg-green-100 text-green-700'>
-          Sẵn sàng
-        </Badge>
-      );
-    case 'in_use':
-      return (
-        <Badge className='border-blue-200 bg-blue-100 text-blue-700'>
-          Đang sử dụng
-        </Badge>
-      );
-    case 'maintenance':
-      return (
-        <Badge className='border-yellow-200 bg-yellow-100 text-yellow-700'>
-          Bảo trì
-        </Badge>
-      );
-    case 'out_of_service':
-      return (
-        <Badge className='border-red-200 bg-red-100 text-red-700'>
-          Ngừng hoạt động
-        </Badge>
-      );
-    default:
-      return null;
-  }
+  const statusConfig: Record<string, { label: string; className: string }> = {
+    active: {
+      label: t('status.active'),
+      className: 'border-green-200 bg-green-100 text-green-700'
+    },
+    inactive: {
+      label: t('status.inactive'),
+      className: 'border-red-200 bg-red-100 text-red-700'
+    },
+    available: {
+      label: t('status.available'),
+      className: 'border-green-200 bg-green-100 text-green-700'
+    },
+    in_use: {
+      label: t('status.inUse'),
+      className: 'border-blue-200 bg-blue-100 text-blue-700'
+    },
+    maintenance: {
+      label: t('status.maintenance'),
+      className: 'border-yellow-200 bg-yellow-100 text-yellow-700'
+    },
+    out_of_service: {
+      label: t('status.outOfService'),
+      className: 'border-red-200 bg-red-100 text-red-700'
+    }
+  };
+
+  const config = statusConfig[status] || {
+    label: status,
+    className: 'border-gray-200 bg-gray-100 text-gray-700'
+  };
+
+  return <Badge className={config.className}>{config.label}</Badge>;
 }
 
 export function TruckManagement() {
+  const t = useTranslations('Truck');
+  const { toast } = useToast();
+  const [trucks, setTrucks] = useState<Truck[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [search, setSearch] = useState('');
-  const [status, setStatus] = useState<'all' | Truck['status']>('all');
-  const [openId, setOpenId] = useState<string | null>(null);
+  const [openDetailId, setOpenDetailId] = useState<string | null>(null);
+  const [openCreateDialog, setOpenCreateDialog] = useState(false);
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [openDeleteModal, setOpenDeleteModal] = useState(false);
+  const [editingTruck, setEditingTruck] = useState<Truck | null>(null);
+  const [deletingTruck, setDeletingTruck] = useState<Truck | null>(null);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
 
-  const trucks = mockTrucks;
+  // Debounce search input for better performance
+  const debouncedSearch = useDebounce(search, 300);
 
-  const filtered = useMemo(() => {
-    return trucks.filter((t) => {
-      const matchText =
-        t.licenseNumber.toLowerCase().includes(search.toLowerCase()) ||
-        t.model.toLowerCase().includes(search.toLowerCase());
-      const matchStatus = status === 'all' || t.status === status;
-      return matchText && matchStatus;
+  const [form, setForm] = useState<CreateTruckDto>({
+    licensePlate: '',
+    model: '',
+    capacity: null,
+    status: 'active',
+    currentLocation: '',
+    licensePhoto: ''
+  });
+
+  const loadTrucks = async (pageNum = 1) => {
+    setIsLoading(true);
+    try {
+      const res = await fetchTrucks({
+        page: pageNum,
+        limit: 50
+      });
+      setTrucks(res.data);
+      setHasMore(res.hasNextPage || false);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: t('toast.loadError'),
+        description: error instanceof Error ? error.message : undefined
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTrucks(page);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  const resetForm = () => {
+    setForm({
+      licensePlate: '',
+      model: '',
+      capacity: null,
+      status: 'active',
+      currentLocation: '',
+      licensePhoto: ''
     });
-  }, [trucks, search, status]);
+  };
 
-  const selected = trucks.find((t) => t.id === openId);
+  const handleCreate = async () => {
+    if (!form.licensePlate || !form.model) {
+      toast({
+        variant: 'destructive',
+        title: t('toast.fillRequired')
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await createTruck(form);
+      toast({
+        title: t('toast.createSuccess'),
+        description: t('toast.createSuccessDesc', {
+          licensePlate: form.licensePlate
+        })
+      });
+      resetForm();
+      setOpenCreateDialog(false);
+      await loadTrucks(page);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: t('toast.createError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleEdit = async () => {
+    if (!editingTruck) return;
+
+    if (!form.licensePlate || !form.model) {
+      toast({
+        variant: 'destructive',
+        title: t('toast.fillRequired')
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await updateTruck(editingTruck.id, form);
+      toast({
+        title: t('toast.updateSuccess'),
+        description: t('toast.updateSuccessDesc', {
+          licensePlate: form.licensePlate
+        })
+      });
+      setOpenEditDialog(false);
+      setEditingTruck(null);
+      resetForm();
+      await loadTrucks(page);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: t('toast.updateError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteClick = (truck: Truck) => {
+    setDeletingTruck(truck);
+    setOpenDeleteModal(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deletingTruck) return;
+
+    try {
+      setIsDeleting(true);
+      await deleteTruck(deletingTruck.id);
+      toast({
+        title: t('toast.deleteSuccess'),
+        description: t('toast.deleteSuccessDesc', {
+          licensePlate: deletingTruck.licensePlate || ''
+        })
+      });
+      setOpenDeleteModal(false);
+      setDeletingTruck(null);
+      await loadTrucks(page);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: t('toast.deleteError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const openEditForm = (truck: Truck) => {
+    setEditingTruck(truck);
+    setForm({
+      licensePlate: truck.licensePlate || '',
+      model: truck.model || '',
+      capacity: truck.capacity,
+      status: truck.status || 'active',
+      currentLocation: truck.currentLocation || '',
+      licensePhoto: truck.licensePhoto || ''
+    });
+    setOpenEditDialog(true);
+  };
+
+  const filtered = trucks.filter((truck) => {
+    const searchLower = debouncedSearch.toLowerCase();
+    if (!searchLower) return true;
+    return (
+      (truck.licensePlate?.toLowerCase() || '').includes(searchLower) ||
+      (truck.model?.toLowerCase() || '').includes(searchLower) ||
+      (truck.currentLocation?.toLowerCase() || '').includes(searchLower)
+    );
+  });
+
+  const selectedTruck = trucks.find((truck) => truck.id === openDetailId);
 
   return (
     <>
       <div className='w-full space-y-6'>
+        {/* Header Actions */}
         <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-          <Input
-            placeholder='Tìm theo biển số, model...'
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className='max-w-sm'
-          />
-          <Select value={status} onValueChange={(v) => setStatus(v as any)}>
-            <SelectTrigger className='w-[200px]'>
-              <SelectValue placeholder='Trạng thái' />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value='all'>Tất cả</SelectItem>
-              <SelectItem value='available'>Sẵn sàng</SelectItem>
-              <SelectItem value='in_use'>Đang sử dụng</SelectItem>
-              <SelectItem value='maintenance'>Bảo trì</SelectItem>
-              <SelectItem value='out_of_service'>Ngừng hoạt động</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className='relative max-w-sm flex-1'>
+            <IconSearch className='text-muted-foreground absolute top-3 left-3 h-4 w-4' />
+            <Input
+              placeholder={t('searchPlaceholder')}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className='pl-10'
+            />
+          </div>
+          <Button onClick={() => setOpenCreateDialog(true)}>
+            <IconPlus className='mr-2 h-4 w-4' />
+            {t('addTruck')}
+          </Button>
         </div>
 
-        <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-          {filtered.map((t) => (
-            <Card
-              key={t.id}
-              className='cursor-pointer transition hover:shadow-md'
-              onClick={() => setOpenId(t.id)}
+        {/* Truck Cards Grid */}
+        {isLoading ? (
+          <div className='py-12 text-center'>
+            <p className='text-muted-foreground'>{t('loading')}</p>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className='py-12 text-center'>
+            <IconTruck className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
+            <p className='text-muted-foreground'>
+              {debouncedSearch ? t('noTrucks') : t('noTrucksEmpty')}
+            </p>
+          </div>
+        ) : (
+          <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
+            {filtered.map((truck) => (
+              <Card
+                key={truck.id}
+                className='cursor-pointer transition hover:shadow-md'
+              >
+                <CardHeader className='pb-2'>
+                  <div className='flex items-center justify-between'>
+                    <CardTitle className='flex items-center gap-2 text-lg font-semibold'>
+                      <IconTruck className='h-4 w-4' />
+                      {truck.licensePlate || 'N/A'}
+                    </CardTitle>
+                    <StatusBadge status={truck.status} t={t} />
+                  </div>
+                  <CardDescription>
+                    {truck.model || t('fields.model')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className='space-y-3'>
+                  <div className='grid grid-cols-2 gap-3 text-sm'>
+                    <div className='flex items-center gap-1'>
+                      <IconWeight className='h-4 w-4' />
+                      {truck.capacity
+                        ? `${truck.capacity}${t('units.kg')}`
+                        : 'N/A'}
+                    </div>
+                    <div className='flex items-center gap-1'>
+                      <IconMapPin className='h-4 w-4' />
+                      {truck.currentLocation || 'N/A'}
+                    </div>
+                  </div>
+                  {truck.iotDevice && truck.iotDevice.length > 0 && (
+                    <div className='flex items-center gap-1 text-sm'>
+                      <IconCpu className='h-4 w-4' />
+                      <span>
+                        {truck.iotDevice.length}{' '}
+                        {truck.iotDevice.length === 1
+                          ? t('units.device')
+                          : t('units.devices')}
+                      </span>
+                    </div>
+                  )}
+                  <div className='flex gap-2 pt-2'>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      className='flex-1'
+                      onClick={() => setOpenDetailId(truck.id)}
+                    >
+                      {t('actions.details')}
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      onClick={() => openEditForm(truck)}
+                    >
+                      <IconEdit className='h-4 w-4' />
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      onClick={() => handleDeleteClick(truck)}
+                    >
+                      <IconTrash className='h-4 w-4' />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && filtered.length > 0 && (
+          <div className='flex justify-center gap-2'>
+            <Button
+              variant='outline'
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
             >
-              <CardHeader className='pb-2'>
-                <div className='flex items-center justify-between'>
-                  <CardTitle className='flex items-center gap-2 text-lg font-semibold'>
-                    <IconTruck className='h-4 w-4' />
-                    {t.licenseNumber}
-                  </CardTitle>
-                  <StatusBadge status={t.status} />
-                </div>
-                <CardDescription>{t.model}</CardDescription>
-              </CardHeader>
-              <CardContent className='grid grid-cols-2 gap-3 text-sm'>
-                <div className='flex items-center gap-1'>
-                  <IconWeight className='h-4 w-4' /> {t.capacity}kg
-                </div>
-                <div className='flex items-center gap-1'>
-                  <IconCube className='h-4 w-4' /> {t.volume}m³
-                </div>
-                <div className='flex items-center gap-1'>
-                  <IconGasStation className='h-4 w-4' /> {t.fuelType}
-                </div>
-                <div className='flex items-center gap-1'>
-                  <IconUsers className='h-4 w-4' /> {t.transportStaff.length}{' '}
-                  nhân viên
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+              {t('pagination.previous')}
+            </Button>
+            <Button variant='outline' disabled>
+              {t('pagination.page', { page })}
+            </Button>
+            <Button
+              variant='outline'
+              onClick={() => setPage((p) => p + 1)}
+              disabled={!hasMore}
+            >
+              {t('pagination.next')}
+            </Button>
+          </div>
+        )}
       </div>
-      <Dialog open={!!openId} onOpenChange={(o) => !o && setOpenId(null)}>
-        <DialogContent className='max-w-[95vw] sm:max-w-3xl'>
-          {selected && (
+
+      {/* Detail Dialog */}
+      <Dialog
+        open={!!openDetailId}
+        onOpenChange={(o) => !o && setOpenDetailId(null)}
+      >
+        <DialogContent className='max-h-[90vh] max-w-[95vw] overflow-y-auto sm:max-w-3xl'>
+          {selectedTruck && (
             <>
               <DialogHeader>
                 <DialogTitle className='flex items-center gap-2'>
-                  <IconTruck className='h-5 w-5' /> {selected.licenseNumber}
+                  <IconTruck className='h-5 w-5' /> {selectedTruck.licensePlate}
                 </DialogTitle>
-                <DialogDescription>{selected.model}</DialogDescription>
+                <DialogDescription>{selectedTruck.model}</DialogDescription>
               </DialogHeader>
 
               <div className='grid gap-4 md:grid-cols-2'>
                 <Card>
                   <CardHeader className='pb-2'>
-                    <CardTitle className='text-sm'>Thông tin cơ bản</CardTitle>
-                  </CardHeader>
-                  <CardContent className='space-y-2 text-sm'>
-                    <div>
-                      <span className='font-medium'>Model:</span>{' '}
-                      {selected.model}
-                    </div>
-                    <div>
-                      <span className='font-medium'>Tải trọng:</span>{' '}
-                      {selected.capacity}kg
-                    </div>
-                    <div>
-                      <span className='font-medium'>Giới hạn:</span>{' '}
-                      {selected.maxWeight}kg
-                    </div>
-                    <div>
-                      <span className='font-medium'>Thể tích:</span>{' '}
-                      {selected.volume}m³
-                    </div>
-                    <div>
-                      <span className='font-medium'>Nhiên liệu:</span>{' '}
-                      {selected.fuelType}
-                    </div>
-                    <div>
-                      <span className='font-medium'>Đăng kiểm:</span>{' '}
-                      {selected.registrationExpiry}
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader className='pb-2'>
-                    <CardTitle className='text-sm'>Thiết bị IoT</CardTitle>
-                  </CardHeader>
-                  <CardContent className='space-y-3 text-sm'>
-                    <div className='flex items-center justify-between'>
-                      <div className='flex items-center gap-2'>
-                        <IconCpu className='h-4 w-4' /> GPS:{' '}
-                        {selected.gpsDevice.deviceId}
-                      </div>
-                      <Badge
-                        variant='outline'
-                        className={
-                          selected.gpsDevice.isActive
-                            ? 'bg-green-50 text-green-700'
-                            : 'bg-gray-50 text-gray-700'
-                        }
-                      >
-                        {selected.gpsDevice.isActive
-                          ? 'Hoạt động'
-                          : 'Không hoạt động'}
-                      </Badge>
-                    </div>
-                    <div className='text-muted-foreground text-xs'>
-                      Cập nhật:{' '}
-                      {new Date(selected.gpsDevice.lastUpdate).toLocaleString(
-                        'vi-VN'
-                      )}
-                    </div>
-                    <div className='flex items-center justify-between'>
-                      <div className='flex items-center gap-2'>
-                        <IconActivity className='h-4 w-4' /> Nhiệt độ:{' '}
-                        {selected.environmentSensors.temperatureSensorId}
-                      </div>
-                      <Badge
-                        variant='outline'
-                        className={
-                          selected.environmentSensors.isActive
-                            ? 'bg-green-50 text-green-700'
-                            : 'bg-gray-50 text-gray-700'
-                        }
-                      >
-                        {selected.environmentSensors.isActive
-                          ? 'Hoạt động'
-                          : 'Không hoạt động'}
-                      </Badge>
-                    </div>
-                    <div className='text-muted-foreground flex items-center gap-2 text-xs'>
-                      <IconMapPin className='h-3 w-3' /> Độ ẩm:{' '}
-                      {selected.environmentSensors.humiditySensorId}
-                    </div>
-                    <div className='text-muted-foreground text-xs'>
-                      Cập nhật:{' '}
-                      {new Date(
-                        selected.environmentSensors.lastUpdate
-                      ).toLocaleString('vi-VN')}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className='grid gap-4'>
-                <Card>
-                  <CardHeader className='pb-2'>
                     <CardTitle className='text-sm'>
-                      Nhân viên vận chuyển
+                      {t('dialog.basicInfo')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className='space-y-2 text-sm'>
-                    {selected.transportStaff.length === 0 ? (
-                      <div className='text-muted-foreground'>
-                        Chưa có nhân viên
-                      </div>
-                    ) : (
-                      selected.transportStaff.map((s) => (
+                    <div>
+                      <span className='font-medium'>
+                        {t('fields.licensePlate')}:
+                      </span>{' '}
+                      {selectedTruck.licensePlate || 'N/A'}
+                    </div>
+                    <div>
+                      <span className='font-medium'>{t('fields.model')}:</span>{' '}
+                      {selectedTruck.model || 'N/A'}
+                    </div>
+                    <div>
+                      <span className='font-medium'>
+                        {t('fields.capacity')}:
+                      </span>{' '}
+                      {selectedTruck.capacity
+                        ? `${selectedTruck.capacity}${t('units.kg')}`
+                        : 'N/A'}
+                    </div>
+                    <div>
+                      <span className='font-medium'>
+                        {t('fields.currentLocation')}:
+                      </span>{' '}
+                      {selectedTruck.currentLocation || 'N/A'}
+                    </div>
+                    <div>
+                      <span className='font-medium'>{t('fields.status')}:</span>{' '}
+                      <StatusBadge status={selectedTruck.status} t={t} />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className='pb-2'>
+                    <CardTitle className='text-sm'>
+                      {t('dialog.iotDevicesSection')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-3 text-sm'>
+                    {selectedTruck.iotDevice &&
+                    selectedTruck.iotDevice.length > 0 ? (
+                      selectedTruck.iotDevice.map((device) => (
                         <div
-                          key={s.id}
-                          className='grid grid-cols-1 gap-2 sm:grid-cols-4'
+                          key={device.id}
+                          className='flex items-center justify-between border-b pb-2'
                         >
-                          <div className='font-medium'>{s.name}</div>
-                          <div>{s.phone}</div>
-                          <div>Vai trò: {s.role}</div>
-                          <div>KN: {s.experience} năm</div>
+                          <div className='flex items-center gap-2'>
+                            <IconCpu className='h-4 w-4' />
+                            <div>
+                              <div className='font-medium'>
+                                {device.deviceName || device.id}
+                              </div>
+                              <div className='text-muted-foreground text-xs'>
+                                {device.deviceType || 'N/A'}
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       ))
+                    ) : (
+                      <div className='text-muted-foreground'>
+                        {t('dialog.noIotDevices')}
+                      </div>
                     )}
                   </CardContent>
                 </Card>
               </div>
 
-              <div className='flex justify-end'>
-                <Button variant='outline' onClick={() => setOpenId(null)}>
-                  Đóng
+              {selectedTruck.licensePhoto && (
+                <Card>
+                  <CardHeader className='pb-2'>
+                    <CardTitle className='text-sm'>
+                      {t('dialog.licensePhotoSection')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={selectedTruck.licensePhoto}
+                      alt='License'
+                      className='w-full rounded-md'
+                    />
+                  </CardContent>
+                </Card>
+              )}
+
+              <DialogFooter>
+                <Button variant='outline' onClick={() => setOpenDetailId(null)}>
+                  {t('actions.close')}
                 </Button>
-              </div>
+              </DialogFooter>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Create Dialog */}
+      <Dialog
+        open={openCreateDialog}
+        onOpenChange={(open) => {
+          if (!open) resetForm();
+          setOpenCreateDialog(open);
+        }}
+      >
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle>{t('dialog.createTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('dialog.createDescription')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4 py-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='licensePlate'>{t('fields.licensePlate')} *</Label>
+              <Input
+                id='licensePlate'
+                value={form.licensePlate || ''}
+                onChange={(e) =>
+                  setForm({ ...form, licensePlate: e.target.value })
+                }
+                placeholder={t('placeholders.licensePlate')}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='model'>{t('fields.model')} *</Label>
+              <Input
+                id='model'
+                value={form.model || ''}
+                onChange={(e) => setForm({ ...form, model: e.target.value })}
+                placeholder={t('placeholders.model')}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='capacity'>
+                {t('fields.capacity')} ({t('units.kg')})
+              </Label>
+              <Input
+                id='capacity'
+                type='number'
+                value={form.capacity || ''}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    capacity: e.target.value ? Number(e.target.value) : null
+                  })
+                }
+                placeholder={t('placeholders.capacity')}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='currentLocation'>
+                {t('fields.currentLocation')}
+              </Label>
+              <Input
+                id='currentLocation'
+                value={form.currentLocation || ''}
+                onChange={(e) =>
+                  setForm({ ...form, currentLocation: e.target.value })
+                }
+                placeholder={t('placeholders.currentLocation')}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='status'>{t('fields.status')}</Label>
+              <select
+                id='status'
+                value={form.status || 'active'}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+                className='border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm'
+              >
+                <option value='active'>{t('status.active')}</option>
+                <option value='inactive'>{t('status.inactive')}</option>
+                <option value='maintenance'>{t('status.maintenance')}</option>
+                <option value='available'>{t('status.available')}</option>
+                <option value='in_use'>{t('status.inUse')}</option>
+                <option value='out_of_service'>
+                  {t('status.outOfService')}
+                </option>
+              </select>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='licensePhoto'>{t('fields.licensePhoto')}</Label>
+              <Input
+                id='licensePhoto'
+                value={form.licensePhoto || ''}
+                onChange={(e) =>
+                  setForm({ ...form, licensePhoto: e.target.value })
+                }
+                placeholder={t('placeholders.licensePhoto')}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setOpenCreateDialog(false)}
+              disabled={isSubmitting}
+            >
+              {t('actions.cancel')}
+            </Button>
+            <Button onClick={handleCreate} disabled={isSubmitting}>
+              {isSubmitting ? t('actions.creating') : t('actions.create')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog
+        open={openEditDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingTruck(null);
+            resetForm();
+          }
+          setOpenEditDialog(open);
+        }}
+      >
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle>{t('dialog.editTitle')}</DialogTitle>
+            <DialogDescription>
+              {t('dialog.editDescription', {
+                licensePlate: editingTruck?.licensePlate || ''
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4 py-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='edit-licensePlate'>
+                {t('fields.licensePlate')} *
+              </Label>
+              <Input
+                id='edit-licensePlate'
+                value={form.licensePlate || ''}
+                onChange={(e) =>
+                  setForm({ ...form, licensePlate: e.target.value })
+                }
+                placeholder={t('placeholders.licensePlate')}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='edit-model'>{t('fields.model')} *</Label>
+              <Input
+                id='edit-model'
+                value={form.model || ''}
+                onChange={(e) => setForm({ ...form, model: e.target.value })}
+                placeholder={t('placeholders.model')}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='edit-capacity'>
+                {t('fields.capacity')} ({t('units.kg')})
+              </Label>
+              <Input
+                id='edit-capacity'
+                type='number'
+                value={form.capacity || ''}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    capacity: e.target.value ? Number(e.target.value) : null
+                  })
+                }
+                placeholder={t('placeholders.capacity')}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='edit-currentLocation'>
+                {t('fields.currentLocation')}
+              </Label>
+              <Input
+                id='edit-currentLocation'
+                value={form.currentLocation || ''}
+                onChange={(e) =>
+                  setForm({ ...form, currentLocation: e.target.value })
+                }
+                placeholder={t('placeholders.currentLocation')}
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='edit-status'>{t('fields.status')}</Label>
+              <select
+                id='edit-status'
+                value={form.status || 'active'}
+                onChange={(e) => setForm({ ...form, status: e.target.value })}
+                className='border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm'
+              >
+                <option value='active'>{t('status.active')}</option>
+                <option value='inactive'>{t('status.inactive')}</option>
+                <option value='maintenance'>{t('status.maintenance')}</option>
+                <option value='available'>{t('status.available')}</option>
+                <option value='in_use'>{t('status.inUse')}</option>
+                <option value='out_of_service'>
+                  {t('status.outOfService')}
+                </option>
+              </select>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='edit-licensePhoto'>
+                {t('fields.licensePhoto')}
+              </Label>
+              <Input
+                id='edit-licensePhoto'
+                value={form.licensePhoto || ''}
+                onChange={(e) =>
+                  setForm({ ...form, licensePhoto: e.target.value })
+                }
+                placeholder={t('placeholders.licensePhoto')}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setOpenEditDialog(false)}
+              disabled={isSubmitting}
+            >
+              {t('actions.cancel')}
+            </Button>
+            <Button onClick={handleEdit} disabled={isSubmitting}>
+              {isSubmitting ? t('actions.updating') : t('actions.update')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog
+        open={openDeleteModal}
+        onOpenChange={(open) => {
+          if (!open) {
+            setOpenDeleteModal(false);
+            setDeletingTruck(null);
+          }
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('deleteModal.title')}</DialogTitle>
+            <DialogDescription>
+              {t('deleteModal.description')}
+            </DialogDescription>
+          </DialogHeader>
+          <div className='flex w-full items-center justify-end space-x-2 pt-6'>
+            <Button
+              disabled={isDeleting}
+              variant='outline'
+              onClick={() => {
+                setOpenDeleteModal(false);
+                setDeletingTruck(null);
+              }}
+            >
+              {t('deleteModal.cancel')}
+            </Button>
+            <Button
+              disabled={isDeleting}
+              variant='destructive'
+              onClick={handleDeleteConfirm}
+            >
+              {isDeleting ? t('actions.updating') : t('deleteModal.confirm')}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </>

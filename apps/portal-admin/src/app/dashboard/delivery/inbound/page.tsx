@@ -1,10 +1,10 @@
 import PageContainer from '@/components/layout/page-container';
-import { InboundDelivery } from '@/features/delivery/components/inbound-delivery';
+import { InboundTruckAssignment } from '@/features/logistics/components/inbound-truck-assignment';
 
 export default function InboundDeliveryPage() {
   return (
     <PageContainer scrollable={true}>
-      <InboundDelivery />
+      <InboundTruckAssignment />
     </PageContainer>
   );
 }

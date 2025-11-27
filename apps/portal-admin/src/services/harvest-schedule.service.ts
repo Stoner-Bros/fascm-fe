@@ -16,16 +16,12 @@ export async function createHarvestSchedule(body: CreateHarvestScheduleDto) {
 
 export async function fetchHarvestSchedules({
   page = 1,
-  limit = 10,
-  status,
-  supplierId
+  limit = 10
 }: FindAllHarvestSchedulesDto = {}) {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit)
   });
-  if (status) params.set('status', status);
-  if (supplierId) params.set('supplierId', supplierId);
 
   return fetchJSON<InfinityPaginationResponse<HarvestSchedule>>(
     `/harvest-schedules?${params.toString()}`
@@ -55,8 +51,8 @@ export async function confirmHarvestSchedule(
   status: 'approved' | 'rejected',
   reason?: string
 ) {
-  const body: { status: string; reason?: string } = { status };
-  if (status === 'rejected' && reason) {
+  const body: { status: 'approved' | 'rejected'; reason?: string } = { status };
+  if (reason) {
     body.reason = reason;
   }
   return fetchJSON<HarvestSchedule>(`/harvest-schedules/${id}/confirm`, {

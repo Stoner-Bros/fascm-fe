@@ -1,36 +1,24 @@
 import { fetchJSON } from '@/lib/client';
-
-export type Delivery = {
-  id: string;
-  startLat?: number | null;
-  startLng?: number | null;
-  endLat?: number | null;
-  endLng?: number | null;
-  startAddress?: string | null;
-  endAddress?: string | null;
-  status?: string | null;
-  startTime?: string | null;
-  endTime?: string | null;
-  orderSchedule?: { id: string } | null;
-  truck?: { id: string } | null;
-};
-
-export type FindAllDeliveriesDto = { page?: number; limit?: number };
-export type InfinityPaginationResponse<T> = {
-  data: T[];
-  page: number;
-  limit: number;
-  hasNextPage: boolean;
-};
+import {
+  CreateDeliveryDto,
+  Delivery,
+  FindAllDeliveriesDto,
+  InfinityPaginationResponse,
+  UpdateDeliveryDto
+} from '@/types/delivery';
 
 export async function fetchDeliveries({
   page = 1,
-  limit = 10
+  limit = 10,
+  orderScheduleId
 }: FindAllDeliveriesDto = {}) {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit)
   });
+  if (orderScheduleId) {
+    params.append('orderScheduleId', orderScheduleId);
+  }
   return fetchJSON<InfinityPaginationResponse<Delivery>>(
     `/deliveries?${params.toString()}`
   );
@@ -38,4 +26,24 @@ export async function fetchDeliveries({
 
 export async function fetchDeliveryById(id: string) {
   return fetchJSON<Delivery>(`/deliveries/${id}`);
+}
+
+export async function createDelivery(data: CreateDeliveryDto) {
+  return fetchJSON<Delivery>('/deliveries', {
+    method: 'POST',
+    body: data
+  });
+}
+
+export async function updateDelivery(id: string, data: UpdateDeliveryDto) {
+  return fetchJSON<Delivery>(`/deliveries/${id}`, {
+    method: 'PATCH',
+    body: data
+  });
+}
+
+export async function deleteDelivery(id: string) {
+  return fetchJSON<void>(`/deliveries/${id}`, {
+    method: 'DELETE'
+  });
 }

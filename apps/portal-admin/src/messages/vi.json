@@ -68,6 +68,92 @@
       }
     }
   },
+  "Truck": {
+    "title": "Quản lý Xe tải",
+    "searchPlaceholder": "Tìm theo biển số, model, vị trí...",
+    "addTruck": "Thêm xe tải",
+    "loading": "Đang tải dữ liệu...",
+    "noTrucks": "Không tìm thấy xe tải nào",
+    "noTrucksEmpty": "Chưa có xe tải nào",
+    "status": {
+      "active": "Hoạt động",
+      "inactive": "Không hoạt động",
+      "maintenance": "Bảo trì",
+      "available": "Sẵn sàng",
+      "inUse": "Đang sử dụng",
+      "outOfService": "Ngừng hoạt động",
+      "unknown": "Không xác định"
+    },
+    "fields": {
+      "licensePlate": "Biển số xe",
+      "model": "Model",
+      "capacity": "Tải trọng",
+      "currentLocation": "Vị trí hiện tại",
+      "status": "Trạng thái",
+      "licensePhoto": "Ảnh giấy phép",
+      "iotDevices": "Thiết bị IoT"
+    },
+    "placeholders": {
+      "licensePlate": "VD: 29A-12345",
+      "model": "VD: Hyundai H350",
+      "capacity": "VD: 2000",
+      "currentLocation": "VD: Kho Hà Nội",
+      "licensePhoto": "https://..."
+    },
+    "actions": {
+      "details": "Chi tiết",
+      "edit": "Sửa",
+      "delete": "Xóa",
+      "close": "Đóng",
+      "cancel": "Hủy",
+      "create": "Tạo xe tải",
+      "update": "Cập nhật",
+      "creating": "Đang tạo...",
+      "updating": "Đang cập nhật..."
+    },
+    "dialog": {
+      "createTitle": "Thêm xe tải mới",
+      "createDescription": "Nhập thông tin xe tải để thêm vào hệ thống",
+      "editTitle": "Chỉnh sửa xe tải",
+      "editDescription": "Cập nhật thông tin xe tải {licensePlate}",
+      "detailsTitle": "Chi tiết xe tải",
+      "basicInfo": "Thông tin cơ bản",
+      "iotDevicesSection": "Thiết bị IoT",
+      "noIotDevices": "Chưa có thiết bị IoT",
+      "licensePhotoSection": "Ảnh giấy phép"
+    },
+    "pagination": {
+      "previous": "Trang trước",
+      "next": "Trang sau",
+      "page": "Trang {page}"
+    },
+    "toast": {
+      "createSuccess": "Đã tạo xe tải",
+      "createSuccessDesc": "Xe {licensePlate} đã được tạo thành công",
+      "createError": "Không thể tạo xe tải",
+      "updateSuccess": "Đã cập nhật xe tải",
+      "updateSuccessDesc": "Xe {licensePlate} đã được cập nhật",
+      "updateError": "Không thể cập nhật xe tải",
+      "deleteSuccess": "Đã xóa xe tải",
+      "deleteSuccessDesc": "Xe {licensePlate} đã được xóa",
+      "deleteError": "Không thể xóa xe tải",
+      "loadError": "Không thể tải danh sách xe tải",
+      "fillRequired": "Vui lòng điền đầy đủ thông tin bắt buộc",
+      "deleteConfirm": "Bạn có chắc chắn muốn xóa xe {licensePlate}?",
+      "tryAgain": "Vui lòng thử lại"
+    },
+    "units": {
+      "kg": "kg",
+      "devices": "thiết bị",
+      "device": "thiết bị"
+    },
+    "deleteModal": {
+      "title": "Bạn có chắc chắn?",
+      "description": "Hành động này không thể hoàn tác. Xe tải sẽ bị xóa vĩnh viễn.",
+      "cancel": "Hủy",
+      "confirm": "Xóa"
+    }
+  },
   "Auth": {
     "signIn": {
       "title": "Đăng nhập tài khoản",
