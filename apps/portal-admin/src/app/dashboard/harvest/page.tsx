@@ -27,7 +27,8 @@ export default function HarvestPage() {
         }
         const response = await fetchHarvestSchedules({
           page: 1,
-          limit: 100
+          limit: 100,
+          status: ''
         });
 
         if (cancelled) return;

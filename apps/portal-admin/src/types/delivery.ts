@@ -132,6 +132,8 @@ export interface FindAllDeliveriesDto {
   page?: number;
   limit?: number;
   orderScheduleId?: string;
+  status?: string;
+  sort?: 'asc' | 'desc';
 }
 
 /**

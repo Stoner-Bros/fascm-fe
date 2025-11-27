@@ -35,4 +35,6 @@ export type UpdateHarvestScheduleDto = Partial<CreateHarvestScheduleDto>;
 export type FindAllHarvestSchedulesDto = {
   page?: number;
   limit?: number;
+  status?: string;
+  sort?: 'asc' | 'desc';
 };

@@ -270,7 +270,34 @@ export function TruckManagement() {
   });
 
   const selectedTruck = trucks.find((truck) => truck.id === openDetailId);
-
+  function parseDeviceData(d: any): {
+    temperature?: number;
+    humidity?: number;
+  } {
+    try {
+      if (typeof d?.data === 'string' && d.data.trim().length > 0) {
+        const obj = JSON.parse(d.data);
+        return {
+          temperature: obj.temperature ?? obj.temp ?? obj.t,
+          humidity: obj.humidity ?? obj.humid ?? obj.h
+        };
+      }
+      if (Array.isArray(d?.data)) {
+        const last = d.data[d.data.length - 1];
+        return {
+          temperature: last?.temperature ?? last?.temp ?? last?.t,
+          humidity: last?.humidity ?? last?.humid ?? last?.h
+        };
+      }
+      if (typeof d?.data === 'object' && d.data) {
+        return {
+          temperature: d.data.temperature ?? d.data.temp ?? d.data.t,
+          humidity: d.data.humidity ?? d.data.humid ?? d.data.h
+        };
+      }
+    } catch {}
+    return {};
+  }
   return (
     <>
       <div className='w-full space-y-6'>
@@ -469,13 +496,42 @@ export function TruckManagement() {
                           className='flex items-center justify-between border-b pb-2'
                         >
                           <div className='flex items-center gap-2'>
-                            <IconCpu className='h-4 w-4' />
                             <div>
+                              <IconCpu className='h-4 w-4' />
                               <div className='font-medium'>
-                                {device.deviceName || device.id}
+                                {device.type || 'N/A'}
                               </div>
                               <div className='text-muted-foreground text-xs'>
-                                {device.deviceType || 'N/A'}
+                                {device.id || 'N/A'}
+                              </div>
+                              <div className='grid grid-cols-2 gap-4'>
+                                {(() => {
+                                  const r = parseDeviceData(device);
+                                  return (
+                                    <>
+                                      <div className='rounded-lg border p-3 text-center'>
+                                        <div className='text-muted-foreground text-xs'>
+                                          Nhiệt độ
+                                        </div>
+                                        <div className='text-2xl font-bold'>
+                                          {r.temperature != null
+                                            ? `${r.temperature}°C`
+                                            : '--'}
+                                        </div>
+                                      </div>
+                                      <div className='rounded-lg border p-3 text-center'>
+                                        <div className='text-muted-foreground text-xs'>
+                                          Độ ẩm
+                                        </div>
+                                        <div className='text-2xl font-bold'>
+                                          {r.humidity != null
+                                            ? `${r.humidity}%`
+                                            : '--'}
+                                        </div>
+                                      </div>
+                                    </>
+                                  );
+                                })()}
                               </div>
                             </div>
                           </div>

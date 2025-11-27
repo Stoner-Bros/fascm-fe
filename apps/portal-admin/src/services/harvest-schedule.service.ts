@@ -16,11 +16,15 @@ export async function createHarvestSchedule(body: CreateHarvestScheduleDto) {
 
 export async function fetchHarvestSchedules({
   page = 1,
-  limit = 10
+  limit = 10,
+  status,
+  sort = 'desc'
 }: FindAllHarvestSchedulesDto = {}) {
   const params = new URLSearchParams({
     page: String(page),
-    limit: String(limit)
+    limit: String(limit),
+    status: status || '',
+    sort
   });
 
   return fetchJSON<InfinityPaginationResponse<HarvestSchedule>>(
