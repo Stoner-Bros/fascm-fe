@@ -50,7 +50,28 @@ export async function fetchDeliveries({
     hasNextPage: boolean;
   }>(`/deliveries?${params.toString()}`);
 }
-
+//create fetchDeliveriesByHaverstSchedule
+export async function fetchDeliveriesByHarvestSchedule({
+  harvestScheduleId,
+  page = 1,
+  limit = 10
+}: {
+  harvestScheduleId: string;
+  page?: number;
+  limit?: number;
+}) {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+    harvestScheduleId
+  });
+  return fetchJSON<{
+    data: Delivery[];
+    page: number;
+    limit: number;
+    hasNextPage: boolean;
+  }>(`/deliveries?${params.toString()}`);
+}
 export async function fetchDeliveriesByOrderSchedule({
   orderScheduleId,
   page = 1,
