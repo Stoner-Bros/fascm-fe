@@ -209,7 +209,8 @@ export function InboundTruckAssignment() {
         endLat: null,
         endLng: null,
         startAddress: 'Kho trung tâm',
-        endAddress: `Nhà cung cấp: ${selectedSchedule.supplierId?.user?.firstName || ''} ${selectedSchedule.supplierId?.user?.lastName || ''}`,
+        endAddress:
+          selectedSchedule.supplierId?.address || 'Địa chỉ khách hàng',
         orderSchedule: null
       });
 

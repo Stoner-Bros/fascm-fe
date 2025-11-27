@@ -1,7 +1,8 @@
 'use client';
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { fetchDeliveries, type Delivery } from '@/services/delivery.service';
+import { fetchDeliveries } from '@/services/delivery.service';
+import { Delivery } from '@/types';
 
 type LatLng = { lat: number; lng: number };
 
@@ -49,6 +50,7 @@ export default function DeliveryRealtimeAdminPage() {
               <tr>
                 <th className='border-b p-2 text-left'>ID</th>
                 <th className='border-b p-2 text-left'>Order Schedule</th>
+                <th className='border-b p-2 text-left'>Harvest Schedule</th>
                 <th className='border-b p-2 text-left'>Trạng thái</th>
                 <th className='border-b p-2 text-left'>Bắt đầu</th>
                 <th className='border-b p-2 text-left'>Kết thúc</th>
@@ -60,6 +62,9 @@ export default function DeliveryRealtimeAdminPage() {
                 <tr key={d.id}>
                   <td className='border-b p-2'>{d.id}</td>
                   <td className='border-b p-2'>{d.orderSchedule?.id ?? '-'}</td>
+                  <td className='border-b p-2'>
+                    {d.harvestSchedule?.id ?? '-'}
+                  </td>
                   <td className='border-b p-2'>{d.status ?? '-'}</td>
                   <td className='border-b p-2'>{d.startTime ?? '-'}</td>
                   <td className='border-b p-2'>{d.endTime ?? '-'}</td>
