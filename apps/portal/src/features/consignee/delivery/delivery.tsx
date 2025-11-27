@@ -18,110 +18,211 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle
+} from '@/components/ui/alert-dialog';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useToast } from '@/components/ui/use-toast';
 import { fetchMyOrders } from '@/services/order.service';
 import {
   fetchDeliveriesByOrderSchedule,
+  confirmDeliveryReceived,
   type Delivery
 } from '@/services/delivery.service';
+import {
+  IconCheck,
+  IconRefresh,
+  IconClock,
+  IconTruck,
+  IconMapPin
+} from '@tabler/icons-react';
 
-type DeliveryItem = {
-  productName: string;
-  uom: string;
-  qty: number;
-};
-
-type DeliveryBatch = {
-  id: string;
-  orderId: string;
-  orderRef: string;
-  batchNo: number;
-  status: 'Scheduled' | 'InTransit' | 'Delivered';
-  paymentStatus: 'Unpaid' | 'PartiallyPaid' | 'Paid';
-  scheduledDate: string; // ISO
-  deliveredDate?: string; // ISO
-  items: DeliveryItem[];
-  amount: number; // VND
-};
-
-function mapDeliveryToRow(d: Delivery): {
+type DeliveryRow = {
   id: string;
   orderScheduleId: string;
   status: string;
   startTime?: string | null;
   endTime?: string | null;
-} {
+  startAddress?: string | null;
+  endAddress?: string | null;
+  truck?: {
+    id: string;
+    licensePlate?: string | null;
+    model?: string | null;
+    capacity?: number | null;
+  } | null;
+  fullDelivery: Delivery;
+};
+
+function mapDeliveryToRow(d: Delivery): DeliveryRow {
   return {
     id: d.id,
     orderScheduleId: String(d.orderSchedule?.id ?? ''),
     status: String(d.status ?? ''),
     startTime: d.startTime ?? null,
-    endTime: d.endTime ?? null
+    endTime: d.endTime ?? null,
+    startAddress: d.startAddress ?? null,
+    endAddress: d.endAddress ?? null,
+    truck: d.truck ?? null,
+    fullDelivery: d
   };
-}
-
-function formatCurrencyVND(n: number) {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND'
-  }).format(n);
 }
 
 export default function ConsigneeDeliveryFeature() {
-  const [rows, setRows] = useState<ReturnType<typeof mapDeliveryToRow>[]>([]);
+  const { toast } = useToast();
+  const [rows, setRows] = useState<DeliveryRow[]>([]);
   const [loading, setLoading] = useState(false);
-  useEffect(() => {
-    let ignore = false;
-    setLoading(true);
-    fetchMyOrders({ page: 1, limit: 10 })
-      .then(async (res) => {
-        const scheduleIds = res.data
-          .map((o) => o.orderSchedule?.id)
-          .filter((id): id is string => !!id);
-        const deliveriesLists = await Promise.all(
-          scheduleIds.map((sid) =>
-            fetchDeliveriesByOrderSchedule({
-              orderScheduleId: sid,
-              page: 1,
-              limit: 10
-            })
-          )
-        );
-        const deliveries = deliveriesLists.flatMap((r) => r.data);
-        const mapped = deliveries.map(mapDeliveryToRow);
-        if (!ignore) setRows(mapped);
-      })
-      .finally(() => !ignore && setLoading(false));
-    return () => {
-      ignore = true;
-    };
-  }, []);
-  const totalBatches = rows.length;
-  const deliveredCount = rows.filter((d) => d.status === 'COMPLETED').length;
-  const totalAmount = 0;
-  const unpaidAmount = 0;
+  const [selectedDelivery, setSelectedDelivery] = useState<Delivery | null>(
+    null
+  );
+  const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
 
-  const badgeForStatus = (s: DeliveryBatch['status']) => {
-    switch (s) {
-      case 'Scheduled':
-        return <Badge variant='secondary'>Scheduled</Badge>;
-      case 'InTransit':
-        return <Badge>In Transit</Badge>;
-      case 'Delivered':
-        return <Badge variant='success'>Delivered</Badge>;
+  const loadDeliveries = async () => {
+    setLoading(true);
+    try {
+      const res = await fetchMyOrders({ page: 1, limit: 100 });
+      const scheduleIds = res.data
+        .map((o) => o.orderSchedule?.id)
+        .filter((id): id is string => !!id);
+      const deliveriesLists = await Promise.all(
+        scheduleIds.map((sid) =>
+          fetchDeliveriesByOrderSchedule({
+            orderScheduleId: sid,
+            page: 1,
+            limit: 100
+          })
+        )
+      );
+      const deliveries = deliveriesLists.flatMap((r) => r.data);
+      const mapped = deliveries.map(mapDeliveryToRow);
+      setRows(mapped);
+    } catch (error) {
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể tải danh sách giao hàng',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
-  const badgeForPayment = (p: DeliveryBatch['paymentStatus']) => {
-    switch (p) {
-      case 'Unpaid':
-        return <Badge variant='destructive'>Unpaid</Badge>;
-      case 'PartiallyPaid':
-        return <Badge variant='outline'>Partially Paid</Badge>;
-      case 'Paid':
-        return <Badge variant='success'>Paid</Badge>;
+  useEffect(() => {
+    loadDeliveries();
+  }, []);
+
+  const totalBatches = rows.length;
+  const deliveredCount = rows.filter((d) => d.status === 'completed').length;
+  const inTransitCount = rows.filter(
+    (d) =>
+      d.status === 'scheduled' ||
+      d.status === 'departed' ||
+      d.status === 'in_transit' ||
+      d.status === 'arrived'
+  ).length;
+  const totalAmount = 0;
+  const unpaidAmount = 0;
+
+  const handleConfirmClick = (delivery: Delivery) => {
+    setSelectedDelivery(delivery);
+    setIsConfirmDialogOpen(true);
+  };
+
+  const handleConfirmDelivery = async () => {
+    if (!selectedDelivery) return;
+
+    try {
+      await confirmDeliveryReceived(selectedDelivery.id);
+      toast({
+        title: 'Thành công',
+        description: 'Đã xác nhận nhận hàng thành công',
+        variant: 'default'
+      });
+      setIsConfirmDialogOpen(false);
+      setSelectedDelivery(null);
+      loadDeliveries(); // Reload the list
+    } catch (error) {
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể xác nhận nhận hàng',
+        variant: 'destructive'
+      });
     }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'scheduled':
+        return (
+          <Badge variant='secondary' className='flex w-fit items-center gap-1'>
+            <IconClock className='h-3 w-3' />
+            Đã lên lịch
+          </Badge>
+        );
+      case 'departed':
+        return (
+          <Badge variant='default' className='flex w-fit items-center gap-1'>
+            <IconTruck className='h-3 w-3' />
+            Đã khởi hành
+          </Badge>
+        );
+      case 'in_transit':
+        return (
+          <Badge variant='default' className='flex w-fit items-center gap-1'>
+            <IconTruck className='h-3 w-3' />
+            Đang vận chuyển
+          </Badge>
+        );
+      case 'arrived':
+        return (
+          <Badge variant='default' className='flex w-fit items-center gap-1'>
+            <IconMapPin className='h-3 w-3' />
+            Đã đến nơi
+          </Badge>
+        );
+      case 'completed':
+        return (
+          <Badge variant='default' className='flex w-fit items-center gap-1'>
+            <IconCheck className='h-3 w-3' />
+            Hoàn thành
+          </Badge>
+        );
+      default:
+        return <Badge variant='outline'>{status || 'N/A'}</Badge>;
+    }
+  };
+
+  const formatDate = (dateString?: string | null) => {
+    if (!dateString) return '-';
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleString('vi-VN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    } catch {
+      return '-';
+    }
+  };
+
+  const canConfirm = (status: string) => {
+    return (
+      status === 'scheduled' ||
+      status === 'departed' ||
+      status === 'in_transit' ||
+      status === 'arrived'
+    );
   };
 
   return (
@@ -130,19 +231,16 @@ export default function ConsigneeDeliveryFeature() {
         <div className='flex items-center justify-between'>
           <div>
             <h2 className='text-3xl font-bold tracking-tight'>
-              Delivery theo đơn hàng
+              Quản Lý Giao Hàng
             </h2>
             <p className='text-muted-foreground'>
-              Quản lý các đợt giao, thanh toán theo từng đợt.
+              Theo dõi và xác nhận các chuyến giao hàng của bạn
             </p>
           </div>
-          <div>
-            <Button asChild>
-              <Link href={'/consignee/deliveries/DEMO-RT-001/live'}>
-                Xem Demo Realtime
-              </Link>
-            </Button>
-          </div>
+          <Button onClick={loadDeliveries} variant='outline' size='sm'>
+            <IconRefresh className='mr-2 h-4 w-4' />
+            Làm mới
+          </Button>
         </div>
 
         {/* Summary */}
@@ -150,30 +248,22 @@ export default function ConsigneeDeliveryFeature() {
           <CardHeader>
             <CardTitle>Tổng quan</CardTitle>
             <CardDescription>
-              Thống kê nhanh các đợt giao đang diễn ra
+              Thống kê nhanh các chuyến giao hàng
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className='grid grid-cols-1 gap-4 sm:grid-cols-4'>
+            <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
               <div className='rounded-md border p-4'>
-                <p className='text-muted-foreground text-sm'>Tổng số đợt</p>
+                <p className='text-muted-foreground text-sm'>Tổng số chuyến</p>
                 <p className='text-xl font-semibold'>{totalBatches}</p>
+              </div>
+              <div className='rounded-md border p-4'>
+                <p className='text-muted-foreground text-sm'>Đang vận chuyển</p>
+                <p className='text-xl font-semibold'>{inTransitCount}</p>
               </div>
               <div className='rounded-md border p-4'>
                 <p className='text-muted-foreground text-sm'>Đã giao</p>
                 <p className='text-xl font-semibold'>{deliveredCount}</p>
-              </div>
-              <div className='rounded-md border p-4'>
-                <p className='text-muted-foreground text-sm'>Tổng giá trị</p>
-                <p className='text-xl font-semibold'>
-                  {formatCurrencyVND(totalAmount)}
-                </p>
-              </div>
-              <div className='rounded-md border p-4'>
-                <p className='text-muted-foreground text-sm'>Chưa thanh toán</p>
-                <p className='text-xl font-semibold'>
-                  {formatCurrencyVND(unpaidAmount)}
-                </p>
               </div>
             </div>
           </CardContent>
@@ -182,53 +272,117 @@ export default function ConsigneeDeliveryFeature() {
         {/* Deliveries list */}
         <Card>
           <CardHeader>
-            <CardTitle>Danh sách các đợt giao</CardTitle>
+            <CardTitle>Danh sách chuyến giao hàng</CardTitle>
           </CardHeader>
           <CardContent>
             <div className='rounded-md border'>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Order</TableHead>
-                    <TableHead>Batch</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Payment</TableHead>
-                    <TableHead>Scheduled</TableHead>
-                    <TableHead>Delivered</TableHead>
-                    <TableHead>Items</TableHead>
-                    <TableHead>Amount</TableHead>
-                    <TableHead className='text-right'>Action</TableHead>
+                    <TableHead>Mã giao hàng</TableHead>
+                    <TableHead>Mã đơn hàng</TableHead>
+                    <TableHead>Xe vận chuyển</TableHead>
+                    <TableHead>Địa chỉ nhận</TableHead>
+                    <TableHead>Thời gian dự kiến</TableHead>
+                    <TableHead>Trạng thái</TableHead>
+                    <TableHead className='text-right'>Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {rows.map((d) => (
-                    <TableRow key={d.id}>
-                      <TableCell>{d.orderScheduleId || '-'}</TableCell>
-                      <TableCell>{d.status || '-'}</TableCell>
-                      <TableCell>{d.startTime ?? '-'}</TableCell>
-                      <TableCell>{d.endTime ?? '-'}</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell className='space-x-2 text-right'>
-                        <Button asChild variant='outline' size='sm'>
-                          <Link href={`/consignee/deliveries/${d.id}`}>
-                            Xem
-                          </Link>
-                        </Button>
-                        <Button asChild size='sm'>
-                          <Link href={`/consignee/deliveries/${d.id}/live`}>
-                            Live
-                          </Link>
-                        </Button>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className='text-center'>
+                        Đang tải...
                       </TableCell>
                     </TableRow>
-                  ))}
+                  ) : rows.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={7} className='text-center'>
+                        Không có chuyến giao hàng nào
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    rows.map((d) => (
+                      <TableRow key={d.id}>
+                        <TableCell className='font-mono text-sm'>
+                          {d.id}
+                        </TableCell>
+                        <TableCell className='font-mono text-sm'>
+                          {d.orderScheduleId || '-'}
+                        </TableCell>
+                        <TableCell>
+                          <div className='flex flex-col'>
+                            <span className='font-semibold'>
+                              {d.truck?.licensePlate || 'N/A'}
+                            </span>
+                            <span className='text-muted-foreground text-xs'>
+                              {d.truck?.model}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className='max-w-[200px] truncate'>
+                            {d.endAddress || '-'}
+                          </div>
+                        </TableCell>
+                        <TableCell>{formatDate(d.endTime)}</TableCell>
+                        <TableCell>{getStatusBadge(d.status)}</TableCell>
+                        <TableCell className='text-right'>
+                          <div className='flex justify-end gap-2'>
+                            <Button asChild variant='outline' size='sm'>
+                              <Link href={`/consignee/deliveries/${d.id}/live`}>
+                                Theo dõi
+                              </Link>
+                            </Button>
+                            {canConfirm(d.status) && (
+                              <Button
+                                size='sm'
+                                onClick={() =>
+                                  handleConfirmClick(d.fullDelivery)
+                                }
+                                className='gap-1'
+                              >
+                                <IconCheck className='h-4 w-4' />
+                                Xác nhận
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
                 </TableBody>
               </Table>
             </div>
           </CardContent>
         </Card>
       </div>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog
+        open={isConfirmDialogOpen}
+        onOpenChange={setIsConfirmDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Xác nhận đã nhận hàng</AlertDialogTitle>
+            <AlertDialogDescription>
+              Bạn có chắc chắn đã nhận đầy đủ hàng từ chuyến giao hàng{' '}
+              <strong>{selectedDelivery?.id}</strong>?
+              <br />
+              <br />
+              Hành động này sẽ đánh dấu chuyến giao hàng là hoàn thành.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={handleConfirmDelivery}>
+              <IconCheck className='mr-2 h-4 w-4' />
+              Xác nhận đã nhận
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageContainer>
   );
 }

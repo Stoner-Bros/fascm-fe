@@ -12,11 +12,43 @@ export type Delivery = {
   startTime?: string | null;
   endTime?: string | null;
   orderSchedule?: { id: string } | null;
-  truck?: { id: string } | null;
+  harvestSchedule?: {
+    id: string;
+    description?: string | null;
+    harvestDate?: string | null;
+    status?: string | null;
+  } | null;
+  truck?: {
+    id: string;
+    licensePlate?: string | null;
+    model?: string | null;
+    capacity?: number | null;
+  } | null;
+  createdAt?: string;
+  updatedAt?: string;
 };
 
 export async function fetchDeliveryById(id: string) {
   return fetchJSON<Delivery>(`/deliveries/${id}`);
+}
+
+export async function fetchDeliveries({
+  page = 1,
+  limit = 100
+}: {
+  page?: number;
+  limit?: number;
+} = {}) {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit)
+  });
+  return fetchJSON<{
+    data: Delivery[];
+    page: number;
+    limit: number;
+    hasNextPage: boolean;
+  }>(`/deliveries?${params.toString()}`);
 }
 
 export async function fetchDeliveriesByOrderSchedule({
@@ -39,4 +71,18 @@ export async function fetchDeliveriesByOrderSchedule({
     limit: number;
     hasNextPage: boolean;
   }>(`/deliveries?${params.toString()}`);
+}
+
+export async function updateDelivery(
+  id: string,
+  data: Partial<Delivery>
+): Promise<Delivery> {
+  return fetchJSON<Delivery>(`/deliveries/${id}`, {
+    method: 'PATCH',
+    body: data
+  });
+}
+
+export async function confirmDeliveryReceived(id: string): Promise<Delivery> {
+  return updateDelivery(id, { status: 'completed' });
 }

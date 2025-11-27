@@ -106,11 +106,18 @@ export function InboundTruckAssignment() {
     hasNextPage: false
   });
 
-  // Load deliveries to check assignments
+  // Load deliveries to check assignments (exclude completed)
   const loadDeliveries = async () => {
     try {
       const res = await fetchDeliveries({ page: 1, limit: 1000 });
-      setDeliveries(res.data);
+      // Only include active deliveries (not completed or cancelled)
+      const activeDeliveries = res.data.filter(
+        (d) =>
+          d.harvestSchedule?.status !== 'completed' &&
+          d.status !== 'completed' &&
+          d.status !== 'cancelled'
+      );
+      setDeliveries(activeDeliveries);
     } catch (error) {
       // Silent error - deliveries will be empty
     }

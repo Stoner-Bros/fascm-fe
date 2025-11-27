@@ -78,6 +78,9 @@ export function DeliveryTracking() {
   const [activeTab, setActiveTab] = useState<'all' | 'inbound' | 'outbound'>(
     'all'
   );
+  const [statusFilter, setStatusFilter] = useState<
+    'all' | 'active' | 'completed'
+  >('all');
 
   const [pagination, setPagination] = useState({
     page: 1,
@@ -85,7 +88,7 @@ export function DeliveryTracking() {
     hasNextPage: false
   });
 
-  // Load all deliveries
+  // Load all deliveries (show all by default)
   const loadDeliveries = async () => {
     setIsLoading(true);
     try {
@@ -93,6 +96,7 @@ export function DeliveryTracking() {
         page: pagination.page,
         limit: pagination.limit
       });
+
       setDeliveries(res.data);
       setPagination((prev) => ({ ...prev, hasNextPage: res.hasNextPage }));
     } catch (error) {
@@ -145,15 +149,34 @@ export function DeliveryTracking() {
     });
   };
 
-  // Filter deliveries by type
+  // Check if delivery is completed
+  const isDeliveryCompleted = (d: Delivery) => {
+    return (
+      d.status === 'completed' ||
+      d.status === 'cancelled' ||
+      d.harvestSchedule?.status === 'completed'
+    );
+  };
+
+  // Filter deliveries by type and status
   const filteredDeliveries = deliveries.filter((d) => {
-    if (activeTab === 'inbound') return d.harvestSchedule !== null;
-    if (activeTab === 'outbound') return d.orderSchedule !== null;
+    // Filter by type (inbound/outbound)
+    if (activeTab === 'inbound' && !d.harvestSchedule) return false;
+    if (activeTab === 'outbound' && !d.orderSchedule) return false;
+
+    // Filter by status
+    if (statusFilter === 'active' && isDeliveryCompleted(d)) return false;
+    if (statusFilter === 'completed' && !isDeliveryCompleted(d)) return false;
+
     return true;
   });
 
   const inboundCount = deliveries.filter((d) => d.harvestSchedule).length;
   const outboundCount = deliveries.filter((d) => d.orderSchedule).length;
+  const activeCount = deliveries.filter((d) => !isDeliveryCompleted(d)).length;
+  const completedCount = deliveries.filter((d) =>
+    isDeliveryCompleted(d)
+  ).length;
 
   return (
     <div className='space-y-4'>
@@ -176,11 +199,34 @@ export function DeliveryTracking() {
           </div>
         </CardHeader>
         <CardContent>
+          {/* Status Filter */}
+          <div className='mb-4 flex gap-2'>
+            <Button
+              variant={statusFilter === 'all' ? 'default' : 'outline'}
+              size='sm'
+              onClick={() => setStatusFilter('all')}
+            >
+              Tất cả ({deliveries.length})
+            </Button>
+            <Button
+              variant={statusFilter === 'active' ? 'default' : 'outline'}
+              size='sm'
+              onClick={() => setStatusFilter('active')}
+            >
+              Đang hoạt động ({activeCount})
+            </Button>
+            <Button
+              variant={statusFilter === 'completed' ? 'default' : 'outline'}
+              size='sm'
+              onClick={() => setStatusFilter('completed')}
+            >
+              Đã hoàn thành ({completedCount})
+            </Button>
+          </div>
+
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
             <TabsList className='mb-4'>
-              <TabsTrigger value='all'>
-                Tất cả ({deliveries.length})
-              </TabsTrigger>
+              <TabsTrigger value='all'>Tất cả</TabsTrigger>
               <TabsTrigger value='inbound'>
                 Inbound ({inboundCount})
               </TabsTrigger>
