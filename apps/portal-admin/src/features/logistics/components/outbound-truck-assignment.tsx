@@ -106,21 +106,18 @@ export function OutboundTruckAssignment() {
     hasNextPage: false
   });
 
-  // Load deliveries to check assignments (exclude completed)
+  // Load all deliveries to check assignments
   const loadDeliveries = async () => {
     try {
       const res = await fetchDeliveries({ page: 1, limit: 1000 });
-      // Only include active deliveries (not completed or cancelled)
-      const activeDeliveries = res.data.filter(
-        (d) => d.status !== 'completed' && d.status !== 'cancelled'
-      );
-      setDeliveries(activeDeliveries);
+      // Include all deliveries without filtering by status
+      setDeliveries(res.data);
     } catch (error) {
       // Silent error - deliveries will be empty
     }
   };
 
-  // Load orders ready for delivery (approved or pending pickup)
+  // Load all orders
   const loadOrders = async () => {
     setIsLoading(true);
     try {
@@ -128,27 +125,8 @@ export function OutboundTruckAssignment() {
         page: pagination.page,
         limit: pagination.limit
       });
-      // Filter orders that are ready for delivery
-      const readyOrders = res.data.filter(
-        (o: OrderBE) =>
-          o.orderSchedule?.status === 'APPROVED' ||
-          o.orderSchedule?.status === 'PENDING_ASSIGNMENT' ||
-          o.orderSchedule?.status === 'PENDING_PICKUP'
-      );
-
-      // Filter out orders that already have truck assignments
-      const assignedOrderScheduleIds = new Set(
-        deliveries
-          .filter((d) => d.orderSchedule?.id)
-          .map((d) => d.orderSchedule!.id)
-      );
-
-      const unassignedOrders = readyOrders.filter(
-        (o: OrderBE) =>
-          o.orderSchedule && !assignedOrderScheduleIds.has(o.orderSchedule.id)
-      );
-
-      setOrders(unassignedOrders);
+      // Display all orders without filtering by status or assignment
+      setOrders(res.data);
       setPagination((prev) => ({ ...prev, hasNextPage: res.hasNextPage }));
     } catch (error) {
       toast({

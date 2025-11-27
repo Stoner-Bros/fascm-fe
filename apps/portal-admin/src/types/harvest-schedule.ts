@@ -8,6 +8,7 @@ export type HarvestSchedule = {
       firstName?: string;
       lastName?: string;
     };
+    address?: string;
   } | null;
   status?: HarvestScheduleStatus | null;
   createdAt?: Date | string;

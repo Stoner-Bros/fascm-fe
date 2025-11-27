@@ -106,24 +106,18 @@ export function InboundTruckAssignment() {
     hasNextPage: false
   });
 
-  // Load deliveries to check assignments (exclude completed)
+  // Load all deliveries to check assignments
   const loadDeliveries = async () => {
     try {
       const res = await fetchDeliveries({ page: 1, limit: 1000 });
-      // Only include active deliveries (not completed or cancelled)
-      const activeDeliveries = res.data.filter(
-        (d) =>
-          d.harvestSchedule?.status !== 'completed' &&
-          d.status !== 'completed' &&
-          d.status !== 'cancelled'
-      );
-      setDeliveries(activeDeliveries);
+      // Include all deliveries without filtering by status
+      setDeliveries(res.data);
     } catch (error) {
       // Silent error - deliveries will be empty
     }
   };
 
-  // Load approved harvest schedules (ready for pickup)
+  // Load all harvest schedules
   const loadSchedules = async () => {
     setIsLoading(true);
     try {
@@ -131,23 +125,8 @@ export function InboundTruckAssignment() {
         page: pagination.page,
         limit: pagination.limit
       });
-      // Filter only approved schedules (ready to pick up)
-      const approvedSchedules = res.data.filter(
-        (s: HarvestSchedule) => s.status === 'approved'
-      );
-
-      // Filter out schedules that already have truck assignments
-      const assignedScheduleIds = new Set(
-        deliveries
-          .filter((d) => d.harvestSchedule?.id)
-          .map((d) => d.harvestSchedule!.id)
-      );
-
-      const unassignedSchedules = approvedSchedules.filter(
-        (s: HarvestSchedule) => !assignedScheduleIds.has(s.id)
-      );
-
-      setSchedules(unassignedSchedules);
+      // Display all schedules without filtering by status or assignment
+      setSchedules(res.data);
       setPagination((prev) => ({ ...prev, hasNextPage: res.hasNextPage }));
     } catch (error) {
       toast({
@@ -209,7 +188,8 @@ export function InboundTruckAssignment() {
         endLat: null,
         endLng: null,
         startAddress: 'Kho trung tâm',
-        endAddress: `Nhà cung cấp: ${selectedSchedule.supplierId?.user?.firstName || ''} ${selectedSchedule.supplierId?.user?.lastName || ''}`,
+        endAddress:
+          selectedSchedule.supplierId?.address || 'Địa chỉ khách hàng',
         orderSchedule: null
       });
 

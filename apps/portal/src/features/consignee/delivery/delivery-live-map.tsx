@@ -231,7 +231,7 @@ export default function DeliveryLiveMap({
   ]);
 
   return (
-    <div className='space-y-4'>
+    <div className='space-y-4 px-4'>
       <div className='rounded-md border p-2 text-xs'>
         <span className='mr-2'>
           Socket: {connected ? 'connected' : 'disconnected'}
