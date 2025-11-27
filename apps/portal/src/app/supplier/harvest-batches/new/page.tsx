@@ -248,34 +248,56 @@ export default function NewHarvestBatchPage() {
       // Step 3: Create ALL Harvest Details using this ONE ticket
       // Tính amount cho mỗi detail: quantity * unitPrice
       // Tạo tất cả details cho cùng 1 ticket
-      const createdDetails = await Promise.all(
-        harvestDetails.map(async (detail, index) => {
-          if (!detail.productId) {
-            throw new Error(
-              `Missing productId in harvest detail #${index + 1}`
-            );
-          }
-
-          const quantity = Number(detail.quantity) || 0;
-          const unitPrice = Number(detail.unitPrice) || 0;
-          const amount = quantity * unitPrice; // Tính amount = quantity * unitPrice
-
-          const payload = {
-            product: {
-              id: String(detail.productId)
-            },
-            harvestTicket: {
-              id: String(ticket.id) // Tất cả details dùng cùng 1 ticket
-            },
-            quantity: quantity,
-            unitPrice: unitPrice,
-            unit: String(detail.unit || 'kg'),
-            amount: amount // Gửi amount đã tính
-          };
-
-          return createHarvestDetail(payload);
-        })
+      console.log(
+        'Creating harvest details:',
+        harvestDetails.length,
+        'details'
       );
+
+      const createdDetails = [];
+      for (let index = 0; index < harvestDetails.length; index++) {
+        const detail = harvestDetails[index];
+
+        if (!detail.productId) {
+          throw new Error(`Missing productId in harvest detail #${index + 1}`);
+        }
+
+        const quantity = Number(detail.quantity) || 0;
+        const unitPrice = Number(detail.unitPrice) || 0;
+        const amount = quantity * unitPrice; // Tính amount = quantity * unitPrice
+
+        const payload = {
+          product: {
+            id: String(detail.productId)
+          },
+          harvestTicket: {
+            id: String(ticket.id) // Tất cả details dùng cùng 1 ticket
+          },
+          quantity: quantity,
+          unitPrice: unitPrice,
+          unit: String(detail.unit || 'kg'),
+          amount: amount // Gửi amount đã tính
+        };
+
+        console.log(`Creating harvest detail #${index + 1}:`, payload);
+
+        try {
+          const createdDetail = await createHarvestDetail(payload);
+          console.log(
+            `Successfully created harvest detail #${index + 1}:`,
+            createdDetail
+          );
+          createdDetails.push(createdDetail);
+        } catch (error) {
+          console.error(
+            `Failed to create harvest detail #${index + 1}:`,
+            error
+          );
+          throw new Error(
+            `Failed to create harvest detail #${index + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`
+          );
+        }
+      }
 
       // Kiểm tra tất cả details đã được tạo thành công
       if (createdDetails.length !== harvestDetails.length) {
@@ -283,6 +305,11 @@ export default function NewHarvestBatchPage() {
           `Failed to create all harvest details. Expected ${harvestDetails.length}, created ${createdDetails.length}`
         );
       }
+
+      console.log(
+        'Successfully created all harvest details:',
+        createdDetails.length
+      );
 
       // Step 4: Tính toán và cập nhật Harvest Ticket
       // Tính tổng quantity từ TẤT CẢ các details (unit = kg)

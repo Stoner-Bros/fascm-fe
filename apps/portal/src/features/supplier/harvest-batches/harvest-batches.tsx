@@ -75,6 +75,7 @@ type HarvestBatchRow = {
   harvestDate: string;
   location: string;
   status: string;
+  reason?: string; // Lý do từ chối (nếu có)
 };
 
 const getStatusIcon = (status: string) => {
@@ -138,29 +139,26 @@ export default function SupplierHarvestBatchesFeature() {
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
 
   /* 
-    CHỈ chạy 1 lần khi mount.
-    Không để [toast] trong dependency để tránh vòng lặp.
+    CHỈ fetch 1 lần duy nhất khi mount - GIỮ LẠI API CALLS ĐỂ LẤY PRODUCTS
   */
   useEffect(() => {
     let cancelled = false;
-    let intervalId: NodeJS.Timeout | null = null;
 
-    const loadData = async (isInitialLoad = false) => {
-      if (cancelled) return;
-
+    const loadData = async () => {
+      setLoading(true);
       try {
-        if (isInitialLoad) {
-          setLoading(true);
-        }
-
+        // 1. Fetch schedules
         const schedulesRes = await fetchHarvestSchedules({
           page: 1,
           limit: 50
         });
         const schedules: HarvestSchedule[] = schedulesRes.data ?? [];
 
+        if (cancelled) return;
+
         const supplierCache = new Map<string, Supplier>();
 
+        // 2. Process từng schedule để lấy đầy đủ thông tin
         const rows: HarvestBatchRow[] = await Promise.all(
           schedules.map(async (schedule) => {
             const scheduleId = schedule.id;
@@ -187,7 +185,7 @@ export default function SupplierHarvestBatchesFeature() {
               }
             }
 
-            // ===== Tickets & Details of this schedule =====
+            // ===== Tickets & Details của schedule này =====
             const ticketsRes = await fetchHarvestTickets({
               page: 1,
               limit: 20,
@@ -224,6 +222,7 @@ export default function SupplierHarvestBatchesFeature() {
 
             const details = detailResponses.flat();
 
+            // Extract product names từ details
             const productNames = new Set<string>();
             for (const detail of details) {
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -248,51 +247,36 @@ export default function SupplierHarvestBatchesFeature() {
               products,
               harvestDate,
               location,
-              status: schedule.status ?? 'PENDING'
+              status: schedule.status ?? 'PENDING',
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              reason: (schedule as any)?.reason
             };
           })
         );
 
         if (cancelled) return;
-
-        // Luôn tạo array mới để React detect được sự thay đổi
-        setBatches([...rows]);
+        setBatches(rows);
       } catch (err) {
         if (cancelled) return;
         console.error('Failed to load harvest batches', err);
-        // Chỉ hiển thị error khi load lần đầu
-        if (isInitialLoad) {
-          toast({
-            title: 'Error',
-            description: 'Failed to load harvest batches',
-            variant: 'destructive'
-          });
-        }
+        toast({
+          title: 'Error',
+          description: 'Failed to load harvest batches',
+          variant: 'destructive'
+        });
       } finally {
-        if (!cancelled && isInitialLoad) {
-          setLoading(false);
-        }
+        if (!cancelled) setLoading(false);
       }
     };
 
-    // Load lần đầu ngay lập tức
-    loadData(true);
-
-    // Polling để tự động cập nhật danh sách mỗi 3 giây
-    intervalId = setInterval(() => {
-      if (!cancelled) {
-        loadData(false);
-      }
-    }, 3000); // 3 giây
+    // CHỈ LOAD 1 LẦN DUY NHẤT - KHÔNG CÓ POLLING/INTERVAL
+    loadData();
 
     return () => {
       cancelled = true;
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // <--- chỉ mount 1 lần
+  }, []); // Không có dependencies - chỉ chạy 1 lần khi mount
 
   const handleCancelBatch = (batchId: string) => {
     setSelectedBatchId(batchId);
@@ -540,44 +524,17 @@ export default function SupplierHarvestBatchesFeature() {
                               )}
                               {batch.status.toUpperCase() === 'REJECTED' && (
                                 <DropdownMenuItem
-                                  onClick={async () => {
-                                    try {
-                                      // Fetch schedule để lấy reason
-                                      const res = await fetchHarvestSchedules({
-                                        page: 1,
-                                        limit: 100
-                                      });
-                                      const schedule = res.data?.find(
-                                        (s) => s.id === batch.id
-                                      );
-                                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                      const reason = (schedule as any)?.reason;
-                                      if (reason) {
-                                        toast({
-                                          title: 'Lý do từ chối',
-                                          description: reason,
-                                          variant: 'default'
-                                        });
-                                      } else {
-                                        toast({
-                                          title: 'Lý do từ chối',
-                                          description:
-                                            'Không có lý do được cung cấp.',
-                                          variant: 'default'
-                                        });
-                                      }
-                                    } catch (err) {
-                                      console.error(
-                                        'Error fetching reason:',
-                                        err
-                                      );
-                                      toast({
-                                        title: 'Error',
-                                        description:
-                                          'Không thể tải lý do từ chối.',
-                                        variant: 'destructive'
-                                      });
-                                    }
+                                  onClick={() => {
+                                    // Sử dụng reason từ dữ liệu đã load
+                                    const reason =
+                                      batch.reason ||
+                                      'Không có lý do được cung cấp.';
+
+                                    toast({
+                                      title: 'Lý do từ chối',
+                                      description: reason,
+                                      variant: 'default'
+                                    });
                                   }}
                                 >
                                   <IconInfoCircle className='mr-2 h-4 w-4' />
