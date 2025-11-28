@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { IconEdit, IconMail, IconPhone, IconUser } from '@tabler/icons-react';
 import { useState } from 'react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export default function ConsigneeProfilePage() {
   const { user } = {

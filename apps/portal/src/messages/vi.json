@@ -103,7 +103,7 @@
           "monitoring": "Cảnh báo giám sát nhiệt độ tự động"
         }
       }
-    },
+    },  
     "howItWorks": {
       "title": "Cách hoạt động",
       "description": "Khám phá cách FASCM hoạt động với quy trình được tinh giản của chúng tôi. Người quản lý tạo sản phẩm, nhân viên kho quản lý đơn hàng và nhà cung cấp thực hiện các yêu cầu đã được xác nhận.",
@@ -275,6 +275,68 @@
         "homeButton": "Về trang chủ",
         "loginButton": "Về trang đăng nhập"
       }
+    }
+  },
+  "SupplierHarvestBatches": {
+    "header": {
+      "title": "Lô thu hoạch",
+      "subtitle": "Quản lý và theo dõi các lô thu hoạch của bạn",
+      "newBatch": "Tạo lô mới"
+    },
+    "cards": {
+      "total": "Tổng số lô",
+      "pending": "Đang chờ",
+      "inProgress": "Đang thực hiện",
+      "completed": "Hoàn thành"
+    },
+    "filters": {
+      "searchPlaceholder": "Tìm theo mã lịch hoặc sản phẩm...",
+      "statusPlaceholder": "Lọc theo trạng thái",
+      "allStatus": "Tất cả trạng thái"
+    },
+    "table": {
+      "id": "Mã lịch / Lô",
+      "products": "Sản phẩm",
+      "harvestDate": "Ngày thu hoạch",
+      "location": "Địa điểm",
+      "status": "Trạng thái",
+      "actions": "Thao tác",
+      "loading": "Đang tải danh sách lô thu hoạch...",
+      "empty": "Không có lô thu hoạch nào",
+      "noProducts": "Chưa có sản phẩm"
+    },
+    "statuses": {
+      "pending": "Đang chờ",
+      "inProgress": "Đang xử lý",
+      "approved": "Đã duyệt",
+      "completed": "Hoàn thành",
+      "cancelled": "Đã hủy",
+      "rejected": "Bị từ chối",
+      "unknown": "Không xác định"
+    },
+    "actionsMenu": {
+      "label": "Thao tác",
+      "trigger": "Thao tác",
+      "viewDetails": "Xem chi tiết",
+      "edit": "Chỉnh sửa",
+      "cancelBatch": "Hủy lô",
+      "viewReason": "Xem lý do từ chối"
+    },
+    "reason": {
+      "title": "Lý do từ chối",
+      "default": "Không có lý do được cung cấp."
+    },
+    "toast": {
+      "errorTitle": "Lỗi",
+      "errorDescription": "Không thể tải danh sách lô thu hoạch",
+      "cancelTitle": "Đã hủy lô",
+      "cancelDescription": "Lô thu hoạch {id} đã được hủy."
+    },
+    "dialog": {
+      "title": "Hủy lô thu hoạch?",
+      "description": "Thao tác này sẽ hủy lô thu hoạch {id}. Hành động này không thể hoàn tác.",
+      "keep": "Không, giữ lại",
+      "confirm": "Có, hủy lô"
     }
   }
 }

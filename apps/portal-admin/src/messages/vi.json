@@ -26,8 +26,8 @@
     "title": "Quản lý Vận chuyển",
     "description": "Tổng quan và quản lý các đợt vận chuyển với hệ thống xe tải thông minh",
     "stats": {
-      "totalInbound": "Tổng Inbound",
-      "totalOutbound": "Tổng Outbound",
+      "totalInbound": "Tổng chuyến nhập",
+      "totalOutbound": "Tổng chuyến xuất",
       "inTransit": "Đang vận chuyển",
       "delayed": "Chậm trễ",
       "farmToWarehouse": "vận chuyển vườn → kho",
@@ -36,16 +36,16 @@
       "needsUrgentAction": "cần xử lý gấp"
     },
     "inbound": {
-      "title": "Nhập kho (Inbound)",
+      "title": "Nhập kho",
       "subtitle": "Vận chuyển từ vườn về kho (không giới hạn tải trọng)",
       "inTransitBadge": "đang chuyển",
-      "manage": "Quản lý Inbound"
+      "manage": "Quản lý chuyến nhập"
     },
     "outbound": {
-      "title": "Xuất kho (Outbound)",
+      "title": "Xuất kho",
       "subtitle": "Vận chuyển từ kho ra phân phối (kiểm soát tải trọng & đa đơn hàng)",
       "inTransitBadge": "đang chuyển",
-      "manage": "Quản lý Outbound"
+      "manage": "Quản lý chuyến xuất"
     },
     "status": {
       "completed": "Hoàn thành",
@@ -55,11 +55,11 @@
     "recentActivities": {
       "title": "Hoạt động gần đây",
       "description": "Các sự kiện và cập nhật mới nhất",
-      "activity1": "Inbound IN-2024-001 đã hoàn thành",
+      "activity1": "Chuyến nhập IN-2024-001 đã hoàn thành",
       "activity1Details": "500kg rau lá tươi từ Vườn Organic A đã được nhập kho thành công bằng xe HY-29A-12345 (2 nhân viên)",
-      "activity2": "Outbound OUT-2024-015 đang vận chuyển",
-      "activity2Details": "Xe HN-30B-67890 chở 3 đơn hàng (total: 150kg) đang đến khách hàng đầu tiên - nhiệt độ -2°C",
-      "activity3": "Cảnh báo: Inbound IN-2024-003 chậm trễ",
+      "activity2": "Chuyến xuất OUT-2024-015 đang vận chuyển",
+      "activity2Details": "Xe HN-30B-67890 chở 3 đơn hàng (tổng: 150kg) đang đến khách hàng đầu tiên - nhiệt độ -2°C",
+      "activity3": "Cảnh báo: Chuyến nhập IN-2024-003 chậm trễ",
       "activity3Details": "Xe HY-29A-12345 từ Vườn B bị ùn tắc, GPS hiện tại: 15km/h - trễ 1h so với dự kiến",
       "timeAgo": {
         "minutes": "{count} phút trước",

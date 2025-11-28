@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -273,6 +273,26 @@ export function InboundTruckAssignment() {
     }
   };
 
+  // Filter out schedules that already have deliveries assigned
+  const availableSchedules = useMemo(() => {
+    // Get set of schedule IDs that already have deliveries
+    const assignedScheduleIds = new Set(
+      deliveries
+        .filter((d) => d.harvestSchedule?.id)
+        .map((d) => {
+          const scheduleId =
+            d.harvestSchedule?.id ?? (d.harvestSchedule as any)?.id ?? '';
+          return String(scheduleId);
+        })
+    );
+
+    // Filter out schedules that are already assigned
+    return schedules.filter((schedule) => {
+      const scheduleId = String(schedule.id);
+      return !assignedScheduleIds.has(scheduleId);
+    });
+  }, [schedules, deliveries]);
+
   // Format date
   const formatDate = (date?: string | Date | null) => {
     if (!date) return 'N/A';
@@ -326,7 +346,6 @@ export function InboundTruckAssignment() {
                   <TableHead>Mã lịch</TableHead>
                   <TableHead>Nhà cung cấp</TableHead>
                   <TableHead>Ngày thu hoạch</TableHead>
-                  <TableHead>Mô tả</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead className='text-right'>Thao tác</TableHead>
                 </TableRow>
@@ -338,26 +357,20 @@ export function InboundTruckAssignment() {
                       Đang tải...
                     </TableCell>
                   </TableRow>
-                ) : schedules.length === 0 ? (
+                ) : availableSchedules.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className='text-center'>
                       Không có lịch thu hoạch
                     </TableCell>
                   </TableRow>
                 ) : (
-                  schedules.map((schedule) => (
+                  availableSchedules.map((schedule) => (
                     <TableRow key={schedule.id}>
                       <TableCell className='font-mono text-sm'>
-                        {schedule.id.slice(0, 8)}...
+                        {schedule.id.slice(0, 8)}
                       </TableCell>
-                      <TableCell>
-                        {schedule.supplierId?.user?.firstName}{' '}
-                        {schedule.supplierId?.user?.lastName}
-                      </TableCell>
+                      <TableCell>{schedule.supplierId?.gardenName}</TableCell>
                       <TableCell>{formatDate(schedule.harvestDate)}</TableCell>
-                      <TableCell className='truncate'>
-                        {schedule.description || 'N/A'}
-                      </TableCell>
                       <TableCell>
                         <StatusBadge status={schedule.status} />
                       </TableCell>
@@ -550,10 +563,7 @@ export function InboundTruckAssignment() {
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>Nhà cung cấp</Label>
-                  <p>
-                    {selectedSchedule.supplierId?.user?.firstName}{' '}
-                    {selectedSchedule.supplierId?.user?.lastName}
-                  </p>
+                  <p>{selectedSchedule.supplierId?.gardenName}</p>
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>
@@ -633,8 +643,9 @@ export function InboundTruckAssignment() {
                   <div>
                     <span className='text-muted-foreground'>Nhà cung cấp:</span>{' '}
                     <span className='font-medium'>
-                      {selectedSchedule.supplierId?.user?.firstName}{' '}
-                      {selectedSchedule.supplierId?.user?.lastName}
+                      {selectedSchedule.supplierId?.representativeName ||
+                        selectedSchedule.supplierId?.gardenName ||
+                        'N/A'}
                     </span>
                   </div>
                   <div>
@@ -643,6 +654,12 @@ export function InboundTruckAssignment() {
                     </span>{' '}
                     <span className='font-medium'>
                       {formatDate(selectedSchedule.harvestDate)}
+                    </span>
+                  </div>
+                  <div className='col-span-2'>
+                    <span className='text-muted-foreground'>Địa chỉ:</span>{' '}
+                    <span className='font-medium'>
+                      {selectedSchedule.supplierId?.address || 'N/A'}
                     </span>
                   </div>
                 </div>
@@ -703,6 +720,7 @@ export function InboundTruckAssignment() {
               </div>
             </div>
           )}
+
           <DialogFooter>
             <Button
               variant='outline'

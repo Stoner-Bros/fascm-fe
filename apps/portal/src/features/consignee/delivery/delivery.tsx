@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { fetchMyOrders } from '@/services/order.service';
 import {
   fetchDeliveriesByOrderSchedule,

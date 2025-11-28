@@ -4,6 +4,8 @@ export type HarvestSchedule = {
   harvestDate?: string | Date | null;
   supplierId?: {
     id: string;
+    representativeName?: string;
+    gardenName?: string;
     user?: {
       firstName?: string;
       lastName?: string;
