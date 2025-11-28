@@ -27,7 +27,7 @@ import {
 } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Product, fetchProducts } from '@/services/product.service';
 import {
   createHarvestSchedule,

@@ -276,5 +276,67 @@
         "loginButton": "Go to login"
       }
     }
+  },
+  "SupplierHarvestBatches": {
+    "header": {
+      "title": "Harvest Batches",
+      "subtitle": "Manage and track your harvest batches",
+      "newBatch": "New Batch"
+    },
+    "cards": {
+      "total": "Total Batches",
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "completed": "Completed"
+    },
+    "filters": {
+      "searchPlaceholder": "Search by Schedule ID or product...",
+      "statusPlaceholder": "Filter by status",
+      "allStatus": "All Status"
+    },
+    "table": {
+      "id": "Schedule / Batch ID",
+      "products": "Product(s)",
+      "harvestDate": "Harvest Date",
+      "location": "Location",
+      "status": "Status",
+      "actions": "Actions",
+      "loading": "Loading harvest batches...",
+      "empty": "No harvest batches found",
+      "noProducts": "No products"
+    },
+    "statuses": {
+      "pending": "Pending",
+      "inProgress": "In Progress",
+      "approved": "Approved",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "rejected": "Rejected",
+      "unknown": "Unknown"
+    },
+    "actionsMenu": {
+      "label": "Actions",
+      "trigger": "Actions",
+      "viewDetails": "View Details",
+      "edit": "Edit",
+      "cancelBatch": "Cancel Batch",
+      "viewReason": "View rejection reason"
+    },
+    "reason": {
+      "title": "Rejection reason",
+      "default": "No rejection reason provided."
+    },
+    "toast": {
+      "errorTitle": "Error",
+      "errorDescription": "Failed to load harvest batches",
+      "cancelTitle": "Batch cancelled",
+      "cancelDescription": "Harvest batch {id} has been cancelled."
+    },
+    "dialog": {
+      "title": "Cancel harvest batch?",
+      "description": "This action will cancel harvest batch {id}. This cannot be undone.",
+      "keep": "No, keep it",
+      "confirm": "Yes, cancel batch"
+    }
   }
 }

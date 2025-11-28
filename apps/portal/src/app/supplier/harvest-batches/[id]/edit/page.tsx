@@ -23,7 +23,7 @@ import {
 import { IconArrowLeft, IconDeviceFloppy } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 // Mock initial data - in real app, fetch based on ID
 const mockBatchData = {

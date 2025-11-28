@@ -20,7 +20,7 @@ import {
   IconFileText
 } from '@tabler/icons-react';
 import { useState } from 'react';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 export default function BusinessInformationPage() {
   const { toast } = useToast();
