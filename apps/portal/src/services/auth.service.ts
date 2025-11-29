@@ -89,24 +89,30 @@ export async function register(
 
 export async function confirmEmail(
   req: AuthConfirmEmailRequest
-): Promise<void> {
+): Promise<AuthLoginResponse> {
   // Nest route: POST /auth/email/confirm
-  await fetchJSON<void>('/auth/email/confirm', {
+  const res = await fetchJSON<AuthLoginResponse>('/auth/email/confirm', {
     method: 'POST',
     body: req,
     auth: false
   });
+  setAccessToken(res.token);
+  setRefreshToken(res.refreshToken);
+  return res;
 }
 
 export async function confirmNewEmail(
   req: AuthConfirmEmailRequest
-): Promise<void> {
+): Promise<AuthLoginResponse> {
   // Nest route: POST /auth/email/confirm/new
-  await fetchJSON<void>('/auth/email/confirm/new', {
+  const res = await fetchJSON<AuthLoginResponse>('/auth/email/confirm/new', {
     method: 'POST',
     body: req,
     auth: false
   });
+  setAccessToken(res.token);
+  setRefreshToken(res.refreshToken);
+  return res;
 }
 
 export async function forgotPassword(
@@ -156,6 +162,7 @@ export async function logoutServer(): Promise<void> {
     });
   } catch (error) {
     // Continue with local logout even if server logout fails
+    // eslint-disable-next-line no-console
     console.warn('Server logout failed:', error);
   }
   logout();

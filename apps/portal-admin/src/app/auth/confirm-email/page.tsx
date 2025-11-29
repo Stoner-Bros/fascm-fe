@@ -27,23 +27,13 @@ export default function ConfirmEmailPage() {
         }
 
         // Gọi API confirm email với hash
-        const res = await confirmEmail({ hash });
-        let dashboardPath = '/dashboard';
-        if (res && res.user) {
-          if (res.user.role.name === RoleEnum.CONSIGNEE) {
-            dashboardPath = '/consignee';
-          } else if (res.user.role.name === RoleEnum.SUPPLIER) {
-            dashboardPath = '/supplier';
-          } else {
-            throw new Error('You are not allowed to access this portal.');
-          }
-        }
+        await confirmEmail({ hash });
 
         setStatus('success');
 
         // Chuyển hướng về trang login sau 3 giây
         setTimeout(() => {
-          router.push(dashboardPath + '/profile');
+          router.push('/dashboard/profile');
         }, 3000);
       } catch (error: any) {
         setStatus('error');

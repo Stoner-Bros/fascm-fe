@@ -31,7 +31,7 @@ export default function SignInViewPage() {
 
     try {
       const res = await login({ email, password });
-      let dashboardPath = '/dashboard';
+      let dashboardPath = '/dashboard/overview';
       if (res && res.user) {
         if (
           res.user.role.name === RoleEnum.CONSIGNEE ||

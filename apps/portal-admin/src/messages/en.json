@@ -170,6 +170,21 @@
       "termsOfService": "Terms of Service",
       "and": "and",
       "privacyPolicy": "Privacy Policy"
+    },
+    "confirmEmail": {
+      "title": "Email Confirmation",
+      "verifying": "Verifying your email...",
+      "success": {
+        "title": "Email confirmed successfully!",
+        "description": "You will be redirected to the login page in 3 seconds...",
+        "loginButton": "Login now"
+      },
+      "error": {
+        "title": "Email confirmation failed",
+        "noHash": "Hash not found in URL",
+        "homeButton": "Go to home",
+        "loginButton": "Go to login"
+      }
     }
   }
 }

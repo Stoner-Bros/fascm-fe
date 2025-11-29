@@ -170,6 +170,21 @@
       "termsOfService": "Điều khoản Dịch vụ",
       "and": "và",
       "privacyPolicy": "Chính sách Bảo mật"
+    },
+    "confirmEmail": {
+      "title": "Xác nhận Email",
+      "verifying": "Đang xác nhận email của bạn...",
+      "success": {
+        "title": "Email đã được xác nhận thành công!",
+        "description": "Bạn sẽ được chuyển hướng đến trang đăng nhập sau 3 giây...",
+        "loginButton": "Đăng nhập ngay"
+      },
+      "error": {
+        "title": "Xác nhận email thất bại",
+        "noHash": "Hash không tồn tại trong URL",
+        "homeButton": "Về trang chủ",
+        "loginButton": "Về trang đăng nhập"
+      }
     }
   }
 }
