@@ -8,7 +8,7 @@ import {
   AuthResetPasswordRequest,
   AuthUpdateRequest,
   RefreshResponse
-} from '@/features/consignee/types/auth';
+} from '@/types/auth';
 import { fetchJSON } from '../lib/client';
 
 // Simple token storage helpers

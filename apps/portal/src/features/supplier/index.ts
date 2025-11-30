@@ -1,8 +1,8 @@
 // Export types
-export * from './types/common';
-export * from './types/harvest-schedule';
-export * from './types/harvest-detail';
-export * from './types/harvest-ticket';
+export * from '../../types/common';
+export * from '../../types/harvest-schedule';
+export * from '../../types/harvest-detail';
+export * from '../../types/harvest-ticket';
 
 // Export services
 export * from '../../services/supplier.service';

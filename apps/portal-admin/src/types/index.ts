@@ -39,6 +39,7 @@ export * from './data-table';
 export * from './delivery';
 export * from './common';
 export * from './supplier';
+export * from './consignee';
 export * from './product';
 export * from './harvest-schedule';
 export * from './harvest-ticket';

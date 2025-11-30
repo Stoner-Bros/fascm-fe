@@ -1,3 +1,5 @@
+import type { AccountUserPayload } from './common';
+
 export type DeliveryStaff = {
   id: string;
   licenseNumber: string;
@@ -7,12 +9,12 @@ export type DeliveryStaff = {
     id: string;
     licenseNumber?: string;
     model?: string;
-  };
+  } | null;
   warehouse?: {
     id: string;
     name?: string;
     address?: string;
-  };
+  } | null;
   user?: {
     id: string;
     firstName?: string;
@@ -24,18 +26,16 @@ export type DeliveryStaff = {
 };
 
 export type CreateDeliveryStaffDto = {
-  truck: {
+  truck?: {
     id: string;
-  };
-  warehouse: {
+  } | null;
+  warehouse?: {
     id: string;
-  };
+  } | null;
   licenseNumber: string;
   licensePhoto?: string;
   licenseExpiredAt: string;
-  user: {
-    id: string;
-  };
+  user: AccountUserPayload;
 };
 
 export type UpdateDeliveryStaffDto = Partial<CreateDeliveryStaffDto>;
