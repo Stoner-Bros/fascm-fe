@@ -237,11 +237,11 @@ export default function OrderDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {order.orderSchedule?.consignee?.address ? (
+                {order.orderSchedule?.address ? (
                   <DeliveryRouteSim
                     cargo={`Khối lượng ${String(order.totalMass ?? '')} kg`}
                     startAddress={'Trung tâm TP. Hồ Chí Minh'}
-                    endAddress={String(order.orderSchedule?.consignee?.address)}
+                    endAddress={String(order.orderSchedule?.address)}
                     orderScheduleId={String(order.orderSchedule?.id ?? '')}
                     productName={String(
                       details?.[0]?.product?.name ??
@@ -369,9 +369,7 @@ export default function OrderDetailPage() {
                   </div>
                   <div className='flex justify-between'>
                     <span className='text-muted-foreground'>Địa chỉ giao:</span>
-                    <span>
-                      {order.orderSchedule?.consignee?.address ?? '-'}
-                    </span>
+                    <span>{order.orderSchedule?.address ?? '-'}</span>
                   </div>
                   <div className='flex justify-between'>
                     <span className='text-muted-foreground'>

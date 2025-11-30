@@ -14,6 +14,7 @@ export type Order = {
   orderSchedule?: {
     id: string;
     status?: OrderScheduleStatus;
+    address: string;
     description?: string | null;
     orderDate?: string | null;
     consignee?: Consignee | null;
