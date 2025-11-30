@@ -24,6 +24,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { fetchHarvestDetailsByHarvestTicketId } from '@/services/harvest-detail.service';
 import {
+  approveHarvestSchedule,
   completeHarvestSchedule,
   confirmHarvestSchedule,
   fetchHarvestScheduleById
@@ -42,7 +43,8 @@ import {
   IconFileText,
   IconUser,
   IconX,
-  IconInfoCircle
+  IconInfoCircle,
+  IconMapPin
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -303,10 +305,7 @@ export default function HarvestScheduleDetailPage() {
     if (!harvestSchedule) return;
     try {
       setActionLoading(true);
-      const updated = await confirmHarvestSchedule(
-        harvestSchedule.id,
-        'approved'
-      );
+      const updated = await approveHarvestSchedule(harvestSchedule.id);
       setHarvestSchedule(updated);
       setError(null);
       toast.success('Đã duyệt lịch thu hoạch thành công!', {
@@ -570,6 +569,25 @@ export default function HarvestScheduleDetailPage() {
                           {
                             // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             (harvestSchedule as any)?.supplierId?.user?.lastName
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                )}
+                {harvestSchedule.supplierId && (
+                  <>
+                    <Separator />
+                    <div>
+                      <p className='text-muted-foreground mb-1 text-sm'>
+                        Supplier Address
+                      </p>
+                      <div className='flex items-center gap-2'>
+                        <IconMapPin className='h-4 w-4' />
+                        <p className='text-sm font-medium'>
+                          {
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            (harvestSchedule as any)?.supplierId?.address
                           }
                         </p>
                       </div>

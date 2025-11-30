@@ -23,7 +23,10 @@ import { IconLoader2, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Product } from '../types/product';
-import { CreateOrderRequest, CreateOrderDetailRequest } from '../types/order';
+import {
+  CreateOrderRequest,
+  CreateOrderDetailRequest
+} from '../../../types/order';
 import { createOrder } from '@/services/order.service';
 import { fetchProducts } from '@/services/product.service';
 import { createOrderDetail } from '@/services/order-detail.service';
@@ -32,8 +35,12 @@ import {
   fetchMyConsignee,
   updateConsignee
 } from '@/services/consignee.service';
-import type { Consignee } from '@/features/consignee/types/consignee';
-import { AddressPickerMap } from '@/components/map/osrm-map';
+import type { Consignee } from '@/types/consignee';
+import dynamic from 'next/dynamic';
+const AddressPickerMap = dynamic(
+  () => import('@/components/map/osrm-map').then((m) => m.AddressPickerMap),
+  { ssr: false }
+);
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -54,7 +61,7 @@ export default function ConsigneeNewOrderFeature() {
   const didFetchRef = useRef(false);
   const didPrefillRef = useRef(false);
   const [scheduleDescription, setScheduleDescription] = useState('');
-  const SCHEDULE_STATUS = 'IN_PROGRESS';
+  const SCHEDULE_STATUS = 'pending';
   const [scheduleDateTime, setScheduleDateTime] = useState<string>(() => {
     const d = new Date();
     const yyyy = d.getFullYear();
@@ -219,23 +226,12 @@ export default function ConsigneeNewOrderFeature() {
         (acc, l) => acc + computeVolumeLiters(l),
         0
       );
-      if (consignee?.id) {
-        const payload: Record<string, any> = {};
-        if (deliveryAddress && deliveryAddress !== (consignee.address ?? '')) {
-          payload.address = deliveryAddress;
-        }
-        if (contact && contact !== (consignee.contact ?? '')) {
-          payload.contact = contact;
-        }
-        if (Object.keys(payload).length > 0) {
-          await updateConsignee(consignee.id, payload);
-          setConsignee({ ...consignee, ...(payload as any) });
-        }
-      }
+      // Không cập nhật consignee; chỉ set address trong schedule
       const schedule = await createOrderSchedule({
         description: scheduleDescription,
         status: SCHEDULE_STATUS,
         orderDate: new Date(scheduleDateTime).toISOString(),
+        address: deliveryAddress || null,
         consignee: consignee?.id ? { id: consignee.id } : undefined
       });
 
@@ -313,7 +309,7 @@ export default function ConsigneeNewOrderFeature() {
             <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
               <div className='space-y-2'>
                 <Label htmlFor='schedule-datetime'>
-                  Ngày & Giờ đặt hàng{' '}
+                  Ngày & Giờ nhận hàng{' '}
                   <span className='text-destructive'>*</span>
                 </Label>
                 <DateTimePicker

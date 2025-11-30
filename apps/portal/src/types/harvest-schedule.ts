@@ -2,6 +2,7 @@ export type HarvestSchedule = {
   id: string;
   description?: string | null;
   harvestDate?: string | Date | null;
+  address?: string | null;
   supplierId?: {
     id: string;
   } | null;
@@ -12,12 +13,16 @@ export type HarvestSchedule = {
 
 export type HarvestScheduleStatus =
   | 'PENDING'
-  | 'CONFIRMED'
-  | 'CANCELLED'
+  | 'REJECTED'
   | 'COMPLETED'
-  | 'IN_PROGRESS';
+  | 'PREPARING'
+  | 'DELIVERING'
+  | 'DELIVERED'
+  | 'APPROVED'
+  | 'CANCELLED';
 
 export type CreateHarvestScheduleDto = {
+  address?: string | null;
   description?: string | null;
   harvestDate: string | Date;
   supplierId: {
@@ -26,7 +31,9 @@ export type CreateHarvestScheduleDto = {
 };
 
 export type UpdateHarvestScheduleDto = Partial<CreateHarvestScheduleDto>;
-
+export type UpdateHarvestScheduleStatusDto = {
+  status: HarvestScheduleStatus;
+};
 export type FindAllHarvestSchedulesDto = {
   page?: number;
   limit?: number;

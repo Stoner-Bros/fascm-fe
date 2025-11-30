@@ -55,12 +55,12 @@ export default function HarvestPage() {
     // Load lần đầu ngay lập tức
     loadHarvestSchedules(true);
 
-    // Polling để tự động cập nhật danh sách mỗi 3 giây (giảm thời gian để responsive hơn)
-    intervalId = setInterval(() => {
-      if (!cancelled) {
-        loadHarvestSchedules(false);
-      }
-    }, 3000); // 3 giây
+    // // Polling để tự động cập nhật danh sách mỗi 3 giây (giảm thời gian để responsive hơn)
+    // intervalId = setInterval(() => {
+    //   if (!cancelled) {
+    //     loadHarvestSchedules(false);
+    //   }
+    // }, 3000); // 3 giây
 
     return () => {
       cancelled = true;

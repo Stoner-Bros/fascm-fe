@@ -1,3 +1,5 @@
+import type { AccountUserPayload } from './common';
+
 export type Staff = {
   id: string;
   position: string;
@@ -5,7 +7,7 @@ export type Staff = {
     id: string;
     name?: string;
     address?: string;
-  };
+  } | null;
   user?: {
     id: string;
     firstName?: string;
@@ -17,13 +19,11 @@ export type Staff = {
 };
 
 export type CreateStaffDto = {
-  warehouse: {
+  warehouse?: {
     id: string;
-  };
+  } | null;
   position: string;
-  user: {
-    id: string;
-  };
+  user: AccountUserPayload;
 };
 
 export type UpdateStaffDto = Partial<CreateStaffDto>;

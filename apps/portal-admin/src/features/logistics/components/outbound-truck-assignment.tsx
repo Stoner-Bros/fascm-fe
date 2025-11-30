@@ -55,7 +55,7 @@ function OrderStatusBadge({ status }: { status?: string | null }) {
   if (!status) return <Badge variant='outline'>Unknown</Badge>;
 
   const variants: Record<string, { label: string; variant: any }> = {
-    IN_PROGRESS: { label: 'Đang xử lý', variant: 'secondary' },
+    IN_PROGRESS: { label: 'Đang chờ duyệt', variant: 'secondary' },
     APPROVED: { label: 'Đã duyệt', variant: 'default' },
     PENDING_ASSIGNMENT: { label: 'Chờ phân xe', variant: 'secondary' },
     PENDING_PICKUP: { label: 'Chờ giao hàng', variant: 'default' },

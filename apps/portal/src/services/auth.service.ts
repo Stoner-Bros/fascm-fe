@@ -9,7 +9,7 @@ import {
   AuthResetPasswordRequest,
   AuthUpdateRequest,
   RefreshResponse
-} from '@/features/consignee/types/auth';
+} from '@/types/auth';
 import { fetchJSON } from '../lib/client';
 import { setCookie, removeCookie } from '../lib/cookie';
 import {

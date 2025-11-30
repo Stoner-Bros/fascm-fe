@@ -5,7 +5,7 @@ import type {
   UpdateSupplierDto,
   FindAllSuppliersDto,
   InfinityPaginationResponse
-} from '../features/supplier/types/supplier';
+} from '../types/supplier';
 
 export async function createSupplier(body: CreateSupplierDto) {
   return fetchJSON<Supplier>('/suppliers', { method: 'POST', body });

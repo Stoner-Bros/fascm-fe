@@ -5,9 +5,9 @@ export async function updateOrderSchedule(
   id: string,
   body: UpdateOrderScheduleDto
 ) {
-  return fetchJSON<OrderSchedule>(`/order-schedules/${id}`, {
+  return fetchJSON<OrderSchedule>(`/order-schedules/${id}/status`, {
     method: 'PATCH',
-    body
+    body: { status: body.status }
   });
 }
 

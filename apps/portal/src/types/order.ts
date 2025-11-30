@@ -1,4 +1,4 @@
-import { Product } from './product';
+import { Product } from '../features/consignee/types/product';
 import { Consignee } from './consignee';
 
 export type Order = {
@@ -14,6 +14,7 @@ export type Order = {
   orderSchedule?: {
     id: string;
     status?: OrderScheduleStatus;
+    address: string;
     description?: string | null;
     orderDate?: string | null;
     consignee?: Consignee | null;

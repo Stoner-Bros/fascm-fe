@@ -139,6 +139,36 @@ export const navItems: NavItem[] = [
         shortcut: ['m', 'm']
       },
       {
+        title: 'Managers Accounts',
+        url: '/dashboard/account/managers',
+        icon: 'userPen',
+        shortcut: ['a', 'm']
+      },
+      {
+        title: 'Consignees Accounts',
+        url: '/dashboard/account/consignees',
+        icon: 'user',
+        shortcut: ['a', 'c']
+      },
+      {
+        title: 'Suppliers Accounts',
+        url: '/dashboard/account/suppliers',
+        icon: 'inventory',
+        shortcut: ['a', 's']
+      },
+      {
+        title: 'Staff Accounts',
+        url: '/dashboard/account/staffs',
+        icon: 'employee',
+        shortcut: ['a', 'f']
+      },
+      {
+        title: 'Delivery Staff Accounts',
+        url: '/dashboard/account/delivery-staffs',
+        icon: 'delivery',
+        shortcut: ['a', 'd']
+      },
+      {
         title: 'Login',
         shortcut: ['l', 'l'],
         url: '/',

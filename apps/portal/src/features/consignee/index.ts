@@ -1,5 +1,5 @@
 // Export types
-export * from './types/order';
+export * from '../../types/order';
 
 // Export services
 export * from './services/order-service';

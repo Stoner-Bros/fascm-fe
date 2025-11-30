@@ -34,9 +34,9 @@ import {
   fetchHarvestDetailsByHarvestTicketId,
   fetchSupplierById
 } from '@/features/supplier';
-import type { HarvestSchedule } from '@/features/supplier/types/harvest-schedule';
-import type { HarvestDetail } from '@/features/supplier/types/harvest-detail';
-import type { Supplier } from '@/features/supplier/types/supplier';
+import type { HarvestSchedule } from '@/types/harvest-schedule';
+import type { HarvestDetail } from '@/types/harvest-detail';
+import type { Supplier } from '@/types/supplier';
 
 type DetailRow = {
   id: string;

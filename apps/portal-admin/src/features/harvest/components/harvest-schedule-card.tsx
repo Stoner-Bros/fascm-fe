@@ -116,10 +116,9 @@ export function HarvestScheduleCard({ schedule }: HarvestScheduleCardProps) {
           </div>
           {schedule.supplierId && (
             <div>
-              <span className='text-muted-foreground'>Supplier Name: </span>
+              <span className='text-muted-foreground'>Supplier Garden: </span>
               <span className='font-medium'>
-                {schedule.supplierId.user?.firstName}{' '}
-                {schedule.supplierId.user?.lastName}
+                {schedule.supplierId?.gardenName}
               </span>
             </div>
           )}
