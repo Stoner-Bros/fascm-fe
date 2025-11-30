@@ -2,7 +2,6 @@ import { fetchJSON } from '@/lib/client';
 import type {
   HarvestSchedule,
   CreateHarvestScheduleDto,
-  UpdateHarvestScheduleDto,
   FindAllHarvestSchedulesDto
 } from '@/types/harvest-schedule';
 import type { InfinityPaginationResponse } from '@/types/common';

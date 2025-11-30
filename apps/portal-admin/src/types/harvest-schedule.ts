@@ -15,6 +15,7 @@ export type HarvestSchedule = {
   status?: HarvestScheduleStatus | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
+  address?: string | null;
 };
 
 export type HarvestScheduleStatus =
@@ -32,6 +33,7 @@ export type CreateHarvestScheduleDto = {
   supplierId: {
     id: string;
   };
+  address?: string | null;
 };
 
 export type UpdateHarvestScheduleDto = Partial<CreateHarvestScheduleDto>;
