@@ -22,7 +22,7 @@ import type {
 
 function badgeForSchedule(status?: OrderScheduleStatus | null) {
   switch (status) {
-    case 'IN_PROGRESS':
+    case 'pending':
       return (
         <Badge
           variant='outline'
@@ -31,7 +31,7 @@ function badgeForSchedule(status?: OrderScheduleStatus | null) {
           Đang xử lý
         </Badge>
       );
-    case 'APPROVED':
+    case 'approved':
       return (
         <Badge
           variant='outline'
@@ -40,7 +40,7 @@ function badgeForSchedule(status?: OrderScheduleStatus | null) {
           Đã duyệt
         </Badge>
       );
-    case 'PENDING_ASSIGNMENT':
+    case 'preparing':
       return (
         <Badge
           variant='outline'
@@ -49,7 +49,7 @@ function badgeForSchedule(status?: OrderScheduleStatus | null) {
           Chờ phân công
         </Badge>
       );
-    case 'PENDING_PICKUP':
+    case 'delivering':
       return (
         <Badge
           variant='outline'
@@ -58,16 +58,25 @@ function badgeForSchedule(status?: OrderScheduleStatus | null) {
           Chờ lấy hàng
         </Badge>
       );
-    case 'REJECTED':
+    case 'delivered':
       return (
         <Badge
           variant='outline'
-          className='border-red-200 bg-red-50 text-red-700'
+          className='border-green-200 bg-green-50 text-green-700'
         >
-          Từ chối
+          Đã giao hàng
         </Badge>
       );
-    case 'CANCELLED':
+    case 'completed':
+      return (
+        <Badge
+          variant='outline'
+          className='border-green-200 bg-green-50 text-green-700'
+        >
+          Đã hoàn thành
+        </Badge>
+      );
+    case 'canceled':
       return (
         <Badge
           variant='outline'
@@ -184,8 +193,8 @@ export function OrderDetail({
                 </div>
               </div>
             </div>
-            {localOrder?.orderSchedule?.status !== 'APPROVED' &&
-              localOrder?.orderSchedule?.status !== 'CANCELLED' && (
+            {localOrder?.orderSchedule?.status !== 'approved' &&
+              localOrder?.orderSchedule?.status !== 'canceled' && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant='outline' disabled={updating}>
@@ -193,10 +202,10 @@ export function OrderDetail({
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align='end'>
-                    <DropdownMenuItem onClick={() => doUpdate('APPROVED')}>
+                    <DropdownMenuItem onClick={() => doUpdate('approved')}>
                       Duyệt
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => doUpdate('REJECTED')}>
+                    <DropdownMenuItem onClick={() => doUpdate('rejected')}>
                       Từ chối
                     </DropdownMenuItem>
                   </DropdownMenuContent>

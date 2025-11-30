@@ -24,6 +24,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { fetchHarvestDetailsByHarvestTicketId } from '@/services/harvest-detail.service';
 import {
+  approveHarvestSchedule,
   completeHarvestSchedule,
   confirmHarvestSchedule,
   fetchHarvestScheduleById
@@ -303,10 +304,7 @@ export default function HarvestScheduleDetailPage() {
     if (!harvestSchedule) return;
     try {
       setActionLoading(true);
-      const updated = await confirmHarvestSchedule(
-        harvestSchedule.id,
-        'approved'
-      );
+      const updated = await approveHarvestSchedule(harvestSchedule.id);
       setHarvestSchedule(updated);
       setError(null);
       toast.success('Đã duyệt lịch thu hoạch thành công!', {

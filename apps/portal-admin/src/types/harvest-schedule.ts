@@ -18,12 +18,14 @@ export type HarvestSchedule = {
 };
 
 export type HarvestScheduleStatus =
-  | 'pending'
-  | 'approved'
-  | 'rejected'
-  | 'canceled'
-  | 'completed';
-
+  | 'PENDING'
+  | 'REJECTED'
+  | 'COMPLETED'
+  | 'PREPARING'
+  | 'DELIVERING'
+  | 'DELIVERED'
+  | 'APPROVED'
+  | 'CANCELLED';
 export type CreateHarvestScheduleDto = {
   description?: string | null;
   harvestDate: string | Date;
@@ -33,7 +35,9 @@ export type CreateHarvestScheduleDto = {
 };
 
 export type UpdateHarvestScheduleDto = Partial<CreateHarvestScheduleDto>;
-
+export type UpdateHarvestScheduleStatusDto = {
+  status: HarvestScheduleStatus;
+};
 export type FindAllHarvestSchedulesDto = {
   page?: number;
   limit?: number;

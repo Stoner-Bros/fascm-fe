@@ -33,7 +33,11 @@ import {
   updateConsignee
 } from '@/services/consignee.service';
 import type { Consignee } from '@/features/consignee/types/consignee';
-import { AddressPickerMap } from '@/components/map/osrm-map';
+import dynamic from 'next/dynamic';
+const AddressPickerMap = dynamic(
+  () => import('@/components/map/osrm-map').then((m) => m.AddressPickerMap),
+  { ssr: false }
+);
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { Textarea } from '@/components/ui/textarea';
 

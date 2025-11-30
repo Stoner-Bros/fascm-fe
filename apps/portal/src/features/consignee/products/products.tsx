@@ -147,123 +147,121 @@ export default function ConsigneeProductsFeature() {
             </p>
           </div>
         </div>
-
+        <div className='flex items-center justify-end gap-2'>
+          <div className='text-muted-foreground text-sm'>
+            Đã chọn: {selectedProductIds.length}
+          </div>
+          {selectedProductIds.length > 0 && (
+            <Button variant='ghost' onClick={() => setSelectedProductIds([])}>
+              <IconX className='mr-2 h-4 w-4' />
+              Bỏ chọn
+            </Button>
+          )}
+          <Button
+            variant='default'
+            disabled={selectedProductIds.length === 0}
+            onClick={() => {
+              const params = new URLSearchParams();
+              for (const id of selectedProductIds) params.append('product', id);
+              router.push(`/consignee/orders/new?${params.toString()}`);
+            }}
+          >
+            <IconShoppingCart className='mr-2 h-4 w-4' />
+            Thêm vào đơn hàng
+          </Button>
+        </div>
         <div className='grid grid-cols-1 gap-6 lg:grid-cols-4'>
           {/* Filters Sidebar */}
-          <Card className='lg:col-span-1'>
-            <CardHeader>
-              <div className='relative'>
-                <IconSearch className='text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4' />
-                <Input
-                  placeholder='Search products by name'
-                  className='pl-8'
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-            </CardHeader>
-            <CardHeader>
-              <CardTitle className='flex items-center gap-2'>
-                <IconFilter className='h-5 w-5' />
-                Filters
-              </CardTitle>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              <div className='space-y-2'>
-                <Label>Category</Label>
-                <div className='space-y-2'>
-                  <div>
-                    <select
-                      className='border-input bg-background ring-offset-background placeholder:text-muted-foreground focus:ring-ring inline-flex h-9 w-full items-center justify-between rounded-md border px-3 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        onSelectCategory(value);
-                      }}
-                    >
-                      <option value=''>All Category</option>
-                      {categoryOptions.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  {selectedCategoryIds.length > 0 && (
-                    <div className='flex flex-wrap gap-2'>
-                      {selectedCategoryIds.map((id) => {
-                        const cat = categoryOptions.find((c) => c.id === id);
-                        return (
-                          <Badge
-                            key={id}
-                            variant='secondary'
-                            className='flex items-center gap-1'
-                          >
-                            {cat?.name ?? id}
-                            <Button
-                              variant='ghost'
-                              size='icon'
-                              className='h-4 w-4 p-0'
-                              onClick={() => removeSelectedCategory(id)}
-                              aria-label={`Remove ${cat?.name ?? id}`}
-                            >
-                              <IconX className='h-3 w-3' />
-                            </Button>
-                          </Badge>
-                        );
-                      })}
-                    </div>
-                  )}
+          <div className='mt-4 lg:col-span-1'>
+            <Card className='sticky top-6 max-h-[400px] overflow-y-auto lg:col-span-1'>
+              <CardHeader>
+                <div className='relative'>
+                  <IconSearch className='text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4' />
+                  <Input
+                    placeholder='Search products by name'
+                    className='pl-8'
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
-              </div>
+              </CardHeader>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2'>
+                  <IconFilter className='h-5 w-5' />
+                  Filters
+                </CardTitle>
+              </CardHeader>
+              <CardContent className='space-y-6'>
+                <div className='space-y-2'>
+                  <Label>Category</Label>
+                  <div className='space-y-2'>
+                    <div>
+                      <select
+                        className='border-input bg-background ring-offset-background placeholder:text-muted-foreground focus:ring-ring inline-flex h-9 w-full items-center justify-between rounded-md border px-3 text-sm shadow-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none'
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          onSelectCategory(value);
+                        }}
+                      >
+                        <option value=''>All Category</option>
+                        {categoryOptions.map((cat) => (
+                          <option key={cat.id} value={cat.id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    {selectedCategoryIds.length > 0 && (
+                      <div className='flex flex-wrap gap-2'>
+                        {selectedCategoryIds.map((id) => {
+                          const cat = categoryOptions.find((c) => c.id === id);
+                          return (
+                            <Badge
+                              key={id}
+                              variant='secondary'
+                              className='flex items-center gap-1'
+                            >
+                              {cat?.name ?? id}
+                              <Button
+                                variant='ghost'
+                                size='icon'
+                                className='h-4 w-4 p-0'
+                                onClick={() => removeSelectedCategory(id)}
+                                aria-label={`Remove ${cat?.name ?? id}`}
+                              >
+                                <IconX className='h-3 w-3' />
+                              </Button>
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
 
-              <div className='text-muted-foreground mb-4 text-sm'>
-                {loading
-                  ? 'Loading products…'
-                  : `Showing ${filteredProducts.length} products`}
-              </div>
-              <Button
-                variant='outline'
-                className='w-full'
-                onClick={() => {
-                  setSearchQuery('');
-                  setSelectedCategoryIds([]);
-                }}
-              >
-                Clear Filters
-              </Button>
-            </CardContent>
-          </Card>
+                <div className='text-muted-foreground mb-4 text-sm'>
+                  {loading
+                    ? 'Loading products…'
+                    : `Showing ${filteredProducts.length} products`}
+                </div>
+                <Button
+                  variant='outline'
+                  className='w-full'
+                  onClick={() => {
+                    setSearchQuery('');
+                    setSelectedCategoryIds([]);
+                  }}
+                >
+                  Clear Filters
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Products Grid */}
           <div className='space-y-4 lg:col-span-3'>
             <div className='flex items-center justify-between'>
-              <div className='text-muted-foreground text-sm'>
-                Đã chọn: {selectedProductIds.length}
-              </div>
-              <div className='flex items-center gap-2'>
-                <Button
-                  variant='default'
-                  disabled={selectedProductIds.length === 0}
-                  onClick={() => {
-                    const params = new URLSearchParams();
-                    for (const id of selectedProductIds)
-                      params.append('product', id);
-                    router.push(`/consignee/orders/new?${params.toString()}`);
-                  }}
-                >
-                  <IconShoppingCart className='mr-2 h-4 w-4' />
-                  Thêm vào đơn hàng
-                </Button>
-                {selectedProductIds.length > 0 && (
-                  <Button
-                    variant='ghost'
-                    onClick={() => setSelectedProductIds([])}
-                  >
-                    <IconX className='mr-2 h-4 w-4' />
-                    Bỏ chọn
-                  </Button>
-                )}
-              </div>
+              <div className='flex items-center gap-2'></div>
             </div>
             {filteredProducts.length === 0 ? (
               <Card>
