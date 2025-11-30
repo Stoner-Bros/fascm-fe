@@ -23,7 +23,10 @@ import { IconLoader2, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Product } from '../types/product';
-import { CreateOrderRequest, CreateOrderDetailRequest } from '../types/order';
+import {
+  CreateOrderRequest,
+  CreateOrderDetailRequest
+} from '../../../types/order';
 import { createOrder } from '@/services/order.service';
 import { fetchProducts } from '@/services/product.service';
 import { createOrderDetail } from '@/services/order-detail.service';
@@ -32,7 +35,7 @@ import {
   fetchMyConsignee,
   updateConsignee
 } from '@/services/consignee.service';
-import type { Consignee } from '@/features/consignee/types/consignee';
+import type { Consignee } from '@/types/consignee';
 import dynamic from 'next/dynamic';
 const AddressPickerMap = dynamic(
   () => import('@/components/map/osrm-map').then((m) => m.AddressPickerMap),

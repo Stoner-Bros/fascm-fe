@@ -15,7 +15,7 @@ import {
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { Order } from '../types/order';
+import { Order } from '../../../types/order';
 import { formatDate } from '@/lib/format';
 import { OrderService } from '@/features/consignee/services/order-service';
 import {

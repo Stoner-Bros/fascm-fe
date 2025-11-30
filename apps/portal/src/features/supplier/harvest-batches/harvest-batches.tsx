@@ -65,9 +65,9 @@ import {
   fetchHarvestDetailsByHarvestTicketId,
   fetchSupplierById
 } from '@/features/supplier';
-import type { HarvestSchedule } from '@/features/supplier/types/harvest-schedule';
-import type { HarvestDetail } from '@/features/supplier/types/harvest-detail';
-import type { Supplier } from '@/features/supplier/types/supplier';
+import type { HarvestSchedule } from '@/types/harvest-schedule';
+import type { HarvestDetail } from '@/types/harvest-detail';
+import type { Supplier } from '@/types/supplier';
 
 type HarvestBatchRow = {
   id: string; // HarvestScheduleId
@@ -379,10 +379,10 @@ export default function SupplierHarvestBatchesFeature() {
             <CardHeader className='pb-3'>
               <CardDescription className='flex items-center gap-2'>
                 <IconTruck className='h-4 w-4' />
-                In Progress
+                Approved
               </CardDescription>
               <CardTitle className='text-3xl'>
-                {statusCounts.IN_PROGRESS}
+                {statusCounts.COMPLETED}
               </CardTitle>
             </CardHeader>
           </Card>
@@ -393,7 +393,7 @@ export default function SupplierHarvestBatchesFeature() {
             <CardHeader className='pb-3'>
               <CardDescription className='flex items-center gap-2'>
                 <IconCheck className='h-4 w-4' />
-                Completed
+                Rejected
               </CardDescription>
               <CardTitle className='text-3xl'>
                 {statusCounts.COMPLETED}
@@ -448,7 +448,7 @@ export default function SupplierHarvestBatchesFeature() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Schedule / Batch ID</TableHead>
+                    <TableHead>Schedule</TableHead>
                     <TableHead>Product(s)</TableHead>
                     <TableHead>Harvest Date</TableHead>
                     <TableHead>Location</TableHead>

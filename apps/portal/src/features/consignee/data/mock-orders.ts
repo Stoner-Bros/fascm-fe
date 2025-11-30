@@ -1,4 +1,4 @@
-import { OrderDetail } from '../types/order';
+import { OrderDetail } from '../../../types/order';
 
 export const mockOrders: Record<string, OrderDetail> = {
   // Pending Order

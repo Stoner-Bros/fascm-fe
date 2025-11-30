@@ -1,20 +1,14 @@
 import type { AccountUserPayload } from './common';
 
-export type Supplier = {
+export type Consignee = {
   id: string;
   contact?: string;
   taxCode?: string;
   address?: string;
   certificate?: string;
   qrCode?: string;
-  gardenName?: string;
   organizationName?: string;
   representativeName?: string;
-  warehouse?: {
-    id: string;
-    name?: string;
-    address?: string;
-  } | null;
   user?: {
     id?: string | number;
     firstName?: string;
@@ -25,24 +19,20 @@ export type Supplier = {
   updatedAt?: string | Date;
 };
 
-export type CreateSupplierDto = {
+export type CreateConsigneeDto = {
   contact: string;
   taxCode: string;
   address: string;
   certificate?: string;
   qrCode?: string;
-  gardenName: string;
   organizationName: string;
   representativeName: string;
-  warehouse?: {
-    id: string;
-  } | null;
   user: AccountUserPayload;
 };
 
-export type UpdateSupplierDto = Partial<CreateSupplierDto>;
+export type UpdateConsigneeDto = Partial<CreateConsigneeDto>;
 
-export type FindAllSuppliersDto = {
+export type FindAllConsigneesDto = {
   page?: number;
   limit?: number;
   search?: string;

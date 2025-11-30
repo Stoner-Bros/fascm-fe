@@ -1,4 +1,4 @@
-import { OrderDetail, OrderStatus, OrderSummary } from '../types/order';
+import { OrderDetail, OrderStatus, OrderSummary } from '../../../types/order';
 import { getOrderById, getAllOrders } from '../data/mock-orders';
 
 export class OrderService {

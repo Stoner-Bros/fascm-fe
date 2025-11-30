@@ -13,7 +13,6 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import {
   IconSearch,
-  IconShoppingCart,
   IconEye,
   IconPackage,
   IconFilter,
@@ -26,18 +25,14 @@ import { Product } from '../../../types/product';
 import { fetchProducts } from '@/services/product.service';
 import { Category, fetchCategories } from '@/services/category.service';
 import { getApiBase } from '@/lib/client';
-import { Checkbox } from '@/components/ui/checkbox';
-import { useRouter } from 'next/navigation';
 
-export default function ConsigneeProductsFeature() {
-  const router = useRouter();
+export default function SupplierProductsFeature() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategoryIds, setSelectedCategoryIds] = useState<string[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -92,13 +87,13 @@ export default function ConsigneeProductsFeature() {
       })
       .catch((err) => {
         if (!mounted) return;
-
         setError(err?.message ?? 'Failed to load products');
       })
       .finally(() => {
         if (!mounted) return;
         setLoading(false);
       });
+
     return () => {
       mounted = false;
     };
@@ -147,29 +142,7 @@ export default function ConsigneeProductsFeature() {
             </p>
           </div>
         </div>
-        <div className='flex items-center justify-end gap-2'>
-          <div className='text-muted-foreground text-sm'>
-            Đã chọn: {selectedProductIds.length}
-          </div>
-          {selectedProductIds.length > 0 && (
-            <Button variant='ghost' onClick={() => setSelectedProductIds([])}>
-              <IconX className='mr-2 h-4 w-4' />
-              Bỏ chọn
-            </Button>
-          )}
-          <Button
-            variant='default'
-            disabled={selectedProductIds.length === 0}
-            onClick={() => {
-              const params = new URLSearchParams();
-              for (const id of selectedProductIds) params.append('product', id);
-              router.push(`/consignee/orders/new?${params.toString()}`);
-            }}
-          >
-            <IconShoppingCart className='mr-2 h-4 w-4' />
-            Thêm vào đơn hàng
-          </Button>
-        </div>
+
         <div className='grid grid-cols-1 gap-6 lg:grid-cols-4'>
           {/* Filters Sidebar */}
           <div className='mt-4 lg:col-span-1'>
@@ -260,9 +233,14 @@ export default function ConsigneeProductsFeature() {
 
           {/* Products Grid */}
           <div className='space-y-4 lg:col-span-3'>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-2'></div>
-            </div>
+            {error && (
+              <Card>
+                <CardContent className='py-4 text-sm text-red-600'>
+                  {error}
+                </CardContent>
+              </Card>
+            )}
+
             {filteredProducts.length === 0 ? (
               <Card>
                 <CardContent className='flex flex-col items-center justify-center py-12'>
@@ -300,35 +278,16 @@ export default function ConsigneeProductsFeature() {
                           <CardTitle className='text-lg'>
                             {product.name}
                           </CardTitle>
-                          <CardDescription className='max-h-12 overflow-hidden'>
+                          <CardDescription className='max-h-16 overflow-hidden break-words whitespace-pre-wrap'>
                             {product.description ?? '—'}
                           </CardDescription>
                         </div>
-                        <Checkbox
-                          className='border-muted-foreground h-[20px] w-[20px] border'
-                          checked={selectedProductIds.includes(product.id)}
-                          onCheckedChange={(v) => {
-                            const checked = Boolean(v);
-                            setSelectedProductIds((prev) => {
-                              const set = new Set(prev);
-                              if (checked) set.add(product.id);
-                              else set.delete(product.id);
-                              return Array.from(set);
-                            });
-                          }}
-                          aria-label='Chọn sản phẩm'
-                        />
                       </div>
                     </CardHeader>
                     <CardContent className='flex h-full flex-col space-y-4'>
                       <div className='flex items-center justify-between'>
                         <div>
-                          <p className='text-sm font-bold'>
-                            {product.pricePerKg
-                              ? `${product.pricePerKg} VND/kg`
-                              : 'N/A'}
-                          </p>
-                          <p className='text-muted-foreground text-xs'>
+                          <p className='text-muted-foreground text-sm'>
                             Status: {product.status ?? 'N/A'}
                           </p>
                         </div>
@@ -350,13 +309,6 @@ export default function ConsigneeProductsFeature() {
                           <Button variant='outline' className='w-full'>
                             <IconEye className='mr-2 h-4 w-4' />
                             View Details
-                          </Button>
-                        </Link>
-                        <Link
-                          href={`/consignee/orders/new?product=${product.id}`}
-                        >
-                          <Button>
-                            <IconShoppingCart className='h-4 w-4' />
                           </Button>
                         </Link>
                       </div>

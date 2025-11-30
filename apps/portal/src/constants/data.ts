@@ -70,10 +70,18 @@ export const supplierNavItems: NavItem[] = [
     items: []
   },
   {
+    title: 'Products',
+    url: '/supplier/products',
+    icon: 'product',
+    shortcut: ['h', 'b'],
+    isActive: false,
+    items: []
+  },
+  {
     title: 'Harvest Batches',
     url: '/supplier/harvest-batches',
     icon: 'product',
-    shortcut: ['h', 'b'],
+    shortcut: ['p', 'c'],
     isActive: false,
     items: []
   },

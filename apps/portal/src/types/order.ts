@@ -1,4 +1,4 @@
-import { Product } from './product';
+import { Product } from '../features/consignee/types/product';
 import { Consignee } from './consignee';
 
 export type Order = {

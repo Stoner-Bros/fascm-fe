@@ -1,10 +1,12 @@
+import type { AccountUserPayload } from './common';
+
 export type Manager = {
   id: string;
   warehouse?: {
     id: string;
     name?: string;
     address?: string;
-  };
+  } | null;
   user?: {
     id: string;
     firstName?: string;
@@ -16,12 +18,10 @@ export type Manager = {
 };
 
 export type CreateManagerDto = {
-  warehouse: {
+  warehouse?: {
     id: string;
-  };
-  user: {
-    id: string;
-  };
+  } | null;
+  user: AccountUserPayload;
 };
 
 export type UpdateManagerDto = Partial<CreateManagerDto>;

@@ -1,5 +1,5 @@
 import { fetchJSON } from '../lib/client';
-import type { Consignee } from '@/features/consignee/types/consignee';
+import type { Consignee } from '@/types/consignee';
 
 export async function fetchMyConsignee() {
   return fetchJSON<Consignee | null>('/consignees/mine');
