@@ -242,8 +242,7 @@ export function InboundTruckAssignment() {
         endLat: null,
         endLng: null,
         startAddress: 'Kho trung tâm',
-        endAddress:
-          selectedSchedule.supplierId?.address || 'Địa chỉ khách hàng',
+        endAddress: selectedSchedule.address || 'Địa chỉ khách hàng',
         orderSchedule: null
       });
 
@@ -659,7 +658,7 @@ export function InboundTruckAssignment() {
                   <div className='col-span-2'>
                     <span className='text-muted-foreground'>Địa chỉ:</span>{' '}
                     <span className='font-medium'>
-                      {selectedSchedule.supplierId?.address || 'N/A'}
+                      {selectedSchedule.address || 'N/A'}
                     </span>
                   </div>
                 </div>

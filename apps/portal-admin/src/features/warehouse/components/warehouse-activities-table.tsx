@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import {
@@ -28,6 +28,8 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import { fetchImportTickets } from '@/services/import-ticket.service';
+import { fetchExportTickets } from '@/services/export-ticket.service';
 import {
   IconSearch,
   IconFilter,
@@ -70,140 +72,6 @@ export interface WarehouseActivity {
   completedAt?: string;
 }
 
-// Mock data for warehouse activities
-const mockActivities: WarehouseActivity[] = [
-  {
-    id: '1',
-    date: '2025-10-30T08:00:00',
-    code: 'PXK-20251030-01',
-    type: 'export',
-    productName: 'Gạo ST25',
-    productCode: 'RICE-ST25-001',
-    quantity: 200,
-    unit: 'Kg',
-    warehouse: 'Kho chính',
-    warehouseArea: 'Khu A1',
-    user: 'Nguyễn Văn A',
-    notes: 'Giao hàng đơn #1234',
-    status: 'completed',
-    customer: 'Siêu thị BigC',
-    deliveryStaff: 'Lê Văn Giao',
-    assignedAt: '2025-10-30T08:15:00',
-    deliveryStartedAt: '2025-10-30T09:00:00',
-    completedAt: '2025-10-30T11:30:00'
-  },
-  {
-    id: '2',
-    date: '2025-10-29T14:30:00',
-    code: 'PNK-20251029-03',
-    type: 'import',
-    productName: 'Đường trắng',
-    productCode: 'SUGAR-WHITE-002',
-    quantity: 100,
-    unit: 'Kg',
-    warehouse: 'Kho lẻ',
-    warehouseArea: 'Khu B2',
-    user: 'Trần Thị B',
-    notes: 'Nhập hàng từ NCC #567',
-    status: 'completed',
-    supplier: 'Công ty TNHH ABC',
-    batchNumber: 'BATCH-2025-001',
-    deliveryStaff: 'Phạm Văn Nhận',
-    assignedAt: '2025-10-29T14:45:00',
-    deliveryStartedAt: '2025-10-29T15:00:00',
-    completedAt: '2025-10-29T16:15:00'
-  },
-  {
-    id: '3',
-    date: '2025-10-29T10:15:00',
-    code: 'PXK-20251029-02',
-    type: 'export',
-    productName: 'Nước mắm',
-    productCode: 'SAUCE-FM-003',
-    quantity: 50,
-    unit: 'Chai',
-    warehouse: 'Kho chính',
-    warehouseArea: 'Khu C1',
-    user: 'Lê Văn C',
-    notes: 'Xuất cho nhà hàng',
-    status: 'delivering',
-    customer: 'Nhà hàng Hải Sản',
-    deliveryStaff: 'Nguyễn Thị Giao',
-    assignedAt: '2025-10-29T10:30:00',
-    deliveryStartedAt: '2025-10-29T11:00:00'
-  },
-  {
-    id: '4',
-    date: '2025-10-28T16:45:00',
-    code: 'PNK-20251028-01',
-    type: 'import',
-    productName: 'Thịt bò tươi',
-    productCode: 'MEAT-BEEF-004',
-    quantity: 75,
-    unit: 'Kg',
-    warehouse: 'Kho lạnh',
-    warehouseArea: 'Khu D1',
-    user: 'Phạm Thị D',
-    notes: 'Nhập hàng tươi sống',
-    status: 'assigned',
-    supplier: 'Trang trại XYZ',
-    batchNumber: 'FRESH-2025-028',
-    deliveryStaff: 'Trần Văn Vận',
-    assignedAt: '2025-10-28T17:00:00'
-  },
-  {
-    id: '5',
-    date: '2025-10-28T09:20:00',
-    code: 'PXK-20251028-01',
-    type: 'export',
-    productName: 'Rau cải xanh',
-    productCode: 'VEG-CABBAGE-005',
-    quantity: 30,
-    unit: 'Kg',
-    warehouse: 'Kho tươi sống',
-    warehouseArea: 'Khu E1',
-    user: 'Hoàng Văn E',
-    notes: 'Xuất cho siêu thị',
-    status: 'pending_assignment',
-    customer: 'Siêu thị Lotte'
-  },
-  {
-    id: '6',
-    date: '2025-10-27T13:10:00',
-    code: 'PNK-20251027-02',
-    type: 'import',
-    productName: 'Bánh mì tươi',
-    productCode: 'BREAD-FRESH-006',
-    quantity: 120,
-    unit: 'Ổ',
-    warehouse: 'Kho bánh kẹo',
-    warehouseArea: 'Khu F1',
-    user: 'Vũ Thị F',
-    notes: 'Nhập từ lò bánh',
-    status: 'cancelled',
-    supplier: 'Lò bánh Như Lan',
-    batchNumber: 'BREAD-2025-027'
-  },
-  {
-    id: '7',
-    date: '2025-10-30T15:20:00',
-    code: 'PXK-20251030-02',
-    type: 'export',
-    productName: 'Sữa tươi',
-    productCode: 'MILK-FRESH-007',
-    quantity: 80,
-    unit: 'Hộp',
-    warehouse: 'Kho lạnh',
-    warehouseArea: 'Khu D2',
-    user: 'Đỗ Văn G',
-    notes: 'Giao cho cửa hàng tiện lợi',
-    status: 'assigned',
-    customer: 'Circle K',
-    deliveryStaff: 'Bùi Thị Hoa',
-    assignedAt: '2025-10-30T15:35:00'
-  }
-];
-
 const warehouses = [
   'Tất cả',
   'Kho chính',
@@ -214,11 +82,111 @@ const warehouses = [
 ];
 const activityTypes = ['Tất cả', 'Xuất kho', 'Nhập kho'];
 export function WarehouseActivitiesTable() {
-  const [activities] = useState<WarehouseActivity[]>(mockActivities);
+  const [activities, setActivities] = useState<WarehouseActivity[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState('Tất cả');
   const [selectedActivityType, setSelectedActivityType] = useState('Tất cả');
   const [selectedStatus, setSelectedStatus] = useState('Tất cả');
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const [importsRes, exportsRes] = await Promise.all([
+          fetchImportTickets({ page: 1, limit: 50 }),
+          fetchExportTickets({ page: 1, limit: 50 })
+        ]);
+
+        const importActivities: WarehouseActivity[] = (
+          importsRes.data ?? []
+        ).map((it) => ({
+          id: String(it.id),
+          date: String(
+            it.importDate ?? it.createdAt ?? new Date().toISOString()
+          ),
+          code: String(it.inboundBatch?.batchCode ?? it.id),
+          type: 'import',
+          productName: String(
+            it.inboundBatch?.product?.name ??
+              it?.inboundBatch?.harvestDetail?.product?.name ??
+              '-'
+          ),
+          productCode: String(
+            it?.inboundBatch?.harvestDetail?.product?.id ??
+              it?.inboundBatch?.harvestDetail?.product?.id ??
+              '-'
+          ),
+          quantity: Number(
+            it.realityQuantity ?? it.inboundBatch?.harvestTicket?.quantity ?? 0
+          ),
+          unit: String(
+            it.inboundBatch?.harvestTicket?.unit ?? it.inboundBatch?.unit ?? ''
+          ),
+          warehouse: String(
+            it.inboundBatch?.harvestTicket?.harvestScheduleId?.supplierId
+              ?.warehouse?.name ??
+              it.area?.name ??
+              '-'
+          ),
+          warehouseArea: it.area?.name ?? undefined,
+          user: String(
+            it.inboundBatch?.harvestTicket?.harvestScheduleId?.supplierId?.user
+              ?.firstName &&
+              it.inboundBatch?.harvestTicket?.harvestScheduleId?.supplierId
+                ?.user?.lastName
+              ? `${it.inboundBatch.harvestTicket.harvestScheduleId.supplierId.user.firstName} ${it.inboundBatch.harvestTicket.harvestScheduleId.supplierId.user.lastName}`
+              : '-'
+          ),
+          notes: undefined,
+          status: 'completed',
+          batchNumber:
+            it.numberOfBatch !== undefined && it.numberOfBatch !== null
+              ? String(it.numberOfBatch)
+              : undefined,
+          supplier:
+            it.inboundBatch?.harvestTicket?.harvestScheduleId?.supplierId
+              ?.representativeName ?? undefined
+        }));
+
+        const exportActivities: WarehouseActivity[] = (
+          exportsRes.data ?? []
+        ).map((et) => ({
+          id: String((et as any).id ?? ''),
+          date: String(
+            (et as any).ExportDate ??
+              (et as any).createdAt ??
+              new Date().toISOString()
+          ),
+          code: String(
+            (et as any).orderDetail?.order?.id ?? (et as any).id ?? ''
+          ),
+          type: 'export',
+          productName: String((et as any).orderDetail?.product?.name ?? '-'),
+          productCode: String((et as any).orderDetail?.product?.id ?? '-'),
+          quantity: Number((et as any).orderDetail?.quantity ?? 0),
+          unit: String((et as any).orderDetail?.unit ?? ''),
+          warehouse: '-',
+          warehouseArea: undefined,
+          user: String(
+            (et as any).orderDetail?.order?.orderSchedule?.consignee
+              ?.representativeName ?? '-'
+          ),
+          notes: undefined,
+          status: 'completed',
+          batchNumber:
+            (et as any).numberOfBatch !== undefined &&
+            (et as any).numberOfBatch !== null
+              ? String((et as any).numberOfBatch)
+              : undefined,
+          customer:
+            (et as any).orderDetail?.order?.orderSchedule?.consignee
+              ?.organizationName ?? undefined
+        }));
+
+        setActivities([...importActivities, ...exportActivities]);
+      } catch {}
+    };
+    load();
+  }, []);
 
   // Filter and search logic
   const filteredActivities = useMemo(() => {
@@ -323,6 +291,7 @@ export function WarehouseActivitiesTable() {
     setSelectedWarehouse('Tất cả');
     setSelectedActivityType('Tất cả');
     setSelectedStatus('Tất cả');
+    setActivities((prev) => [...prev]);
   };
 
   return (

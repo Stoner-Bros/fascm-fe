@@ -2,7 +2,6 @@ import { fetchJSON } from '@/lib/client';
 import type {
   HarvestSchedule,
   CreateHarvestScheduleDto,
-  UpdateHarvestScheduleDto,
   FindAllHarvestSchedulesDto
 } from '@/types/harvest-schedule';
 import type { InfinityPaginationResponse } from '@/types/common';
@@ -47,18 +46,10 @@ export async function deleteHarvestSchedule(id: string) {
   return fetchJSON<void>(`/harvest-schedules/${id}`, { method: 'DELETE' });
 }
 
-export async function confirmHarvestSchedule(
-  id: string,
-  status: 'approved' | 'rejected',
-  reason?: string
-) {
-  const body: { status: 'approved' | 'rejected'; reason?: string } = { status };
-  if (reason) {
-    body.reason = reason;
-  }
-  return fetchJSON<HarvestSchedule>(`/harvest-schedules/${id}/confirm`, {
+export async function rejectHarvestSchedule(id: string, reason: string) {
+  return fetchJSON<HarvestSchedule>(`/harvest-schedules/${id}/status`, {
     method: 'PATCH',
-    body
+    body: { status: 'rejected', reason: reason }
   });
 }
 

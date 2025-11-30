@@ -18,9 +18,10 @@ const DeliveryRouteSim = dynamic(
   () => import('@/components/map/delivery-route-sim'),
   { ssr: false }
 );
-import { Order, OrderDetail, OrderService } from '@/features/consignee';
+import { Order, OrderDetail } from '@/features/consignee';
 import { fetchOrderById } from '@/services/order.service';
 import { fetchOrderDetails } from '@/services/order-detail.service';
+import { formatDate, formatCurrency } from '@/lib/utils';
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -154,12 +155,11 @@ export default function OrderDetailPage() {
           </div>
           <div className='text-right md:justify-self-end'>
             <p className='text-sm'>
-              Ngày đặt:{' '}
-              {order.orderDate ? OrderService.formatDate(order.orderDate) : '-'}
+              Ngày đặt: {order.orderDate ? formatDate(order.orderDate) : '-'}
             </p>
             <p className='font-medium'>
               Tổng tiền:{' '}
-              {OrderService.formatCurrency(
+              {formatCurrency(
                 Number(
                   order.totalPayment ??
                     Number(order.totalAmount ?? 0) +
@@ -186,7 +186,7 @@ export default function OrderDetailPage() {
                       <div className='flex items-center justify-between gap-4'>
                         <div className='flex h-12 w-12 items-center justify-center rounded-md border'>
                           <img
-                            src={item.product?.image ?? ''}
+                            src={item.product?.image || undefined}
                             alt={item.product?.name ?? item.product?.id ?? '-'}
                             className='h-full w-full rounded-md object-cover'
                           />
@@ -197,12 +197,12 @@ export default function OrderDetailPage() {
                           </h4>
                           <p className='text-muted-foreground text-sm'>
                             {item.quantity ?? 0} {item.unit ?? ''} ×{' '}
-                            {OrderService.formatCurrency(item.unitPrice ?? 0)}
+                            {formatCurrency(item.unitPrice ?? 0)}
                           </p>
                         </div>
                         <div className='text-right'>
                           <p className='font-medium'>
-                            {OrderService.formatCurrency(
+                            {formatCurrency(
                               (Number.isFinite(item.quantity ?? 0)
                                 ? (item.quantity ?? 0)
                                 : 0) * (item.unitPrice ?? 0)
@@ -210,7 +210,7 @@ export default function OrderDetailPage() {
                           </p>
                           <p className='text-muted-foreground text-sm'>
                             Gồm VAT:{' '}
-                            {OrderService.formatCurrency(
+                            {formatCurrency(
                               (Number.isFinite(item.quantity ?? 0)
                                 ? (item.quantity ?? 0)
                                 : 0) *
@@ -272,7 +272,7 @@ export default function OrderDetailPage() {
                 <div className='flex justify-between text-sm'>
                   <span>Tạm tính:</span>
                   <span>
-                    {OrderService.formatCurrency(
+                    {formatCurrency(
                       details.reduce(
                         (sum, it) =>
                           sum +
@@ -292,7 +292,7 @@ export default function OrderDetailPage() {
                 <div className='flex justify-between text-sm'>
                   <span>VAT:</span>
                   <span>
-                    {OrderService.formatCurrency(
+                    {formatCurrency(
                       Number(order?.vatAmount ?? 0) ||
                         Number(order?.totalAmount ?? 0) *
                           (Number(order?.taxRate ?? 5) / 100)
@@ -303,7 +303,7 @@ export default function OrderDetailPage() {
                 <div className='flex justify-between font-medium'>
                   <span>Tổng cộng:</span>
                   <span>
-                    {OrderService.formatCurrency(
+                    {formatCurrency(
                       Number(
                         order?.totalPayment ??
                           Number(order?.totalAmount ?? 0) +
@@ -338,16 +338,14 @@ export default function OrderDetailPage() {
                   <span className='text-muted-foreground'>Ngày giao hàng:</span>
                   <span>
                     {order.orderSchedule?.orderDate
-                      ? OrderService.formatDate(order.orderSchedule.orderDate)
+                      ? formatDate(order.orderSchedule.orderDate)
                       : '-'}
                   </span>
                 </div>
                 <div className='flex justify-between'>
                   <span className='text-muted-foreground'>Ngày đặt hàng:</span>
                   <span>
-                    {order.orderDate
-                      ? OrderService.formatDate(order.orderDate)
-                      : '-'}
+                    {order.orderDate ? formatDate(order.orderDate) : '-'}
                   </span>
                 </div>
                 <div className='mt-4 border-t pt-3'>

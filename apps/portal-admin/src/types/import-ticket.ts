@@ -5,13 +5,43 @@ export type ImportTicket = {
   realityQuantity: number;
   importDate: string;
   inboundBatch?: {
-    id: string;
     batchCode?: string;
+    unit?: string;
+    quantity: number;
     product?: {
       id: string;
       name?: string;
     };
+    harvestDetail: {
+      product: {
+        id: string;
+        name?: string;
+        unit?: string;
+      };
+    };
+    harvestTicket?: {
+      id: string;
+      date: string;
+      quantity: number;
+      unit?: string;
+      harvestScheduleId?: {
+        id: string;
+        supplierId?: {
+          warehouse?: {
+            id: string;
+            name?: string;
+          };
+          user?: {
+            id: string;
+            firstName?: string;
+            lastName?: string;
+          };
+          representativeName?: string;
+        };
+      };
+    };
   };
+
   area?: {
     id: string;
     name?: string;

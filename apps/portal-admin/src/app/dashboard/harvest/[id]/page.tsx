@@ -26,7 +26,7 @@ import { fetchHarvestDetailsByHarvestTicketId } from '@/services/harvest-detail.
 import {
   approveHarvestSchedule,
   completeHarvestSchedule,
-  confirmHarvestSchedule,
+  rejectHarvestSchedule,
   fetchHarvestScheduleById
 } from '@/services/harvest-schedule.service';
 import {
@@ -338,7 +338,7 @@ export default function HarvestScheduleDetailPage() {
     }
     try {
       setActionLoading(true);
-      const updated = await confirmHarvestSchedule(
+      const updated = await rejectHarvestSchedule(
         harvestSchedule.id,
         'rejected',
         rejectReason.trim()
