@@ -58,11 +58,11 @@ export const useAuthStore = create<AuthState>()(
 
       // Computed properties
       get isAuthenticated() {
-        return !!get().user && checkIsAuthenticated();
+        return !!get()?.user && checkIsAuthenticated();
       },
 
       get userDisplayName() {
-        const user = get().user;
+        const user = get()?.user;
         if (!user) return '';
         return user.firstName && user.lastName
           ? `${user.firstName} ${user.lastName}`.trim()
@@ -70,7 +70,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       get userRole() {
-        return get().user?.role.name || null;
+        return get()?.user?.role.name || null;
       },
 
       // Actions
@@ -86,7 +86,7 @@ export const useAuthStore = create<AuthState>()(
 
       syncFromCookie: () => {
         const cookieUser = getUserSession();
-        const currentUser = get().user;
+        const currentUser = get()?.user;
 
         // Only update if different to avoid unnecessary re-renders
         if (JSON.stringify(cookieUser) !== JSON.stringify(currentUser)) {

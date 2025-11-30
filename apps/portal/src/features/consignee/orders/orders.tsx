@@ -17,7 +17,6 @@ import { useEffect, useState } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Order } from '../../../types/order';
 import { formatDate } from '@/lib/format';
-import { OrderService } from '@/features/consignee/services/order-service';
 import {
   Select,
   SelectContent,
@@ -26,6 +25,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { fetchMyOrders } from '@/services/order.service';
+import { formatCurrency } from '@/lib/utils';
 
 export default function ConsigneeOrdersFeature() {
   const { toast } = useToast();
@@ -197,14 +197,10 @@ export default function ConsigneeOrdersFeature() {
                           {formatDate(order.orderSchedule?.orderDate ?? '-')}
                         </TableCell>
                         <TableCell>
-                          {OrderService.formatCurrency(
-                            Number(order.totalAmount ?? 0)
-                          )}
+                          {formatCurrency(Number(order.totalAmount ?? 0))}
                         </TableCell>
                         <TableCell>
-                          {OrderService.formatCurrency(
-                            Number(order.totalPayment ?? 0)
-                          )}
+                          {formatCurrency(Number(order.totalPayment ?? 0))}
                         </TableCell>
                         <TableCell className='text-right'>
                           <Link href={`/consignee/orders/${order.id}`}>
