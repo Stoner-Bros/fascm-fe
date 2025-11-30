@@ -1,6 +1,7 @@
 import KBar from '@/components/kbar';
 import ConsigneeSidebar from '@/components/layout/consignee-sidebar';
 import Header from '@/components/layout/header';
+import ConsigneeNotificationListener from '@/components/notifications/consignee-notification-listener';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { cookies } from 'next/headers';
 
@@ -18,6 +19,7 @@ export default async function ConsigneeLayout({
         <ConsigneeSidebar />
         <SidebarInset className='overflow-auto'>
           <Header />
+          <ConsigneeNotificationListener />
           {/* page main content */}
           {children}
           {/* page main content ends */}

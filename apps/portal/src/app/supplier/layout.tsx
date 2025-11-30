@@ -3,6 +3,7 @@ import SupplierSidebar from '@/components/layout/supplier-sidebar';
 import Header from '@/components/layout/header';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { cookies } from 'next/headers';
+import SupplierNotificationListener from '@/components/notifications/supplier-notification-listener';
 export default async function SupplierLayout({
   children
 }: {
@@ -18,6 +19,7 @@ export default async function SupplierLayout({
         <SidebarInset className='overflow-auto'>
           <Header />
           {/* page main content */}
+          <SupplierNotificationListener />
           {children}
           {/* page main content ends */}
         </SidebarInset>

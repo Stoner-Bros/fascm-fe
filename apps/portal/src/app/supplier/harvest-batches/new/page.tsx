@@ -55,7 +55,8 @@ export default function NewHarvestBatchPage() {
   // Step 1: Harvest Schedule
   const [scheduleData, setScheduleData] = useState({
     description: '',
-    harvestDate: ''
+    harvestDate: '',
+    address: ''
   });
 
   // Step 2: Harvest Details - Khởi tạo với 1 detail mặc định
@@ -87,12 +88,18 @@ export default function NewHarvestBatchPage() {
         });
       });
 
-    // Get supplier ID from supplier service
+    // Get supplier info (id + address)
     fetchMySupplier()
       .then((supplier) => {
         if (!mounted) return;
         if (supplier && supplier.id) {
           setSupplierId(supplier.id);
+
+          // 🔥 Prefill Harvest Address = supplier.address (nếu có)
+          setScheduleData((prev) => ({
+            ...prev,
+            address: supplier.address || prev.address || ''
+          }));
         }
       })
       .catch((err) => {
@@ -121,9 +128,7 @@ export default function NewHarvestBatchPage() {
   };
 
   const getDefaultQuantity = () => 20;
-
   const getQuantityStep = () => 20;
-
   const getMinQuantity = () => 20;
 
   const addHarvestDetail = () => {
@@ -228,6 +233,8 @@ export default function NewHarvestBatchPage() {
       const schedule = await createHarvestSchedule({
         description: scheduleData.description || null,
         harvestDate: new Date(scheduleData.harvestDate).toISOString(),
+        // ✅ Address là giá trị đã prefill từ supplier và có thể chỉnh sửa trên UI
+        address: scheduleData.address || null,
         supplierId: {
           id: supplierId
         }
@@ -246,8 +253,6 @@ export default function NewHarvestBatchPage() {
       }
 
       // Step 3: Create ALL Harvest Details using this ONE ticket
-      // Tính amount cho mỗi detail: quantity * unitPrice
-      // Tạo tất cả details cho cùng 1 ticket
       console.log(
         'Creating harvest details:',
         harvestDetails.length,
@@ -264,19 +269,19 @@ export default function NewHarvestBatchPage() {
 
         const quantity = Number(detail.quantity) || 0;
         const unitPrice = Number(detail.unitPrice) || 0;
-        const amount = quantity * unitPrice; // Tính amount = quantity * unitPrice
+        const amount = quantity * unitPrice;
 
         const payload = {
           product: {
             id: String(detail.productId)
           },
           harvestTicket: {
-            id: String(ticket.id) // Tất cả details dùng cùng 1 ticket
+            id: String(ticket.id)
           },
           quantity: quantity,
           unitPrice: unitPrice,
           unit: String(detail.unit || 'kg'),
-          amount: amount // Gửi amount đã tính
+          amount: amount
         };
 
         console.log(`Creating harvest detail #${index + 1}:`, payload);
@@ -294,12 +299,13 @@ export default function NewHarvestBatchPage() {
             error
           );
           throw new Error(
-            `Failed to create harvest detail #${index + 1}: ${error instanceof Error ? error.message : 'Unknown error'}`
+            `Failed to create harvest detail #${index + 1}: ${
+              error instanceof Error ? error.message : 'Unknown error'
+            }`
           );
         }
       }
 
-      // Kiểm tra tất cả details đã được tạo thành công
       if (createdDetails.length !== harvestDetails.length) {
         throw new Error(
           `Failed to create all harvest details. Expected ${harvestDetails.length}, created ${createdDetails.length}`
@@ -312,26 +318,22 @@ export default function NewHarvestBatchPage() {
       );
 
       // Step 4: Tính toán và cập nhật Harvest Ticket
-      // Tính tổng quantity từ TẤT CẢ các details (unit = kg)
       const totalQuantity = harvestDetails.reduce(
         (sum, detail) => sum + (Number(detail.quantity) || 0),
         0
       );
 
-      // Tính tổng amount từ TẤT CẢ các details (totalPayment và totalAmount)
-      // totalPayment = totalAmount = tổng amount của tất cả details
       const totalAmount = harvestDetails.reduce((sum, detail) => {
         const qty = Number(detail.quantity) || 0;
         const price = Number(detail.unitPrice) || 0;
-        return sum + qty * price; // Cộng tất cả amount
+        return sum + qty * price;
       }, 0);
 
-      // Cập nhật Harvest Ticket với các giá trị đã tính từ TẤT CẢ details
       await updateHarvestTicket(ticket.id, {
-        quantity: totalQuantity, // Tổng quantity từ tất cả details
-        unit: 'kg', // Unit cố định là kg
-        totalPayment: totalAmount, // Tổng amount từ tất cả details
-        totalAmount: totalAmount // Tổng amount từ tất cả details
+        quantity: totalQuantity,
+        unit: 'kg',
+        totalPayment: totalAmount,
+        totalAmount: totalAmount
       });
 
       toast({
@@ -404,7 +406,18 @@ export default function NewHarvestBatchPage() {
                     placeholder='Select harvest date and time'
                   />
                 </div>
-
+                <div className='space-y-2'>
+                  <Label htmlFor='address'>
+                    Harvest Address <span className='text-destructive'>*</span>
+                  </Label>
+                  <Input
+                    id='address'
+                    name='address'
+                    value={scheduleData.address}
+                    onChange={handleScheduleChange}
+                    placeholder='Enter harvest address'
+                  />
+                </div>
                 <div className='space-y-2'>
                   <Label htmlFor='description'>Description</Label>
                   <textarea

@@ -1,19 +1,17 @@
+import AuthInitializer from '@/components/auth/auth-initializer';
 import Providers from '@/components/layout/providers';
+import ThemeProvider from '@/components/layout/ThemeToggle/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
 import { fontVariables } from '@/lib/font';
-import ThemeProvider from '@/components/layout/ThemeToggle/theme-provider';
 import { cn } from '@/lib/utils';
 import type { Metadata, Viewport } from 'next';
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
 import { cookies } from 'next/headers';
 import NextTopLoader from 'nextjs-toploader';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import './globals.css';
 import './theme.css';
-import { NextIntlClientProvider } from 'next-intl';
-import { getLocale, getMessages } from 'next-intl/server';
-import ConsigneeNotificationListener from '@/components/notifications/consignee-notification-listener';
-import SupplierNotificationListener from '@/components/notifications/supplier-notification-listener';
-import AuthInitializer from '@/components/auth/auth-initializer';
 
 const META_THEME_COLORS = {
   light: '#ffffff',
@@ -82,8 +80,6 @@ export default async function RootLayout({
               <Providers activeThemeValue={activeThemeValue as string}>
                 <AuthInitializer />
                 <Toaster />
-                <ConsigneeNotificationListener />
-                <SupplierNotificationListener />
                 {children}
               </Providers>
             </ThemeProvider>
