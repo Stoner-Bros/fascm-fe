@@ -11,6 +11,8 @@ import './globals.css';
 import './theme.css';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
+import ConsigneeNotificationListener from '@/components/notifications/consignee-notification-listener';
+import SupplierNotificationListener from '@/components/notifications/supplier-notification-listener';
 
 const META_THEME_COLORS = {
   light: '#ffffff',
@@ -78,6 +80,8 @@ export default async function RootLayout({
             >
               <Providers activeThemeValue={activeThemeValue as string}>
                 <Toaster />
+                <ConsigneeNotificationListener />
+                <SupplierNotificationListener />
                 {children}
               </Providers>
             </ThemeProvider>

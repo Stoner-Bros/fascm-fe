@@ -3,7 +3,8 @@ import type {
   HarvestSchedule,
   CreateHarvestScheduleDto,
   UpdateHarvestScheduleDto,
-  FindAllHarvestSchedulesDto
+  FindAllHarvestSchedulesDto,
+  UpdateHarvestScheduleStatusDto
 } from '../features/supplier/types/harvest-schedule';
 import type { InfinityPaginationResponse } from '../features/supplier/types/common';
 
@@ -36,13 +37,10 @@ export async function fetchHarvestScheduleById(id: string) {
   return fetchJSON<HarvestSchedule>(`/harvest-schedules/${id}`);
 }
 
-export async function updateHarvestSchedule(
-  id: string,
-  body: UpdateHarvestScheduleDto
-) {
-  return fetchJSON<HarvestSchedule>(`/harvest-schedules/${id}`, {
+export async function updateHarvestSchedule(id: string) {
+  return fetchJSON<HarvestSchedule>(`/harvest-schedules/${id}/status`, {
     method: 'PATCH',
-    body
+    body: { status: 'APPROVED' }
   });
 }
 
@@ -51,8 +49,9 @@ export async function deleteHarvestSchedule(id: string) {
 }
 
 export async function confirmHarvestSchedule(id: string) {
-  return fetchJSON<HarvestSchedule>(`/harvest-schedules/${id}/confirm`, {
-    method: 'PATCH'
+  return fetchJSON<HarvestSchedule>(`/harvest-schedules/${id}/status`, {
+    method: 'PATCH',
+    body: { status: 'COMPLETED' }
   });
 }
 

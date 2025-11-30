@@ -36,13 +36,10 @@ export async function fetchHarvestScheduleById(id: string) {
   return fetchJSON<HarvestSchedule>(`/harvest-schedules/${id}`);
 }
 
-export async function updateHarvestSchedule(
-  id: string,
-  body: UpdateHarvestScheduleDto
-) {
-  return fetchJSON<HarvestSchedule>(`/harvest-schedules/${id}`, {
+export async function approveHarvestSchedule(id: string) {
+  return fetchJSON<HarvestSchedule>(`/harvest-schedules/${id}/status`, {
     method: 'PATCH',
-    body
+    body: { status: 'approved' }
   });
 }
 

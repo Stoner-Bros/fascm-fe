@@ -24,37 +24,37 @@ import type { OrderBE, OrderScheduleStatus } from '@/types/order';
 
 function badgeForSchedule(status?: OrderScheduleStatus | null) {
   switch (status) {
-    case 'IN_PROGRESS':
+    case 'pending':
       return (
         <span className='rounded bg-violet-100 px-2 py-1 text-xs text-violet-700'>
           Đang xử lý
         </span>
       );
-    case 'APPROVED':
+    case 'approved':
       return (
         <span className='rounded bg-blue-100 px-2 py-1 text-xs text-blue-700'>
           Đã duyệt
         </span>
       );
-    case 'PENDING_ASSIGNMENT':
+    case 'preparing':
       return (
         <span className='rounded bg-yellow-100 px-2 py-1 text-xs text-yellow-700'>
           Chờ phân công
         </span>
       );
-    case 'PENDING_PICKUP':
+    case 'delivering':
       return (
         <span className='rounded bg-amber-100 px-2 py-1 text-xs text-amber-700'>
           Chờ lấy hàng
         </span>
       );
-    case 'REJECTED':
+    case 'rejected':
       return (
         <span className='rounded bg-red-100 px-2 py-1 text-xs text-red-700'>
           Từ chối
         </span>
       );
-    case 'CANCELLED':
+    case 'canceled':
       return (
         <span className='rounded bg-red-100 px-2 py-1 text-xs text-red-700'>
           Đã hủy
@@ -147,8 +147,8 @@ export default function OrderTable() {
                 </TableCell>
                 <TableCell className='text-right'>
                   <div className='flex items-center justify-end gap-2'>
-                    {o.orderSchedule?.status !== 'APPROVED' &&
-                      o.orderSchedule?.status !== 'REJECTED' && (
+                    {o.orderSchedule?.status !== 'approved' &&
+                      o.orderSchedule?.status !== 'rejected' && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button
@@ -164,12 +164,12 @@ export default function OrderTable() {
                             className='min-w-[180px]'
                           >
                             <DropdownMenuItem
-                              onClick={() => doUpdate(o, 'APPROVED')}
+                              onClick={() => doUpdate(o, 'approved')}
                             >
                               Duyệt
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                              onClick={() => doUpdate(o, 'REJECTED')}
+                              onClick={() => doUpdate(o, 'rejected')}
                             >
                               Từ chối
                             </DropdownMenuItem>

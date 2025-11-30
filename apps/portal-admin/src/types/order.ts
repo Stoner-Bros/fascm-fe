@@ -24,12 +24,14 @@ export type OrderSchedule = {
 };
 
 export type OrderScheduleStatus =
-  | 'IN_PROGRESS'
-  | 'APPROVED'
-  | 'PENDING_ASSIGNMENT'
-  | 'PENDING_PICKUP'
-  | 'CANCELLED'
-  | 'REJECTED';
+  | 'pending'
+  | 'rejected'
+  | 'preparing'
+  | 'delivering'
+  | 'delivered'
+  | 'completed'
+  | 'canceled'
+  | 'approved';
 
 export type OrderBE = {
   id: string;
