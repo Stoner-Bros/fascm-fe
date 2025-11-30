@@ -45,6 +45,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
 import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
+import useAuth from '@/hooks/use-auth';
 export const company = {
   name: 'Acme Inc',
   logo: IconPhotoUp,
@@ -60,14 +61,7 @@ const tenants = [
 export default function SupplierSidebar() {
   const pathname = usePathname();
   const { isOpen } = useMediaQuery();
-  const { user } = {
-    user: {
-      firstName: 'John',
-      lastName: 'Doe',
-      emailAddresses: [{ emailAddress: 'john.doe@example.com' }],
-      phoneNumbers: [{ phoneNumber: '+1 (555) 123-4567' }]
-    }
-  };
+  const { user, logout } = useAuth();
   const router = useRouter();
   const handleSwitchTenant = (_tenantId: string) => {
     // Tenant switching functionality would be implemented here
@@ -211,7 +205,7 @@ export default function SupplierSidebar() {
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={logout}>
                   <IconLogout className='mr-2 h-4 w-4' />
                   Sign Out
                 </DropdownMenuItem>

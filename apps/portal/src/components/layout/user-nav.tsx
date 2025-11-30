@@ -10,15 +10,10 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
+import useAuth from '@/hooks/use-auth';
 import { useRouter } from 'next/navigation';
 export function UserNav() {
-  const { user } = {
-    user: {
-      firstName: 'Alice',
-      lastName: 'Johnson',
-      emailAddresses: [{ emailAddress: 'alice.johnson@example.com' }]
-    }
-  };
+  const { user, logout } = useAuth();
   const router = useRouter();
   if (user) {
     return (
@@ -40,7 +35,7 @@ export function UserNav() {
                 {`${user.firstName} ${user.lastName}`}
               </p>
               <p className='text-muted-foreground text-xs leading-none'>
-                {user.emailAddresses[0].emailAddress}
+                {user.email}
               </p>
             </div>
           </DropdownMenuLabel>
@@ -59,7 +54,7 @@ export function UserNav() {
             </DropdownMenuItem> */}
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Đăng xuất</DropdownMenuItem>
+          <DropdownMenuItem onClick={logout}>Đăng xuất</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     );

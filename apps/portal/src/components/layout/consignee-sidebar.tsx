@@ -46,6 +46,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
 import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
+import useAuth from '@/hooks/use-auth';
 
 export const company = {
   name: 'Retail Corp',
@@ -62,13 +63,7 @@ const tenants = [
 export default function ConsigneeSidebar() {
   const pathname = usePathname();
   const { isOpen } = useMediaQuery();
-  const { user } = {
-    user: {
-      firstName: 'Jane',
-      lastName: 'Smith',
-      emailAddresses: [{ emailAddress: 'jane.smith@example.com' }]
-    }
-  };
+  const { user, logout } = useAuth();
   const router = useRouter();
   const handleSwitchTenant = (_tenantId: string) => {
     // Tenant switching functionality would be implemented here
@@ -218,7 +213,7 @@ export default function ConsigneeSidebar() {
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={logout}>
                   <IconLogout className='mr-2 h-4 w-4' />
                   Sign Out
                 </DropdownMenuItem>
