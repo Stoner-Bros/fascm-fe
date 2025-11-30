@@ -11,11 +11,21 @@ export type AuthLoginResponse = {
 };
 
 export type AuthMeResponse = {
-  id: string;
+  id: number;
   email: string;
   firstName?: string;
   lastName?: string;
-  roles?: string[];
+  role?: any;
+  status?: any;
+  photo?: {
+    id: string;
+    path: string;
+  } | null;
+  provider?: string;
+  socialId?: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
 };
 
 export type AuthRegisterRequest = {

@@ -7,7 +7,7 @@ import { useTranslations } from 'next-intl';
 import { Metadata } from 'next';
 import Link from 'next/link';
 import { useState } from 'react';
-import { login } from '@/services/auth.service';
+import { useAuth } from '@/hooks/use-auth';
 import { RoleEnum } from '@/constants/enums';
 import { useRouter } from 'next/navigation';
 
@@ -23,6 +23,7 @@ export default function SignInViewPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

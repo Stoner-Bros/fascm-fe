@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { confirmEmail } from '@/services/auth.service';
 import { useTranslations } from 'next-intl';
 import { RoleEnum } from '@/constants/enums';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function ConfirmEmailPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { confirmEmail } = useAuth();
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>(
     'loading'
   );
