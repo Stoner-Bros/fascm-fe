@@ -11,6 +11,7 @@ import './globals.css';
 import './theme.css';
 import { NextIntlClientProvider } from 'next-intl';
 import { getLocale, getMessages } from 'next-intl/server';
+import AuthInitializer from '@/components/auth/auth-initializer';
 
 const META_THEME_COLORS = {
   light: '#ffffff',
@@ -77,6 +78,7 @@ export default async function RootLayout({
               enableColorScheme
             >
               <Providers activeThemeValue={activeThemeValue as string}>
+                <AuthInitializer />
                 <Toaster />
                 {children}
               </Providers>
