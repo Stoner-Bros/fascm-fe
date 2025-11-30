@@ -306,7 +306,7 @@ export default function ConsigneeNewOrderFeature() {
             <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
               <div className='space-y-2'>
                 <Label htmlFor='schedule-datetime'>
-                  Ngày & Giờ đặt hàng{' '}
+                  Ngày & Giờ nhận hàng{' '}
                   <span className='text-destructive'>*</span>
                 </Label>
                 <DateTimePicker
