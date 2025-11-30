@@ -58,7 +58,7 @@ export default function ConsigneeNewOrderFeature() {
   const didFetchRef = useRef(false);
   const didPrefillRef = useRef(false);
   const [scheduleDescription, setScheduleDescription] = useState('');
-  const SCHEDULE_STATUS = 'IN_PROGRESS';
+  const SCHEDULE_STATUS = 'pending';
   const [scheduleDateTime, setScheduleDateTime] = useState<string>(() => {
     const d = new Date();
     const yyyy = d.getFullYear();
@@ -223,23 +223,12 @@ export default function ConsigneeNewOrderFeature() {
         (acc, l) => acc + computeVolumeLiters(l),
         0
       );
-      if (consignee?.id) {
-        const payload: Record<string, any> = {};
-        if (deliveryAddress && deliveryAddress !== (consignee.address ?? '')) {
-          payload.address = deliveryAddress;
-        }
-        if (contact && contact !== (consignee.contact ?? '')) {
-          payload.contact = contact;
-        }
-        if (Object.keys(payload).length > 0) {
-          await updateConsignee(consignee.id, payload);
-          setConsignee({ ...consignee, ...(payload as any) });
-        }
-      }
+      // Không cập nhật consignee; chỉ set address trong schedule
       const schedule = await createOrderSchedule({
         description: scheduleDescription,
         status: SCHEDULE_STATUS,
         orderDate: new Date(scheduleDateTime).toISOString(),
+        address: deliveryAddress || null,
         consignee: consignee?.id ? { id: consignee.id } : undefined
       });
 

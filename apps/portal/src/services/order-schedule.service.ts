@@ -5,6 +5,7 @@ export type OrderSchedule = {
   description?: string | null;
   status?: string | null;
   orderDate?: string | Date | null;
+  address?: string | null;
   consignee?: { id: string } | null;
   createdAt?: Date;
   updatedAt?: Date;
@@ -14,6 +15,7 @@ export type CreateOrderScheduleRequest = {
   description?: string | null;
   status?: string | null;
   orderDate?: string | Date | null;
+  address?: string | null;
   consignee?: { id: string } | null;
 };
 
