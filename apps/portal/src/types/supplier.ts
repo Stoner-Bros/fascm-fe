@@ -1,24 +1,47 @@
 export type Supplier = {
-  id: string;
-  user?: {
-    clerkUserId?: string | null;
-    id: number;
-    firstName?: string;
-    lastName?: string;
-    role?: {
-      id: number;
-      name: string;
-      __entity?: string;
-    };
-    status?: {
-      id: number;
-      name: string;
-      __entity?: string;
-    };
-    createdAt?: string;
-    updatedAt?: string;
-    deletedAt?: string | null;
+  warehouse: {
+    address: string;
+    name: string;
+    id: string;
+    createdAt: string;
+    updatedAt: string;
   };
+  user: {
+    id: number;
+    email: string;
+    provider: string;
+    socialId: string;
+    firstName: string;
+    lastName: string;
+    photo: {
+      id: string;
+      path: string;
+    };
+    role: {
+      id: number;
+      name: string;
+    };
+    status: {
+      id: number;
+      name: string;
+    };
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string;
+  };
+  contact: string;
+  taxCode: string;
+  address: string;
+  certificate: string;
+  qrCode: string;
+  gardenName: string;
+  representativeName: string;
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type UpdateSupplierDto = {
   contact?: string;
   taxCode?: string;
   address?: string;
@@ -26,28 +49,13 @@ export type Supplier = {
   qrCode?: string;
   gardenName?: string;
   representativeName?: string;
-  createdAt?: string | Date;
-  updatedAt?: string | Date;
-  // Legacy fields for backward compatibility
-  name?: string;
-  contactPerson?: string;
-  phone?: string;
-  email?: string;
-  rating?: number;
-  isActive?: boolean;
-  certifications?: string[];
+  warehouse: {
+    id: string;
+  };
+  user: {
+    id: string;
+  };
 };
-
-export type CreateSupplierDto = {
-  name: string;
-  contactPerson?: string;
-  phone?: string;
-  email?: string;
-  address?: string;
-  certifications?: string[];
-};
-
-export type UpdateSupplierDto = Partial<CreateSupplierDto>;
 
 export type FindAllSuppliersDto = {
   page?: number;

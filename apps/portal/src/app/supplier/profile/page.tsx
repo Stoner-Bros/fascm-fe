@@ -1,5 +1,6 @@
 'use client';
 
+import { FileUploader } from '@/components/file-uploader';
 import PageContainer from '@/components/layout/page-container';
 import { Button } from '@/components/ui/button';
 import {
@@ -12,31 +13,74 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { IconEdit, IconMail, IconPhone, IconUser } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { updateProfile } from '@/services/auth.service';
+import { updateSupplier } from '@/services/supplier.service';
+import { uploadFile } from '@/services/file.service';
+import type { Supplier } from '@/types/supplier';
+import { FileType } from '@/types/file';
+import {
+  IconBuilding,
+  IconCheck,
+  IconEdit,
+  IconFileText,
+  IconId,
+  IconMail,
+  IconMapPin,
+  IconPhone,
+  IconPlant,
+  IconShield,
+  IconUser,
+  IconX
+} from '@tabler/icons-react';
+import Image from 'next/image';
+import { useEffect, useState } from 'react';
 
 export default function SupplierProfilePage() {
-  const { user } = {
-    user: {
-      firstName: 'John',
-      lastName: 'Doe',
-      emailAddresses: [{ emailAddress: 'john.doe@example.com' }],
-      phoneNumbers: [{ phoneNumber: '+1 (555) 123-4567' }]
-    }
-  };
+  const { user, fullInfo } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [certificateFiles, setCertificateFiles] = useState<File[]>([]);
+  const [qrCodeFiles, setQrCodeFiles] = useState<File[]>([]);
+  const [userPhotoFiles, setUserPhotoFiles] = useState<File[]>([]);
+
+  const supplierInfo = fullInfo as Supplier;
+
   const [formData, setFormData] = useState({
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
-    email: user?.emailAddresses[0]?.emailAddress || '',
-    phone: user?.phoneNumbers[0]?.phoneNumber || '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: ''
+    email: user?.email || '',
+    gardenName: supplierInfo?.gardenName || '',
+    representativeName: supplierInfo?.representativeName || '',
+    contact: supplierInfo?.contact || '',
+    address: supplierInfo?.address || '',
+    taxCode: supplierInfo?.taxCode || '',
+    certificate: supplierInfo?.certificate || '',
+    qrCode: supplierInfo?.qrCode || '',
+    warehouseName: supplierInfo?.warehouse?.name || '',
+    warehouseAddress: supplierInfo?.warehouse?.address || ''
   });
+
+  useEffect(() => {
+    if (user && supplierInfo) {
+      setFormData({
+        firstName: user?.firstName || '',
+        lastName: user?.lastName || '',
+        email: user?.email || '',
+        gardenName: supplierInfo?.gardenName || '',
+        representativeName: supplierInfo?.representativeName || '',
+        contact: supplierInfo?.contact || '',
+        address: supplierInfo?.address || '',
+        taxCode: supplierInfo?.taxCode || '',
+        certificate: supplierInfo?.certificate || '',
+        qrCode: supplierInfo?.qrCode || '',
+        warehouseName: supplierInfo?.warehouse?.name || '',
+        warehouseAddress: supplierInfo?.warehouse?.address || ''
+      });
+    }
+  }, [user, supplierInfo]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -46,28 +90,117 @@ export default function SupplierProfilePage() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileUpload = async (
+    files: File[],
+    type: 'certificate' | 'qrCode' | 'userPhoto'
+  ): Promise<FileType | null> => {
+    if (files.length === 0) return null;
+
+    try {
+      const uploadedFile = await uploadFile(files[0]);
+      return uploadedFile || null;
+    } catch (error) {
+      console.error(`Failed to upload ${type}:`, error);
+      toast({
+        variant: 'destructive',
+        title: 'File Upload Failed',
+        description: `Failed to upload ${type} file. Please try again.`
+      });
+      return null;
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement API call to update profile
-    toast({
-      title: 'Profile Updated',
-      description: 'Your profile has been successfully updated.'
-    });
-    setIsEditing(false);
+
+    if (!supplierInfo?.id) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Supplier information not found.'
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Upload files if any
+      const [certificateUrl, qrCodeUrl, userPhotoUrl] = await Promise.all([
+        handleFileUpload(certificateFiles, 'certificate'),
+        handleFileUpload(qrCodeFiles, 'qrCode'),
+        handleFileUpload(userPhotoFiles, 'userPhoto')
+      ]);
+
+      // Update user profile
+      await updateProfile({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        ...(userPhotoUrl && {
+          photo: {
+            id: userPhotoUrl.id,
+            path: userPhotoUrl.path
+          }
+        })
+      });
+
+      // Update supplier information
+      await updateSupplier(supplierInfo.id, {
+        gardenName: formData.gardenName,
+        representativeName: formData.representativeName,
+        contact: formData.contact,
+        address: formData.address,
+        taxCode: formData.taxCode,
+        certificate: certificateUrl?.path || formData.certificate,
+        qrCode: qrCodeUrl?.path || formData.qrCode,
+        warehouse: { id: supplierInfo.warehouse.id },
+        user: { id: String(user?.id) }
+      });
+
+      // Clear file states
+      setCertificateFiles([]);
+      setQrCodeFiles([]);
+      setUserPhotoFiles([]);
+
+      toast({
+        title: 'Profile Updated',
+        description: 'Your profile has been successfully updated.'
+      });
+
+      setIsEditing(false);
+
+      // Refresh page to show updated data
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to update profile:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Update Failed',
+        description: 'Failed to update profile. Please try again.'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
     setIsEditing(false);
-    // Reset form data
+    setCertificateFiles([]);
+    setQrCodeFiles([]);
+    setUserPhotoFiles([]);
     setFormData({
       firstName: user?.firstName || '',
       lastName: user?.lastName || '',
-      email: user?.emailAddresses[0]?.emailAddress || '',
-      phone: user?.phoneNumbers[0]?.phoneNumber || '',
-      address: '',
-      city: '',
-      state: '',
-      zipCode: ''
+      email: user?.email || '',
+      gardenName: supplierInfo?.gardenName || '',
+      representativeName: supplierInfo?.representativeName || '',
+      contact: supplierInfo?.contact || '',
+      address: supplierInfo?.address || '',
+      taxCode: supplierInfo?.taxCode || '',
+      certificate: supplierInfo?.certificate || '',
+      qrCode: supplierInfo?.qrCode || '',
+      warehouseName: supplierInfo?.warehouse?.name || '',
+      warehouseAddress: supplierInfo?.warehouse?.address || ''
     });
   };
 
@@ -78,7 +211,7 @@ export default function SupplierProfilePage() {
           <div>
             <h2 className='text-3xl font-bold tracking-tight'>Profile</h2>
             <p className='text-muted-foreground'>
-              Manage your account information
+              Manage your account information and farm details
             </p>
           </div>
           {!isEditing && (
@@ -86,6 +219,32 @@ export default function SupplierProfilePage() {
               <IconEdit className='mr-2 h-4 w-4' />
               Edit Profile
             </Button>
+          )}
+          {isEditing && (
+            <div className='flex justify-end space-x-2'>
+              <Button
+                type='button'
+                variant='outline'
+                onClick={handleCancel}
+                disabled={isSubmitting}
+              >
+                <IconX className='mr-2 h-4 w-4' />
+                Cancel
+              </Button>
+              <Button onClick={handleSubmit} disabled={isSubmitting}>
+                {isSubmitting ? (
+                  <>
+                    <div className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <IconCheck className='mr-2 h-4 w-4' />
+                    Save Changes
+                  </>
+                )}
+              </Button>
+            </div>
           )}
         </div>
 
@@ -97,10 +256,91 @@ export default function SupplierProfilePage() {
               <CardHeader>
                 <CardTitle>Personal Information</CardTitle>
                 <CardDescription>
-                  Your basic account information
+                  Your basic account information and profile picture
                 </CardDescription>
               </CardHeader>
-              <CardContent className='space-y-4'>
+              <CardContent className='space-y-6'>
+                {/* Profile Picture & QR Code Section */}
+                <div className='flex flex-col space-y-6 lg:flex-row lg:space-y-0 lg:space-x-4'>
+                  {/* Avatar Section */}
+                  <div className='flex basis-1/2 items-center justify-start space-x-4'>
+                    <div className='relative'>
+                      {user?.photo?.path ? (
+                        <Image
+                          priority={true}
+                          src={user.photo.path}
+                          alt='Profile Picture'
+                          width={200}
+                          height={200}
+                          className='aspect-square rounded-full border-4 border-gray-200 object-cover object-center'
+                        />
+                      ) : (
+                        <div className='flex h-[200px] w-[200px] items-center justify-center rounded-full border-4 border-gray-200 bg-gray-100'>
+                          <IconUser className='h-12 w-12 text-gray-400' />
+                        </div>
+                      )}
+                    </div>
+
+                    {isEditing && (
+                      <div className='space-y-2'>
+                        <FileUploader
+                          value={userPhotoFiles}
+                          onValueChange={setUserPhotoFiles}
+                          accept={{
+                            'image/*': ['.png', '.jpg', '.jpeg', '.gif']
+                          }}
+                          maxSize={5 * 1024 * 1024} // 5MB
+                          maxFiles={1}
+                          className='h-[200px]'
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {/* QR Code Section */}
+                  <div className='flex basis-1/2 items-center justify-start space-x-4'>
+                    <div className='text-center'>
+                      {formData.qrCode ? (
+                        <div className='rounded-lg border-2 border-dashed border-gray-300 p-4'>
+                          <Image
+                            src={formData.qrCode}
+                            priority={true}
+                            alt='Farm QR Code'
+                            height={200}
+                            width={200}
+                            className='aspect-square rounded-md object-cover object-center'
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <div className='flex h-[200px] w-[200px] items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50'>
+                          <div className='text-center'>
+                            <IconFileText className='mx-auto mb-2 h-8 w-8 text-gray-400' />
+                            <p className='text-xs text-gray-500'>No QR Code</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {isEditing && (
+                      <div className='space-y-2'>
+                        <FileUploader
+                          value={qrCodeFiles}
+                          onValueChange={setQrCodeFiles}
+                          accept={{
+                            'image/*': ['.png', '.jpg', '.jpeg', '.gif']
+                          }}
+                          maxSize={5 * 1024 * 1024} // 5MB
+                          maxFiles={1}
+                          className='h-[200px]'
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                   <div className='space-y-2'>
                     <Label htmlFor='firstName'>First Name</Label>
@@ -111,6 +351,8 @@ export default function SupplierProfilePage() {
                         value={formData.firstName}
                         onChange={handleInputChange}
                         placeholder='Enter first name'
+                        className='h-[42px] !text-base'
+                        required
                       />
                     ) : (
                       <div className='flex items-center space-x-2 rounded-md border p-2'>
@@ -129,6 +371,8 @@ export default function SupplierProfilePage() {
                         value={formData.lastName}
                         onChange={handleInputChange}
                         placeholder='Enter last name'
+                        className='h-[42px] !text-base'
+                        required
                       />
                     ) : (
                       <div className='flex items-center space-x-2 rounded-md border p-2'>
@@ -150,20 +394,218 @@ export default function SupplierProfilePage() {
                   </p>
                 </div>
 
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='role'>Role</Label>
+                    <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
+                      <IconShield className='text-muted-foreground h-4 w-4' />
+                      <span className='capitalize'>
+                        {user?.role?.name || 'Not set'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label htmlFor='status'>Account Status</Label>
+                    <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
+                      <IconCheck className='text-muted-foreground h-4 w-4' />
+                      <span className='capitalize'>
+                        {user?.status?.name || 'Not set'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label htmlFor='provider'>Account Provider</Label>
+                    <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
+                      <IconShield className='text-muted-foreground h-4 w-4' />
+                      <span className='capitalize'>
+                        {user?.provider || 'Email'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Farm Information</CardTitle>
+                <CardDescription>
+                  Your farm details and business information
+                </CardDescription>
+              </CardHeader>
+              <CardContent className='space-y-4'>
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='gardenName'>Garden/Farm Name</Label>
+                    {isEditing ? (
+                      <Input
+                        id='gardenName'
+                        name='gardenName'
+                        value={formData.gardenName}
+                        onChange={handleInputChange}
+                        placeholder='Enter garden/farm name'
+                        className='h-[42px] !text-base'
+                        required
+                      />
+                    ) : (
+                      <div className='flex items-center space-x-2 rounded-md border p-2'>
+                        <IconPlant className='text-muted-foreground h-4 w-4' />
+                        <span>{formData.gardenName || 'Not set'}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label htmlFor='representativeName'>
+                      Representative Name
+                    </Label>
+                    {isEditing ? (
+                      <Input
+                        id='representativeName'
+                        name='representativeName'
+                        value={formData.representativeName}
+                        onChange={handleInputChange}
+                        placeholder='Enter representative name'
+                        className='h-[42px] !text-base'
+                        required
+                      />
+                    ) : (
+                      <div className='flex items-center space-x-2 rounded-md border p-2'>
+                        <IconUser className='text-muted-foreground h-4 w-4' />
+                        <span>{formData.representativeName || 'Not set'}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div className='space-y-2'>
-                  <Label htmlFor='phone'>Phone Number</Label>
+                  <Label htmlFor='contact'>Contact Information</Label>
                   {isEditing ? (
                     <Input
-                      id='phone'
-                      name='phone'
-                      value={formData.phone}
+                      id='contact'
+                      name='contact'
+                      value={formData.contact}
                       onChange={handleInputChange}
-                      placeholder='Enter phone number'
+                      placeholder='Enter phone number or contact info'
+                      className='h-[42px] !text-base'
+                      required
                     />
                   ) : (
                     <div className='flex items-center space-x-2 rounded-md border p-2'>
                       <IconPhone className='text-muted-foreground h-4 w-4' />
-                      <span>{formData.phone || 'Not set'}</span>
+                      <span>{formData.contact || 'Not set'}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='address'>Farm Address</Label>
+                  {isEditing ? (
+                    <Input
+                      id='address'
+                      name='address'
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      placeholder='Enter complete farm address'
+                      className='h-[42px] !text-base'
+                      required
+                    />
+                  ) : (
+                    <div className='flex items-center space-x-2 rounded-md border p-2'>
+                      <IconMapPin className='text-muted-foreground h-4 w-4' />
+                      <span>{formData.address || 'Not set'}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='taxCode'>Tax Identification Number</Label>
+                  {isEditing ? (
+                    <Input
+                      id='taxCode'
+                      name='taxCode'
+                      value={formData.taxCode}
+                      onChange={handleInputChange}
+                      placeholder='Enter tax identification number'
+                      className='h-[42px] !text-base'
+                      required
+                    />
+                  ) : (
+                    <div className='flex items-center space-x-2 rounded-md border p-2'>
+                      <IconId className='text-muted-foreground h-4 w-4' />
+                      <span>{formData.taxCode || 'Not set'}</span>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Certificates & Documents */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Farm Certificate</CardTitle>
+                <CardDescription>
+                  Upload or manage your farm certificate
+                </CardDescription>
+              </CardHeader>
+              <CardContent className='space-y-4'>
+                <div className='space-y-2'>
+                  <Label>Farm Certificate</Label>
+                  {!isEditing && formData.certificate && (
+                    <div className='flex items-center space-x-2 rounded-md border p-3'>
+                      <IconFileText className='text-muted-foreground h-5 w-5' />
+                      <div className='flex-1'>
+                        <p className='text-sm font-medium'>
+                          Current Certificate
+                        </p>
+                        <p className='text-muted-foreground text-xs'>
+                          {formData.certificate}
+                        </p>
+                      </div>
+                      {formData.certificate.startsWith('http') && (
+                        <Button
+                          variant='outline'
+                          size='sm'
+                          onClick={() =>
+                            window.open(formData.certificate, '_blank')
+                          }
+                        >
+                          View
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  {isEditing && (
+                    <div className='space-y-3'>
+                      <Input
+                        id='certificate'
+                        name='certificate'
+                        value={formData.certificate}
+                        onChange={handleInputChange}
+                        placeholder='Enter certificate information or URL'
+                      />
+                      <div>
+                        <Label className='text-muted-foreground text-sm'>
+                          Or upload new certificate:
+                        </Label>
+                        <FileUploader
+                          value={certificateFiles}
+                          onValueChange={setCertificateFiles}
+                          accept={{
+                            'image/*': ['.png', '.jpg', '.jpeg'],
+                            'application/pdf': ['.pdf'],
+                            'application/msword': ['.doc'],
+                            'application/vnd.openxmlformats-officedocument.wordprocessingml.document':
+                              ['.docx']
+                          }}
+                          maxSize={10 * 1024 * 1024} // 10MB
+                          maxFiles={1}
+                          className='w-full'
+                        />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -172,91 +614,61 @@ export default function SupplierProfilePage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Address Information</CardTitle>
-                <CardDescription>
-                  Your location and contact details
-                </CardDescription>
+                <CardTitle>Warehouse Information</CardTitle>
+                <CardDescription>Associated warehouse details</CardDescription>
               </CardHeader>
               <CardContent className='space-y-4'>
                 <div className='space-y-2'>
-                  <Label htmlFor='address'>Street Address</Label>
-                  {isEditing ? (
-                    <Input
-                      id='address'
-                      name='address'
-                      value={formData.address}
-                      onChange={handleInputChange}
-                      placeholder='Enter street address'
-                    />
-                  ) : (
-                    <div className='rounded-md border p-2'>
-                      {formData.address || 'Not set'}
-                    </div>
-                  )}
+                  <Label htmlFor='warehouseName'>Warehouse Name</Label>
+                  <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
+                    <IconBuilding className='text-muted-foreground h-4 w-4' />
+                    <span>
+                      {formData.warehouseName || 'No warehouse assigned'}
+                    </span>
+                  </div>
                 </div>
 
-                <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='city'>City</Label>
-                    {isEditing ? (
-                      <Input
-                        id='city'
-                        name='city'
-                        value={formData.city}
-                        onChange={handleInputChange}
-                        placeholder='Enter city'
-                      />
-                    ) : (
-                      <div className='rounded-md border p-2'>
-                        {formData.city || 'Not set'}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className='space-y-2'>
-                    <Label htmlFor='state'>State/Province</Label>
-                    {isEditing ? (
-                      <Input
-                        id='state'
-                        name='state'
-                        value={formData.state}
-                        onChange={handleInputChange}
-                        placeholder='Enter state'
-                      />
-                    ) : (
-                      <div className='rounded-md border p-2'>
-                        {formData.state || 'Not set'}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className='space-y-2'>
-                    <Label htmlFor='zipCode'>ZIP Code</Label>
-                    {isEditing ? (
-                      <Input
-                        id='zipCode'
-                        name='zipCode'
-                        value={formData.zipCode}
-                        onChange={handleInputChange}
-                        placeholder='Enter ZIP'
-                      />
-                    ) : (
-                      <div className='rounded-md border p-2'>
-                        {formData.zipCode || 'Not set'}
-                      </div>
-                    )}
+                <div className='space-y-2'>
+                  <Label htmlFor='warehouseAddress'>Warehouse Address</Label>
+                  <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
+                    <IconMapPin className='text-muted-foreground h-4 w-4' />
+                    <span>
+                      {formData.warehouseAddress || 'No warehouse address'}
+                    </span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {isEditing && (
-              <div className='flex justify-end space-x-2'>
-                <Button type='button' variant='outline' onClick={handleCancel}>
-                  Cancel
-                </Button>
-                <Button type='submit'>Save Changes</Button>
-              </div>
+              <Card className='!border-none shadow-none'>
+                <CardContent>
+                  <div className='flex justify-end space-x-2'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      onClick={handleCancel}
+                      disabled={isSubmitting}
+                    >
+                      <IconX className='mr-2 h-4 w-4' />
+                      Cancel
+                    </Button>
+                    <Button type='submit' disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <div className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <IconCheck className='mr-2 h-4 w-4' />
+                          Save Changes
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </div>
         </form>

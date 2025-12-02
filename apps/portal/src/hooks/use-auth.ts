@@ -1,5 +1,10 @@
 import { useCallback } from 'react';
-import { useAuthStore, useUser, useIsAuthenticated } from '@/stores/auth.store';
+import {
+  useAuthStore,
+  useUser,
+  useIsAuthenticated,
+  useFullInfo
+} from '@/stores/auth.store';
 import {
   login as authLogin,
   logout as authLogout,
@@ -11,12 +16,14 @@ import {
 
 export const useAuth = () => {
   const user = useUser();
+  const fullInfo = useFullInfo();
   const isAuthenticated = useIsAuthenticated();
   const isLoading = useAuthStore((state) => state.isLoading);
   const userDisplayName = useAuthStore((state) => state.userDisplayName);
   const userRole = useAuthStore((state) => state.userRole);
   const setLoading = useAuthStore((state) => state.setLoading);
   const setUser = useAuthStore((state) => state.setUser);
+  const setFullInfo = useAuthStore((state) => state.setFullInfo);
   const clearAuth = useAuthStore((state) => state.clearAuth);
 
   const login = useCallback(
@@ -92,6 +99,7 @@ export const useAuth = () => {
       setLoading(true);
       try {
         const response = await authConfirmEmail(token);
+        setUser(response.user);
         setLoading(false);
         return response;
       } catch (error) {
@@ -129,6 +137,7 @@ export const useAuth = () => {
 
   return {
     user,
+    fullInfo,
     isAuthenticated,
     isLoading,
     userDisplayName,
@@ -142,6 +151,7 @@ export const useAuth = () => {
     hasRole,
     confirmEmail,
     setUser,
+    setFullInfo,
     setLoading,
     clearAuth
   };

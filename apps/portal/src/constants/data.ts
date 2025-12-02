@@ -104,12 +104,6 @@ export const supplierNavItems: NavItem[] = [
         url: '/supplier/profile',
         icon: 'userPen',
         shortcut: ['p', 'r']
-      },
-      {
-        title: 'Farm Information',
-        url: '/supplier/profile/farm',
-        icon: 'product',
-        shortcut: ['f', 'i']
       }
     ]
   }
@@ -175,18 +169,6 @@ export const consigneeNavItems: NavItem[] = [
         url: '/consignee/profile',
         icon: 'userPen',
         shortcut: ['p', 'f']
-      },
-      {
-        title: 'Business Info',
-        url: '/consignee/profile/business',
-        icon: 'building',
-        shortcut: ['b', 'i']
-      },
-      {
-        title: 'Logout',
-        shortcut: ['l', 'l'],
-        url: '/',
-        icon: 'logout'
       }
     ]
   }

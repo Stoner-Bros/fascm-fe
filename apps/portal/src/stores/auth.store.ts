@@ -7,7 +7,7 @@ import {
 } from '@/services/auth.service';
 
 // Define the User type (adjust according to your actual User interface)
-interface User {
+export interface User {
   id: number;
   email: string;
   firstName?: string;
@@ -28,6 +28,7 @@ interface User {
 interface AuthState {
   // State
   user: User | null;
+  fullInfo: any;
   isLoading: boolean;
   isInitialized: boolean;
   lastSyncTime: number;
@@ -39,6 +40,7 @@ interface AuthState {
 
   // Actions
   setUser: (user: User | null) => void;
+  setFullInfo: (info: any) => void;
   setLoading: (loading: boolean) => void;
   syncFromCookie: () => void;
   clearAuth: () => void;
@@ -81,6 +83,8 @@ export const useAuthStore = create<AuthState>()(
           isLoading: false
         });
       },
+
+      setFullInfo: (info) => set({ fullInfo: info }),
 
       setLoading: (isLoading) => set({ isLoading }),
 
@@ -187,6 +191,7 @@ export const useAuthStore = create<AuthState>()(
 
 // Helper hooks for common use cases
 export const useUser = () => useAuthStore((state) => state.user);
+export const useFullInfo = () => useAuthStore((state) => state.fullInfo);
 export const useIsAuthenticated = () =>
   useAuthStore((state) => state.isAuthenticated);
 export const useUserDisplayName = () =>
