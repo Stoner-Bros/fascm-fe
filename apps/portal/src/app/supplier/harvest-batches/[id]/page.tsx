@@ -37,6 +37,14 @@ import {
 import type { HarvestSchedule } from '@/types/harvest-schedule';
 import type { HarvestDetail } from '@/types/harvest-detail';
 import type { Supplier } from '@/types/supplier';
+const HarvestRouteSim = dynamic(
+  () => import('@/components/map/harvest-route-sim'),
+  { ssr: false }
+);
+
+import { fetchDeliveriesByHarvestSchedule } from '@/services/delivery.service';
+import dynamic from 'next/dynamic';
+import { confirmHarvestSchedule } from '@/services/harvest-schedule.service';
 
 type DetailRow = {
   id: string;
@@ -54,7 +62,9 @@ const statusColor = (status: string) => {
   switch (s) {
     case 'PENDING':
       return 'bg-yellow-100 text-yellow-800';
-    case 'IN_PROGRESS':
+    case 'DELIVERING':
+      return 'bg-blue-100 text-blue-800';
+    case 'DELIVERED':
       return 'bg-blue-100 text-blue-800';
     case 'COMPLETED':
       return 'bg-green-100 text-green-800';
@@ -78,6 +88,7 @@ export default function HarvestBatchDetailPage() {
   const [details, setDetails] = useState<DetailRow[]>([]);
   const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [loading, setLoading] = useState(false);
+  const [activeDeliveryId, setActiveDeliveryId] = useState<string>('');
 
   useEffect(() => {
     let cancelled = false;
@@ -177,6 +188,44 @@ export default function HarvestBatchDetailPage() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scheduleId]); // không để toast trong deps để tránh loop
+  useEffect(() => {
+    const sid = String(schedule?.id ?? '').trim();
+    if (!sid) return;
+    fetchDeliveriesByHarvestSchedule({
+      harvestScheduleId: sid,
+      page: 1,
+      limit: 10
+    })
+      .then((res) => {
+        const all = Array.isArray(res?.data) ? res.data : [];
+        const list = all.filter(
+          (x) => String(x?.harvestSchedule?.id ?? '') === sid
+        );
+        const prefer =
+          list.find(
+            (x) => String(x.status ?? '').toLowerCase() === 'delivering'
+          ) ||
+          list.find(
+            (x) => String(x.status ?? '').toLowerCase() === 'scheduled'
+          ) ||
+          list
+            .filter((x) => String(x.status ?? '').toLowerCase() !== 'completed')
+            .sort(
+              (a, b) =>
+                new Date(String(b.updatedAt ?? b.createdAt ?? 0)).getTime() -
+                new Date(String(a.updatedAt ?? a.createdAt ?? 0)).getTime()
+            )[0] ||
+          (list.length === 0 ? all : list)
+            .slice()
+            .sort(
+              (a, b) =>
+                new Date(String(b.updatedAt ?? b.createdAt ?? 0)).getTime() -
+                new Date(String(a.updatedAt ?? a.createdAt ?? 0)).getTime()
+            )[0];
+        if (prefer?.id) setActiveDeliveryId(String(prefer.id));
+      })
+      .catch(() => {});
+  }, [schedule?.id]);
 
   const handleCancelBatch = () => {
     // TODO: call cancelHarvestSchedule(scheduleId)
@@ -185,6 +234,28 @@ export default function HarvestBatchDetailPage() {
       description: `Harvest batch ${scheduleId} has been cancelled.`
     });
     router.push('/supplier/harvest-batches');
+  };
+
+  const [confirming, setConfirming] = useState(false);
+  const handleConfirmComplete = async () => {
+    if (!scheduleId) return;
+    try {
+      setConfirming(true);
+      const updated = await confirmHarvestSchedule(scheduleId);
+      setSchedule(updated);
+      toast({
+        title: 'Thành công',
+        description: 'Đã xác nhận hoàn thành đơn hàng'
+      });
+    } catch (err) {
+      toast({
+        title: 'Lỗi',
+        description: 'Xác nhận hoàn thành thất bại',
+        variant: 'destructive'
+      });
+    } finally {
+      setConfirming(false);
+    }
   };
 
   const status = schedule?.status ?? 'PENDING';
@@ -260,6 +331,33 @@ export default function HarvestBatchDetailPage() {
 
         <div className='grid gap-6 md:grid-cols-3'>
           <div className='space-y-6 md:col-span-2'>
+            {status.toUpperCase() !== 'COMPLETED' && (
+              <HarvestRouteSim
+                cargo={`Khối lượng ${String(
+                  details.reduce((sum, d) => sum + d.quantity, 0)
+                )} kg`}
+                startAddress={'Kho Nhà Cung Cấp'}
+                endAddress={String(schedule?.address ?? '')}
+                harvestScheduleId={String(schedule?.id ?? '')}
+                deliveryId={activeDeliveryId}
+                productName={String(
+                  details.map((d) => d.productName).join(', ')
+                )}
+              />
+            )}
+            {status.toUpperCase() === 'COMPLETED' && (
+              <div className='rounded-md border border-green-200 bg-green-50 p-4'>
+                <div className='font-medium text-green-700'>
+                  Đơn hàng đã hoàn thành
+                </div>
+                <div className='text-sm text-green-600'>
+                  Thời gian:{' '}
+                  {schedule?.updatedAt
+                    ? new Date(String(schedule.updatedAt)).toLocaleString()
+                    : '-'}
+                </div>
+              </div>
+            )}
             {/* Product Information */}
             <Card>
               <CardHeader>
@@ -361,7 +459,7 @@ export default function HarvestBatchDetailPage() {
                   </div>
                   <div className='col-span-2'>
                     <p className='text-muted-foreground text-sm'>Address</p>
-                    <p className='font-medium'>{supplier?.address || '—'}</p>
+                    <p className='font-medium'>{schedule?.address || '—'}</p>
                   </div>
                 </div>
               </CardContent>
@@ -403,6 +501,15 @@ export default function HarvestBatchDetailPage() {
                     Create New Batch
                   </Button>
                 </Link>
+                {status.toUpperCase() === 'DELIVERED' && (
+                  <Button
+                    className='w-full'
+                    onClick={handleConfirmComplete}
+                    disabled={confirming}
+                  >
+                    Xác nhận hoàn thành
+                  </Button>
+                )}
               </CardContent>
             </Card>
           </div>

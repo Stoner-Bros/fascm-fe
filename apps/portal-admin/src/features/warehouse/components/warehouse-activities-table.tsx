@@ -29,7 +29,10 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { fetchImportTickets } from '@/services/import-ticket.service';
-import { fetchExportTickets } from '@/services/export-ticket.service';
+import {
+  fetchExportTickets,
+  fetchExportTicketById
+} from '@/services/export-ticket.service';
 import {
   IconSearch,
   IconFilter,
@@ -87,6 +90,13 @@ export function WarehouseActivitiesTable() {
   const [selectedWarehouse, setSelectedWarehouse] = useState('Tất cả');
   const [selectedActivityType, setSelectedActivityType] = useState('Tất cả');
   const [selectedStatus, setSelectedStatus] = useState('Tất cả');
+  const [detailOpen, setDetailOpen] = useState(false);
+  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<string | null>(null);
+  const [selectedActivity, setSelectedActivity] =
+    useState<WarehouseActivity | null>(null);
+  const [importDetail, setImportDetail] = useState<any | null>(null);
+  const [exportDetail, setExportDetail] = useState<any | null>(null);
 
   useEffect(() => {
     const load = async () => {
@@ -115,9 +125,7 @@ export function WarehouseActivitiesTable() {
               it?.inboundBatch?.harvestDetail?.product?.id ??
               '-'
           ),
-          quantity: Number(
-            it.realityQuantity ?? it.inboundBatch?.harvestTicket?.quantity ?? 0
-          ),
+          quantity: Number(it.realityQuantity ?? it.percent ?? 0),
           unit: String(
             it.inboundBatch?.harvestTicket?.unit ?? it.inboundBatch?.unit ?? ''
           ),
@@ -232,6 +240,33 @@ export function WarehouseActivitiesTable() {
     selectedStatus
   ]);
 
+  const openDetail = async (activity: WarehouseActivity) => {
+    setSelectedActivity(activity);
+    setDetailOpen(true);
+    setDetailLoading(true);
+    setDetailError(null);
+    setImportDetail(null);
+    setExportDetail(null);
+    try {
+      if (activity.type === 'import') {
+        const { fetchImportTicketById } = await import(
+          '@/services/import-ticket.service'
+        );
+        const data = await fetchImportTicketById(activity.id);
+        setImportDetail(data);
+      } else {
+        const data = await fetchExportTicketById(activity.id);
+        setExportDetail(data);
+      }
+    } catch (err: any) {
+      setDetailError(
+        typeof err?.message === 'string' ? err.message : 'Lỗi tải chi tiết'
+      );
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
   const getActivityTypeIcon = (type: 'import' | 'export') => {
     return type === 'import' ? (
       <IconArrowDown className='h-4 w-4 text-green-600' />
@@ -295,211 +330,331 @@ export function WarehouseActivitiesTable() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className='flex items-center justify-between'>
-          <div>
-            <CardTitle className='flex items-center gap-2'>
-              <IconPackage className='h-5 w-5' />
-              Hoạt động xuất nhập kho gần đây
-            </CardTitle>
-            <CardDescription>
-              Theo dõi tất cả các hoạt động xuất nhập kho trong hệ thống
-            </CardDescription>
+    <>
+      <Card>
+        <CardHeader>
+          <div className='flex items-center justify-between'>
+            <div>
+              <CardTitle className='flex items-center gap-2'>
+                <IconPackage className='h-5 w-5' />
+                Hoạt động xuất nhập kho gần đây
+              </CardTitle>
+              <CardDescription>
+                Theo dõi tất cả các hoạt động xuất nhập kho trong hệ thống
+              </CardDescription>
+            </div>
+            <Button variant='outline' size='sm' onClick={clearFilters}>
+              <IconRefresh className='mr-2 h-4 w-4' />
+              Làm mới
+            </Button>
           </div>
-          <Button variant='outline' size='sm' onClick={clearFilters}>
-            <IconRefresh className='mr-2 h-4 w-4' />
-            Làm mới
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {/* Filters and Search */}
-        <div className='mb-6 space-y-4'>
-          <div className='flex flex-wrap items-center gap-4'>
-            <div className='min-w-[200px] flex-1'>
-              <div className='relative'>
-                <IconSearch className='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400' />
-                <Input
-                  placeholder='Tìm kiếm sản phẩm, mã phiếu, người thực hiện...'
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className='pl-10'
-                />
+        </CardHeader>
+        <CardContent>
+          {/* Filters and Search */}
+          <div className='mb-6 space-y-4'>
+            <div className='flex flex-wrap items-center gap-4'>
+              <div className='min-w-[200px] flex-1'>
+                <div className='relative'>
+                  <IconSearch className='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400' />
+                  <Input
+                    placeholder='Tìm kiếm sản phẩm, mã phiếu, người thực hiện...'
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className='pl-10'
+                  />
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className='flex flex-wrap items-center gap-4'>
-            <div className='flex items-center gap-2'>
-              <IconFilter className='h-4 w-4 text-gray-500' />
-              <span className='text-sm font-medium text-gray-700'>Bộ lọc:</span>
+            <div className='flex flex-wrap items-center gap-4'>
+              <div className='flex items-center gap-2'>
+                <IconFilter className='h-4 w-4 text-gray-500' />
+                <span className='text-sm font-medium text-gray-700'>
+                  Bộ lọc:
+                </span>
+              </div>
+
+              <Select
+                value={selectedActivityType}
+                onValueChange={setSelectedActivityType}
+              >
+                <SelectTrigger className='w-[140px]'>
+                  <SelectValue placeholder='Loại hoạt động' />
+                </SelectTrigger>
+                <SelectContent>
+                  {activityTypes.map((type) => (
+                    <SelectItem key={type} value={type}>
+                      {type}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={selectedWarehouse}
+                onValueChange={setSelectedWarehouse}
+              >
+                <SelectTrigger className='w-[140px]'>
+                  <SelectValue placeholder='Kho hàng' />
+                </SelectTrigger>
+                <SelectContent>
+                  {warehouses.map((warehouse) => (
+                    <SelectItem key={warehouse} value={warehouse}>
+                      {warehouse}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <SelectTrigger className='w-[180px]'>
+                  <SelectValue placeholder='Tất cả trạng thái' />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='Tất cả'>Tất cả trạng thái</SelectItem>
+                  <SelectItem value='pending_assignment'>
+                    Chờ phân công
+                  </SelectItem>
+                  <SelectItem value='assigned'>Đã phân công</SelectItem>
+                  <SelectItem value='delivering'>Đang giao hàng</SelectItem>
+                  <SelectItem value='completed'>Hoàn tất</SelectItem>
+                  <SelectItem value='cancelled'> Đã hủy</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-
-            <Select
-              value={selectedActivityType}
-              onValueChange={setSelectedActivityType}
-            >
-              <SelectTrigger className='w-[140px]'>
-                <SelectValue placeholder='Loại hoạt động' />
-              </SelectTrigger>
-              <SelectContent>
-                {activityTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select
-              value={selectedWarehouse}
-              onValueChange={setSelectedWarehouse}
-            >
-              <SelectTrigger className='w-[140px]'>
-                <SelectValue placeholder='Kho hàng' />
-              </SelectTrigger>
-              <SelectContent>
-                {warehouses.map((warehouse) => (
-                  <SelectItem key={warehouse} value={warehouse}>
-                    {warehouse}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-              <SelectTrigger className='w-[180px]'>
-                <SelectValue placeholder='Tất cả trạng thái' />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value='Tất cả'>Tất cả trạng thái</SelectItem>
-                <SelectItem value='pending_assignment'>
-                  Chờ phân công
-                </SelectItem>
-                <SelectItem value='assigned'>Đã phân công</SelectItem>
-                <SelectItem value='delivering'>Đang giao hàng</SelectItem>
-                <SelectItem value='completed'>Hoàn tất</SelectItem>
-                <SelectItem value='cancelled'> Đã hủy</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
-        </div>
 
-        {/* Results Summary */}
-        <div className='mb-4 text-sm text-gray-600'>
-          Hiển thị {filteredActivities.length} kết quả từ tổng số{' '}
-          {activities.length} hoạt động
-        </div>
+          {/* Results Summary */}
+          <div className='mb-4 text-sm text-gray-600'>
+            Hiển thị {filteredActivities.length} kết quả từ tổng số{' '}
+            {activities.length} hoạt động
+          </div>
 
-        {/* Activities Table */}
-        <div className='overflow-hidden rounded-lg border'>
-          <Table>
-            <TableHeader>
-              <TableRow className='bg-gray-50'>
-                <TableHead className='font-semibold'>Ngày</TableHead>
-                <TableHead className='font-semibold'>Mã phiếu</TableHead>
-                <TableHead className='font-semibold'>Loại hoạt động</TableHead>
-                <TableHead className='font-semibold'>Sản phẩm</TableHead>
-                <TableHead className='font-semibold'>Số lượng</TableHead>
-                <TableHead className='font-semibold'>Đơn vị</TableHead>
-                <TableHead className='font-semibold'>Kho</TableHead>
-                <TableHead className='font-semibold'>Người thực hiện</TableHead>
-                <TableHead className='font-semibold'>
-                  Nhân viên giao hàng
-                </TableHead>
-                <TableHead className='font-semibold'>Trạng thái</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredActivities.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={11}
-                    className='py-8 text-center text-gray-500'
-                  >
-                    Không tìm thấy hoạt động nào phù hợp với bộ lọc
-                  </TableCell>
+          {/* Activities Table */}
+          <div className='overflow-hidden rounded-lg border'>
+            <Table>
+              <TableHeader>
+                <TableRow className='bg-gray-50'>
+                  <TableHead className='font-semibold'>Ngày</TableHead>
+                  <TableHead className='font-semibold'>Mã phiếu</TableHead>
+                  <TableHead className='font-semibold'>
+                    Loại hoạt động
+                  </TableHead>
+                  <TableHead className='font-semibold'>Sản phẩm</TableHead>
+                  <TableHead className='font-semibold'>Số lượng</TableHead>
+                  <TableHead className='font-semibold'>Đơn vị</TableHead>
+                  <TableHead className='font-semibold'>Kho</TableHead>
+                  <TableHead className='font-semibold'>
+                    Người thực hiện
+                  </TableHead>
+                  <TableHead className='font-semibold'>
+                    Nhân viên giao hàng
+                  </TableHead>
+                  <TableHead className='font-semibold'>Trạng thái</TableHead>
+                  <TableHead className='text-right font-semibold'>
+                    Hành động
+                  </TableHead>
                 </TableRow>
-              ) : (
-                filteredActivities.map((activity) => (
-                  <TableRow key={activity.id} className='hover:bg-gray-50'>
-                    <TableCell>
-                      <div className='flex items-center gap-2'>
-                        <IconCalendar className='h-4 w-4 text-gray-400' />
-                        <span className='text-sm'>
-                          {format(new Date(activity.date), 'dd/MM/yyyy', {
-                            locale: vi
-                          })}
-                        </span>
-                      </div>
+              </TableHeader>
+              <TableBody>
+                {filteredActivities.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={11}
+                      className='py-8 text-center text-gray-500'
+                    >
+                      Không tìm thấy hoạt động nào phù hợp với bộ lọc
                     </TableCell>
-                    <TableCell>
-                      <code className='rounded bg-gray-100 px-2 py-1 text-xs'>
-                        {activity.code}
-                      </code>
-                    </TableCell>
-                    <TableCell>
-                      <div className='flex items-center gap-2'>
-                        {getActivityTypeIcon(activity.type)}
-                        {getActivityTypeBadge(activity.type)}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div>
-                        <div className='text-sm font-medium'>
-                          {activity.productName}
-                        </div>
-                        <div className='text-xs text-gray-500'>
-                          {activity.productCode}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell className='text-right font-medium'>
-                      {activity.quantity.toLocaleString()}
-                    </TableCell>
-                    <TableCell>{activity.unit}</TableCell>
-                    <TableCell>
-                      <div className='flex items-center gap-2'>
-                        <IconMapPin className='h-4 w-4 text-gray-400' />
-                        <div>
-                          <div className='text-sm font-medium'>
-                            {activity.warehouse}
-                          </div>
-                          {activity.warehouseArea && (
-                            <div className='text-xs text-gray-500'>
-                              {activity.warehouseArea}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className='flex items-center gap-2'>
-                        <IconUser className='h-4 w-4 text-gray-400' />
-                        <span className='text-sm'>{activity.user}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {activity.deliveryStaff ? (
+                  </TableRow>
+                ) : (
+                  filteredActivities.map((activity) => (
+                    <TableRow key={activity.id} className='hover:bg-gray-50'>
+                      <TableCell>
                         <div className='flex items-center gap-2'>
-                          <IconUser className='h-4 w-4 text-gray-400' />
+                          <IconCalendar className='h-4 w-4 text-gray-400' />
                           <span className='text-sm'>
-                            {activity.deliveryStaff}
+                            {format(new Date(activity.date), 'dd/MM/yyyy', {
+                              locale: vi
+                            })}
                           </span>
                         </div>
-                      ) : (
-                        <span className='text-sm text-gray-400'>-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>{getStatusBadge(activity.status)}</TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                      </TableCell>
+                      <TableCell>
+                        <code className='rounded bg-gray-100 px-2 py-1 text-xs'>
+                          {activity.code}
+                        </code>
+                      </TableCell>
+                      <TableCell>
+                        <div className='flex items-center gap-2'>
+                          {getActivityTypeIcon(activity.type)}
+                          {getActivityTypeBadge(activity.type)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className='text-sm font-medium'>
+                            {activity.productName}
+                          </div>
+                          <div className='text-xs text-gray-500'>
+                            {activity.productCode}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className='text-right font-medium'>
+                        {activity.quantity.toLocaleString()}
+                      </TableCell>
+                      <TableCell>{activity.unit}</TableCell>
+                      <TableCell>
+                        <div className='flex items-center gap-2'>
+                          <IconMapPin className='h-4 w-4 text-gray-400' />
+                          <div>
+                            <div className='text-sm font-medium'>
+                              {activity.warehouse}
+                            </div>
+                            {activity.warehouseArea && (
+                              <div className='text-xs text-gray-500'>
+                                {activity.warehouseArea}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className='flex items-center gap-2'>
+                          <IconUser className='h-4 w-4 text-gray-400' />
+                          <span className='text-sm'>{activity.user}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {activity.deliveryStaff ? (
+                          <div className='flex items-center gap-2'>
+                            <IconUser className='h-4 w-4 text-gray-400' />
+                            <span className='text-sm'>
+                              {activity.deliveryStaff}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className='text-sm text-gray-400'>-</span>
+                        )}
+                      </TableCell>
+                      <TableCell>{getStatusBadge(activity.status)}</TableCell>
+                      <TableCell className='text-right'>
+                        <Button
+                          size='sm'
+                          variant='outline'
+                          onClick={() => openDetail(activity)}
+                        >
+                          Xem chi tiết
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Detail Dialog */}
+      {detailOpen && (
+        <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4'>
+          <div className='max-h-[80vh] w-full max-w-xl overflow-y-auto rounded-lg bg-white p-4 shadow-lg'>
+            <div className='mb-3 flex items-center justify-between'>
+              <div className='text-lg font-semibold'>
+                Chi tiết{' '}
+                {selectedActivity?.type === 'import'
+                  ? 'Import Ticket'
+                  : 'Export Ticket'}
+              </div>
+              <Button variant='ghost' onClick={() => setDetailOpen(false)}>
+                Đóng
+              </Button>
+            </div>
+            {detailLoading ? (
+              <div className='text-sm text-gray-500'>Đang tải...</div>
+            ) : detailError ? (
+              <div className='text-red-600'>{detailError}</div>
+            ) : selectedActivity?.type === 'import' && importDetail ? (
+              <div className='space-y-2 text-sm'>
+                <div>
+                  <span className='font-medium'>ID:</span> {importDetail.id}
+                </div>
+                <div>
+                  <span className='font-medium'>Ngày nhập:</span>{' '}
+                  {importDetail.importDate
+                    ? new Date(importDetail.importDate).toLocaleString('vi-VN')
+                    : '-'}
+                </div>
+                <div>
+                  <span className='font-medium'>Số batch:</span>{' '}
+                  {importDetail.numberOfBatch ?? '-'}
+                </div>
+                <div>
+                  <span className='font-medium'>Sản phẩm:</span>{' '}
+                  {importDetail.inboundBatch?.product?.name ??
+                    importDetail.inboundBatch?.harvestDetail?.product?.name ??
+                    '-'}
+                </div>
+                <div>
+                  <span className='font-medium'>Số lượng thực tế:</span>{' '}
+                  {importDetail.percent ?? '-'}
+                </div>
+                <div>
+                  <span className='font-medium'>Đơn vị:</span>{' '}
+                  {importDetail.inboundBatch?.unit ??
+                    importDetail.inboundBatch?.harvestTicket?.unit ??
+                    '-'}
+                </div>
+                <div>
+                  <span className='font-medium'>Khu vực kho:</span>{' '}
+                  {importDetail.area?.name ?? '-'}
+                </div>
+              </div>
+            ) : selectedActivity?.type === 'export' && exportDetail ? (
+              <div className='space-y-2 text-sm'>
+                <div>
+                  <span className='font-medium'>ID:</span> {exportDetail.id}
+                </div>
+                <div>
+                  <span className='font-medium'>Ngày xuất:</span>{' '}
+                  {exportDetail.ExportDate
+                    ? new Date(exportDetail.ExportDate).toLocaleString('vi-VN')
+                    : '-'}
+                </div>
+                <div>
+                  <span className='font-medium'>Số batch:</span>{' '}
+                  {exportDetail.numberOfBatch ?? '-'}
+                </div>
+                <div>
+                  <span className='font-medium'>Sản phẩm:</span>{' '}
+                  {exportDetail.orderDetail?.product?.name ?? '-'}
+                </div>
+                <div>
+                  <span className='font-medium'>Số lượng:</span>{' '}
+                  {exportDetail.orderDetail?.quantity ?? '-'}
+                </div>
+                <div>
+                  <span className='font-medium'>Đơn vị:</span>{' '}
+                  {exportDetail.orderDetail?.unit ?? '-'}
+                </div>
+                <div>
+                  <span className='font-medium'>Khách nhận:</span>{' '}
+                  {exportDetail.orderDetail?.order?.orderSchedule?.consignee
+                    ?.organizationName ??
+                    exportDetail.orderDetail?.order?.orderSchedule?.consignee
+                      ?.representativeName ??
+                    '-'}
+                </div>
+              </div>
+            ) : (
+              <div className='text-sm text-gray-500'>
+                Không có dữ liệu chi tiết
+              </div>
+            )}
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+    </>
   );
 }

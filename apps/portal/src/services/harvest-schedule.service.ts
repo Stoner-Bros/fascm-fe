@@ -51,7 +51,7 @@ export async function deleteHarvestSchedule(id: string) {
 export async function confirmHarvestSchedule(id: string) {
   return fetchJSON<HarvestSchedule>(`/harvest-schedules/${id}/status`, {
     method: 'PATCH',
-    body: { status: 'COMPLETED' }
+    body: { status: 'completed' }
   });
 }
 

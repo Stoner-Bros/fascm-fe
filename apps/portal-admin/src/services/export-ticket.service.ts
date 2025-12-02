@@ -45,3 +45,7 @@ export async function fetchExportTickets({
     `${BASE_PATH}?${params.toString()}`
   );
 }
+
+export async function fetchExportTicketById(id: string) {
+  return fetchJSON<ExportTicket>(`${BASE_PATH}/${id}`);
+}

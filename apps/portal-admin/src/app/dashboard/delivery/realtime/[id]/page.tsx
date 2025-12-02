@@ -490,6 +490,14 @@ export default function DeliveryDetailPage() {
               </div>
               <div className='rounded border p-3'>
                 <div className='text-muted-foreground text-xs'>
+                  Harvester ID
+                </div>
+                <div className='text-sm font-medium'>
+                  {selected?.harvestSchedule?.id ?? '-'}
+                </div>
+              </div>
+              <div className='rounded border p-3'>
+                <div className='text-muted-foreground text-xs'>
                   Order Schedule
                 </div>
                 <div className='text-sm font-medium'>

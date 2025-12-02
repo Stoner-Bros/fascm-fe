@@ -37,7 +37,7 @@ export default function OrderDetailPage() {
 
   const statusClasses = (s?: string) => {
     const k = String(s ?? '').toUpperCase();
-    if (k === 'IN_PROGRESS') return 'bg-blue-100 text-blue-700';
+    if (k === 'PENDING') return 'bg-blue-100 text-blue-700';
     if (k === 'CONFIRMED') return 'bg-yellow-100 text-yellow-700';
     if (k === 'CANCELLED') return 'bg-red-100 text-red-700';
     if (k === 'COMPLETED') return 'bg-green-100 text-green-700';
