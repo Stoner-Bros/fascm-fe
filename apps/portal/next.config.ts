@@ -9,8 +9,11 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'api.slingacademy.com',
-        port: ''
+        hostname: 'api.slingacademy.com'
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com'
       }
     ]
   },

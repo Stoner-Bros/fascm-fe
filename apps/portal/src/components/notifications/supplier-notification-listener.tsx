@@ -1,18 +1,21 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { subscribeSupplierNotifications } from '@/services/notifications.service';
-import { fetchMySupplier } from '@/services/supplier.service';
+import { fetchSupplier } from '@/services/supplier.service';
 import { toast } from 'sonner';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function SupplierNotificationListener() {
   const [supplierId, setSupplierId] = useState<string>('');
+  const { setFullInfo } = useAuth();
 
   useEffect(() => {
     let mounted = true;
-    fetchMySupplier()
+    fetchSupplier()
       .then((s) => {
         if (!mounted) return;
         setSupplierId(s?.id ?? '');
+        setFullInfo(s);
       })
       .catch(() => {});
     return () => {

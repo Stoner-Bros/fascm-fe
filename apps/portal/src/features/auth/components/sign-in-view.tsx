@@ -23,7 +23,7 @@ export default function SignInViewPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { login, logout } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +43,7 @@ export default function SignInViewPage() {
             process.env.NEXT_PUBLIC_SUPPLIER_AFTER_SIGN_IN_URL ||
             '/supplier/dashboard';
         } else {
+          await logout();
           throw new Error('You are not allowed to access this portal.');
         }
       }

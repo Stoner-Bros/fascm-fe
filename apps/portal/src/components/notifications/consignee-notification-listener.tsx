@@ -3,9 +3,11 @@ import { useEffect, useState } from 'react';
 import { subscribeConsigneeNotifications } from '@/services/notifications.service';
 import { fetchMyConsignee } from '@/services/consignee.service';
 import { toast } from 'sonner';
+import useAuth from '@/hooks/use-auth';
 
 export default function ConsigneeNotificationListener() {
   const [consigneeId, setConsigneeId] = useState<string>('');
+  const { setFullInfo } = useAuth();
 
   useEffect(() => {
     let mounted = true;
@@ -13,6 +15,7 @@ export default function ConsigneeNotificationListener() {
       if (!mounted) return;
       const id = c?.id ?? '';
       setConsigneeId(id);
+      setFullInfo(c);
     });
     return () => {
       mounted = false;
