@@ -60,7 +60,8 @@ export async function cancelHarvestSchedule(id: string) {
 }
 
 export async function completeHarvestSchedule(id: string) {
-  return fetchJSON<HarvestSchedule>(`/harvest-schedules/${id}/complete`, {
-    method: 'PATCH'
+  return fetchJSON<HarvestSchedule>(`/harvest-schedules/${id}/status`, {
+    method: 'PATCH',
+    body: { status: 'completed' }
   });
 }

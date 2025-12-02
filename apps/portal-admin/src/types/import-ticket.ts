@@ -5,6 +5,7 @@ export type ImportTicket = {
   realityQuantity: number;
   importDate: string;
   inboundBatch?: {
+    id?: string;
     batchCode?: string;
     unit?: string;
     quantity: number;

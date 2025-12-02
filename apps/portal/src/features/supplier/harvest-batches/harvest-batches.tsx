@@ -78,16 +78,29 @@ type HarvestBatchRow = {
   reason?: string; // Lý do từ chối (nếu có)
 };
 
+const normalizeStatus = (status?: string | null): string => {
+  if (!status || status.trim() === '') return 'pending';
+  return status.toLowerCase().trim();
+};
+
 const getStatusIcon = (status: string) => {
-  const s = status?.toUpperCase();
+  const s = normalizeStatus(status);
   switch (s) {
-    case 'PENDING':
+    case 'pending':
       return <IconClock className='h-4 w-4' />;
-    case 'IN_PROGRESS':
-      return <IconTruck className='h-4 w-4' />;
-    case 'COMPLETED':
+    case 'approved':
       return <IconCheck className='h-4 w-4' />;
-    case 'CANCELLED':
+    case 'preparing':
+      return <IconTruck className='h-4 w-4' />;
+    case 'delivering':
+      return <IconTruck className='h-4 w-4' />;
+    case 'delivered':
+      return <IconPackage className='h-4 w-4' />;
+    case 'completed':
+      return <IconCheck className='h-4 w-4' />;
+    case 'rejected':
+      return <IconX className='h-4 w-4' />;
+    case 'canceled':
       return <IconX className='h-4 w-4' />;
     default:
       return <IconPackage className='h-4 w-4' />;
@@ -95,15 +108,22 @@ const getStatusIcon = (status: string) => {
 };
 
 const getStatusVariant = (status: string) => {
-  const s = status?.toUpperCase();
+  const s = normalizeStatus(status);
   switch (s) {
-    case 'PENDING':
+    case 'pending':
       return 'outline';
-    case 'IN_PROGRESS':
-      return 'secondary';
-    case 'COMPLETED':
+    case 'approved':
       return 'default';
-    case 'CANCELLED':
+    case 'preparing':
+      return 'default';
+    case 'delivering':
+      return 'default';
+    case 'delivered':
+      return 'default';
+    case 'completed':
+      return 'default';
+    case 'rejected':
+    case 'canceled':
       return 'destructive';
     default:
       return 'outline';
@@ -111,16 +131,24 @@ const getStatusVariant = (status: string) => {
 };
 
 const getStatusLabel = (status: string) => {
-  const s = status?.toUpperCase();
+  const s = normalizeStatus(status);
   switch (s) {
-    case 'PENDING':
-      return 'Pending';
-    case 'IN_PROGRESS':
-      return 'In Progress';
-    case 'COMPLETED':
-      return 'Completed';
-    case 'CANCELLED':
-      return 'Cancelled';
+    case 'pending':
+      return 'Chờ duyệt đơn';
+    case 'rejected':
+      return 'Đã từ chối đơn';
+    case 'approved':
+      return 'Đã duyệt đơn';
+    case 'preparing':
+      return 'Chuẩn đi lấy';
+    case 'delivering':
+      return 'Đang đi lấy';
+    case 'delivered':
+      return 'Đã lấy';
+    case 'completed':
+      return 'Đã hoàn thành';
+    case 'canceled':
+      return 'Đã hủy đơn';
     default:
       return status || 'Unknown';
   }
@@ -131,7 +159,15 @@ export default function SupplierHarvestBatchesFeature() {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<
-    'ALL' | 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED'
+    | 'ALL'
+    | 'pending'
+    | 'rejected'
+    | 'approved'
+    | 'preparing'
+    | 'delivering'
+    | 'delivered'
+    | 'completed'
+    | 'canceled'
   >('ALL');
   const [batches, setBatches] = useState<HarvestBatchRow[]>([]);
   const [loading, setLoading] = useState(false);
@@ -288,7 +324,7 @@ export default function SupplierHarvestBatchesFeature() {
       setBatches((prev) =>
         prev.map((batch) =>
           batch.id === selectedBatchId
-            ? { ...batch, status: 'CANCELLED' }
+            ? { ...batch, status: 'canceled' }
             : batch
         )
       );
@@ -310,7 +346,8 @@ export default function SupplierHarvestBatchesFeature() {
         batch.id.toLowerCase().includes(q) ||
         batch.products.toLowerCase().includes(q);
       const matchesStatus =
-        statusFilter === 'ALL' || batch.status.toUpperCase() === statusFilter;
+        statusFilter === 'ALL' ||
+        normalizeStatus(batch.status) === statusFilter;
       return matchesSearch && matchesStatus;
     });
   }, [batches, searchQuery, statusFilter]);
@@ -318,12 +355,25 @@ export default function SupplierHarvestBatchesFeature() {
   const statusCounts = useMemo(
     () => ({
       all: batches.length,
-      PENDING: batches.filter((b) => b.status.toUpperCase() === 'PENDING')
+      pending: batches.filter((b) => normalizeStatus(b.status) === 'pending')
         .length,
-      IN_PROGRESS: batches.filter(
-        (b) => b.status.toUpperCase() === 'IN_PROGRESS'
+      rejected: batches.filter((b) => normalizeStatus(b.status) === 'rejected')
+        .length,
+      approved: batches.filter((b) => normalizeStatus(b.status) === 'approved')
+        .length,
+      preparing: batches.filter(
+        (b) => normalizeStatus(b.status) === 'preparing'
       ).length,
-      COMPLETED: batches.filter((b) => b.status.toUpperCase() === 'COMPLETED')
+      delivering: batches.filter(
+        (b) => normalizeStatus(b.status) === 'delivering'
+      ).length,
+      delivered: batches.filter(
+        (b) => normalizeStatus(b.status) === 'delivered'
+      ).length,
+      completed: batches.filter(
+        (b) => normalizeStatus(b.status) === 'completed'
+      ).length,
+      canceled: batches.filter((b) => normalizeStatus(b.status) === 'canceled')
         .length
     }),
     [batches]
@@ -362,41 +412,41 @@ export default function SupplierHarvestBatchesFeature() {
           </Card>
           <Card
             className='hover:border-primary cursor-pointer'
-            onClick={() => setStatusFilter('PENDING')}
+            onClick={() => setStatusFilter('pending')}
           >
             <CardHeader className='pb-3'>
               <CardDescription className='flex items-center gap-2'>
                 <IconClock className='h-4 w-4' />
-                Pending
+                Chờ duyệt đơn
               </CardDescription>
-              <CardTitle className='text-3xl'>{statusCounts.PENDING}</CardTitle>
+              <CardTitle className='text-3xl'>{statusCounts.pending}</CardTitle>
             </CardHeader>
           </Card>
           <Card
             className='hover:border-primary cursor-pointer'
-            onClick={() => setStatusFilter('IN_PROGRESS')}
+            onClick={() => setStatusFilter('approved')}
           >
             <CardHeader className='pb-3'>
               <CardDescription className='flex items-center gap-2'>
-                <IconTruck className='h-4 w-4' />
-                Approved
+                <IconCheck className='h-4 w-4' />
+                Đã duyệt đơn
               </CardDescription>
               <CardTitle className='text-3xl'>
-                {statusCounts.COMPLETED}
+                {statusCounts.approved}
               </CardTitle>
             </CardHeader>
           </Card>
           <Card
             className='hover:border-primary cursor-pointer'
-            onClick={() => setStatusFilter('COMPLETED')}
+            onClick={() => setStatusFilter('completed')}
           >
             <CardHeader className='pb-3'>
               <CardDescription className='flex items-center gap-2'>
                 <IconCheck className='h-4 w-4' />
-                Rejected
+                Đã hoàn thành
               </CardDescription>
               <CardTitle className='text-3xl'>
-                {statusCounts.COMPLETED}
+                {statusCounts.completed}
               </CardTitle>
             </CardHeader>
           </Card>
@@ -420,12 +470,16 @@ export default function SupplierHarvestBatchesFeature() {
                   value={statusFilter}
                   onValueChange={(v) =>
                     setStatusFilter(
-                      (v.toUpperCase() as
+                      (v as
                         | 'ALL'
-                        | 'PENDING'
-                        | 'IN_PROGRESS'
-                        | 'COMPLETED'
-                        | 'CANCELLED') || 'ALL'
+                        | 'pending'
+                        | 'rejected'
+                        | 'approved'
+                        | 'preparing'
+                        | 'delivering'
+                        | 'delivered'
+                        | 'completed'
+                        | 'canceled') || 'ALL'
                     )
                   }
                 >
@@ -433,11 +487,15 @@ export default function SupplierHarvestBatchesFeature() {
                     <SelectValue placeholder='Filter by status' />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='ALL'>All Status</SelectItem>
-                    <SelectItem value='PENDING'>Pending</SelectItem>
-                    <SelectItem value='IN_PROGRESS'>In Progress</SelectItem>
-                    <SelectItem value='COMPLETED'>Completed</SelectItem>
-                    <SelectItem value='CANCELLED'>Cancelled</SelectItem>
+                    <SelectItem value='ALL'>Tất cả trạng thái</SelectItem>
+                    <SelectItem value='pending'>Chờ duyệt đơn</SelectItem>
+                    <SelectItem value='rejected'>Đã từ chối đơn</SelectItem>
+                    <SelectItem value='approved'>Đã duyệt đơn</SelectItem>
+                    <SelectItem value='preparing'>Chuẩn đi lấy</SelectItem>
+                    <SelectItem value='delivering'>Đang đi lấy</SelectItem>
+                    <SelectItem value='delivered'>Đã lấy</SelectItem>
+                    <SelectItem value='completed'>Đã hoàn thành</SelectItem>
+                    <SelectItem value='canceled'>Đã hủy đơn</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -502,7 +560,7 @@ export default function SupplierHarvestBatchesFeature() {
                                   View Details
                                 </Link>
                               </DropdownMenuItem>
-                              {batch.status.toUpperCase() === 'PENDING' && (
+                              {normalizeStatus(batch.status) === 'pending' && (
                                 <>
                                   <DropdownMenuItem asChild>
                                     <Link
@@ -522,7 +580,7 @@ export default function SupplierHarvestBatchesFeature() {
                                   </DropdownMenuItem>
                                 </>
                               )}
-                              {batch.status.toUpperCase() === 'REJECTED' && (
+                              {normalizeStatus(batch.status) === 'rejected' && (
                                 <DropdownMenuItem
                                   onClick={() => {
                                     // Sử dụng reason từ dữ liệu đã load

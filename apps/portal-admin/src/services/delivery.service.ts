@@ -50,6 +50,13 @@ export async function updateDelivery(id: string, data: UpdateDeliveryDto) {
   });
 }
 
+export async function updateDeliveryStatus(id: string, status: string) {
+  return fetchJSON<Delivery>(`/deliveries/${id}/status`, {
+    method: 'PATCH',
+    body: { status }
+  });
+}
+
 export async function deleteDelivery(id: string) {
   return fetchJSON<void>(`/deliveries/${id}`, {
     method: 'DELETE'
