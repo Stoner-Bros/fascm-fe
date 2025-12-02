@@ -12,7 +12,7 @@ import { Form, FormField, FormItem, FormMessage } from '@/components/ui/form';
 import { Checkbox } from '@/components/ui/checkbox';
 import { IconPackageExport, IconClipboardList } from '@tabler/icons-react';
 import { toast } from 'sonner';
-import { fetchOrders } from '@/services/order.service';
+import { fetchOrdersByStatus } from '@/services/order.service';
 import { fetchOrderDetailsByOrderId } from '@/services/order-detail.service';
 import { createExportTicket } from '@/services/export-ticket.service';
 import { updateOrderSchedule } from '@/services/order-schedule.service';
@@ -36,20 +36,28 @@ export default function WarehouseExport() {
     defaultValues: { selectedOrders: [], notes: '' }
   });
 
-  useEffect(() => {
+  const loadApprovedOrders = async () => {
     setIsLoading(true);
-    fetchOrders({ page: 1, limit: 10 })
-      .then((res) => {
-        const approved = res.data.filter(
-          (o) => o.orderSchedule?.status === 'APPROVED'
-        );
-        setAvailableOrders(approved);
-      })
-      .catch((e) => {
-        console.error(e);
-        toast.error('Không tải được danh sách đơn đã duyệt');
-      })
-      .finally(() => setIsLoading(false));
+    try {
+      const res = await fetchOrdersByStatus({
+        page: 1,
+        limit: 10,
+        status: 'approved'
+      });
+      const approved = res.data.filter(
+        (o) => o.orderSchedule?.status === 'approved'
+      );
+      setAvailableOrders(approved);
+    } catch (e) {
+      console.error(e);
+      toast.error('Không tải được danh sách đơn đã duyệt');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadApprovedOrders();
   }, []);
 
   const selectedOrders = useWatch({
@@ -101,7 +109,7 @@ export default function WarehouseExport() {
           const scheduleId = order.orderSchedule?.id;
           if (!scheduleId) continue;
           try {
-            await updateOrderSchedule(scheduleId, { status: 'PENDING_PICKUP' });
+            await updateOrderSchedule(scheduleId, { status: 'preparing' });
             count++;
           } catch (e) {
             console.warn('Không cập nhật được trạng thái đơn', scheduleId, e);
@@ -112,8 +120,9 @@ export default function WarehouseExport() {
 
       if (updatedScheduleCount > 0) {
         toast.success(
-          `Cập nhật trạng thái ${updatedScheduleCount} đơn sang "Chờ vận chuyển"`
+          `Cập nhật trạng thái ${updatedScheduleCount} đơn sang "Chờ phân xe"`
         );
+        await loadApprovedOrders();
       }
       form.reset();
     } catch (e) {

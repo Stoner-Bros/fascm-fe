@@ -24,7 +24,7 @@ const Polyline = dynamic(
 import type { Icon, Map as LeafletMap } from 'leaflet';
 import { io } from 'socket.io-client';
 import { useParams } from 'next/navigation';
-import { fetchDeliveryById } from '@/services/delivery.service';
+import { fetchDeliveryById, updateDelivery } from '@/services/delivery.service';
 import PageContainer from '@/components/layout/page-container';
 import { Delivery } from '@/types';
 type LatLng = { lat: number; lng: number };
@@ -65,7 +65,7 @@ export default function DeliveryDetailPage() {
   const [distanceKm, setDistanceKm] = useState<number>(0);
   const [durationMin, setDurationMin] = useState<number>(0);
   const [progress, setProgress] = useState<number>(0);
-  const [localStatus, setLocalStatus] = useState<string>('');
+  const [returning, setReturning] = useState<boolean>(false);
   const [pos, setPos] = useState<LatLng | undefined>(undefined);
   const [running, setRunning] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
@@ -179,12 +179,16 @@ export default function DeliveryDetailPage() {
     if (!id) return;
     socket.emit('delivery:subscribe', { deliveryId: id });
     const onSub = (p: any) => {};
-    const onStart = (p: any) => {
+    const onStart = async (p: any) => {
       setStart({ lat: p.startLat, lng: p.startLng });
       setPos({ lat: p.startLat, lng: p.startLng });
       if (Array.isArray(p.route)) setRoute(p.route as [number, number][]);
       if (typeof p.orderId === 'string') setOrderId(p.orderId);
-      setLocalStatus('IN_TRANSIT');
+      try {
+        await updateDelivery(id, { status: 'delivering' });
+        const d = await fetchDeliveryById(id);
+        setSelected(d);
+      } catch {}
       setProgress(0);
       setCurrentIndex(0);
     };
@@ -201,10 +205,14 @@ export default function DeliveryDetailPage() {
         : 0;
       setCurrentIndex(idx);
     };
-    const onEnd = (p: any) => {
+    const onEnd = async (p: any) => {
       setEnd({ lat: p.endLat, lng: p.endLng });
       setPos({ lat: p.endLat, lng: p.endLng });
-      setLocalStatus('DELIVERED');
+      try {
+        await updateDelivery(id, { status: 'delivered' });
+        const d = await fetchDeliveryById(id);
+        setSelected(d);
+      } catch {}
       setProgress(100);
       setCurrentIndex(Math.max(route.length - 1, 0));
     };
@@ -220,7 +228,7 @@ export default function DeliveryDetailPage() {
     };
   }, [socket, deliveryId]);
 
-  const startTrip = () => {
+  const startTrip = async () => {
     if (!deliveryId || !start) return;
     setPos(start);
     setRunning(false);
@@ -232,22 +240,31 @@ export default function DeliveryDetailPage() {
       startTime: new Date().toISOString(),
       route: route
     });
-    setLocalStatus('IN_TRANSIT');
+    try {
+      await updateDelivery(deliveryId, { status: 'delivering' });
+      const d = await fetchDeliveryById(deliveryId);
+      setSelected(d);
+    } catch {}
     setProgress(0);
     setCurrentIndex(0);
   };
 
-  const simulate = () => {
+  const simulate = async () => {
     if (route.length < 2 || !deliveryId) return;
     setRunning(true);
     let i = 0;
     if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
+    timerRef.current = setInterval(async () => {
       if (i >= route.length) {
         if (timerRef.current) clearInterval(timerRef.current);
         setRunning(false);
         setProgress(100);
         setCurrentIndex(Math.max(route.length - 1, 0));
+        try {
+          await updateDelivery(deliveryId, { status: 'delivered' });
+          const d = await fetchDeliveryById(deliveryId);
+          setSelected(d);
+        } catch {}
         return;
       }
       const [lat, lng] = route[i];
@@ -264,22 +281,95 @@ export default function DeliveryDetailPage() {
       setProgress(pct);
       i += 1;
     }, 1000);
-    setLocalStatus('IN_TRANSIT');
+    try {
+      await updateDelivery(deliveryId, { status: 'delivering' });
+      const d = await fetchDeliveryById(deliveryId);
+      setSelected(d);
+    } catch {}
   };
 
-  const endTrip = () => {
-    if (!deliveryId || !end) return;
+  const endTrip = async () => {
+    if (!deliveryId) return;
     if (timerRef.current) clearInterval(timerRef.current);
     setRunning(false);
-    socket.emit('delivery:end', {
-      deliveryId,
-      endLat: end.lat,
-      endLng: end.lng,
-      endTime: new Date().toISOString()
-    });
-    setLocalStatus('DELIVERED');
+    const finalEnd = end || pos || start;
+    if (finalEnd) {
+      socket.emit('delivery:end', {
+        deliveryId,
+        endLat: finalEnd.lat,
+        endLng: finalEnd.lng,
+        endTime: new Date().toISOString()
+      });
+    }
+    try {
+      await updateDelivery(deliveryId, { status: 'delivered' });
+      const d = await fetchDeliveryById(deliveryId);
+      setSelected(d);
+    } catch {}
     setProgress(100);
     setCurrentIndex(Math.max(route.length - 1, 0));
+  };
+
+  const returnTrip = async () => {
+    if (!deliveryId || !start || route.length < 2) return;
+    const reversed = [...route].reverse();
+    setReturning(true);
+    setRunning(true);
+    let i = 0;
+    if (timerRef.current) clearInterval(timerRef.current);
+    try {
+      if (String(selected?.status ?? '').toLowerCase() !== 'delivered') {
+        await updateDelivery(deliveryId, { status: 'delivered' });
+        const d1 = await fetchDeliveryById(deliveryId);
+        setSelected(d1);
+      }
+      await updateDelivery(deliveryId, { status: 'returning' });
+      const d2 = await fetchDeliveryById(deliveryId);
+      setSelected(d2);
+    } catch {}
+    timerRef.current = setInterval(async () => {
+      if (i >= reversed.length) {
+        if (timerRef.current) clearInterval(timerRef.current);
+        setRunning(false);
+        setReturning(false);
+        setProgress(100);
+        setCurrentIndex(0);
+        try {
+          await updateDelivery(deliveryId, { status: 'completed' });
+          const d = await fetchDeliveryById(deliveryId);
+          setSelected(d);
+        } catch {}
+        return;
+      }
+      const [lat, lng] = reversed[i];
+      setPos({ lat, lng });
+      setCurrentIndex(Math.max(reversed.length - 1 - i, 0));
+      socket.emit('delivery:update', {
+        deliveryId,
+        lat,
+        lng,
+        timestamp: new Date().toISOString()
+      });
+      const pct =
+        reversed.length > 1 ? Math.round((i / (reversed.length - 1)) * 100) : 0;
+      setProgress(pct);
+      i += 1;
+    }, 1000);
+  };
+
+  const finishTrip = async () => {
+    if (!deliveryId || !start) return;
+    if (timerRef.current) clearInterval(timerRef.current);
+    setRunning(false);
+    setReturning(false);
+    setPos(start);
+    setCurrentIndex(0);
+    setProgress(0);
+    try {
+      await updateDelivery(deliveryId, { status: 'completed' });
+      const d = await fetchDeliveryById(deliveryId);
+      setSelected(d);
+    } catch {}
   };
 
   useEffect(() => {
@@ -409,7 +499,7 @@ export default function DeliveryDetailPage() {
               <div className='rounded border p-3'>
                 <div className='text-muted-foreground text-xs'>Trạng thái</div>
                 <div className='text-sm font-medium'>
-                  {localStatus || selected?.status || '-'}
+                  {selected?.status || '-'}
                 </div>
               </div>
               <div className='rounded border p-3'>
@@ -441,6 +531,16 @@ export default function DeliveryDetailPage() {
               </button>
               <button className='rounded border px-3 py-2' onClick={endTrip}>
                 Kết thúc
+              </button>
+              <button
+                className='rounded border px-3 py-2'
+                onClick={returnTrip}
+                disabled={running || route.length < 2}
+              >
+                Quay về kho
+              </button>
+              <button className='rounded border px-3 py-2' onClick={finishTrip}>
+                Kết thúc hành trình
               </button>
             </div>
           </div>

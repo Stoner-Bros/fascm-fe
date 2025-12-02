@@ -21,6 +21,7 @@ export type OrderSchedule = {
   consignee?: Consignee | null;
   createdAt: string;
   updatedAt: string;
+  address?: string | null;
 };
 
 export type OrderScheduleStatus =
