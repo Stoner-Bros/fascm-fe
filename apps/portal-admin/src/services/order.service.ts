@@ -14,7 +14,20 @@ export async function fetchOrders({
     `/orders?${params.toString()}`
   );
 }
-
+export async function fetchOrdersByStatus({
+  status,
+  page = 1,
+  limit = 10
+}: FindAllOrdersDto & { status: string }) {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit),
+    status
+  });
+  return fetchJSON<InfinityPaginationResponse<OrderBE>>(
+    `/orders?${params.toString()}`
+  );
+}
 export async function fetchOrderById(id: string) {
   return fetchJSON<OrderBE>(`/orders/${id}`);
 }

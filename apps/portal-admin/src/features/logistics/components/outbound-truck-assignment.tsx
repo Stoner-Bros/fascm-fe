@@ -55,10 +55,12 @@ function OrderStatusBadge({ status }: { status?: string | null }) {
   if (!status) return <Badge variant='outline'>Unknown</Badge>;
 
   const variants: Record<string, { label: string; variant: any }> = {
-    IN_PROGRESS: { label: 'Đang chờ duyệt', variant: 'secondary' },
+    PENDING: { label: 'Đang chờ duyệt', variant: 'secondary' },
     APPROVED: { label: 'Đã duyệt', variant: 'default' },
-    PENDING_ASSIGNMENT: { label: 'Chờ phân xe', variant: 'secondary' },
-    PENDING_PICKUP: { label: 'Chờ giao hàng', variant: 'default' },
+    PREPARING: { label: 'Chờ phân xe', variant: 'secondary' },
+    DELIVERING: { label: 'Chờ giao hàng', variant: 'default' },
+    DELIVERED: { label: 'Đã giao hàng', variant: 'default' },
+    COMPLETED: { label: 'Hoàn thành', variant: 'default' },
     CANCELLED: { label: 'Đã hủy', variant: 'destructive' },
     REJECTED: { label: 'Từ chối', variant: 'destructive' }
   };
@@ -109,7 +111,7 @@ export function OutboundTruckAssignment() {
   // Load all deliveries to check assignments
   const loadDeliveries = async () => {
     try {
-      const res = await fetchDeliveries({ page: 1, limit: 1000 });
+      const res = await fetchDeliveries({ page: 1, limit: 20 });
       // Include all deliveries without filtering by status
       setDeliveries(res.data);
     } catch (error) {
@@ -194,8 +196,7 @@ export function OutboundTruckAssignment() {
         endLng: null,
         startAddress: 'Kho trung tâm',
         endAddress:
-          selectedOrder.orderSchedule.consignee?.address ||
-          'Địa chỉ khách hàng',
+          selectedOrder.orderSchedule?.address || 'Địa chỉ khách hàng',
         harvestSchedule: null
       });
 
@@ -474,9 +475,7 @@ export function OutboundTruckAssignment() {
                   <Label className='text-muted-foreground'>
                     Địa chỉ giao hàng
                   </Label>
-                  <p>
-                    {selectedOrder.orderSchedule?.consignee?.address || 'N/A'}
-                  </p>
+                  <p>{selectedOrder.orderSchedule?.address || 'N/A'}</p>
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>
@@ -560,7 +559,7 @@ export function OutboundTruckAssignment() {
                   <div className='col-span-2'>
                     <span className='text-muted-foreground'>Địa chỉ:</span>{' '}
                     <span className='font-medium'>
-                      {selectedOrder.orderSchedule?.consignee?.address || 'N/A'}
+                      {selectedOrder.orderSchedule?.address || 'N/A'}
                     </span>
                   </div>
                 </div>

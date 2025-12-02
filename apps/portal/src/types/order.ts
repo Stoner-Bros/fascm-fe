@@ -1,5 +1,5 @@
-import { Product } from '../features/consignee/types/product';
 import { Consignee } from './consignee';
+import { Product } from './product';
 
 export type Order = {
   totalVolume?: number | null;
@@ -18,6 +18,7 @@ export type Order = {
     description?: string | null;
     orderDate?: string | null;
     consignee?: Consignee | null;
+    updatedAt?: string | null;
   } | null;
   id: string;
   createdAt: Date;

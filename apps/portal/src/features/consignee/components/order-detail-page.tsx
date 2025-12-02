@@ -21,6 +21,7 @@ const DeliveryRouteSim = dynamic(
 import { Order, OrderDetail } from '@/features/consignee';
 import { fetchOrderById } from '@/services/order.service';
 import { fetchOrderDetails } from '@/services/order-detail.service';
+import { updateOrderSchedule } from '@/services/order-schedule.service';
 import { formatDate, formatCurrency } from '@/lib/utils';
 
 export default function OrderDetailPage() {
@@ -30,6 +31,7 @@ export default function OrderDetailPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [details, setDetails] = useState<OrderDetail[]>([]);
   const [loading, setLoading] = useState(true);
+  const [confirming, setConfirming] = useState(false);
 
   const orderId = params.id as string;
 
@@ -237,7 +239,23 @@ export default function OrderDetailPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                {order.orderSchedule?.address ? (
+                {String(order.orderSchedule?.status ?? '').toLowerCase() ===
+                'completed' ? (
+                  <div className='space-y-1'>
+                    <div className='text-sm font-medium text-green-700'>
+                      Đơn hàng đã được xác nhận
+                    </div>
+                    <div className='text-muted-foreground text-sm'>
+                      Thời điểm:{' '}
+                      {order.orderSchedule?.updatedAt
+                        ? new Date(
+                            order.orderSchedule.updatedAt as any
+                          ).toLocaleString('vi-VN')
+                        : new Date().toLocaleString('vi-VN')}
+                    </div>
+                  </div>
+                ) : String(order.orderSchedule?.status ?? '').toLowerCase() ===
+                    'delivering' && order.orderSchedule?.address ? (
                   <DeliveryRouteSim
                     cargo={`Khối lượng ${String(order.totalMass ?? '')} kg`}
                     startAddress={'Trung tâm TP. Hồ Chí Minh'}
@@ -251,7 +269,7 @@ export default function OrderDetailPage() {
                   />
                 ) : (
                   <div className='text-muted-foreground text-sm'>
-                    Chưa có địa chỉ giao hàng
+                    Bản đồ chỉ hiển thị khi trạng thái đang giao hàng
                   </div>
                 )}
               </CardContent>
@@ -395,6 +413,71 @@ export default function OrderDetailPage() {
                   <IconFileText className='mr-2 h-4 w-4' />
                   In đơn hàng
                 </Button>
+                {String(order.orderSchedule?.status ?? '').toLowerCase() ===
+                  'delivered' && (
+                  <>
+                    <div className='text-muted-foreground text-sm'>
+                      Hàng đã giao. Vui lòng xác nhận để hoàn thành đơn.
+                    </div>
+                    <Button
+                      className='w-full'
+                      disabled={confirming}
+                      onClick={async () => {
+                        const id = String(order.orderSchedule?.id ?? '');
+                        if (!id) return;
+                        try {
+                          setConfirming(true);
+                          const updated = await updateOrderSchedule(id, {
+                            status: 'completed'
+                          });
+                          setOrder((prev) => {
+                            if (!prev) return prev;
+                            const normalized = {
+                              id: String(updated.id),
+                              status: updated.status as any,
+                              address: String(updated.address ?? ''),
+                              description: updated.description ?? null,
+                              orderDate:
+                                typeof updated.orderDate === 'string'
+                                  ? updated.orderDate
+                                  : updated.orderDate
+                                    ? new Date(
+                                        updated.orderDate as any
+                                      ).toISOString()
+                                    : null,
+                              consignee: updated.consignee
+                                ? { id: String((updated.consignee as any).id) }
+                                : null,
+                              updatedAt: updated.updatedAt
+                                ? new Date(
+                                    updated.updatedAt as any
+                                  ).toISOString()
+                                : new Date().toISOString()
+                            };
+                            return { ...prev, orderSchedule: normalized };
+                          });
+                          toast({
+                            title: 'Xác nhận thành công',
+                            description:
+                              'Đơn hàng đã được xác nhận hoàn thành.',
+                            variant: 'default'
+                          });
+                        } catch (e) {
+                          toast({
+                            title: 'Không thể xác nhận',
+                            description:
+                              'Có lỗi khi cập nhật trạng thái. Vui lòng thử lại.',
+                            variant: 'destructive'
+                          });
+                        } finally {
+                          setConfirming(false);
+                        }
+                      }}
+                    >
+                      Xác nhận đã nhận hàng
+                    </Button>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>

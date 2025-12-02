@@ -44,7 +44,7 @@ export async function createDelivery(data: CreateDeliveryDto) {
 }
 
 export async function updateDelivery(id: string, data: UpdateDeliveryDto) {
-  return fetchJSON<Delivery>(`/deliveries/${id}`, {
+  return fetchJSON<Delivery>(`/deliveries/${id}/status`, {
     method: 'PATCH',
     body: data
   });
