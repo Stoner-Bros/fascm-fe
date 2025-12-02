@@ -40,11 +40,18 @@ import {
   IconEye,
   IconCalendar,
   IconMapPin,
-  IconTruck
+  IconTruck,
+  IconPlayerPlay,
+  IconCheck,
+  IconArrowLeft
 } from '@tabler/icons-react';
 import { fetchHarvestSchedules } from '@/services/harvest-schedule.service';
 import { fetchTrucks } from '@/services/truck.service';
-import { createDelivery, fetchDeliveries } from '@/services/delivery.service';
+import {
+  createDelivery,
+  fetchDeliveries,
+  updateDeliveryStatus
+} from '@/services/delivery.service';
 import type { HarvestSchedule } from '@/types/harvest-schedule';
 import type { Truck } from '@/types/truck';
 import type { Delivery } from '@/types/delivery';
@@ -223,6 +230,101 @@ export function InboundTruckAssignment() {
     };
     loadDetailProducts();
   }, [isDetailDialogOpen, selectedSchedule]);
+
+  // Handle start delivery
+  const handleStartDelivery = async (deliveryId: string) => {
+    setIsSubmitting(true);
+    try {
+      await updateDeliveryStatus(deliveryId, 'delivering');
+      toast({
+        title: 'Thành công',
+        description: 'Đã bắt đầu chuyến đi thu mua hàng'
+      });
+      // Reload deliveries to reflect status change
+      await loadDeliveries();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description:
+          error instanceof Error ? error.message : 'Không thể bắt đầu chuyến đi'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle complete pickup
+  const handleCompletePickup = async (deliveryId: string) => {
+    setIsSubmitting(true);
+    try {
+      await updateDeliveryStatus(deliveryId, 'delivered');
+      toast({
+        title: 'Thành công',
+        description: 'Đã xác nhận lấy hàng thành công'
+      });
+      // Reload deliveries to reflect status change
+      await loadDeliveries();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description:
+          error instanceof Error ? error.message : 'Không thể xác nhận lấy hàng'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle return to warehouse
+  const handleReturnToWarehouse = async (deliveryId: string) => {
+    setIsSubmitting(true);
+    try {
+      await updateDeliveryStatus(deliveryId, 'returning');
+      toast({
+        title: 'Thành công',
+        description: 'Đã xác nhận xe trở về kho'
+      });
+      // Reload deliveries to reflect status change
+      await loadDeliveries();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Không thể xác nhận trở về kho'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle complete delivery after returning
+  const handleCompleteDelivery = async (deliveryId: string) => {
+    setIsSubmitting(true);
+    try {
+      await updateDeliveryStatus(deliveryId, 'completed');
+      toast({
+        title: 'Thành công',
+        description: 'Đã hoàn tất chuyến inbound'
+      });
+      await loadDeliveries();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Không thể hoàn tất chuyến đi'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   // Handle assign truck for inbound pickup
   const handleAssignTruck = async () => {
@@ -507,7 +609,7 @@ export function InboundTruckAssignment() {
                   <TableHead>Xe</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead>Khởi hành</TableHead>
-                  <TableHead>Kết thúc</TableHead>
+                  <TableHead>Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -531,7 +633,51 @@ export function InboundTruckAssignment() {
                       </TableCell>
                       <TableCell>{d.status || '-'}</TableCell>
                       <TableCell>{formatDate(d.startTime)}</TableCell>
-                      <TableCell>{formatDate(d.endTime)}</TableCell>
+                      <TableCell>
+                        {d.status === 'scheduled' ? (
+                          <Button
+                            variant='default'
+                            size='sm'
+                            onClick={() => handleStartDelivery(d.id)}
+                            disabled={isSubmitting}
+                          >
+                            <IconPlayerPlay className='mr-1 h-4 w-4' />
+                            Bắt đầu
+                          </Button>
+                        ) : d.status === 'delivering' ? (
+                          <Button
+                            variant='default'
+                            size='sm'
+                            onClick={() => handleCompletePickup(d.id)}
+                            disabled={isSubmitting}
+                          >
+                            <IconCheck className='mr-1 h-4 w-4' />
+                            Đã lấy hàng
+                          </Button>
+                        ) : d.status === 'delivered' ? (
+                          <Button
+                            variant='default'
+                            size='sm'
+                            onClick={() => handleReturnToWarehouse(d.id)}
+                            disabled={isSubmitting}
+                          >
+                            <IconArrowLeft className='mr-1 h-4 w-4' />
+                            Trở về kho
+                          </Button>
+                        ) : d.status === 'returning' ? (
+                          <Button
+                            variant='default'
+                            size='sm'
+                            onClick={() => handleCompleteDelivery(d.id)}
+                            disabled={isSubmitting}
+                          >
+                            <IconCheck className='mr-1 h-4 w-4' />
+                            Hoàn thành
+                          </Button>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))
                 )}

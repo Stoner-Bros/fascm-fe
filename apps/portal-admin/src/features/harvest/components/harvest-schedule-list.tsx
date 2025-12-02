@@ -33,7 +33,8 @@ export function HarvestScheduleList({
         '';
 
       const matchesStatus =
-        statusFilter === 'all' || schedule.status === statusFilter;
+        statusFilter === 'all' ||
+        normalizeStatus(schedule.status) === statusFilter;
 
       return matchesSearch && matchesStatus;
     });
@@ -41,24 +42,38 @@ export function HarvestScheduleList({
 
   const statusOptions = [
     { value: 'all', label: 'Tất cả trạng thái' },
-    { value: 'PENDING', label: 'Chờ xử lý' },
-    { value: 'CONFIRMED', label: 'Đã xác nhận' },
-    { value: 'IN_PROGRESS', label: 'Đang thực hiện' },
-    { value: 'COMPLETED', label: 'Hoàn thành' },
-    { value: 'CANCELLED', label: 'Đã hủy' }
+    { value: 'pending', label: 'Chờ duyệt đơn' },
+    { value: 'rejected', label: 'Đã từ chối đơn' },
+    { value: 'approved', label: 'Đã duyệt đơn' },
+    { value: 'preparing', label: 'Chuẩn đi lấy' },
+    { value: 'delivering', label: 'Đang đi lấy' },
+    { value: 'delivered', label: 'Đã lấy' },
+    { value: 'completed', label: 'Đã hoàn thành' },
+    { value: 'canceled', label: 'Đã hủy đơn' }
   ];
 
+  const normalizeStatus = (status?: string | null): string => {
+    if (!status || status.trim() === '') return 'pending';
+    return status.toLowerCase().trim();
+  };
+
   const getStatusBadgeVariant = (status?: string | null) => {
-    switch (status) {
-      case 'PENDING':
+    const normalized = normalizeStatus(status);
+    switch (normalized) {
+      case 'pending':
         return 'secondary';
-      case 'CONFIRMED':
+      case 'approved':
         return 'default';
-      case 'IN_PROGRESS':
+      case 'preparing':
         return 'default';
-      case 'COMPLETED':
+      case 'delivering':
         return 'default';
-      case 'CANCELLED':
+      case 'delivered':
+        return 'default';
+      case 'completed':
+        return 'default';
+      case 'rejected':
+      case 'canceled':
         return 'destructive';
       default:
         return 'secondary';

@@ -12,10 +12,8 @@ import { Button } from '@/components/ui/button';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
-  DialogTitle,
-  DialogTrigger
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -30,39 +28,24 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import {
   IconArchive,
-  IconPlus,
   IconRefresh,
   IconSearch,
   IconTicket
 } from '@tabler/icons-react';
-import {
-  createBatch,
-  fetchBatches,
-  updateBatch
-} from '@/services/batch.service';
+import { createBatch, fetchBatches } from '@/services/batch.service';
 import {
   createImportTicket,
   fetchImportTickets
 } from '@/services/import-ticket.service';
 import { fetchInboundBatches } from '@/services/inbound-batch.service';
-import { fetchOrderDetails } from '@/services/order-detail.service';
 import type { Batch } from '@/types/batch';
 import type { ImportTicket } from '@/types/import-ticket';
 import type { InboundBatch } from '@/types/inbound-batch';
-import type { OrderDetail } from '@/types/order-detail';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 
 const BATCH_CAPACITY_KG = 20;
 
 const defaultImportTicketForm = {
-  inboundBatchId: '',
   realityQuantity: 0,
   importDate: new Date().toISOString(),
   areaId: ''
@@ -73,28 +56,25 @@ export function BatchManagement() {
   const [batches, setBatches] = useState<Batch[]>([]);
   const [importTickets, setImportTickets] = useState<ImportTicket[]>([]);
   const [inboundBatches, setInboundBatches] = useState<InboundBatch[]>([]);
+  const [selectedInboundForDetail, setSelectedInboundForDetail] =
+    useState<InboundBatch | null>(null);
+  const [selectedTicketForBatches, setSelectedTicketForBatches] =
+    useState<ImportTicket | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isImportTicketDialogOpen, setIsImportTicketDialogOpen] =
-    useState(false);
-  const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-  const [orderDetails, setOrderDetails] = useState<OrderDetail[]>([]);
-  const [isLoadingOrderDetails, setIsLoadingOrderDetails] = useState(false);
+  const [isInboundDetailOpen, setIsInboundDetailOpen] = useState(false);
+  const [isTicketBatchesOpen, setIsTicketBatchesOpen] = useState(false);
   const [filters, setFilters] = useState({ search: '' });
   const [importTicketForm, setImportTicketForm] = useState(
     defaultImportTicketForm
   );
-  const [assignForm, setAssignForm] = useState({ orderDetailId: '' });
-  const [selectedBatchForAssignment, setSelectedBatchForAssignment] =
-    useState<Batch | null>(null);
 
   const loadBatches = async () => {
     setIsLoading(true);
     try {
       const res = await fetchBatches({
         page: 1,
-        limit: 50,
-        search: filters.search || undefined
+        limit: 100
       });
       setBatches(res.data);
     } catch (error) {
@@ -126,23 +106,10 @@ export function BatchManagement() {
     }
   };
 
-  const loadOrderDetails = async () => {
-    setIsLoadingOrderDetails(true);
-    try {
-      const res = await fetchOrderDetails({ page: 1, limit: 100 });
-      setOrderDetails(res.data);
-    } catch (error) {
-      console.error('Unable to load order details', error);
-    } finally {
-      setIsLoadingOrderDetails(false);
-    }
-  };
-
   useEffect(() => {
     loadBatches();
     loadImportTickets();
     loadInboundBatches();
-    loadOrderDetails();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -150,96 +117,8 @@ export function BatchManagement() {
     setImportTicketForm(defaultImportTicketForm);
   };
 
-  const resetAssignForm = () => {
-    setAssignForm({ orderDetailId: '' });
-    setSelectedBatchForAssignment(null);
-  };
-
-  const handleOpenAssignDialog = (batch: Batch) => {
-    setSelectedBatchForAssignment(batch);
-    setAssignForm({ orderDetailId: '' });
-    setIsAssignDialogOpen(true);
-  };
-
-  const handleAssignOrderDetail = async () => {
-    if (!selectedBatchForAssignment) return;
-    if (!assignForm.orderDetailId) {
-      toast({
-        variant: 'destructive',
-        title: 'Vui lòng chọn Order Detail'
-      });
-      return;
-    }
-
-    const detail = orderDetails.find(
-      (item) => item.id === assignForm.orderDetailId
-    );
-    if (!detail) {
-      toast({
-        variant: 'destructive',
-        title: 'Order Detail không hợp lệ'
-      });
-      return;
-    }
-
-    const detailProductId = detail.product?.id;
-    if (
-      detailProductId &&
-      detailProductId !== selectedBatchForAssignment.product?.id
-    ) {
-      toast({
-        variant: 'destructive',
-        title: 'Lỗi xác thực',
-        description: 'Product của Order Detail không khớp với batch này.'
-      });
-      return;
-    }
-
-    const remaining =
-      orderDetailStats[detail.id]?.remainingQuantity ??
-      Number(detail.quantity) ??
-      0;
-    const batchQuantity = Number(selectedBatchForAssignment.quantity) || 0;
-    if (detail.unit?.toLowerCase() === 'kg' && remaining < batchQuantity) {
-      toast({
-        variant: 'destructive',
-        title: 'Không đủ số lượng',
-        description: `Order Detail chỉ còn ${remaining} ${detail.unit}.`
-      });
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      const updatedBatch = await updateBatch(selectedBatchForAssignment.id, {
-        orderDetail: { id: assignForm.orderDetailId }
-      });
-      setBatches((prev) =>
-        prev.map((batch) =>
-          batch.id === updatedBatch.id ? updatedBatch : batch
-        )
-      );
-      await loadBatches();
-      await loadOrderDetails();
-      toast({
-        title: 'Đã gắn Order Detail',
-        description: `Batch ${updatedBatch.batchCode} đã được cập nhật`
-      });
-      setIsAssignDialogOpen(false);
-      resetAssignForm();
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Không thể cập nhật batch',
-        description: error instanceof Error ? error.message : undefined
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleCreateImportTicket = async () => {
-    if (!importTicketForm.inboundBatchId) {
+    if (!selectedInboundForDetail?.id) {
       toast({
         variant: 'destructive',
         title: 'Vui lòng chọn Inbound Batch'
@@ -271,7 +150,7 @@ export function BatchManagement() {
       const payload = {
         realityQuantity: Number(importTicketForm.realityQuantity),
         importDate: importTicketForm.importDate,
-        inboundBatch: { id: importTicketForm.inboundBatchId },
+        inboundBatch: { id: selectedInboundForDetail.id },
         ...(importTicketForm.areaId
           ? { area: { id: importTicketForm.areaId } }
           : {})
@@ -280,44 +159,14 @@ export function BatchManagement() {
       const newTicket = await createImportTicket(payload);
       setImportTickets((prev) => [newTicket, ...prev]);
 
-      // Auto-create batches: realityQuantity / 20 batches, each 20kg
-      const numberOfBatches = Math.floor(
-        importTicketForm.realityQuantity / BATCH_CAPACITY_KG
-      );
-      const selectedInboundBatch = inboundBatches.find(
-        (b) => b.id === importTicketForm.inboundBatchId
-      );
-
-      if (numberOfBatches > 0 && selectedInboundBatch?.product) {
-        const baseBatchCode =
-          selectedInboundBatch?.batchCode ||
-          selectedInboundBatch?.id ||
-          newTicket.id ||
-          'BATCH';
-        const batchPayloads = Array.from({ length: numberOfBatches }).map(
-          (_, index) => ({
-            batchCode: `${baseBatchCode}-${String(index + 1).padStart(2, '0')}`,
-            quantity: BATCH_CAPACITY_KG,
-            unit: 'kg',
-            importTicket: { id: newTicket.id },
-            product: { id: selectedInboundBatch.product.id },
-            ...(importTicketForm.areaId
-              ? { area: { id: importTicketForm.areaId } }
-              : {})
-            // orderDetail is intentionally omitted (null)
-          })
-        );
-
-        await Promise.all(batchPayloads.map((payload) => createBatch(payload)));
-      }
-
       toast({
         title: 'Đã tạo import ticket',
-        description: `Ticket ${newTicket.id} đã được tạo và ${numberOfBatches} batch đã được tạo tự động`
+        description: `Ticket ${newTicket.id} đã được tạo thành công`
       });
 
       resetImportTicketForm();
-      setIsImportTicketDialogOpen(false);
+      setIsInboundDetailOpen(false);
+      setSelectedInboundForDetail(null);
       await loadBatches();
       await loadImportTickets();
     } catch (error) {
@@ -331,104 +180,60 @@ export function BatchManagement() {
     }
   };
 
-  const importTicketUsage = useMemo(() => {
-    return batches.reduce<Record<string, number>>((acc, batch) => {
+  // Gom các import ticket theo inbound batch để biết inbound nào đã có ticket
+  const inboundWithTickets = useMemo(() => {
+    const setIds = new Set<string>();
+    importTickets.forEach((ticket) => {
+      const id = ticket.inboundBatch?.id;
+      if (id) setIds.add(id);
+    });
+    return setIds;
+  }, [importTickets]);
+
+  // Danh sách inbound chưa có import ticket (hiển thị phía trên bảng)
+  const inboundWithoutTicket = useMemo(() => {
+    return inboundBatches.filter((batch) => !inboundWithTickets.has(batch.id));
+  }, [inboundBatches, inboundWithTickets]);
+
+  // Lọc import tickets theo từ khóa tìm kiếm
+  const filteredImportTickets = useMemo(() => {
+    if (!filters.search) return importTickets;
+    const keyword = filters.search.toLowerCase();
+    return importTickets.filter((ticket) => {
+      const inboundId = ticket.inboundBatch?.id || '';
+      const productName =
+        ticket.inboundBatch?.product?.name ||
+        ticket.inboundBatch?.product?.id ||
+        '';
+      return (
+        ticket.id.toLowerCase().includes(keyword) ||
+        inboundId.toLowerCase().includes(keyword) ||
+        productName.toLowerCase().includes(keyword)
+      );
+    });
+  }, [filters.search, importTickets]);
+
+  // Gom các batch theo import ticket để hiển thị khi xem chi tiết import ticket
+  const batchesByImportTicket = useMemo(() => {
+    return batches.reduce<Record<string, Batch[]>>((acc, batch) => {
       const id = batch.importTicket?.id;
-      if (id) {
-        acc[id] = (acc[id] ?? 0) + 1;
-      }
+      if (!id) return acc;
+      if (!acc[id]) acc[id] = [];
+      acc[id].push(batch);
       return acc;
     }, {});
   }, [batches]);
 
-  const orderDetailStats = useMemo(() => {
-    const assignedQuantity = batches.reduce<Record<string, number>>(
-      (acc, batch) => {
-        const id = batch.orderDetail?.id;
-        if (id) {
-          acc[id] = (acc[id] ?? 0) + (Number(batch.quantity) || 0);
-        }
-        return acc;
-      },
-      {}
-    );
-
-    return orderDetails.reduce<Record<string, { remainingQuantity: number }>>(
-      (acc, detail) => {
-        const total = Number(detail.quantity) || 0;
-        const used = assignedQuantity[detail.id] ?? 0;
-        acc[detail.id] = {
-          remainingQuantity: Math.max(total - used, 0)
-        };
-        return acc;
-      },
-      {}
-    );
-  }, [batches, orderDetails]);
-
-  // Filter out inbound batches that already have import tickets
-  const availableInboundBatches = useMemo(() => {
-    const usedInboundBatchIds = new Set(
-      importTickets
-        .map((ticket) => ticket.inboundBatch?.id)
-        .filter((id): id is string => Boolean(id))
-    );
-    return inboundBatches.filter((batch) => !usedInboundBatchIds.has(batch.id));
-  }, [inboundBatches, importTickets]);
-
-  const filteredBatches = useMemo(() => {
-    // Chỉ lấy những batch có batchCode
-    const batchesWithCode = batches.filter(
-      (batch) => batch.batchCode && batch.batchCode.trim() !== ''
-    );
-
-    if (!filters.search) return batchesWithCode;
-    const keyword = filters.search.toLowerCase();
-    return batchesWithCode.filter(
-      (batch) =>
-        batch.id.toLowerCase().includes(keyword) ||
-        batch.batchCode.toLowerCase().includes(keyword) ||
-        batch.product?.id?.toLowerCase().includes(keyword)
-    );
-  }, [batches, filters.search]);
-
-  const assignableOrderDetails = useMemo(() => {
-    if (!selectedBatchForAssignment) {
-      return orderDetails.filter((detail) => {
-        const stats = orderDetailStats[detail.id];
-        return (stats?.remainingQuantity ?? Number(detail.quantity) ?? 0) > 0;
-      });
-    }
-    const batchProductId = selectedBatchForAssignment.product?.id;
-    return orderDetails.filter((detail) => {
-      const stats = orderDetailStats[detail.id];
-      const remaining =
-        stats?.remainingQuantity ?? Number(detail.quantity) ?? 0;
-      if (remaining <= 0) return false;
-      if (batchProductId) {
-        return detail.product?.id === batchProductId;
-      }
-      return true;
+  // Các batch của import ticket đang xem chi tiết
+  const batchesOfSelectedTicket = useMemo(() => {
+    if (!selectedTicketForBatches) return [];
+    const list = batchesByImportTicket[selectedTicketForBatches.id] ?? [];
+    return [...list].sort((a, b) => {
+      const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return aTime - bTime;
     });
-  }, [orderDetails, orderDetailStats, selectedBatchForAssignment]);
-
-  const assignedBatches = useMemo(
-    () => filteredBatches.filter((batch) => Boolean(batch.orderDetail?.id)),
-    [filteredBatches]
-  );
-
-  const unassignedBatches = useMemo(
-    () => filteredBatches.filter((batch) => !batch.orderDetail?.id),
-    [filteredBatches]
-  );
-
-  const selectedInboundBatch = useMemo(
-    () =>
-      inboundBatches.find(
-        (batch) => batch.id === importTicketForm.inboundBatchId
-      ),
-    [inboundBatches, importTicketForm.inboundBatchId]
-  );
+  }, [batchesByImportTicket, selectedTicketForBatches]);
 
   return (
     <div className='w-full space-y-6'>
@@ -436,92 +241,232 @@ export function BatchManagement() {
         <div>
           <h1 className='flex items-center gap-2 text-3xl font-bold tracking-tight'>
             <IconArchive className='h-8 w-8 text-emerald-600' />
-            Batch Management
+            Quản lý Import Tickets
           </h1>
           <p className='text-muted-foreground'>
-            Quản lý import tickets và batches trong kho.
+            Quản lý hàng nhập theo inbound batch, tạo import ticket và batches
+            theo nguyên tắc nhập trước xuất trước (FIFO).
           </p>
         </div>
         <div className='flex flex-wrap gap-2'>
+          <Button variant='outline' onClick={loadInboundBatches}>
+            <IconRefresh className='mr-2 h-4 w-4' />
+            Làm mới inbound
+          </Button>
+          <Button variant='outline' onClick={loadImportTickets}>
+            <IconRefresh className='mr-2 h-4 w-4' />
+            Làm mới import ticket
+          </Button>
           <Button variant='outline' onClick={loadBatches}>
             <IconRefresh className='mr-2 h-4 w-4' />
-            Làm mới
+            Làm mới batches
           </Button>
-          <Dialog
-            open={isImportTicketDialogOpen}
-            onOpenChange={(open) => {
-              if (!open) resetImportTicketForm();
-              setIsImportTicketDialogOpen(open);
-            }}
-          >
-            <DialogTrigger asChild>
-              <Button>
-                <IconTicket className='mr-2 h-4 w-4' />
-                Tạo Import Ticket
-              </Button>
-            </DialogTrigger>
-            <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
-              <DialogHeader>
-                <DialogTitle>Tạo Import Ticket</DialogTitle>
-                <DialogDescription>
-                  Tạo import ticket và tự động tạo batches (mỗi batch 20kg).
-                </DialogDescription>
-              </DialogHeader>
-              <div className='space-y-4 py-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='inboundBatch'>Inbound Batch *</Label>
-                  <Select
-                    value={importTicketForm.inboundBatchId}
-                    onValueChange={(value) =>
-                      setImportTicketForm((prev) => ({
-                        ...prev,
-                        inboundBatchId: value
-                      }))
-                    }
-                    disabled={availableInboundBatches.length === 0}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={
-                          availableInboundBatches.length === 0
-                            ? 'Không còn inbound batch khả dụng'
-                            : 'Chọn inbound batch'
-                        }
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {availableInboundBatches.map((batch) => (
-                        <SelectItem key={batch.id} value={batch.id}>
-                          {batch.id} •{' '}
-                          {batch.product?.name || batch.product?.id || '—'}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {availableInboundBatches.length === 0 && (
-                    <p className='text-muted-foreground text-xs'>
-                      Tất cả inbound batches đã được sử dụng để tạo import
-                      ticket.
-                    </p>
-                  )}
-                </div>
-                {selectedInboundBatch && (
-                  <div className='rounded-md border border-dashed p-3 text-sm'>
-                    <p className='font-semibold'>
-                      Batch ID: {selectedInboundBatch.id}
-                    </p>
-                    <p>
-                      Sản phẩm:{' '}
-                      {selectedInboundBatch.product?.name ||
-                        selectedInboundBatch.product?.id ||
-                        '—'}
-                    </p>
-                    <p>
-                      Số lượng: {selectedInboundBatch.quantity}{' '}
-                      {selectedInboundBatch.unit}
-                    </p>
-                  </div>
+        </div>
+      </div>
+
+      {/* Inbound batches chưa tạo import ticket */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Inbound batches chưa tạo import ticket</CardTitle>
+          <CardDescription>
+            Những inbound batch này chưa có import ticket. Bấm xem chi tiết để
+            tạo import ticket.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className='w-full overflow-x-auto rounded-md border'>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Sản phẩm</TableHead>
+                  <TableHead>Số lượng</TableHead>
+                  <TableHead>Thao tác</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {inboundWithoutTicket.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className='text-muted-foreground text-center text-sm'
+                    >
+                      Tất cả inbound batches đã có import ticket.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  inboundWithoutTicket.map((batch) => (
+                    <TableRow key={batch.id}>
+                      <TableCell className='font-medium'>{batch.id}</TableCell>
+                      <TableCell>
+                        {batch.product?.name ||
+                          batch.product?.id ||
+                          'Không có thông tin sản phẩm'}
+                      </TableCell>
+                      <TableCell>
+                        {batch.quantity} {batch.unit}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          size='sm'
+                          variant='outline'
+                          onClick={() => {
+                            setSelectedInboundForDetail(batch);
+                            resetImportTicketForm();
+                            setIsInboundDetailOpen(true);
+                          }}
+                        >
+                          Xem chi tiết
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Bộ lọc & bảng quản lý import ticket */}
+      <Card>
+        <CardHeader className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+          <CardTitle>Quản lý Import Tickets</CardTitle>
+          <div className='flex w-full gap-2 md:w-1/2'>
+            <div className='relative flex-1'>
+              <IconSearch className='text-muted-foreground absolute top-3 left-3 h-4 w-4' />
+              <Input
+                placeholder='Tìm theo ID ticket, inbound, sản phẩm...'
+                value={filters.search}
+                onChange={(e) =>
+                  setFilters((prev) => ({ ...prev, search: e.target.value }))
+                }
+                className='pl-10'
+              />
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className='w-full overflow-x-auto rounded-md border'>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Inbound Batch</TableHead>
+                  <TableHead>Sản phẩm</TableHead>
+                  <TableHead>Percent</TableHead>
+                  <TableHead>Area</TableHead>
+                  <TableHead>Ngày nhập</TableHead>
+                  <TableHead>Số batch</TableHead>
+                  <TableHead>Thao tác</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredImportTickets.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={8}
+                      className='text-muted-foreground text-center text-sm'
+                    >
+                      Không có import ticket nào.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredImportTickets.map((ticket) => {
+                    const batchesOfTicket =
+                      batchesByImportTicket[ticket.id] ?? [];
+                    const product =
+                      ticket.inboundBatch?.product ??
+                      ticket.inboundBatch?.harvestDetail?.product;
+
+                    return (
+                      <TableRow key={ticket.id}>
+                        <TableCell className='font-medium'>
+                          {ticket.id}
+                        </TableCell>
+                        <TableCell>{ticket.inboundBatch?.id ?? '—'}</TableCell>
+                        <TableCell>
+                          {product?.name || product?.id || '—'}
+                        </TableCell>
+                        <TableCell>
+                          {typeof ticket.percent === 'number'
+                            ? `${ticket.percent}%`
+                            : '—'}
+                        </TableCell>
+                        <TableCell>{ticket.area?.id ?? '—'}</TableCell>
+                        <TableCell className='text-muted-foreground text-sm'>
+                          {ticket.importDate
+                            ? new Date(ticket.importDate).toLocaleString(
+                                'vi-VN'
+                              )
+                            : '—'}
+                        </TableCell>
+                        <TableCell>{batchesOfTicket.length}</TableCell>
+                        <TableCell>
+                          <Button
+                            size='sm'
+                            variant='outline'
+                            onClick={() => {
+                              setSelectedTicketForBatches(ticket);
+                              setIsTicketBatchesOpen(true);
+                            }}
+                          >
+                            Xem batches
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Popup chi tiết inbound + tạo import ticket */}
+      <Dialog
+        open={isInboundDetailOpen}
+        onOpenChange={(open) => {
+          setIsInboundDetailOpen(open);
+          if (!open) {
+            setSelectedInboundForDetail(null);
+            resetImportTicketForm();
+          }
+        }}
+      >
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle>Chi tiết Inbound Batch</DialogTitle>
+          </DialogHeader>
+          {selectedInboundForDetail ? (
+            <div className='space-y-4 py-2'>
+              <div className='bg-muted/40 grid gap-3 rounded-md border p-3 text-sm md:grid-cols-2'>
+                <div>
+                  <p className='font-semibold'>Inbound Batch ID</p>
+                  <p>{selectedInboundForDetail.id}</p>
+                </div>
+                <div>
+                  <p className='font-semibold'>Sản phẩm</p>
+                  <p>
+                    {selectedInboundForDetail.product?.name ||
+                      selectedInboundForDetail.product?.id ||
+                      '—'}
+                  </p>
+                </div>
+                <div>
+                  <p className='font-semibold'>Số lượng</p>
+                  <p>
+                    {selectedInboundForDetail.quantity}{' '}
+                    {selectedInboundForDetail.unit}
+                  </p>
+                </div>
+              </div>
+
+              <div className='space-y-3 border-t pt-3'>
+                <p className='text-sm font-semibold'>
+                  Tạo Import Ticket cho inbound batch này
+                </p>
                 <div className='space-y-2'>
                   <Label htmlFor='realityQuantity'>
                     Số lượng thực tế (kg) *
@@ -577,13 +522,14 @@ export function BatchManagement() {
                   />
                 </div>
               </div>
-              <div className='flex justify-end gap-2'>
+
+              <div className='flex justify-end gap-2 pt-2'>
                 <Button
                   variant='outline'
-                  onClick={() => setIsImportTicketDialogOpen(false)}
+                  onClick={() => setIsInboundDetailOpen(false)}
                   disabled={isSubmitting}
                 >
-                  Hủy
+                  Đóng
                 </Button>
                 <Button
                   onClick={handleCreateImportTicket}
@@ -592,246 +538,73 @@ export function BatchManagement() {
                   {isSubmitting ? 'Đang xử lý...' : 'Tạo Import Ticket'}
                 </Button>
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
-      </div>
-
-      <Card>
-        <CardHeader className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-          <CardTitle>Bộ lọc</CardTitle>
-          <div className='flex flex-1 gap-2'>
-            <div className='relative flex-1'>
-              <IconSearch className='text-muted-foreground absolute top-3 left-3 h-4 w-4' />
-              <Input
-                placeholder='Tìm theo batch code, product ID...'
-                value={filters.search}
-                onChange={(e) =>
-                  setFilters((prev) => ({ ...prev, search: e.target.value }))
-                }
-                className='pl-10'
-              />
             </div>
-            <Button variant='outline' onClick={loadBatches}>
-              Tìm kiếm
-            </Button>
-          </div>
-        </CardHeader>
-      </Card>
+          ) : (
+            <p className='text-muted-foreground text-sm'>
+              Không tìm thấy thông tin inbound batch.
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Batch đã gắn Order Detail</CardTitle>
-          <CardDescription>
-            Các batch đã được phân bổ cho đơn hàng.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className='w-full overflow-x-auto rounded-md border'>
+      {/* Popup xem các batches của một import ticket */}
+      <Dialog
+        open={isTicketBatchesOpen}
+        onOpenChange={(open) => {
+          setIsTicketBatchesOpen(open);
+          if (!open) {
+            setSelectedTicketForBatches(null);
+          }
+        }}
+      >
+        <DialogContent className='w-full max-w-[95vw] space-y-4 overflow-hidden p-0 sm:p-6'>
+          <DialogHeader>
+            <DialogTitle>
+              Batches của import ticket {selectedTicketForBatches?.id ?? ''}
+            </DialogTitle>
+          </DialogHeader>
+          <div className='bg-background w-full overflow-auto rounded-md border p-2 shadow-inner'>
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
-                  <TableHead>Import Ticket</TableHead>
-                  <TableHead>Order Detail</TableHead>
+                  <TableHead>Batch code</TableHead>
                   <TableHead>Product</TableHead>
-                  <TableHead>Khu vực</TableHead>
+                  <TableHead>Số lượng</TableHead>
+                  <TableHead>Area</TableHead>
                   <TableHead>Ngày tạo</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={6} className='text-center'>
-                      Đang tải dữ liệu...
-                    </TableCell>
-                  </TableRow>
-                ) : assignedBatches.length === 0 ? (
+                {batchesOfSelectedTicket.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={6}
                       className='text-muted-foreground text-center text-sm'
                     >
-                      Chưa có batch nào được gắn Order Detail
+                      Import ticket này chưa có batch nào.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  assignedBatches.map((batch) => (
+                  batchesOfSelectedTicket.map((batch) => (
                     <TableRow key={batch.id}>
                       <TableCell className='font-medium'>{batch.id}</TableCell>
-                      <TableCell>{batch.importTicket?.id ?? '—'}</TableCell>
-                      <TableCell>{batch.orderDetail?.id ?? '—'}</TableCell>
+                      <TableCell>{batch.batchCode ?? '—'}</TableCell>
                       <TableCell>{batch.product?.id ?? '—'}</TableCell>
-                      <TableCell>{batch.area?.id ?? '—'}</TableCell>
-                      <TableCell className='text-muted-foreground text-sm'>
-                        {batch.createdAt
-                          ? new Date(batch.createdAt).toLocaleString('vi-VN')
-                          : '—'}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Batch chưa gắn Order Detail</CardTitle>
-          <CardDescription>
-            Batch còn trống để tiếp tục phân bổ cho đơn hàng khác.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className='w-full overflow-x-auto rounded-md border'>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Import Ticket</TableHead>
-                  <TableHead>Order Detail</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Khu vực</TableHead>
-                  <TableHead>Ngày tạo</TableHead>
-                  <TableHead>Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className='text-center'>
-                      Đang tải dữ liệu...
-                    </TableCell>
-                  </TableRow>
-                ) : unassignedBatches.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      className='text-muted-foreground text-center text-sm'
-                    >
-                      Không có batch trống
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  unassignedBatches.map((batch) => (
-                    <TableRow key={batch.id}>
-                      <TableCell className='font-medium'>{batch.id}</TableCell>
-                      <TableCell>{batch.importTicket?.id ?? '—'}</TableCell>
-                      <TableCell>{batch.orderDetail?.id ?? '—'}</TableCell>
-                      <TableCell>{batch.product?.id ?? '—'}</TableCell>
-                      <TableCell>{batch.area?.id ?? '—'}</TableCell>
-                      <TableCell className='text-muted-foreground text-sm'>
-                        {batch.createdAt
-                          ? new Date(batch.createdAt).toLocaleString('vi-VN')
-                          : '—'}
-                      </TableCell>
                       <TableCell>
-                        <Button
-                          size='sm'
-                          variant='outline'
-                          onClick={() => handleOpenAssignDialog(batch)}
-                        >
-                          Gắn Order Detail
-                        </Button>
+                        {batch.quantity} {batch.unit}
+                      </TableCell>
+                      <TableCell>{batch.area?.id ?? '—'}</TableCell>
+                      <TableCell className='text-muted-foreground text-sm'>
+                        {batch.createdAt
+                          ? new Date(batch.createdAt).toLocaleString('vi-VN')
+                          : '—'}
                       </TableCell>
                     </TableRow>
                   ))
                 )}
               </TableBody>
             </Table>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Dialog
-        open={isAssignDialogOpen}
-        onOpenChange={(open) => {
-          if (!open) {
-            resetAssignForm();
-          }
-          setIsAssignDialogOpen(open);
-        }}
-      >
-        <DialogContent className='max-w-md'>
-          <DialogHeader>
-            <DialogTitle>Gắn Order Detail cho batch</DialogTitle>
-            <DialogDescription>
-              Chọn Order Detail còn số lượng để gắn vào batch chưa có Order
-              Detail.
-            </DialogDescription>
-          </DialogHeader>
-          {selectedBatchForAssignment ? (
-            <div className='space-y-4'>
-              <div className='rounded-md border p-3 text-sm'>
-                <p>
-                  <span className='font-medium'>Batch:</span>{' '}
-                  {selectedBatchForAssignment.batchCode}
-                </p>
-                <p>
-                  <span className='font-medium'>Số lượng:</span>{' '}
-                  {selectedBatchForAssignment.quantity}{' '}
-                  {selectedBatchForAssignment.unit}
-                </p>
-                <p>
-                  <span className='font-medium'>Product:</span>{' '}
-                  {selectedBatchForAssignment.product?.id ?? '—'}
-                </p>
-              </div>
-              <div className='space-y-2'>
-                <Label>Order Detail</Label>
-                <Select
-                  value={assignForm.orderDetailId}
-                  onValueChange={(value) =>
-                    setAssignForm({ orderDetailId: value })
-                  }
-                  disabled={assignableOrderDetails.length === 0}
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={
-                        assignableOrderDetails.length === 0
-                          ? 'Không còn Order Detail phù hợp'
-                          : 'Chọn Order Detail'
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {assignableOrderDetails.map((detail) => {
-                      const stats = orderDetailStats[detail.id];
-                      const remainingLabel =
-                        stats?.remainingQuantity !== undefined
-                          ? ` • còn ${stats.remainingQuantity} ${detail.unit ?? ''}`
-                          : '';
-                      return (
-                        <SelectItem key={detail.id} value={detail.id}>
-                          {detail.id} •{' '}
-                          {detail.product?.name ||
-                            detail.product?.id ||
-                            'Không có sản phẩm'}
-                          {remainingLabel}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          ) : null}
-          <div className='flex justify-end gap-2 pt-2'>
-            <Button
-              variant='outline'
-              onClick={() => {
-                setIsAssignDialogOpen(false);
-                resetAssignForm();
-              }}
-            >
-              Hủy
-            </Button>
-            <Button onClick={handleAssignOrderDetail} disabled={isSubmitting}>
-              {isSubmitting ? 'Đang xử lý...' : 'Gắn Order Detail'}
-            </Button>
           </div>
         </DialogContent>
       </Dialog>

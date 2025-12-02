@@ -232,42 +232,54 @@ export default function HarvestScheduleDetailPage() {
     };
   }, [id]);
 
-  // Chuẩn hóa status về UPPERCASE và default PENDING
+  // Chuẩn hóa status về lowercase và default pending
   const normalizeStatus = (status?: string | null): string => {
-    if (!status || status.trim() === '') return 'PENDING';
-    return status.toUpperCase().trim();
+    if (!status || status.trim() === '') return 'pending';
+    return status.toLowerCase().trim();
   };
 
   const getStatusLabel = (status?: string | null) => {
     const normalized = normalizeStatus(status);
     switch (normalized) {
-      case 'PENDING':
-        return 'Chờ xử lý';
-      case 'APPROVED':
-        return 'Đã duyệt';
-      case 'REJECTED':
-        return 'Đã từ chối';
-      case 'COMPLETED':
+      case 'pending':
+        return 'Chờ duyệt đơn';
+      case 'rejected':
+        return 'Đã từ chối đơn';
+      case 'approved':
+        return 'Đã duyệt đơn';
+      case 'preparing':
+        return 'Chuẩn đi lấy';
+      case 'delivering':
+        return 'Đang đi lấy';
+      case 'delivered':
+        return 'Đã lấy';
+      case 'completed':
         return 'Đã hoàn thành';
-      case 'CANCELLED':
-        return 'Đã hủy';
+      case 'canceled':
+        return 'Đã hủy đơn';
       default:
-        return 'Chờ xử lý';
+        return normalized || 'Chờ duyệt đơn';
     }
   };
 
   const getStatusColor = (status?: string | null) => {
     const normalized = normalizeStatus(status);
     switch (normalized) {
-      case 'PENDING':
+      case 'pending':
         return 'text-yellow-600 dark:text-yellow-400';
-      case 'APPROVED':
+      case 'approved':
         return 'text-green-600 dark:text-green-400';
-      case 'REJECTED':
-        return 'text-red-600 dark:text-red-400';
-      case 'COMPLETED':
+      case 'preparing':
         return 'text-blue-600 dark:text-blue-400';
-      case 'CANCELLED':
+      case 'delivering':
+        return 'text-purple-600 dark:text-purple-400';
+      case 'delivered':
+        return 'text-indigo-600 dark:text-indigo-400';
+      case 'completed':
+        return 'text-emerald-600 dark:text-emerald-400';
+      case 'rejected':
+        return 'text-red-600 dark:text-red-400';
+      case 'canceled':
         return 'text-gray-600 dark:text-gray-400';
       default:
         return 'text-yellow-600 dark:text-yellow-400';
@@ -277,15 +289,20 @@ export default function HarvestScheduleDetailPage() {
   const getStatusBadgeVariant = (status?: string | null) => {
     const normalized = normalizeStatus(status);
     switch (normalized) {
-      case 'PENDING':
+      case 'pending':
         return 'secondary';
-      case 'APPROVED':
+      case 'approved':
         return 'default';
-      case 'COMPLETED':
+      case 'preparing':
         return 'default';
-      case 'REJECTED':
-      case 'CANCELED':
-      case 'CANCELLED':
+      case 'delivering':
+        return 'default';
+      case 'delivered':
+        return 'default';
+      case 'completed':
+        return 'default';
+      case 'rejected':
+      case 'canceled':
         return 'destructive';
       default:
         return 'secondary';
@@ -340,7 +357,6 @@ export default function HarvestScheduleDetailPage() {
       setActionLoading(true);
       const updated = await rejectHarvestSchedule(
         harvestSchedule.id,
-        'rejected',
         rejectReason.trim()
       );
       setHarvestSchedule(updated);
@@ -529,7 +545,7 @@ export default function HarvestScheduleDetailPage() {
                   </p>
                 </div>
 
-                {normalizeStatus(harvestSchedule.status) === 'REJECTED' &&
+                {normalizeStatus(harvestSchedule.status) === 'rejected' &&
                   // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   (harvestSchedule as any)?.reason && (
                     <>
@@ -702,7 +718,7 @@ export default function HarvestScheduleDetailPage() {
                 <CardTitle>Thao tác</CardTitle>
               </CardHeader>
               <CardContent className='space-y-2'>
-                {normalizeStatus(harvestSchedule.status) === 'PENDING' && (
+                {normalizeStatus(harvestSchedule.status) === 'pending' && (
                   <>
                     <Button
                       className='w-full justify-start'
@@ -724,7 +740,7 @@ export default function HarvestScheduleDetailPage() {
                     </Button>
                   </>
                 )}
-                {normalizeStatus(harvestSchedule.status) === 'APPROVED' && (
+                {normalizeStatus(harvestSchedule.status) === 'delivered' && (
                   <Button
                     className='w-full justify-start'
                     variant='default'
@@ -732,10 +748,10 @@ export default function HarvestScheduleDetailPage() {
                     disabled={actionLoading}
                   >
                     <IconCheck className='mr-2 h-4 w-4' />
-                    {actionLoading ? 'Đang xử lý...' : 'Complete'}
+                    {actionLoading ? 'Đang xử lý...' : 'Đánh dấu hoàn thành'}
                   </Button>
                 )}
-                {normalizeStatus(harvestSchedule.status) === 'COMPLETED' && (
+                {normalizeStatus(harvestSchedule.status) === 'completed' && (
                   <Button
                     className='w-full justify-start'
                     variant='outline'
@@ -745,16 +761,15 @@ export default function HarvestScheduleDetailPage() {
                     Đã hoàn thành
                   </Button>
                 )}
-                {(normalizeStatus(harvestSchedule.status) === 'REJECTED' ||
-                  normalizeStatus(harvestSchedule.status) === 'CANCELED' ||
-                  normalizeStatus(harvestSchedule.status) === 'CANCELLED') && (
+                {(normalizeStatus(harvestSchedule.status) === 'rejected' ||
+                  normalizeStatus(harvestSchedule.status) === 'canceled') && (
                   <Button
                     className='w-full justify-start'
                     variant='outline'
                     disabled
                   >
                     <IconX className='mr-2 h-4 w-4' />
-                    {normalizeStatus(harvestSchedule.status) === 'REJECTED'
+                    {normalizeStatus(harvestSchedule.status) === 'rejected'
                       ? 'Đã từ chối'
                       : 'Đã hủy'}
                   </Button>
