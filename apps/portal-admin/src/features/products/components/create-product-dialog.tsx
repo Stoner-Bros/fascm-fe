@@ -24,7 +24,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { fetchCategories } from '@/services/category.service';
 import { createProduct } from '@/services/product.service';
-import { uploadFile, getFileUrlFromPath } from '@/services/file.service';
+import { uploadFile } from '@/services/file.service';
 import type { Category } from '@/types/product';
 import { IconDeviceFloppy, IconPlus } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
@@ -80,7 +80,7 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
     try {
       setUploading(true);
       const uploadedFile = await uploadFile(files[0]);
-      const imageUrl = getFileUrlFromPath(uploadedFile.path);
+      const imageUrl = uploadedFile.path;
       setUploadedImageUrl(imageUrl);
       toast({
         title: 'Success',

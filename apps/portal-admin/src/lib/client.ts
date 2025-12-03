@@ -11,6 +11,7 @@ export type FetchOptions = {
    * Disable for public endpoints like login.
    */
   auth?: boolean;
+  file?: boolean;
   retryAttempts?: number;
 };
 
@@ -92,11 +93,15 @@ async function performRequest<T>(
     res = await fetch(url, {
       method: options.method ?? 'GET',
       headers: {
-        'Content-Type': 'application/json',
+        ...(options.file ? {} : { 'Content-Type': 'application/json' }),
         ...(options.headers ?? {}),
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {})
       },
-      body: options.body ? JSON.stringify(options.body) : undefined,
+      body: options.body
+        ? options.file
+          ? (options.body as FormData)
+          : JSON.stringify(options.body)
+        : undefined,
       cache: options.cache ?? 'no-store',
       credentials: 'include', // Important: Include cookies in requests
       signal: AbortSignal.timeout(30000)

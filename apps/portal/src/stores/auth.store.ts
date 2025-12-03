@@ -3,7 +3,7 @@ import { devtools } from 'zustand/middleware';
 import {
   getUserSession,
   isAuthenticated as checkIsAuthenticated,
-  logout as authLogout
+  logoutServer as authLogout
 } from '@/services/auth.service';
 
 // Define the User type (adjust according to your actual User interface)

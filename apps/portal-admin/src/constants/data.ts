@@ -103,20 +103,19 @@ export const navItems: NavItem[] = [
     ]
   },
   {
-    title: 'Product',
-    url: '/dashboard/product',
-    icon: 'product',
-    shortcut: ['p', 'p'],
-    isActive: false,
-    items: [] // No child items
-  },
-  {
     title: 'Category',
     url: '/dashboard/category',
     icon: 'tag',
     shortcut: ['c', 'c'],
-    isActive: false,
-    items: [] // No child items
+    isActive: true,
+    items: [
+      {
+        title: 'Product',
+        url: '/dashboard/product',
+        icon: 'product',
+        shortcut: ['p', 'p']
+      }
+    ]
   },
   {
     title: 'Account',
@@ -160,23 +159,17 @@ export const navItems: NavItem[] = [
         url: '/dashboard/account/delivery-staffs',
         icon: 'delivery',
         shortcut: ['a', 'd']
-      },
-      {
-        title: 'Login',
-        shortcut: ['l', 'l'],
-        url: '/',
-        icon: 'login'
       }
     ]
-  },
-  {
-    title: 'Kanban',
-    url: '/dashboard/kanban',
-    icon: 'kanban',
-    shortcut: ['k', 'k'],
-    isActive: false,
-    items: [] // No child items
   }
+  // {
+  //   title: 'Kanban',
+  //   url: '/dashboard/kanban',
+  //   icon: 'kanban',
+  //   shortcut: ['k', 'k'],
+  //   isActive: false,
+  //   items: [] // No child items
+  // }
 ];
 
 export interface SaleUser {

@@ -7,7 +7,7 @@ import {
 } from '@/stores/auth.store';
 import {
   login as authLogin,
-  logout as authLogout,
+  logoutServer as authLogout,
   register as authRegister,
   updateProfile as authUpdateProfile,
   me as getMe,

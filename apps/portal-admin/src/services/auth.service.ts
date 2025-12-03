@@ -202,6 +202,8 @@ export async function refresh(): Promise<RefreshResponse | null> {
       );
       setRefreshToken(res.refreshToken);
 
+      await me(); // Refresh user session in background
+
       return res;
     } catch (error) {
       console.warn('[Auth] Token refresh failed', error);

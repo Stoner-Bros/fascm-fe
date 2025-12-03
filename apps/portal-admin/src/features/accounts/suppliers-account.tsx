@@ -55,7 +55,6 @@ const DEFAULT_FORM = {
   certificate: '',
   qrCode: '',
   gardenName: '',
-  organizationName: '',
   representativeName: '',
   warehouseId: '',
   firstName: '',
@@ -138,7 +137,6 @@ export default function SuppliersAccount() {
   const handleSubmit = async () => {
     const isEditing = Boolean(editingSupplier);
     if (
-      !form.organizationName ||
       !form.representativeName ||
       !form.contact ||
       !form.address ||
@@ -165,7 +163,6 @@ export default function SuppliersAccount() {
         certificate: form.certificate || undefined,
         qrCode: form.qrCode || undefined,
         gardenName: form.gardenName,
-        organizationName: form.organizationName,
         representativeName: form.representativeName,
         warehouse: form.warehouseId ? { id: form.warehouseId } : null
       };
@@ -235,7 +232,6 @@ export default function SuppliersAccount() {
       certificate: supplier.certificate ?? '',
       qrCode: supplier.qrCode ?? '',
       gardenName: supplier.gardenName ?? '',
-      organizationName: supplier.organizationName ?? '',
       representativeName: supplier.representativeName ?? '',
       warehouseId: supplier.warehouse?.id ?? '',
       firstName: supplier.user?.firstName ?? '',
@@ -267,7 +263,6 @@ export default function SuppliersAccount() {
     return tableData.filter((supplier) => {
       const matchesSearch =
         query.length === 0 ||
-        (supplier.organizationName ?? '').toLowerCase().includes(query) ||
         (supplier.gardenName ?? '').toLowerCase().includes(query) ||
         (supplier.representativeName ?? '').toLowerCase().includes(query) ||
         supplier.email.toLowerCase().includes(query) ||
@@ -312,19 +307,6 @@ export default function SuppliersAccount() {
               </DialogHeader>
               <div className='space-y-4'>
                 <div className='grid gap-4 md:grid-cols-2'>
-                  <div className='space-y-2'>
-                    <Label>Tên tổ chức *</Label>
-                    <Input
-                      value={form.organizationName}
-                      onChange={(e) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          organizationName: e.target.value
-                        }))
-                      }
-                      placeholder='Trang trại ABC'
-                    />
-                  </div>
                   <div className='space-y-2'>
                     <Label>Tên vườn *</Label>
                     <Input
