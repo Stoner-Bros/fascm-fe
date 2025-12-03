@@ -1,28 +1,46 @@
 import type { AccountUserPayload } from './common';
 
 export type Supplier = {
-  id: string;
-  contact?: string;
-  taxCode?: string;
-  address?: string;
-  certificate?: string;
-  qrCode?: string;
-  gardenName?: string;
-  organizationName?: string;
-  representativeName?: string;
-  warehouse?: {
+  warehouse: {
+    address: string;
+    name: string;
     id: string;
-    name?: string;
-    address?: string;
-  } | null;
-  user?: {
-    id?: string | number;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
+    createdAt: string;
+    updatedAt: string;
   };
-  createdAt?: string | Date;
-  updatedAt?: string | Date;
+  user: {
+    id: number;
+    email: string;
+    provider: string;
+    socialId: string;
+    firstName: string;
+    lastName: string;
+    photo: {
+      id: string;
+      path: string;
+    };
+    role: {
+      id: number;
+      name: string;
+    };
+    status: {
+      id: number;
+      name: string;
+    };
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string;
+  };
+  contact: string;
+  taxCode: string;
+  address: string;
+  certificate: string;
+  qrCode: string;
+  gardenName: string;
+  representativeName: string;
+  id: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type CreateSupplierDto = {
@@ -32,7 +50,6 @@ export type CreateSupplierDto = {
   certificate?: string;
   qrCode?: string;
   gardenName: string;
-  organizationName: string;
   representativeName: string;
   warehouse?: {
     id: string;

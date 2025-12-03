@@ -1,7 +1,6 @@
 import type { AccountUserPayload } from './common';
 
 export type Consignee = {
-  id: string;
   contact?: string;
   taxCode?: string;
   address?: string;
@@ -9,14 +8,32 @@ export type Consignee = {
   qrCode?: string;
   organizationName?: string;
   representativeName?: string;
-  user?: {
-    id?: string | number;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
+  user: {
+    id: number;
+    email: string;
+    provider: string;
+    socialId: string;
+    firstName: string;
+    lastName: string;
+    photo: {
+      id: string;
+      path: string;
+    };
+    role: {
+      id: number;
+      name: string;
+    };
+    status: {
+      id: number;
+      name: string;
+    };
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string;
   };
-  createdAt?: string | Date;
-  updatedAt?: string | Date;
+  id: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type CreateConsigneeDto = {

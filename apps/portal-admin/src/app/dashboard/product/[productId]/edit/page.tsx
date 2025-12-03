@@ -23,7 +23,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { fetchCategories } from '@/services/category.service';
 import { fetchProductById, updateProduct } from '@/services/product.service';
-import { uploadFile, getFileUrlFromPath } from '@/services/file.service';
+import { uploadFile } from '@/services/file.service';
 import type { Category, Product } from '@/types/product';
 import { IconArrowLeft, IconDeviceFloppy } from '@tabler/icons-react';
 import Link from 'next/link';
@@ -97,7 +97,7 @@ export default function EditProductPage() {
     try {
       setUploading(true);
       const uploadedFile = await uploadFile(files[0]);
-      const imageUrl = getFileUrlFromPath(uploadedFile.path);
+      const imageUrl = uploadedFile.path;
       setUploadedImageUrl(imageUrl);
       toast({
         title: 'Success',
