@@ -50,12 +50,6 @@ export const navItems: NavItem[] = [
         shortcut: ['w', 's']
       },
       {
-        title: 'IoT Device',
-        url: '/dashboard/warehouse/iot-devices',
-        icon: 'iotDevice',
-        shortcut: ['w', 'a']
-      },
-      {
         title: 'Import Ticket',
         url: '/dashboard/warehouse/batches',
         icon: 'inventory',
@@ -116,6 +110,14 @@ export const navItems: NavItem[] = [
         shortcut: ['p', 'p']
       }
     ]
+  },
+  {
+    title: 'IoT Device',
+    url: '/dashboard/iot-devices',
+    icon: 'iotDevice',
+    shortcut: ['w', 'a'],
+    isActive: true,
+    items: [] // No child items
   },
   {
     title: 'Account',

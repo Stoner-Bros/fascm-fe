@@ -47,8 +47,9 @@ import type { Area } from '@/types/area';
 import type { Batch } from '@/types/batch';
 import type { ImportTicket } from '@/types/import-ticket';
 import type { InboundBatch } from '@/types/inbound-batch';
-import { IconArchive, IconRefresh, IconSearch } from '@tabler/icons-react';
+import { IconArchive, IconSearch } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
+import QualityDetection from './quality-detection';
 
 const BATCH_CAPACITY_KG = 20;
 
@@ -70,6 +71,7 @@ export function BatchManagement() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isInboundDetailOpen, setIsInboundDetailOpen] = useState(false);
+  const [isQualityCheckOpen, setIsQualityCheckOpen] = useState(false);
   const [isTicketBatchesOpen, setIsTicketBatchesOpen] = useState(false);
   const [filters, setFilters] = useState({ search: '' });
   const [importTicketForm, setImportTicketForm] = useState(
@@ -389,7 +391,7 @@ export function BatchManagement() {
             theo nguyên tắc nhập trước xuất trước (FIFO).
           </p>
         </div>
-        <div className='flex flex-wrap gap-2'>
+        {/* <div className='flex flex-wrap gap-2'>
           <Button variant='outline' onClick={loadInboundBatches}>
             <IconRefresh className='mr-2 h-4 w-4' />
             Làm mới inbound
@@ -402,7 +404,7 @@ export function BatchManagement() {
             <IconRefresh className='mr-2 h-4 w-4' />
             Làm mới batches
           </Button>
-        </div>
+        </div> */}
       </div>
 
       {/* Inbound batches chưa tạo import ticket */}
@@ -447,7 +449,16 @@ export function BatchManagement() {
                       <TableCell>
                         {batch.quantity} {batch.unit}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className='space-x-2'>
+                        <Button
+                          size='sm'
+                          variant='outline'
+                          onClick={() => {
+                            setIsQualityCheckOpen(true);
+                          }}
+                        >
+                          Quét
+                        </Button>
                         <Button
                           size='sm'
                           variant='outline'
@@ -772,6 +783,21 @@ export function BatchManagement() {
               </TableBody>
             </Table>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Popup UI Quét */}
+      <Dialog
+        open={isQualityCheckOpen}
+        onOpenChange={(open) => {
+          setIsQualityCheckOpen(open);
+        }}
+      >
+        <DialogContent className='max-h-[90vh] !max-w-6xl overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle>Kiểm định chất lượng nhập kho</DialogTitle>
+          </DialogHeader>
+          <QualityDetection />
         </DialogContent>
       </Dialog>
     </div>

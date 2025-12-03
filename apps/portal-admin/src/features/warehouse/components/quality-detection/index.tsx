@@ -27,7 +27,7 @@ import { Settings } from 'lucide-react';
 
 const DEFAULT_API_URL = 'https://quality-detection-system.trycloudflare.com';
 
-export default function QualityDetectionPage() {
+export default function QualityDetection() {
   const [apiBaseUrl, setApiBaseUrl] = useState(DEFAULT_API_URL);
   const [tempApiUrl, setTempApiUrl] = useState(DEFAULT_API_URL);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -216,9 +216,9 @@ export default function QualityDetectionPage() {
   return (
     <div className='container mx-auto space-y-6 p-6'>
       <div className='flex items-center justify-between'>
-        <h1 className='text-3xl font-bold text-gray-900'>
+        {/* <h1 className='text-3xl font-bold text-gray-900'>
           Phát hiện chất lượng
-        </h1>
+        </h1> */}
         <div className='flex items-center space-x-3'>
           {/* API Configuration Dialog */}
           <Dialog open={isDialogOpen} onOpenChange={handleDialogOpen}>
