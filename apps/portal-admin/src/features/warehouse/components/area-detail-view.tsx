@@ -32,8 +32,18 @@ import {
   IconMapPin,
   IconShield
 } from '@tabler/icons-react';
-import { Area, Warehouse, Product, Sensor } from '@/types/inventory';
 import AreaCharts from '@/components/charts/area-charts';
+import {
+  createAreaSetting,
+  fetchAreaSettings,
+  updateAreaSetting
+} from '@/services/area-setting.service';
+import type { AreaSetting } from '@/types/area-setting';
+import { fetchAreaById } from '@/services/area.service';
+import { fetchWarehouseById } from '@/services/warehouse.service';
+import type { Area as AreaEntity } from '@/types/area';
+import type { Warehouse } from '@/types/warehouse';
+import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
 
 interface AreaDetailViewProps {
   warehouseId: string;
@@ -47,232 +57,389 @@ export default function AreaDetailView({
   const router = useRouter();
   const [realTimeData, setRealTimeData] = useState(new Date());
   const [activeTab, setActiveTab] = useState('overview');
+  const [area, setArea] = useState<AreaEntity | null>(null);
+  const [warehouse, setWarehouse] = useState<Warehouse | null>(null);
+  const [isLoadingArea, setIsLoadingArea] = useState(false);
+  const [isLoadingWarehouse, setIsLoadingWarehouse] = useState(false);
+  const [temperature, setTemperature] = useState<number | null>(null);
+  const [humidity, setHumidity] = useState<number | null>(null);
+  const [isLoadingEnv, setIsLoadingEnv] = useState(false);
+  const [areaDeviceIds, setAreaDeviceIds] = useState<string[]>([]);
+  const [areaSetting, setAreaSetting] = useState<AreaSetting | null>(null);
+  const [isLoadingSetting, setIsLoadingSetting] = useState(false);
+  const [isSavingSetting, setIsSavingSetting] = useState(false);
+  const [settingForm, setSettingForm] = useState({
+    minTemperature: '',
+    maxTemperature: '',
+    minHumidity: '',
+    maxHumidity: '',
+    minCapacity: ''
+  });
 
-  // Mock data - trong thực tế sẽ fetch từ API
-  const mockWarehouse: Warehouse = {
-    id: 'WH001',
-    name: 'Kho Trung tâm Hà Nội',
-    location: '123 Đường ABC, Quận Đống Đa, Hà Nội',
-    address: '123 Đường ABC, Quận Đống Đa, Hà Nội',
-    manager: 'Nguyễn Văn A',
-    phone: '024-1234-5678',
-    email: 'manager.hanoi@company.com',
-    status: 'active',
-    totalCapacity: 1500,
-    currentCapacity: 1230,
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: '2024-01-01T00:00:00Z',
-    areas: []
+  type EnvironmentReadings = {
+    temperature?: number | null;
+    humidity?: number | null;
   };
 
-  const mockArea: Area = {
-    id: 'A1',
-    warehouseId: 'WH001',
-    name: 'Khu vực A1 - Sản phẩm khô',
-    type: 'Khô',
-    capacity: 500,
-    currentStock: 410,
-    temperature: 25,
-    humidity: 60,
-    status: 'normal',
-    sensors: [
-      {
-        id: 'TEMP_001',
-        areaId: 'A1',
-        type: 'temperature',
-        value: 25,
-        unit: '°C',
-        status: 'normal',
-        lastReading: new Date().toISOString(),
-        lastUpdate: new Date().toISOString()
-      },
-      {
-        id: 'HUM_001',
-        areaId: 'A1',
-        type: 'humidity',
-        value: 60,
-        unit: '%',
-        status: 'normal',
-        lastReading: new Date().toISOString(),
-        lastUpdate: new Date().toISOString()
+  const parseDeviceData = (device: any): EnvironmentReadings => {
+    try {
+      const raw = device?.data;
+
+      if (typeof raw === 'string' && raw.trim().length > 0) {
+        const obj = JSON.parse(raw);
+        return {
+          temperature:
+            obj.temperature ?? obj.temp ?? obj.t ?? obj.Temperature ?? null,
+          humidity: obj.humidity ?? obj.humid ?? obj.h ?? obj.Humidity ?? null
+        };
       }
-    ],
-    products: [],
-    createdAt: '2024-01-01T00:00:00Z',
-    updatedAt: new Date().toISOString()
+
+      if (Array.isArray(raw) && raw.length > 0) {
+        const last = raw[raw.length - 1];
+        return {
+          temperature:
+            last?.temperature ?? last?.temp ?? last?.t ?? last?.Temperature,
+          humidity: last?.humidity ?? last?.humid ?? last?.h ?? last?.Humidity
+        };
+      }
+
+      if (raw && typeof raw === 'object') {
+        return {
+          temperature:
+            raw.temperature ?? raw.temp ?? raw.t ?? (raw as any).Temperature,
+          humidity: raw.humidity ?? raw.humid ?? raw.h ?? (raw as any).Humidity
+        };
+      }
+    } catch {
+      // ignore parse errors, fall through to empty result
+    }
+
+    return {};
   };
 
-  const mockProducts: Product[] = [
-    {
-      id: 'PROD001',
-      name: 'Cà chua',
-      sku: 'TOMATO-001',
-      category: {
-        id: 'CAT001',
-        name: 'Rau củ quả',
-        storageType: 'tươi sống',
-        shelfLife: 7
-      },
-      unit: 'kg',
-      description: 'Cà chua tươi từ Đà Lạt',
-      minStockLevel: 50,
-      maxStockLevel: 500,
-      currentStock: 150,
-      reservedStock: 0,
-      availableStock: 150,
-      areaId: 'A1',
-      batches: [],
-      supplier: {
-        id: 'SUP001',
-        name: 'Nông trại Đà Lạt',
-        contactPerson: 'Nguyễn Văn A',
-        phone: '0123456789',
-        email: 'contact@dalat-farm.com',
-        address: 'Đà Lạt, Lâm Đồng',
-        rating: 4.5,
-        isActive: true,
-        certifications: ['VietGAP', 'Organic']
-      },
-      storageRequirements: {
-        minTemperature: 2,
-        maxTemperature: 8,
-        minHumidity: 85,
-        maxHumidity: 95
-      },
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
-    },
-    {
-      id: 'PROD002',
-      name: 'Cà rốt',
-      sku: 'CARROT-001',
-      category: {
-        id: 'CAT001',
-        name: 'Rau củ quả',
-        storageType: 'tươi sống',
-        shelfLife: 14
-      },
-      unit: 'kg',
-      description: 'Cà rốt tươi từ Đà Lạt',
-      minStockLevel: 30,
-      maxStockLevel: 300,
-      currentStock: 80,
-      reservedStock: 0,
-      availableStock: 80,
-      areaId: 'A1',
-      batches: [],
-      supplier: {
-        id: 'SUP001',
-        name: 'Nông trại Đà Lạt',
-        contactPerson: 'Nguyễn Văn A',
-        phone: '0123456789',
-        email: 'contact@dalat-farm.com',
-        address: 'Đà Lạt, Lâm Đồng',
-        rating: 4.5,
-        isActive: true,
-        certifications: ['VietGAP', 'Organic']
-      },
-      storageRequirements: {
-        minTemperature: 0,
-        maxTemperature: 4,
-        minHumidity: 90,
-        maxHumidity: 95
-      },
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
-    },
-    {
-      id: 'PROD003',
-      name: 'Dưa',
-      sku: 'PEPPER-002',
-      category: {
-        id: 'CAT001',
-        name: 'Rau củ quả',
-        storageType: 'khô ráo',
-        shelfLife: 365
-      },
-      unit: 'kg',
-      description: 'Dưa tươi từ Đà Lạt',
-      minStockLevel: 100,
-      maxStockLevel: 500,
-      currentStock: 200,
-      reservedStock: 0,
-      availableStock: 200,
-      areaId: 'A1',
-      batches: [],
-      supplier: {
-        id: 'SUP002',
-        name: 'Nông trại Đà Lạt',
-        contactPerson: 'Nguyễn Văn A',
-        phone: '0123456789',
-        email: 'contact@dalat-farm.com',
-        address: 'Đà Lạt, Lâm Đồng',
-        rating: 4.5,
-        isActive: true,
-        certifications: ['VietGAP', 'Organic']
-      },
-      storageRequirements: {
-        minTemperature: 0,
-        maxTemperature: 4,
-        minHumidity: 90,
-        maxHumidity: 95
-      },
-      createdAt: '2024-01-01T00:00:00Z',
-      updatedAt: '2024-01-01T00:00:00Z'
-    }
-  ];
+  const loadEnvironmentFromArea = async (id: string) => {
+    setIsLoadingEnv(true);
+    try {
+      const area: any = await fetchAreaById(id);
+      const iot = area?.iotDevice;
+      const devices: any[] = Array.isArray(iot) ? iot : iot ? [iot] : [];
 
-  const mockAlerts = [
-    {
-      id: 'ALERT001',
-      type: 'warning',
-      title: 'Nhiệt độ cao',
-      message: 'Nhiệt độ khu vực vượt ngưỡng an toàn',
-      value: 28,
-      threshold: 27,
-      unit: '°C',
-      time: '10:30 AM',
-      status: 'active'
-    },
-    {
-      id: 'ALERT002',
-      type: 'info',
-      title: 'Tồn kho thấp',
-      message: 'Sản phẩm cà rốt sắp hết hàng',
-      value: 80,
-      threshold: 100,
-      unit: 'kg',
-      time: '09:15 AM',
-      status: 'resolved'
-    }
-  ];
+      // Lưu lại danh sách device id thuộc area này để filter IoT real-time
+      const deviceIds = devices
+        .map((d) => (d && typeof d === 'object' ? (d as any).id : null))
+        .filter(
+          (v): v is string => typeof v === 'string' && v.trim().length > 0
+        );
+      setAreaDeviceIds(deviceIds);
 
-  const mockActivities = [
-    {
-      id: 'ACT001',
-      type: 'import',
-      description: 'Nhập kho 100kg cà chua',
-      user: 'Nguyễn Văn B',
-      time: '2 giờ trước',
-      status: 'completed'
-    },
-    {
-      id: 'ACT002',
-      type: 'export',
-      description: 'Xuất kho 50kg cà rốt',
-      user: 'Trần Thị C',
-      time: '4 giờ trước',
-      status: 'completed'
-    },
-    {
-      id: 'ACT003',
-      type: 'maintenance',
-      description: 'Bảo trì cảm biến nhiệt độ',
-      user: 'Lê Văn D',
-      time: '1 ngày trước',
-      status: 'completed'
+      for (const d of devices) {
+        const r = parseDeviceData(d);
+        if (r.temperature != null || r.humidity != null) {
+          setTemperature(
+            typeof r.temperature === 'number' ? r.temperature : null
+          );
+          setHumidity(typeof r.humidity === 'number' ? r.humidity : null);
+          return;
+        }
+      }
+
+      // Không có dữ liệu hợp lệ
+      setTemperature(null);
+      setHumidity(null);
+    } catch {
+      setTemperature(null);
+      setHumidity(null);
+    } finally {
+      setIsLoadingEnv(false);
     }
-  ];
+  };
+
+  // Load area & warehouse info từ API
+  useEffect(() => {
+    const loadArea = async () => {
+      if (!areaId) return;
+      setIsLoadingArea(true);
+      try {
+        const data = await fetchAreaById(areaId);
+        setArea(data);
+      } catch (error) {
+        console.error('Unable to load area detail', error);
+        setArea(null);
+      } finally {
+        setIsLoadingArea(false);
+      }
+    };
+
+    const loadWarehouse = async () => {
+      if (!warehouseId) return;
+      setIsLoadingWarehouse(true);
+      try {
+        const data = await fetchWarehouseById(warehouseId);
+        setWarehouse(data);
+      } catch (error) {
+        console.error('Unable to load warehouse', error);
+        setWarehouse(null);
+      } finally {
+        setIsLoadingWarehouse(false);
+      }
+    };
+
+    void loadArea();
+    void loadWarehouse();
+  }, [areaId, warehouseId]);
+
+  // tạm thời vẫn dùng mock area/warehouse, nhưng ngưỡng cảnh báo lấy theo API area-settings
+  useEffect(() => {
+    if (areaId) {
+      void loadEnvironmentFromArea(areaId);
+    }
+
+    let isMounted = true;
+
+    const loadAreaSetting = async () => {
+      // Reset state trước khi fetch
+      if (isMounted) {
+        setIsLoadingSetting(true);
+        setAreaSetting(null);
+        setSettingForm({
+          minTemperature: '',
+          maxTemperature: '',
+          minHumidity: '',
+          maxHumidity: '',
+          minCapacity: ''
+        });
+      }
+
+      try {
+        // Tăng limit để đảm bảo lấy được tất cả settings của area
+        const res = await fetchAreaSettings({ page: 1, limit: 100, areaId });
+
+        // Kiểm tra component vẫn còn mount trước khi set state
+        if (!isMounted) return;
+
+        // Đảm bảo chỉ lấy cấu hình đúng theo areaId
+        const current =
+          (res.data || []).find((s) => s.area?.id === areaId) ?? null;
+
+        if (isMounted) {
+          setAreaSetting(current);
+          setSettingForm({
+            minTemperature:
+              current?.minTemperature !== undefined
+                ? String(current.minTemperature)
+                : '',
+            maxTemperature:
+              current?.maxTemperature !== undefined
+                ? String(current.maxTemperature)
+                : '',
+            minHumidity:
+              current?.minHumidity !== undefined
+                ? String(current.minHumidity)
+                : '',
+            maxHumidity:
+              current?.maxHumidity !== undefined
+                ? String(current.maxHumidity)
+                : '',
+            minCapacity:
+              current?.minCapacity !== undefined
+                ? String(current.minCapacity)
+                : ''
+          });
+        }
+      } catch (error) {
+        console.error('Unable to load area settings', error);
+        if (isMounted) {
+          setAreaSetting(null);
+          setSettingForm({
+            minTemperature: '',
+            maxTemperature: '',
+            minHumidity: '',
+            maxHumidity: '',
+            minCapacity: ''
+          });
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingSetting(false);
+        }
+      }
+    };
+
+    void loadAreaSetting();
+
+    // Cleanup function để đánh dấu component đã unmount
+    return () => {
+      isMounted = false;
+    };
+  }, [areaId]);
+
+  // Real-time cập nhật nhiệt độ / độ ẩm từ IoT data theo area
+  useEffect(() => {
+    if (!areaId) return;
+
+    const unsubscribe = subscribeIoTDataUpdates((payload) => {
+      // 1) Nếu payload có area, phải trùng area hiện tại
+      const payloadAreaId = (payload as any)?.area?.id as string | undefined;
+      if (payloadAreaId && payloadAreaId !== areaId) return;
+
+      // 2) Nếu không có area trong payload, fallback theo device id của area
+      const payloadId = String((payload as any)?.id ?? '').trim();
+      if (!payloadAreaId) {
+        if (!payloadId || !areaDeviceIds.includes(payloadId)) {
+          return;
+        }
+      }
+
+      const r = parseDeviceData(payload as any);
+      if (r.temperature != null || r.humidity != null) {
+        setTemperature(
+          typeof r.temperature === 'number' ? r.temperature : null
+        );
+        setHumidity(typeof r.humidity === 'number' ? r.humidity : null);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [areaId, areaDeviceIds]);
+
+  // Refetch khi chuyển sang tab settings
+  useEffect(() => {
+    if (activeTab === 'settings' && areaId) {
+      const loadAreaSetting = async () => {
+        try {
+          setIsLoadingSetting(true);
+          const res = await fetchAreaSettings({ page: 1, limit: 100, areaId });
+          const current =
+            (res.data || []).find((s) => s.area?.id === areaId) ?? null;
+
+          setAreaSetting(current);
+          setSettingForm({
+            minTemperature:
+              current?.minTemperature !== undefined
+                ? String(current.minTemperature)
+                : '',
+            maxTemperature:
+              current?.maxTemperature !== undefined
+                ? String(current.maxTemperature)
+                : '',
+            minHumidity:
+              current?.minHumidity !== undefined
+                ? String(current.minHumidity)
+                : '',
+            maxHumidity:
+              current?.maxHumidity !== undefined
+                ? String(current.maxHumidity)
+                : '',
+            minCapacity:
+              current?.minCapacity !== undefined
+                ? String(current.minCapacity)
+                : ''
+          });
+        } catch (error) {
+          console.error('Unable to reload area settings', error);
+        } finally {
+          setIsLoadingSetting(false);
+        }
+      };
+      void loadAreaSetting();
+    }
+  }, [activeTab, areaId]);
+
+  // Refetch khi quay lại trang (khi tab browser được focus lại)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (
+        document.visibilityState === 'visible' &&
+        areaId &&
+        activeTab === 'settings'
+      ) {
+        const loadAreaSetting = async () => {
+          try {
+            setIsLoadingSetting(true);
+            const res = await fetchAreaSettings({
+              page: 1,
+              limit: 100,
+              areaId
+            });
+            const current =
+              (res.data || []).find((s) => s.area?.id === areaId) ?? null;
+
+            setAreaSetting(current);
+            setSettingForm({
+              minTemperature:
+                current?.minTemperature !== undefined
+                  ? String(current.minTemperature)
+                  : '',
+              maxTemperature:
+                current?.maxTemperature !== undefined
+                  ? String(current.maxTemperature)
+                  : '',
+              minHumidity:
+                current?.minHumidity !== undefined
+                  ? String(current.minHumidity)
+                  : '',
+              maxHumidity:
+                current?.maxHumidity !== undefined
+                  ? String(current.maxHumidity)
+                  : '',
+              minCapacity:
+                current?.minCapacity !== undefined
+                  ? String(current.minCapacity)
+                  : ''
+            });
+          } catch (error) {
+            console.error('Unable to reload area settings', error);
+          } finally {
+            setIsLoadingSetting(false);
+          }
+        };
+        void loadAreaSetting();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [areaId, activeTab]);
+
+  const handleSaveSettings = async () => {
+    if (
+      !settingForm.minTemperature ||
+      !settingForm.maxTemperature ||
+      !settingForm.minHumidity ||
+      !settingForm.maxHumidity
+    ) {
+      return;
+    }
+
+    const payload = {
+      minTemperature: Number(settingForm.minTemperature),
+      maxTemperature: Number(settingForm.maxTemperature),
+      minHumidity: Number(settingForm.minHumidity),
+      maxHumidity: Number(settingForm.maxHumidity),
+      minCapacity: settingForm.minCapacity
+        ? Number(settingForm.minCapacity)
+        : undefined,
+      area: { id: areaId }
+    };
+
+    try {
+      setIsSavingSetting(true);
+      let saved: AreaSetting;
+      // Chỉ update nếu record hiện tại thuộc đúng area, nếu không thì tạo mới
+      if (areaSetting && areaSetting.area?.id === areaId) {
+        saved = await updateAreaSetting(areaSetting.id, payload);
+      } else {
+        saved = await createAreaSetting(payload);
+      }
+      setAreaSetting(saved);
+    } finally {
+      setIsSavingSetting(false);
+    }
+  };
 
   // Cập nhật dữ liệu thời gian thực
   useEffect(() => {
@@ -321,7 +488,17 @@ export default function AreaDetailView({
     }
   };
 
-  const capacityPercentage = (mockArea.currentStock / mockArea.capacity) * 100;
+  const capacity = area?.capacity ?? 0;
+  const usedCapacity =
+    typeof area?.availableCapacity === 'number'
+      ? Math.max(capacity - area.availableCapacity, 0)
+      : 0;
+  const capacityPercentage =
+    capacity > 0 ? (usedCapacity / Math.max(capacity, 1)) * 100 : 0;
+  const activeAlertCount = 0; // sẽ nối API cảnh báo sau
+  const areaName = area?.name || `Khu vực ${areaId}`;
+  const areaCode = area?.id || areaId;
+  const warehouseName = warehouse?.name || `Kho ${warehouseId}`;
 
   return (
     <div className='container mx-auto space-y-6 p-6'>
@@ -338,17 +515,30 @@ export default function AreaDetailView({
             Quay lại
           </Button>
           <div>
-            <h1 className='text-3xl font-bold'>{mockArea.name}</h1>
+            <h1 className='text-3xl font-bold'>
+              {areaName}
+              {isLoadingArea && ' (đang tải...)'}
+            </h1>
             <p className='text-muted-foreground'>
-              {mockWarehouse.name} • Cập nhật lần cuối:{' '}
+              {warehouseName}
+              {isLoadingWarehouse && ' (đang tải...)'} • Cập nhật lần cuối:{' '}
               {realTimeData.toLocaleTimeString()}
             </p>
           </div>
         </div>
         <div className='flex gap-2'>
-          <Button variant='outline' size='sm'>
+          <Button
+            variant='outline'
+            size='sm'
+            onClick={() => {
+              if (areaId) {
+                void loadEnvironmentFromArea(areaId);
+              }
+            }}
+            disabled={isLoadingEnv}
+          >
             <IconRefresh className='mr-2 h-4 w-4' />
-            Làm mới
+            {isLoadingEnv ? 'Đang tải...' : 'Làm mới'}
           </Button>
           <Button variant='outline' size='sm'>
             <IconSettings className='mr-2 h-4 w-4' />
@@ -365,9 +555,20 @@ export default function AreaDetailView({
             <IconThermometer className='text-muted-foreground h-4 w-4' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{mockArea.temperature}°C</div>
-            <p className='text-muted-foreground text-xs'>Ngưỡng: 20-27°C</p>
-            <div className='mt-2'>{getStatusBadge(mockArea.status)}</div>
+            <div className='text-2xl font-bold'>
+              {temperature != null
+                ? `${temperature}°C`
+                : isLoadingEnv
+                  ? 'Đang tải...'
+                  : '—'}
+            </div>
+            <p className='text-muted-foreground text-xs'>
+              Ngưỡng:{' '}
+              {areaSetting
+                ? `${areaSetting.minTemperature}–${areaSetting.maxTemperature}°C`
+                : '—'}
+            </p>
+            <div className='mt-2'>{getStatusBadge('normal')}</div>
           </CardContent>
         </Card>
 
@@ -377,9 +578,20 @@ export default function AreaDetailView({
             <IconDroplet className='text-muted-foreground h-4 w-4' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>{mockArea.humidity}%</div>
-            <p className='text-muted-foreground text-xs'>Ngưỡng: 50-70%</p>
-            <div className='mt-2'>{getStatusBadge(mockArea.status)}</div>
+            <div className='text-2xl font-bold'>
+              {humidity != null
+                ? `${humidity}%`
+                : isLoadingEnv
+                  ? 'Đang tải...'
+                  : '—'}
+            </div>
+            <p className='text-muted-foreground text-xs'>
+              Ngưỡng:{' '}
+              {areaSetting
+                ? `${areaSetting.minHumidity}–${areaSetting.maxHumidity}%`
+                : '—'}
+            </p>
+            <div className='mt-2'>{getStatusBadge('normal')}</div>
           </CardContent>
         </Card>
 
@@ -390,7 +602,7 @@ export default function AreaDetailView({
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold'>
-              {mockArea.currentStock}/{mockArea.capacity}
+              {usedCapacity.toFixed(0)}/{capacity.toFixed(0)}
             </div>
             <p className='text-muted-foreground text-xs'>
               {capacityPercentage.toFixed(1)}% đã sử dụng
@@ -406,7 +618,7 @@ export default function AreaDetailView({
           </CardHeader>
           <CardContent>
             <div className='text-2xl font-bold text-yellow-600'>
-              {mockAlerts.filter((a) => a.status === 'active').length}
+              {activeAlertCount}
             </div>
             <p className='text-muted-foreground text-xs'>
               Cảnh báo đang hoạt động
@@ -451,25 +663,25 @@ export default function AreaDetailView({
                     <p className='text-muted-foreground text-sm font-medium'>
                       Mã khu vực
                     </p>
-                    <p className='font-semibold'>{mockArea.id}</p>
+                    <p className='font-semibold'>{areaCode}</p>
                   </div>
                   <div>
                     <p className='text-muted-foreground text-sm font-medium'>
                       Loại khu vực
                     </p>
-                    <Badge variant='outline'>{mockArea.type}</Badge>
+                    <Badge variant='outline'>—</Badge>
                   </div>
                   <div>
                     <p className='text-muted-foreground text-sm font-medium'>
                       Trạng thái
                     </p>
-                    {getStatusBadge(mockArea.status)}
+                    {getStatusBadge('normal')}
                   </div>
                   <div>
                     <p className='text-muted-foreground text-sm font-medium'>
                       Số sản phẩm
                     </p>
-                    <p className='font-semibold'>{mockProducts.length} loại</p>
+                    <p className='font-semibold'>—</p>
                   </div>
                 </div>
                 <div>
@@ -478,7 +690,7 @@ export default function AreaDetailView({
                   </p>
                   <Progress value={capacityPercentage} className='h-2' />
                   <p className='text-muted-foreground mt-1 text-xs'>
-                    {mockArea.currentStock} / {mockArea.capacity} đơn vị (
+                    {usedCapacity.toFixed(0)} / {capacity.toFixed(0)} đơn vị (
                     {capacityPercentage.toFixed(1)}%)
                   </p>
                 </div>
@@ -493,36 +705,8 @@ export default function AreaDetailView({
                   Trạng thái cảm biến
                 </CardTitle>
               </CardHeader>
-              <CardContent className='space-y-4'>
-                {mockArea.sensors.map((sensor: Sensor) => (
-                  <div
-                    key={sensor.id}
-                    className='flex items-center justify-between rounded-lg border p-3'
-                  >
-                    <div className='flex items-center gap-3'>
-                      <div
-                        className={`h-3 w-3 rounded-full ${getStatusColor(sensor.status)}`}
-                      />
-                      <div>
-                        <p className='font-medium'>
-                          {sensor.type === 'temperature' ? 'Nhiệt độ' : 'Độ ẩm'}
-                        </p>
-                        <p className='text-muted-foreground text-sm'>
-                          ID: {sensor.id}
-                        </p>
-                      </div>
-                    </div>
-                    <div className='text-right'>
-                      <p className='font-semibold'>
-                        {sensor.value}
-                        {sensor.unit}
-                      </p>
-                      <p className='text-muted-foreground text-xs'>
-                        {new Date(sensor.lastUpdate!).toLocaleTimeString()}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+              <CardContent className='text-muted-foreground space-y-2 text-sm'>
+                <p>Chưa có dữ liệu cảm biến chi tiết cho khu vực này.</p>
               </CardContent>
             </Card>
           </div>
@@ -539,35 +723,9 @@ export default function AreaDetailView({
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className='space-y-3'>
-                {mockActivities.slice(0, 5).map((activity) => (
-                  <div
-                    key={activity.id}
-                    className='flex items-center gap-3 rounded-lg border p-3'
-                  >
-                    <div
-                      className={`h-2 w-2 rounded-full ${
-                        activity.type === 'import'
-                          ? 'bg-green-500'
-                          : activity.type === 'export'
-                            ? 'bg-blue-500'
-                            : 'bg-orange-500'
-                      }`}
-                    />
-                    <div className='flex-1'>
-                      <p className='font-medium'>{activity.description}</p>
-                      <p className='text-muted-foreground text-sm'>
-                        Bởi {activity.user} • {activity.time}
-                      </p>
-                    </div>
-                    <Badge variant='outline' className='text-green-600'>
-                      {activity.status === 'completed'
-                        ? 'Hoàn thành'
-                        : 'Đang xử lý'}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
+              <p className='text-muted-foreground text-sm'>
+                Chưa có dữ liệu lịch sử hoạt động cho khu vực này.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -582,50 +740,8 @@ export default function AreaDetailView({
             </Button>
           </div>
 
-          <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
-            {mockProducts.map((product) => (
-              <Card key={product.id}>
-                <CardHeader>
-                  <CardTitle className='text-base'>{product.name}</CardTitle>
-                  <CardDescription>SKU: {product.sku}</CardDescription>
-                </CardHeader>
-                <CardContent className='space-y-3'>
-                  <div className='grid grid-cols-2 gap-2 text-sm'>
-                    <div>
-                      <p className='text-muted-foreground'>Tồn kho</p>
-                      <p className='font-semibold'>
-                        {product.currentStock} {product.unit}
-                      </p>
-                    </div>
-                  </div>
-                  <div>
-                    <p className='text-muted-foreground mb-1 text-sm'>
-                      Mức tồn kho
-                    </p>
-                    <Progress
-                      value={
-                        (product.currentStock / product.maxStockLevel) * 100
-                      }
-                      className='h-2'
-                    />
-                    <p className='text-muted-foreground mt-1 text-xs'>
-                      {product.minStockLevel} - {product.maxStockLevel}{' '}
-                      {product.unit}
-                    </p>
-                  </div>
-                  <div className='flex gap-2'>
-                    <Button variant='outline' size='sm' className='flex-1'>
-                      <IconEye className='mr-1 h-3 w-3' />
-                      Xem
-                    </Button>
-                    <Button variant='outline' size='sm' className='flex-1'>
-                      <IconEdit className='mr-1 h-3 w-3' />
-                      Sửa
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className='text-muted-foreground text-sm'>
+            Chưa có dữ liệu sản phẩm cho khu vực này.
           </div>
         </TabsContent>
 
@@ -639,66 +755,8 @@ export default function AreaDetailView({
             </Button>
           </div>
 
-          <div className='space-y-3'>
-            {mockAlerts.map((alert) => (
-              <Card
-                key={alert.id}
-                className={`border-l-4 ${
-                  alert.type === 'warning'
-                    ? 'border-l-yellow-500'
-                    : alert.type === 'critical'
-                      ? 'border-l-red-500'
-                      : 'border-l-blue-500'
-                }`}
-              >
-                <CardContent className='pt-4'>
-                  <div className='flex items-start justify-between'>
-                    <div className='flex-1'>
-                      <div className='mb-2 flex items-center gap-2'>
-                        <IconAlertTriangle
-                          className={`h-4 w-4 ${
-                            alert.type === 'warning'
-                              ? 'text-yellow-500'
-                              : alert.type === 'critical'
-                                ? 'text-red-500'
-                                : 'text-blue-500'
-                          }`}
-                        />
-                        <h4 className='font-semibold'>{alert.title}</h4>
-                        <Badge
-                          variant={
-                            alert.status === 'active'
-                              ? 'destructive'
-                              : 'secondary'
-                          }
-                        >
-                          {alert.status === 'active'
-                            ? 'Đang hoạt động'
-                            : 'Đã xử lý'}
-                        </Badge>
-                      </div>
-                      <p className='text-muted-foreground mb-2 text-sm'>
-                        {alert.message}
-                      </p>
-                      <div className='text-muted-foreground flex items-center gap-4 text-xs'>
-                        <span>
-                          Giá trị: {alert.value}
-                          {alert.unit}
-                        </span>
-                        <span>
-                          Ngưỡng: {alert.threshold}
-                          {alert.unit}
-                        </span>
-                        <span>Thời gian: {alert.time}</span>
-                      </div>
-                    </div>
-                    <Button variant='outline' size='sm'>
-                      {alert.status === 'active' ? 'Xử lý' : 'Xem chi tiết'}
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+          <div className='text-muted-foreground text-sm'>
+            Chưa có dữ liệu cảnh báo cho khu vực này.
           </div>
         </TabsContent>
 
@@ -714,43 +772,9 @@ export default function AreaDetailView({
 
           <Card>
             <CardContent className='pt-4'>
-              <div className='space-y-4'>
-                {mockActivities.map((activity) => (
-                  <div
-                    key={activity.id}
-                    className='flex items-center gap-4 rounded-lg border p-4'
-                  >
-                    <div
-                      className={`flex h-10 w-10 items-center justify-center rounded-full ${
-                        activity.type === 'import'
-                          ? 'bg-green-100 text-green-600'
-                          : activity.type === 'export'
-                            ? 'bg-blue-100 text-blue-600'
-                            : 'bg-orange-100 text-orange-600'
-                      }`}
-                    >
-                      {activity.type === 'import' ? (
-                        <IconPackage className='h-5 w-5' />
-                      ) : activity.type === 'export' ? (
-                        <IconBarcode className='h-5 w-5' />
-                      ) : (
-                        <IconSettings className='h-5 w-5' />
-                      )}
-                    </div>
-                    <div className='flex-1'>
-                      <p className='font-medium'>{activity.description}</p>
-                      <p className='text-muted-foreground text-sm'>
-                        Thực hiện bởi {activity.user} • {activity.time}
-                      </p>
-                    </div>
-                    <Badge variant='outline' className='text-green-600'>
-                      {activity.status === 'completed'
-                        ? 'Hoàn thành'
-                        : 'Đang xử lý'}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
+              <p className='text-muted-foreground text-sm'>
+                Chưa có dữ liệu lịch sử chi tiết cho khu vực này.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>
@@ -759,9 +783,9 @@ export default function AreaDetailView({
         <TabsContent value='settings' className='space-y-4'>
           <div className='flex items-center justify-between'>
             <h3 className='text-lg font-semibold'>Cài đặt khu vực</h3>
-            <Button>
+            <Button onClick={handleSaveSettings} disabled={isSavingSetting}>
               <IconShield className='mr-2 h-4 w-4' />
-              Lưu thay đổi
+              {isSavingSetting ? 'Đang lưu...' : 'Lưu thay đổi'}
             </Button>
           </div>
 
@@ -770,17 +794,88 @@ export default function AreaDetailView({
               <CardHeader>
                 <CardTitle>Ngưỡng cảnh báo</CardTitle>
                 <CardDescription>
-                  Cài đặt các ngưỡng để nhận cảnh báo tự động
+                  Nhiệt độ tối thiểu / tối đa theo cấu hình area-settings
                 </CardDescription>
               </CardHeader>
               <CardContent className='space-y-4'>
+                <div>
+                  <label className='text-sm font-medium'>
+                    Nhiệt độ tối thiểu (°C)
+                  </label>
+                  <input
+                    type='number'
+                    value={settingForm.minTemperature}
+                    disabled={isLoadingSetting || isSavingSetting}
+                    onChange={(e) =>
+                      setSettingForm((prev) => ({
+                        ...prev,
+                        minTemperature: e.target.value
+                      }))
+                    }
+                    className='mt-1 w-full rounded-md border px-3 py-2'
+                  />
+                </div>
                 <div>
                   <label className='text-sm font-medium'>
                     Nhiệt độ tối đa (°C)
                   </label>
                   <input
                     type='number'
-                    defaultValue='27'
+                    value={settingForm.maxTemperature}
+                    disabled={isLoadingSetting || isSavingSetting}
+                    onChange={(e) =>
+                      setSettingForm((prev) => ({
+                        ...prev,
+                        maxTemperature: e.target.value
+                      }))
+                    }
+                    className='mt-1 w-full rounded-md border px-3 py-2'
+                  />
+                </div>
+                <div>
+                  <label className='text-sm font-medium'>
+                    Sức chứa tối thiểu (kg)
+                  </label>
+                  <input
+                    type='number'
+                    min={0}
+                    value={settingForm.minCapacity}
+                    disabled={isLoadingSetting || isSavingSetting}
+                    onChange={(e) =>
+                      setSettingForm((prev) => ({
+                        ...prev,
+                        minCapacity: e.target.value
+                      }))
+                    }
+                    placeholder='Ví dụ: 100'
+                    className='mt-1 w-full rounded-md border px-3 py-2'
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Ngưỡng cảnh báo</CardTitle>
+                <CardDescription>
+                  Độ ẩm tối thiểu / tối đa theo cấu hình area-settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent className='space-y-4'>
+                <div>
+                  <label className='text-sm font-medium'>
+                    Độ ẩm tối thiểu (%)
+                  </label>
+                  <input
+                    type='number'
+                    value={settingForm.minHumidity}
+                    disabled={isLoadingSetting || isSavingSetting}
+                    onChange={(e) =>
+                      setSettingForm((prev) => ({
+                        ...prev,
+                        minHumidity: e.target.value
+                      }))
+                    }
                     className='mt-1 w-full rounded-md border px-3 py-2'
                   />
                 </div>
@@ -790,54 +885,16 @@ export default function AreaDetailView({
                   </label>
                   <input
                     type='number'
-                    defaultValue='70'
+                    value={settingForm.maxHumidity}
+                    disabled={isLoadingSetting || isSavingSetting}
+                    onChange={(e) =>
+                      setSettingForm((prev) => ({
+                        ...prev,
+                        maxHumidity: e.target.value
+                      }))
+                    }
                     className='mt-1 w-full rounded-md border px-3 py-2'
                   />
-                </div>
-                <div>
-                  <label className='text-sm font-medium'>
-                    Mức tồn kho tối thiểu
-                  </label>
-                  <input
-                    type='number'
-                    defaultValue='100'
-                    className='mt-1 w-full rounded-md border px-3 py-2'
-                  />
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Thông báo</CardTitle>
-                <CardDescription>
-                  Cấu hình cách thức nhận thông báo
-                </CardDescription>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='flex items-center justify-between'>
-                  <label className='text-sm font-medium'>Email thông báo</label>
-                  <input type='checkbox' defaultChecked className='rounded' />
-                </div>
-                <div className='flex items-center justify-between'>
-                  <label className='text-sm font-medium'>
-                    SMS cảnh báo khẩn cấp
-                  </label>
-                  <input type='checkbox' defaultChecked className='rounded' />
-                </div>
-                <div className='flex items-center justify-between'>
-                  <label className='text-sm font-medium'>Thông báo push</label>
-                  <input type='checkbox' className='rounded' />
-                </div>
-                <div>
-                  <label className='text-sm font-medium'>
-                    Tần suất báo cáo
-                  </label>
-                  <select className='mt-1 w-full rounded-md border px-3 py-2'>
-                    <option>Hàng ngày</option>
-                    <option>Hàng tuần</option>
-                    <option>Hàng tháng</option>
-                  </select>
                 </div>
               </CardContent>
             </Card>

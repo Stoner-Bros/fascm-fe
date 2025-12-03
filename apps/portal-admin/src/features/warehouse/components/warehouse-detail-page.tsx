@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import PageContainer from '@/components/layout/page-container';
 import {
   Card,
@@ -26,6 +27,22 @@ import {
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { fetchWarehouseById } from '@/services/warehouse.service';
+import { createArea, fetchAreas } from '@/services/area.service';
+import { fetchManagers } from '@/services/manager.service';
+import type { Warehouse } from '@/types/warehouse';
+import type { Area } from '@/types/area';
+import type { Manager } from '@/types/manager';
 
 interface WarehouseDetailPageProps {
   warehouseId: string;
@@ -34,16 +51,13 @@ interface WarehouseDetailPageProps {
 export default function WarehouseDetailPage({
   warehouseId
 }: WarehouseDetailPageProps) {
-  // Mock data for specific warehouse
-  const warehouse = {
+  const { toast } = useToast();
+
+  // Mock data cho phần thống kê & hoạt động (sẽ thay dần bằng API sau)
+  const warehouseMock = {
     id: warehouseId,
-    name: `Kho ${warehouseId === 'WH001' ? 'Trung tâm Hà Nội' : warehouseId === 'WH002' ? 'Chi nhánh Hồ Chí Minh' : 'Kho số ' + warehouseId}`,
-    location:
-      warehouseId === 'WH001'
-        ? 'Hà Nội'
-        : warehouseId === 'WH002'
-          ? 'TP.HCM'
-          : 'Đà Nẵng',
+    name: 'Kho Trung tâm Hà Nội',
+    location: 'Hà Nội',
     status: 'active' as const,
     manager: 'Nguyễn Văn A',
     phone: '0123456789',
@@ -56,140 +70,6 @@ export default function WarehouseDetailPage({
     lowStockItems: 12,
     expiringSoon: 8,
     outOfStock: 3,
-    areas: [
-      {
-        id: 'A1',
-        name: 'Khu vực A1 - Rau củ tươi',
-        temperature: 4,
-        humidity: 65,
-        products: 3,
-        capacity: 85,
-        status: 'normal' as const,
-        lastUpdated: '2 phút trước',
-        sensors: [
-          {
-            id: 'T001',
-            type: 'temperature',
-            value: 4,
-            unit: '°C',
-            status: 'normal'
-          },
-          {
-            id: 'H001',
-            type: 'humidity',
-            value: 65,
-            unit: '%',
-            status: 'normal'
-          },
-          {
-            id: 'P001',
-            type: 'pressure',
-            value: 1013,
-            unit: 'hPa',
-            status: 'normal'
-          }
-        ]
-      },
-      {
-        id: 'A2',
-        name: 'Khu vực A2 - Trái cây',
-        temperature: 6,
-        humidity: 70,
-        products: 3,
-        capacity: 72,
-        status: 'warning' as const,
-        lastUpdated: '1 phút trước',
-        sensors: [
-          {
-            id: 'T002',
-            type: 'temperature',
-            value: 6,
-            unit: '°C',
-            status: 'normal'
-          },
-          {
-            id: 'H002',
-            type: 'humidity',
-            value: 70,
-            unit: '%',
-            status: 'warning'
-          },
-          {
-            id: 'P002',
-            type: 'pressure',
-            value: 1015,
-            unit: 'hPa',
-            status: 'normal'
-          }
-        ]
-      },
-      {
-        id: 'A3',
-        name: 'Khu vực A3 - Thịt cá đông lạnh',
-        temperature: -18,
-        humidity: 45,
-        products: 3,
-        capacity: 90,
-        status: 'normal' as const,
-        lastUpdated: '30 giây trước',
-        sensors: [
-          {
-            id: 'T003',
-            type: 'temperature',
-            value: -18,
-            unit: '°C',
-            status: 'normal'
-          },
-          {
-            id: 'H003',
-            type: 'humidity',
-            value: 45,
-            unit: '%',
-            status: 'normal'
-          },
-          {
-            id: 'P003',
-            type: 'pressure',
-            value: 1012,
-            unit: 'hPa',
-            status: 'normal'
-          }
-        ]
-      },
-      {
-        id: 'A4',
-        name: 'Khu vực A4 - Sản phẩm khô',
-        temperature: 25,
-        humidity: 40,
-        products: 3,
-        capacity: 65,
-        status: 'normal' as const,
-        lastUpdated: '5 phút trước',
-        sensors: [
-          {
-            id: 'T004',
-            type: 'temperature',
-            value: 25,
-            unit: '°C',
-            status: 'normal'
-          },
-          {
-            id: 'H004',
-            type: 'humidity',
-            value: 40,
-            unit: '%',
-            status: 'normal'
-          },
-          {
-            id: 'P004',
-            type: 'pressure',
-            value: 1014,
-            unit: 'hPa',
-            status: 'normal'
-          }
-        ]
-      }
-    ],
     recentActivities: [
       {
         id: 1,
@@ -220,6 +100,163 @@ export default function WarehouseDetailPage({
       }
     ]
   };
+
+  const [apiWarehouse, setApiWarehouse] = useState<Warehouse | null>(null);
+  const [isLoadingWarehouse, setIsLoadingWarehouse] = useState(false);
+  const [warehouseManager, setWarehouseManager] = useState<Manager | null>(
+    null
+  );
+  const [apiAreas, setApiAreas] = useState<Area[]>([]);
+  const [isLoadingAreas, setIsLoadingAreas] = useState(false);
+
+  const [isCreateAreaDialogOpen, setIsCreateAreaDialogOpen] = useState(false);
+  const [isCreatingArea, setIsCreatingArea] = useState(false);
+  const [areaForm, setAreaForm] = useState({
+    name: '',
+    description: '',
+    capacity: 0,
+    location: '',
+    iotDeviceId: ''
+  });
+
+  const warehouse = useMemo(() => {
+    return {
+      ...warehouseMock,
+      id: apiWarehouse?.id ?? warehouseMock.id,
+      name: apiWarehouse?.name ?? warehouseMock.name,
+      address: apiWarehouse?.address ?? warehouseMock.address
+    };
+  }, [apiWarehouse, warehouseMock]);
+
+  const loadWarehouse = async () => {
+    setIsLoadingWarehouse(true);
+    try {
+      const data = await fetchWarehouseById(warehouseId);
+      setApiWarehouse(data);
+    } catch (error) {
+      console.error('Unable to load warehouse', error);
+      toast({
+        variant: 'destructive',
+        title: 'Không thể tải thông tin kho',
+        description: error instanceof Error ? error.message : undefined
+      });
+    } finally {
+      setIsLoadingWarehouse(false);
+    }
+  };
+
+  const loadWarehouseManager = async () => {
+    try {
+      const res = await fetchManagers({ page: 1, limit: 100, warehouseId });
+      // Phòng khi backend không filter đúng theo warehouseId, vẫn lọc lại ở FE
+      const managers = (res.data || []).filter(
+        (m) => m.warehouse?.id === warehouseId
+      );
+      setWarehouseManager(managers[0] ?? null);
+    } catch (error) {
+      console.error('Unable to load warehouse manager', error);
+      setWarehouseManager(null);
+    }
+  };
+
+  const loadAreas = async () => {
+    setIsLoadingAreas(true);
+    try {
+      const res = await fetchAreas({ page: 1, limit: 50, warehouseId });
+      setApiAreas(res.data || []);
+    } catch (error) {
+      console.error('Unable to load areas', error);
+      toast({
+        variant: 'destructive',
+        title: 'Không thể tải danh sách khu vực',
+        description: error instanceof Error ? error.message : undefined
+      });
+    } finally {
+      setIsLoadingAreas(false);
+    }
+  };
+
+  useEffect(() => {
+    void loadWarehouse();
+    void loadAreas();
+    void loadWarehouseManager();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [warehouseId]);
+
+  const resetAreaForm = () => {
+    setAreaForm({
+      name: '',
+      description: '',
+      capacity: 0,
+      location: '',
+      iotDeviceId: ''
+    });
+  };
+
+  const handleCreateArea = async () => {
+    if (!areaForm.name || !areaForm.location || !areaForm.capacity) {
+      toast({
+        variant: 'destructive',
+        title: 'Thiếu thông tin khu vực',
+        description: 'Vui lòng nhập tên, vị trí và sức chứa khu vực.'
+      });
+      return;
+    }
+
+    try {
+      setIsCreatingArea(true);
+      const capacityValue = Number(areaForm.capacity);
+      await createArea({
+        name: areaForm.name,
+        description: areaForm.description || undefined,
+        capacity: capacityValue,
+        availableCapacity: capacityValue, // Khi tạo mới, availableCapacity = capacity
+        location: areaForm.location,
+        warehouse: { id: warehouseId },
+        ...(areaForm.iotDeviceId
+          ? { iotDevice: [{ id: areaForm.iotDeviceId }] }
+          : {})
+      });
+
+      toast({
+        title: 'Đã tạo khu vực',
+        description: `Khu vực ${areaForm.name} đã được tạo trong kho này.`
+      });
+
+      resetAreaForm();
+      setIsCreateAreaDialogOpen(false);
+      await loadAreas();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Không thể tạo khu vực',
+        description: error instanceof Error ? error.message : undefined
+      });
+    } finally {
+      setIsCreatingArea(false);
+    }
+  };
+
+  // Map areas từ API sang layout card
+  // Chỉ lấy các khu vực thuộc đúng warehouse hiện tại
+  const apiAreaCards = useMemo(() => {
+    return apiAreas
+      .filter((a) => a.warehouse?.id === warehouseId)
+      .map((a) => ({
+        id: a.id,
+        name: a.name,
+        temperature: 0,
+        description: a.description,
+        humidity: 0,
+        products: 0,
+        capacity: a.capacity ?? 0,
+        status: 'normal' as const,
+        lastUpdated: '—',
+        sensors: []
+      }));
+  }, [apiAreas, warehouseId]);
+
+  const allAreas = useMemo(() => apiAreaCards, [apiAreaCards]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -283,7 +320,15 @@ export default function WarehouseDetailPage({
             </div>
           </div>
           <div className='flex shrink-0 items-center space-x-1 md:space-x-2'>
-            <Button variant='outline' size='sm'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => {
+                void loadWarehouse();
+                void loadAreas();
+              }}
+              disabled={isLoadingWarehouse || isLoadingAreas}
+            >
               <IconRefresh className='mr-1 h-3 w-3 md:mr-2 md:h-4 md:w-4' />
               <span className='hidden sm:inline'>Làm mới</span>
             </Button>
@@ -307,15 +352,25 @@ export default function WarehouseDetailPage({
               <div className='grid grid-cols-1 gap-3 sm:grid-cols-2'>
                 <div>
                   <p className='text-muted-foreground text-sm'>Quản lý kho</p>
-                  <p className='font-medium'>{warehouse.manager}</p>
+                  <p className='font-medium'>
+                    {warehouseManager
+                      ? `${warehouseManager.user?.firstName ?? ''} ${warehouseManager.user?.lastName ?? ''}`.trim() ||
+                        warehouseManager.user?.email ||
+                        warehouseManager.id
+                      : '—'}
+                  </p>
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm'>Số điện thoại</p>
-                  <p className='font-medium'>{warehouse.phone}</p>
+                  <p className='font-medium'>
+                    {warehouseManager?.user?.phone || '—'}
+                  </p>
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm'>Email</p>
-                  <p className='font-medium'>{warehouse.email}</p>
+                  <p className='font-medium'>
+                    {warehouseManager?.user?.email || '—'}
+                  </p>
                 </div>
                 <div>
                   <p className='text-muted-foreground text-sm'>Trạng thái</p>
@@ -330,7 +385,9 @@ export default function WarehouseDetailPage({
               </div>
               <div className='mt-3'>
                 <p className='text-muted-foreground text-sm'>Địa chỉ</p>
-                <p className='font-medium'>{warehouse.address}</p>
+                <p className='font-medium'>
+                  {apiWarehouse?.address || warehouse.address}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -411,16 +468,20 @@ export default function WarehouseDetailPage({
         <div className='space-y-3'>
           <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
             <h3 className='text-lg font-semibold'>
-              Khu vực trong kho ({warehouse.areas.length})
+              Khu vực trong kho ({allAreas.length})
             </h3>
-            <Button variant='outline' size='sm'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => setIsCreateAreaDialogOpen(true)}
+            >
               <IconPlus className='mr-1 h-3 w-3 md:mr-2 md:h-4 md:w-4' />
               <span className='hidden sm:inline'>Thêm khu vực</span>
             </Button>
           </div>
 
           <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5'>
-            {warehouse.areas.map((area) => (
+            {allAreas.map((area) => (
               <Card
                 key={area.id}
                 className={cn('border-2', getStatusColor(area.status))}
@@ -432,7 +493,7 @@ export default function WarehouseDetailPage({
                         {area.name}
                       </CardTitle>
                       <CardDescription className='mt-0.5 truncate text-xs'>
-                        ID: {area.id} • {area.lastUpdated}
+                        {area.description || 'Không có mô tả'}
                       </CardDescription>
                     </div>
                   </div>
@@ -617,6 +678,106 @@ export default function WarehouseDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* Dialog tạo khu vực mới */}
+      <Dialog
+        open={isCreateAreaDialogOpen}
+        onOpenChange={(open) => {
+          setIsCreateAreaDialogOpen(open);
+          if (!open) resetAreaForm();
+        }}
+      >
+        <DialogContent className='max-w-xl'>
+          <DialogHeader>
+            <DialogTitle>Thêm khu vực mới</DialogTitle>
+          </DialogHeader>
+          <div className='space-y-4 py-2'>
+            <div className='space-y-2'>
+              <Label htmlFor='area-name'>Tên khu vực *</Label>
+              <Input
+                id='area-name'
+                placeholder='Ví dụ: Khu vực A2 - Trái cây'
+                value={areaForm.name}
+                onChange={(e) =>
+                  setAreaForm((prev) => ({ ...prev, name: e.target.value }))
+                }
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='area-description'>Mô tả</Label>
+              <Input
+                id='area-description'
+                placeholder='Mô tả ngắn về khu vực'
+                value={areaForm.description}
+                onChange={(e) =>
+                  setAreaForm((prev) => ({
+                    ...prev,
+                    description: e.target.value
+                  }))
+                }
+              />
+            </div>
+            <div className='grid gap-3 md:grid-cols-2'>
+              <div className='space-y-2'>
+                <Label htmlFor='area-capacity'>Sức chứa (kg) *</Label>
+                <Input
+                  id='area-capacity'
+                  type='number'
+                  min={0}
+                  placeholder='Ví dụ: 500'
+                  value={areaForm.capacity}
+                  onChange={(e) =>
+                    setAreaForm((prev) => ({
+                      ...prev,
+                      capacity: Number(e.target.value)
+                    }))
+                  }
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='area-location'>Vị trí *</Label>
+                <Input
+                  id='area-location'
+                  placeholder='Ví dụ: Tầng 1 - Dãy A'
+                  value={areaForm.location}
+                  onChange={(e) =>
+                    setAreaForm((prev) => ({
+                      ...prev,
+                      location: e.target.value
+                    }))
+                  }
+                />
+              </div>
+            </div>
+            <div className='space-y-2'>
+              <Label htmlFor='iot-device-id'>IoT Device ID (tùy chọn)</Label>
+              <Input
+                id='iot-device-id'
+                placeholder='Nhập ID cảm biến nếu có'
+                value={areaForm.iotDeviceId}
+                onChange={(e) =>
+                  setAreaForm((prev) => ({
+                    ...prev,
+                    iotDeviceId: e.target.value
+                  }))
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setIsCreateAreaDialogOpen(false)}
+              disabled={isCreatingArea}
+            >
+              Hủy
+            </Button>
+            <Button onClick={handleCreateArea} disabled={isCreatingArea}>
+              {isCreatingArea ? 'Đang tạo...' : 'Tạo khu vực'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }

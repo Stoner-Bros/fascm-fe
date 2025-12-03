@@ -37,13 +37,6 @@ export const navItems: NavItem[] = [
     isActive: true
   },
   {
-    title: 'Warehouse Manage',
-    url: '/dashboard/warehouse/manage',
-    icon: 'inventory',
-    shortcut: ['w', 'm'],
-    isActive: true
-  },
-  {
     title: 'Warehouse',
     url: '/dashboard/warehouse',
     icon: 'inventory',
