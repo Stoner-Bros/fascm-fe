@@ -22,7 +22,7 @@ import { useToast } from '@/hooks/use-toast';
 import { IconLoader2, IconPlus, IconTrash } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Product } from '../types/product';
+import { Product } from '@/types/product';
 import {
   CreateOrderRequest,
   CreateOrderDetailRequest
@@ -31,10 +31,7 @@ import { createOrder } from '@/services/order.service';
 import { fetchProducts } from '@/services/product.service';
 import { createOrderDetail } from '@/services/order-detail.service';
 import { createOrderSchedule } from '@/services/order-schedule.service';
-import {
-  fetchMyConsignee,
-  updateConsignee
-} from '@/services/consignee.service';
+import { fetchMyConsignee } from '@/services/consignee.service';
 import type { Consignee } from '@/types/consignee';
 import dynamic from 'next/dynamic';
 const AddressPickerMap = dynamic(

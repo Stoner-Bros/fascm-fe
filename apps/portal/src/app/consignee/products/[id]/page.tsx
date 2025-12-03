@@ -21,9 +21,9 @@ import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
-import { Product } from '@/features/consignee/types/product';
-import { OrderService } from '@/features/consignee/services/order-service';
 import { fetchProductById } from '@/services/product.service';
+import { Product } from '@/types/product';
+import { formatCurrency } from '@/lib/utils';
 export default function ProductDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -143,9 +143,7 @@ export default function ProductDetailPage() {
                   <div className='mt-4 flex items-center justify-between'>
                     <span className='text-sm'>Giá</span>
                     <span className='text-xl font-semibold'>
-                      {OrderService.formatCurrency(
-                        Number(product.pricePerKg ?? 0)
-                      )}
+                      {formatCurrency(Number(product.pricePerKg ?? 0))}
                       /kg
                     </span>
                   </div>

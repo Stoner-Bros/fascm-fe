@@ -432,29 +432,39 @@ export default function OrderDetailPage() {
                           });
                           setOrder((prev) => {
                             if (!prev) return prev;
-                            const normalized = {
+                            const normalized: NonNullable<
+                              Order['orderSchedule']
+                            > = {
                               id: String(updated.id),
-                              status: updated.status as any,
-                              address: String(updated.address ?? ''),
-                              description: updated.description ?? null,
+                              status: String(
+                                (updated as any)?.status ??
+                                  prev.orderSchedule?.status ??
+                                  ''
+                              ).toUpperCase() as any,
+                              address: String(
+                                (updated as any)?.address ??
+                                  prev.orderSchedule?.address ??
+                                  ''
+                              ),
+                              description:
+                                (updated as any)?.description ??
+                                prev.orderSchedule?.description ??
+                                null,
                               orderDate:
-                                typeof updated.orderDate === 'string'
-                                  ? updated.orderDate
-                                  : updated.orderDate
-                                    ? new Date(
-                                        updated.orderDate as any
-                                      ).toISOString()
-                                    : null,
-                              consignee: updated.consignee
-                                ? { id: String((updated.consignee as any).id) }
-                                : null,
-                              updatedAt: updated.updatedAt
+                                typeof (updated as any)?.orderDate === 'string'
+                                  ? (updated as any)?.orderDate
+                                  : (prev.orderSchedule?.orderDate ?? null),
+                              consignee: prev.orderSchedule?.consignee ?? null,
+                              updatedAt: (updated as any)?.updatedAt
                                 ? new Date(
-                                    updated.updatedAt as any
+                                    (updated as any)?.updatedAt as any
                                   ).toISOString()
                                 : new Date().toISOString()
                             };
-                            return { ...prev, orderSchedule: normalized };
+                            return {
+                              ...prev,
+                              orderSchedule: normalized
+                            } as Order;
                           });
                           toast({
                             title: 'Xác nhận thành công',

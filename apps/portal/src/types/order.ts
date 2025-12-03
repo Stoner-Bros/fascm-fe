@@ -24,7 +24,14 @@ export type Order = {
   createdAt: Date;
   updatedAt: Date;
 };
-export type OrderScheduleStatus = 'IN_PROGRESS' | 'CONFIRMED' | 'CANCELLED';
+export type OrderScheduleStatus =
+  | 'pending'
+  | 'approved'
+  | 'cancelled'
+  | 'completed'
+  | 'delivered'
+  | 'delivering'
+  | 'rejected';
 export type CreateOrderRequest = {
   id?: string | null;
   totalVolume?: number | null;

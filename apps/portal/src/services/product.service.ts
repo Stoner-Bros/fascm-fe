@@ -1,4 +1,4 @@
-import { Product } from '@/features/consignee/types/product';
+import { Product } from '@/types/product';
 import { fetchJSON } from '../lib/client';
 
 export type { Product };

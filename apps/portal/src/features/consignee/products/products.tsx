@@ -19,7 +19,7 @@ import {
   IconFilter,
   IconX
 } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Label } from '@/components/ui/label';
 import { Product } from '../../../types/product';
@@ -38,9 +38,13 @@ export default function ConsigneeProductsFeature() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+  const didFetchRef = useRef(false);
+  const skipFirstCatRef = useRef(true);
 
   useEffect(() => {
     let mounted = true;
+    if (didFetchRef.current) return;
+    didFetchRef.current = true;
     setLoading(true);
     setError(null);
     console.log('[UI] Using API base', getApiBase());
@@ -80,6 +84,12 @@ export default function ConsigneeProductsFeature() {
 
   useEffect(() => {
     let mounted = true;
+    if (skipFirstCatRef.current) {
+      skipFirstCatRef.current = false;
+      return () => {
+        mounted = false;
+      };
+    }
     setLoading(true);
     fetchProducts({
       page: 1,
@@ -92,7 +102,6 @@ export default function ConsigneeProductsFeature() {
       })
       .catch((err) => {
         if (!mounted) return;
-
         setError(err?.message ?? 'Failed to load products');
       })
       .finally(() => {
