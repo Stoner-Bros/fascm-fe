@@ -53,3 +53,5 @@ export * from './delivery-staff';
 export * from './batch';
 export * from './order-detail';
 export * from './file';
+export * from './area';
+export * from './area-setting';

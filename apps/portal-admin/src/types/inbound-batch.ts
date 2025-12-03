@@ -10,7 +10,25 @@ export type InboundBatch = {
   harvestDetail: {
     id: string;
     code?: string;
+    harvestTicket?: {
+      id: string;
+      harvestScheduleId?: {
+        id: string;
+        supplierId?: {
+          id: string;
+          warehouse?: {
+            id: string;
+            name?: string;
+          };
+        };
+      };
+    };
   };
+  warehouse?: {
+    id: string;
+    name?: string;
+  };
+  warehouseId?: string;
   createdAt?: string;
   updatedAt?: string;
 };

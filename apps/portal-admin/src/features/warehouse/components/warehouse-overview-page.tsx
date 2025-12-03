@@ -1,3 +1,6 @@
+'use client';
+
+import { useEffect, useMemo, useState } from 'react';
 import PageContainer from '@/components/layout/page-container';
 import {
   Card,
@@ -9,7 +12,7 @@ import {
 import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import {
   IconPackage,
@@ -25,13 +28,48 @@ import {
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
-import { buttonVariants } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import { createWarehouse, fetchWarehouses } from '@/services/warehouse.service';
+import { fetchManagers, updateManager } from '@/services/manager.service';
+import type { Manager } from '@/types/manager';
 
 interface WarehouseOverviewPageProps {}
 
 export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
-  // Mock data cho nhiều kho - trong thực tế sẽ fetch từ API
-  const warehouses = [
+  const { toast } = useToast();
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoadingWarehouses, setIsLoadingWarehouses] = useState(false);
+  const [apiWarehouses, setApiWarehouses] = useState<
+    { id: string; name: string; address: string }[]
+  >([]);
+  const [managersWithoutWarehouse, setManagersWithoutWarehouse] = useState<
+    Manager[]
+  >([]);
+  const [isLoadingManagers, setIsLoadingManagers] = useState(false);
+  const [selectedManagerId, setSelectedManagerId] = useState<string>('');
+  const [warehouseForm, setWarehouseForm] = useState({
+    name: '',
+    address: ''
+  });
+  // Mock data cho kho trung tâm Hà Nội - giữ làm mẫu design
+  const mockWarehouses = [
     {
       id: 'WH001',
       name: 'Kho Trung tâm Hà Nội',
@@ -70,96 +108,104 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
           products: 5
         }
       ]
-    },
-    {
-      id: 'WH002',
-      name: 'Kho Miền Nam TP.HCM',
-      location: 'TP. Hồ Chí Minh',
-      capacity: 78,
-      totalItems: 10,
-      lowStockItems: 15,
-      expiringSoon: 3,
-      outOfStock: 2,
-      todayImport: 15,
-      todayExport: 20,
-      status: 'active',
-      areas: [
-        {
-          id: 'B1',
-          name: 'Khu vực B1 - Rau củ',
-          temperature: 5.1,
-          humidity: 68,
-          capacity: 85,
-          products: 5
-        },
-        {
-          id: 'B2',
-          name: 'Khu vực B2 - Trái cây nhiệt đới',
-          temperature: 8.0,
-          humidity: 75,
-          capacity: 80,
-          products: 3
-        },
-        {
-          id: 'B3',
-          name: 'Khu vực B3 - Gia vị',
-          temperature: 20.0,
-          humidity: 40,
-          capacity: 70,
-          products: 2
-        }
-      ]
-    },
-    {
-      id: 'WH003',
-      name: 'Kho Miền Trung Đà Nẵng',
-      location: 'Đà Nẵng',
-      capacity: 92,
-      totalItems: 10,
-      lowStockItems: 31,
-      expiringSoon: 12,
-      outOfStock: 7,
-      todayImport: 15,
-      todayExport: 10,
-      status: 'active',
-      areas: [
-        {
-          id: 'C1',
-          name: 'Khu vực C1 - Nông sản tươi',
-          temperature: 15.0,
-          humidity: 35,
-          capacity: 88,
-          products: 2
-        },
-        {
-          id: 'C2',
-          name: 'Khu vực C2 - Rau củ',
-          temperature: 4.8,
-          humidity: 62,
-          capacity: 95,
-          products: 3
-        },
-        {
-          id: 'C3',
-          name: 'Khu vực C3 - Trái cây',
-          temperature: 6.5,
-          humidity: 72,
-          capacity: 93,
-          products: 5
-        }
-      ]
     }
   ];
 
-  const totalStats = {
-    totalWarehouses: warehouses.length,
-    totalItems: warehouses.reduce((sum, wh) => sum + wh.totalItems, 0),
-    totalLowStock: warehouses.reduce((sum, wh) => sum + wh.lowStockItems, 0),
-    totalExpiring: warehouses.reduce((sum, wh) => sum + wh.expiringSoon, 0),
-    totalOutOfStock: warehouses.reduce((sum, wh) => sum + wh.outOfStock, 0),
-    avgCapacity: Math.round(
-      warehouses.reduce((sum, wh) => sum + wh.capacity, 0) / warehouses.length
-    )
+  // Ghép tên / id kho từ API vào mock kho trung tâm, đồng thời thêm các kho API còn lại
+  const mergedWarehouses = useMemo(() => {
+    if (apiWarehouses.length === 0) return mockWarehouses;
+
+    const [firstApi, ...restApis] = apiWarehouses;
+
+    const centralWarehouse = {
+      ...mockWarehouses[0],
+      id: firstApi?.id ?? mockWarehouses[0].id,
+      name: firstApi?.name || mockWarehouses[0].name
+    };
+
+    const apiOnlyWarehouses = restApis.map((w) => ({
+      id: w.id,
+      name: w.name,
+      location: w.address,
+      capacity: 70,
+      totalItems: 5,
+      lowStockItems: 0,
+      expiringSoon: 0,
+      outOfStock: 0,
+      todayImport: 0,
+      todayExport: 0,
+      status: 'active',
+      areas: []
+    }));
+
+    return [centralWarehouse, ...apiOnlyWarehouses];
+  }, [apiWarehouses]);
+
+  const totalStats = useMemo(() => {
+    const list = mergedWarehouses;
+    if (list.length === 0) {
+      return {
+        totalWarehouses: 0,
+        totalItems: 0,
+        totalLowStock: 0,
+        totalExpiring: 0,
+        totalOutOfStock: 0,
+        avgCapacity: 0
+      };
+    }
+
+    return {
+      totalWarehouses: list.length,
+      totalItems: list.reduce((sum, wh) => sum + wh.totalItems, 0),
+      totalLowStock: list.reduce((sum, wh) => sum + wh.lowStockItems, 0),
+      totalExpiring: list.reduce((sum, wh) => sum + wh.expiringSoon, 0),
+      totalOutOfStock: list.reduce((sum, wh) => sum + wh.outOfStock, 0),
+      avgCapacity: Math.round(
+        list.reduce((sum, wh) => sum + wh.capacity, 0) / list.length
+      )
+    };
+  }, [mergedWarehouses]);
+
+  useEffect(() => {
+    const loadWarehouses = async () => {
+      setIsLoadingWarehouses(true);
+      try {
+        const res = await fetchWarehouses({ page: 1, limit: 10 });
+        setApiWarehouses(
+          (res.data || []).map((w) => ({
+            id: w.id,
+            name: w.name,
+            address: w.address
+          }))
+        );
+      } catch (error) {
+        // Chỉ log nhẹ, vẫn dùng mock nếu API lỗi
+        console.error(
+          'Unable to load warehouses, fallback to mock data',
+          error
+        );
+      } finally {
+        setIsLoadingWarehouses(false);
+      }
+    };
+
+    void loadWarehouses();
+  }, []);
+
+  // Fetch managers chưa gắn warehouse
+  const loadManagersWithoutWarehouse = async () => {
+    setIsLoadingManagers(true);
+    try {
+      const res = await fetchManagers({ page: 1, limit: 100 });
+      setManagersWithoutWarehouse(
+        (res.data || []).filter((m) => !m.warehouse || !m.warehouse.id)
+      );
+    } catch (error) {
+      console.error('Unable to load managers', error);
+      setManagersWithoutWarehouse([]);
+    } finally {
+      setIsLoadingManagers(false);
+    }
   };
 
   const criticalAlerts = [
@@ -182,6 +228,75 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
       severity: 'low'
     }
   ];
+
+  const resetForms = () => {
+    setWarehouseForm({ name: '', address: '' });
+    setSelectedManagerId('');
+  };
+
+  const handleCreateWarehouseWithManager = async () => {
+    if (!warehouseForm.name || !warehouseForm.address) {
+      toast({
+        variant: 'destructive',
+        title: 'Thiếu thông tin kho',
+        description: 'Vui lòng nhập tên kho và địa chỉ.'
+      });
+      return;
+    }
+
+    if (!selectedManagerId) {
+      toast({
+        variant: 'destructive',
+        title: 'Thiếu thông tin manager',
+        description: 'Vui lòng chọn một manager chưa có kho.'
+      });
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      // 1. Tạo warehouse mới
+      const newWarehouse = await createWarehouse({
+        name: warehouseForm.name,
+        address: warehouseForm.address
+      });
+
+      // 2. Gán manager hiện có vào warehouse này
+      await updateManager(selectedManagerId, {
+        warehouse: { id: newWarehouse.id }
+      });
+
+      toast({
+        title: 'Đã tạo kho mới',
+        description: `Kho ${newWarehouse.name} đã được tạo và gán cho manager đã chọn.`
+      });
+
+      // Cập nhật danh sách warehouses từ API để tên kho hiển thị đúng
+      try {
+        const res = await fetchWarehouses({ page: 1, limit: 10 });
+        setApiWarehouses(
+          (res.data || []).map((w) => ({
+            id: w.id,
+            name: w.name,
+            address: w.address
+          }))
+        );
+      } catch {
+        // bỏ qua lỗi, đã hiển thị toast thành công phía trên
+      }
+
+      resetForms();
+      setIsCreateDialogOpen(false);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Không thể tạo kho mới',
+        description: error instanceof Error ? error.message : undefined
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <PageContainer scrollable={true}>
@@ -279,15 +394,29 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
         {/* Danh sách kho */}
         <div className='space-y-4'>
           <div className='flex items-center justify-between'>
-            <h3 className='text-lg font-semibold'>Danh sách kho</h3>
-            <Button variant='outline' size='sm'>
+            <h3 className='text-lg font-semibold'>
+              Danh sách kho{' '}
+              {isLoadingWarehouses && (
+                <span className='text-muted-foreground text-xs'>
+                  (đang tải...)
+                </span>
+              )}
+            </h3>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => {
+                setIsCreateDialogOpen(true);
+                void loadManagersWithoutWarehouse();
+              }}
+            >
               <IconPlus className='mr-2 h-4 w-4' />
               Thêm kho mới
             </Button>
           </div>
 
           <div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3'>
-            {warehouses.map((warehouse) => (
+            {mergedWarehouses.map((warehouse) => (
               <Card
                 key={warehouse.id}
                 className='transition-shadow hover:shadow-lg'
@@ -300,7 +429,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
                       </CardTitle>
                       <CardDescription className='mt-1 flex items-center'>
                         <IconPackage className='mr-1 h-4 w-4' />
-                        {warehouse.location} • ID: {warehouse.id}
+                        {warehouse.location}
                       </CardDescription>
                     </div>
                     <Badge
@@ -458,6 +587,107 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Dialog tạo kho + manager */}
+      <Dialog
+        open={isCreateDialogOpen}
+        onOpenChange={(open) => {
+          setIsCreateDialogOpen(open);
+          if (!open) resetForms();
+        }}
+      >
+        <DialogContent className='max-w-xl'>
+          <DialogHeader>
+            <DialogTitle>Thêm kho mới & Manager</DialogTitle>
+          </DialogHeader>
+          <div className='space-y-6 py-2'>
+            <div className='space-y-3'>
+              <p className='text-sm font-semibold'>Thông tin kho</p>
+              <div className='space-y-2'>
+                <Label htmlFor='warehouse-name'>Tên kho *</Label>
+                <Input
+                  id='warehouse-name'
+                  placeholder='Ví dụ: Kho Trung tâm Hà Nội'
+                  value={warehouseForm.name}
+                  onChange={(e) =>
+                    setWarehouseForm((prev) => ({
+                      ...prev,
+                      name: e.target.value
+                    }))
+                  }
+                />
+              </div>
+              <div className='space-y-2'>
+                <Label htmlFor='warehouse-address'>Địa chỉ *</Label>
+                <Input
+                  id='warehouse-address'
+                  placeholder='Nhập địa chỉ kho'
+                  value={warehouseForm.address}
+                  onChange={(e) =>
+                    setWarehouseForm((prev) => ({
+                      ...prev,
+                      address: e.target.value
+                    }))
+                  }
+                />
+              </div>
+            </div>
+
+            <div className='space-y-3'>
+              <p className='text-sm font-semibold'>
+                Chọn Manager (chưa có kho)
+              </p>
+              <div className='space-y-2'>
+                <Label htmlFor='manager-select'>Manager *</Label>
+                <Select
+                  value={selectedManagerId}
+                  onValueChange={(value) => setSelectedManagerId(value)}
+                  disabled={
+                    isLoadingManagers || managersWithoutWarehouse.length === 0
+                  }
+                >
+                  <SelectTrigger id='manager-select'>
+                    <SelectValue
+                      placeholder={
+                        isLoadingManagers
+                          ? 'Đang tải danh sách manager...'
+                          : managersWithoutWarehouse.length === 0
+                            ? 'Không còn manager trống'
+                            : 'Chọn manager'
+                      }
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {managersWithoutWarehouse.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.user?.email ?? m.id} -{' '}
+                        {[m.user?.firstName, m.user?.lastName]
+                          .filter(Boolean)
+                          .join(' ') || 'Chưa có tên'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => setIsCreateDialogOpen(false)}
+              disabled={isSubmitting}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleCreateWarehouseWithManager}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Đang tạo...' : 'Tạo kho & manager'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </PageContainer>
   );
 }

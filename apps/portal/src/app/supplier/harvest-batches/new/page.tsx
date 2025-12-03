@@ -34,8 +34,9 @@ import {
   createHarvestTicket,
   updateHarvestTicket,
   createHarvestDetail,
-  fetchMySupplier
+  fetchSupplier
 } from '@/features/supplier';
+import type { Supplier } from '@/types/supplier';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 
 type HarvestDetailForm = {
@@ -89,8 +90,8 @@ export default function NewHarvestBatchPage() {
       });
 
     // Get supplier info (id + address)
-    fetchMySupplier()
-      .then((supplier) => {
+    fetchSupplier()
+      .then((supplier: Supplier) => {
         if (!mounted) return;
         if (supplier && supplier.id) {
           setSupplierId(supplier.id);
@@ -102,7 +103,7 @@ export default function NewHarvestBatchPage() {
           }));
         }
       })
-      .catch((err) => {
+      .catch((err: unknown) => {
         if (!mounted) return;
         console.error('Failed to get supplier info', err);
         toast({

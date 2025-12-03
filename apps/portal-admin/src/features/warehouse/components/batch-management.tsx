@@ -37,11 +37,23 @@ import {
   createImportTicket,
   fetchImportTickets
 } from '@/services/import-ticket.service';
-import { fetchInboundBatches } from '@/services/inbound-batch.service';
+import {
+  fetchInboundBatches,
+  fetchInboundBatchById
+} from '@/services/inbound-batch.service';
+import { fetchAreas, fetchAreaById, updateArea } from '@/services/area.service';
 import type { Batch } from '@/types/batch';
 import type { ImportTicket } from '@/types/import-ticket';
 import type { InboundBatch } from '@/types/inbound-batch';
+import type { Area } from '@/types/area';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 
 const BATCH_CAPACITY_KG = 20;
 
@@ -68,6 +80,9 @@ export function BatchManagement() {
   const [importTicketForm, setImportTicketForm] = useState(
     defaultImportTicketForm
   );
+  const [areas, setAreas] = useState<Area[]>([]);
+  const [isLoadingAreas, setIsLoadingAreas] = useState(false);
+  const [warehouseId, setWarehouseId] = useState<string | null>(null);
 
   const loadBatches = async () => {
     setIsLoading(true);
@@ -106,6 +121,33 @@ export function BatchManagement() {
     }
   };
 
+  const loadAreasByWarehouse = async (warehouseIdParam: string) => {
+    if (!warehouseIdParam) {
+      setAreas([]);
+      return;
+    }
+
+    setIsLoadingAreas(true);
+    try {
+      const res = await fetchAreas({
+        page: 1,
+        limit: 100,
+        warehouseId: warehouseIdParam
+      });
+      setAreas(res.data || []);
+    } catch (error) {
+      console.error('Unable to load areas', error);
+      toast({
+        variant: 'destructive',
+        title: 'Không thể tải danh sách khu vực',
+        description: error instanceof Error ? error.message : undefined
+      });
+      setAreas([]);
+    } finally {
+      setIsLoadingAreas(false);
+    }
+  };
+
   useEffect(() => {
     loadBatches();
     loadImportTickets();
@@ -115,7 +157,65 @@ export function BatchManagement() {
 
   const resetImportTicketForm = () => {
     setImportTicketForm(defaultImportTicketForm);
+    setAreas([]);
+    setWarehouseId(null);
   };
+
+  // Fetch areas khi mở dialog và có selectedInboundForDetail
+  useEffect(() => {
+    if (isInboundDetailOpen && selectedInboundForDetail?.id) {
+      // Fetch lại InboundBatch với full details để có đầy đủ thông tin warehouse
+      const loadInboundBatchWithDetails = async () => {
+        try {
+          const fullInboundBatch = await fetchInboundBatchById(
+            selectedInboundForDetail.id
+          );
+
+          // Lấy warehouseId từ InboundBatch với full details
+          // Ưu tiên: warehouseId trực tiếp -> warehouse.id -> harvestDetail.harvestTicket.harvestScheduleId.supplierId.warehouse.id
+          const warehouseIdFromInbound =
+            fullInboundBatch.warehouseId ||
+            fullInboundBatch.warehouse?.id ||
+            fullInboundBatch.harvestDetail?.harvestTicket?.harvestScheduleId
+              ?.supplierId?.warehouse?.id;
+
+          if (warehouseIdFromInbound) {
+            setWarehouseId(warehouseIdFromInbound);
+            await loadAreasByWarehouse(warehouseIdFromInbound);
+          } else {
+            // Nếu không có warehouseId, hiển thị thông báo
+            setAreas([]);
+            setWarehouseId(null);
+            console.warn(
+              'Inbound batch không có thông tin warehouse:',
+              fullInboundBatch
+            );
+            toast({
+              variant: 'destructive',
+              title: 'Không tìm thấy warehouse',
+              description:
+                'Inbound batch này không có thông tin warehouse. Vui lòng kiểm tra lại.'
+            });
+          }
+        } catch (error) {
+          console.error('Failed to load inbound batch details', error);
+          setAreas([]);
+          setWarehouseId(null);
+          toast({
+            variant: 'destructive',
+            title: 'Không thể tải thông tin inbound batch',
+            description: error instanceof Error ? error.message : undefined
+          });
+        }
+      };
+
+      void loadInboundBatchWithDetails();
+    } else {
+      setAreas([]);
+      setWarehouseId(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isInboundDetailOpen, selectedInboundForDetail?.id]);
 
   const handleCreateImportTicket = async () => {
     if (!selectedInboundForDetail?.id) {
@@ -157,6 +257,47 @@ export function BatchManagement() {
       };
 
       const newTicket = await createImportTicket(payload);
+
+      // Nếu có chọn area, cập nhật availableCapacity của area đó
+      if (importTicketForm.areaId) {
+        try {
+          // Tính số batch sẽ được tạo (mỗi batch 20kg)
+          const numberOfBatches = Math.floor(
+            importTicketForm.realityQuantity / BATCH_CAPACITY_KG
+          );
+          const totalWeightInKg = numberOfBatches * BATCH_CAPACITY_KG;
+
+          // Fetch area hiện tại để lấy availableCapacity
+          const currentArea = await fetchAreaById(importTicketForm.areaId);
+          const currentAvailableCapacity =
+            currentArea.availableCapacity ?? currentArea.capacity;
+
+          // Tính availableCapacity mới = availableCapacity hiện tại - số kg đã nhập
+          const newAvailableCapacity = Math.max(
+            0,
+            currentAvailableCapacity - totalWeightInKg
+          );
+
+          // Update area với availableCapacity mới
+          await updateArea(importTicketForm.areaId, {
+            availableCapacity: newAvailableCapacity
+          });
+
+          console.log(
+            `Updated area ${importTicketForm.areaId}: availableCapacity from ${currentAvailableCapacity} to ${newAvailableCapacity} (subtracted ${totalWeightInKg}kg from ${numberOfBatches} batches)`
+          );
+        } catch (areaError) {
+          console.error('Failed to update area availableCapacity', areaError);
+          // Không throw error, chỉ log vì import ticket đã được tạo thành công
+          toast({
+            variant: 'destructive',
+            title: 'Cảnh báo',
+            description:
+              'Import ticket đã được tạo nhưng không thể cập nhật sức chứa khả dụng của khu vực. Vui lòng kiểm tra lại.'
+          });
+        }
+      }
+
       setImportTickets((prev) => [newTicket, ...prev]);
 
       toast({
@@ -169,6 +310,11 @@ export function BatchManagement() {
       setSelectedInboundForDetail(null);
       await loadBatches();
       await loadImportTickets();
+
+      // Reload areas để cập nhật availableCapacity trong dropdown
+      if (warehouseId) {
+        await loadAreasByWarehouse(warehouseId);
+      }
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -496,18 +642,43 @@ export function BatchManagement() {
                   )}
                 </div>
                 <div className='space-y-2'>
-                  <Label htmlFor='areaId'>Area ID (tùy chọn)</Label>
-                  <Input
-                    id='areaId'
-                    value={importTicketForm.areaId}
-                    onChange={(e) =>
+                  <Label htmlFor='areaId'>Area (tùy chọn)</Label>
+                  <Select
+                    value={importTicketForm.areaId || undefined}
+                    onValueChange={(value) =>
                       setImportTicketForm((prev) => ({
                         ...prev,
-                        areaId: e.target.value
+                        areaId: value || ''
                       }))
                     }
-                    placeholder='Nhập Area ID'
-                  />
+                    disabled={isLoadingAreas || !warehouseId}
+                  >
+                    <SelectTrigger id='areaId'>
+                      <SelectValue
+                        placeholder={
+                          isLoadingAreas
+                            ? 'Đang tải danh sách khu vực...'
+                            : !warehouseId
+                              ? 'Không tìm thấy warehouse'
+                              : areas.length === 0
+                                ? 'Không có khu vực nào'
+                                : 'Chọn khu vực'
+                        }
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {areas.map((area) => (
+                        <SelectItem key={area.id} value={area.id}>
+                          {area.name} ({area.id})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {warehouseId && areas.length === 0 && !isLoadingAreas && (
+                    <p className='text-muted-foreground text-xs'>
+                      Warehouse này chưa có khu vực nào
+                    </p>
+                  )}
                 </div>
                 <div className='space-y-2'>
                   <Label htmlFor='importDate'>Ngày nhập kho *</Label>
