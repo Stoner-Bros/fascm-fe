@@ -1,19 +1,13 @@
 import PageContainer from '@/components/layout/page-container';
 import { buttonVariants } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Heading } from '@/components/ui/heading';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 import {
-  IconTrendingUp,
+  IconClockHour4,
   IconTrendingDown,
-  IconClockHour4
+  IconTrendingUp
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { WarehouseActivitiesTable } from './warehouse-activities-table';
@@ -39,15 +33,6 @@ export function StockViewPage({}: StockViewPageProps) {
             description='Theo dõi và quản lý các hoạt động xuất nhập kho nông sản'
           />
           <div className='flex gap-2'>
-            <Link
-              href='/dashboard/warehouse/stock/import'
-              className={cn(
-                buttonVariants({ variant: 'default' }),
-                'text-xs md:text-sm'
-              )}
-            >
-              <IconTrendingUp className='mr-2 h-4 w-4' /> Nhập kho
-            </Link>
             <Link
               href='/dashboard/warehouse/stock/export'
               className={cn(

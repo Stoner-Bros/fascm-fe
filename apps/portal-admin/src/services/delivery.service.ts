@@ -5,7 +5,7 @@ import {
   FindAllDeliveriesDto,
   InfinityPaginationResponse,
   UpdateDeliveryDto
-} from '@/types/delivery';
+} from '@/types';
 
 export async function fetchDeliveries({
   page = 1,

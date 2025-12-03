@@ -1,18 +1,7 @@
 'use client';
-import React, { useState, useEffect, useMemo } from 'react';
-import {
-  fetchIoTDevices,
-  createIoTDevice,
-  fetchIoTDeviceById,
-  subscribeIoTDeviceUpdates,
-  subscribeIoTDataUpdates
-} from '@/services/iotdevice.service';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { formatDistanceToNow, parseISO } from 'date-fns';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -20,12 +9,18 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
-  IconTemperature,
-  IconSettings,
-  IconRefresh,
-  IconEye
-} from '@tabler/icons-react';
+  createIoTDevice,
+  fetchIoTDeviceById,
+  fetchIoTDevices,
+  subscribeIoTDataUpdates,
+  subscribeIoTDeviceUpdates
+} from '@/services/iotdevice.service';
+import { IconEye, IconRefresh, IconTemperature } from '@tabler/icons-react';
+import { formatDistanceToNow, parseISO } from 'date-fns';
+import { useEffect, useState } from 'react';
 
 type UIIoTDevice = {
   truckId: string;

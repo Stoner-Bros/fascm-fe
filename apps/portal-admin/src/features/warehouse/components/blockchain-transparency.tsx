@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -6,28 +7,25 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 import {
-  IconSearch,
-  IconShield,
-  IconLink,
-  IconClock,
-  IconMapPin,
-  IconUser,
-  IconTruck,
-  IconPackage,
-  IconLeaf,
   IconCheck,
+  IconClock,
   IconCopy,
   IconExternalLink,
+  IconLeaf,
+  IconLink,
+  IconMapPin,
+  IconPackage,
   IconQrcode,
-  IconFingerprint
+  IconSearch,
+  IconShield,
+  IconTruck
 } from '@tabler/icons-react';
-import { cn } from '@/lib/utils';
+import { useState } from 'react';
 
 interface BlockchainTransparencyProps {
   className?: string;

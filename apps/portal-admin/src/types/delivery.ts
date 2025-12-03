@@ -2,6 +2,9 @@
 // Core Delivery Types (aligned with backend API)
 // ============================================================================
 
+import { Consignee } from './consignee';
+import { HarvestSchedule } from './harvest-schedule';
+
 /**
  * IoT Device type for truck monitoring
  */
@@ -26,44 +29,6 @@ export interface Truck {
   currentLocation?: string | null;
   licensePhoto?: string | null;
   iotDevice?: IoTDevice[] | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * Supplier type for harvest schedules
- */
-export interface Supplier {
-  id: string;
-  name?: string | null;
-  address?: string | null;
-  phone?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * Harvest Schedule type (aligned with backend)
- */
-export interface HarvestSchedule {
-  id: string;
-  description?: string | null;
-  status?: string | null;
-  harvestDate?: string | null;
-  reason?: string | null;
-  supplierId?: Supplier | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-/**
- * Consignee type for order schedules
- */
-export interface Consignee {
-  id: string;
-  name?: string | null;
-  address?: string | null;
-  phone?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -134,16 +99,6 @@ export interface FindAllDeliveriesDto {
   orderScheduleId?: string;
   status?: string;
   sort?: 'asc' | 'desc';
-}
-
-/**
- * Pagination response wrapper
- */
-export interface InfinityPaginationResponse<T> {
-  data: T[];
-  page: number;
-  limit: number;
-  hasNextPage: boolean;
 }
 
 // ============================================================================

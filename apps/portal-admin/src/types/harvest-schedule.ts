@@ -13,20 +13,21 @@ export type HarvestSchedule = {
     address?: string;
   } | null;
   status?: HarvestScheduleStatus | null;
+  reason?: string | null;
   createdAt?: Date | string;
   updatedAt?: Date | string;
   address?: string | null;
 };
 
 export type HarvestScheduleStatus =
-  | 'PENDING'
-  | 'REJECTED'
-  | 'COMPLETED'
-  | 'PREPARING'
-  | 'DELIVERING'
-  | 'DELIVERED'
-  | 'APPROVED'
-  | 'CANCELLED';
+  | 'pending'
+  | 'rejected'
+  | 'completed'
+  | 'preparing'
+  | 'delivering'
+  | 'delivered'
+  | 'approved'
+  | 'cancelled';
 export type CreateHarvestScheduleDto = {
   description?: string | null;
   harvestDate: string | Date;

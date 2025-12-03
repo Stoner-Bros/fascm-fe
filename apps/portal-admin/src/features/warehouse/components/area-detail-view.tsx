@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import AreaCharts from '@/components/charts/area-charts';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -9,41 +10,37 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import {
-  IconArrowLeft,
-  IconThermometer,
-  IconDroplet,
-  IconBox,
-  IconAlertTriangle,
-  IconSettings,
-  IconHistory,
-  IconBell,
-  IconEye,
-  IconEdit,
-  IconRefresh,
-  IconActivity,
-  IconBarcode,
-  IconPackage,
-  IconClock,
-  IconMapPin,
-  IconShield
-} from '@tabler/icons-react';
-import AreaCharts from '@/components/charts/area-charts';
 import {
   createAreaSetting,
   fetchAreaSettings,
   updateAreaSetting
 } from '@/services/area-setting.service';
-import type { AreaSetting } from '@/types/area-setting';
 import { fetchAreaById } from '@/services/area.service';
+import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
 import { fetchWarehouseById } from '@/services/warehouse.service';
 import type { Area as AreaEntity } from '@/types/area';
+import type { AreaSetting } from '@/types/area-setting';
 import type { Warehouse } from '@/types/warehouse';
-import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
+import {
+  IconActivity,
+  IconAlertTriangle,
+  IconArrowLeft,
+  IconBell,
+  IconBox,
+  IconClock,
+  IconDroplet,
+  IconHistory,
+  IconMapPin,
+  IconPackage,
+  IconRefresh,
+  IconSettings,
+  IconShield,
+  IconThermometer
+} from '@tabler/icons-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 interface AreaDetailViewProps {
   warehouseId: string;

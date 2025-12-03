@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import {
   Table,
   TableBody,
   TableCell,
@@ -26,34 +33,22 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
-import {
-  IconArchive,
-  IconRefresh,
-  IconSearch,
-  IconTicket
-} from '@tabler/icons-react';
-import { createBatch, fetchBatches } from '@/services/batch.service';
+import { fetchAreaById, fetchAreas, updateArea } from '@/services/area.service';
+import { fetchBatches } from '@/services/batch.service';
 import {
   createImportTicket,
   fetchImportTickets
 } from '@/services/import-ticket.service';
 import {
-  fetchInboundBatches,
-  fetchInboundBatchById
+  fetchInboundBatchById,
+  fetchInboundBatches
 } from '@/services/inbound-batch.service';
-import { fetchAreas, fetchAreaById, updateArea } from '@/services/area.service';
+import type { Area } from '@/types/area';
 import type { Batch } from '@/types/batch';
 import type { ImportTicket } from '@/types/import-ticket';
 import type { InboundBatch } from '@/types/inbound-batch';
-import type { Area } from '@/types/area';
-import { DateTimePicker } from '@/components/ui/date-time-picker';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+import { IconArchive, IconRefresh, IconSearch } from '@tabler/icons-react';
+import { useEffect, useMemo, useState } from 'react';
 
 const BATCH_CAPACITY_KG = 20;
 

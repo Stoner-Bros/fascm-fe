@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
 import PageContainer from '@/components/layout/page-container';
+import { Badge } from '@/components/ui/badge';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -9,25 +10,6 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import {
-  IconPackage,
-  IconTemperature,
-  IconDroplet,
-  IconPlus,
-  IconEye,
-  IconBarcode,
-  IconArrowLeft,
-  IconSettings,
-  IconRefresh
-} from '@tabler/icons-react';
-import Link from 'next/link';
-import { cn } from '@/lib/utils';
-import { buttonVariants } from '@/components/ui/button';
-import { useToast } from '@/components/ui/use-toast';
 import {
   Dialog,
   DialogContent,
@@ -37,12 +19,29 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { fetchWarehouseById } from '@/services/warehouse.service';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
 import { createArea, fetchAreas } from '@/services/area.service';
 import { fetchManagers } from '@/services/manager.service';
-import type { Warehouse } from '@/types/warehouse';
+import { fetchWarehouseById } from '@/services/warehouse.service';
 import type { Area } from '@/types/area';
 import type { Manager } from '@/types/manager';
+import type { Warehouse } from '@/types/warehouse';
+import {
+  IconArrowLeft,
+  IconBarcode,
+  IconDroplet,
+  IconEye,
+  IconPackage,
+  IconPlus,
+  IconRefresh,
+  IconSettings,
+  IconTemperature
+} from '@tabler/icons-react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 
 interface WarehouseDetailPageProps {
   warehouseId: string;
@@ -565,7 +564,7 @@ export default function WarehouseDetailPage({
                   </div>
 
                   {/* Sensors */}
-                  <div className='space-y-1'>
+                  {/* <div className='space-y-1'>
                     <p className='text-xs font-medium'>
                       Cảm biến ({area.sensors.length}):
                     </p>
@@ -597,7 +596,7 @@ export default function WarehouseDetailPage({
                         </div>
                       ))}
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Actions */}
                   <div className='flex gap-1'>

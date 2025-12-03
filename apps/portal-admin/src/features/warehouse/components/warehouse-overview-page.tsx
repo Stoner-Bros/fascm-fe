@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
 import PageContainer from '@/components/layout/page-container';
+import { Badge } from '@/components/ui/badge';
+import { Button, buttonVariants } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -9,25 +10,6 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Heading } from '@/components/ui/heading';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Button, buttonVariants } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import {
-  IconPackage,
-  IconAlertTriangle,
-  IconTemperature,
-  IconDroplet,
-  IconTruck,
-  IconPlus,
-  IconEye,
-  IconBarcode,
-  IconClockHour4,
-  IconTrendingUp
-} from '@tabler/icons-react';
-import Link from 'next/link';
-import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -35,9 +17,10 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
+import { Heading } from '@/components/ui/heading';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
+import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
@@ -45,9 +28,25 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { createWarehouse, fetchWarehouses } from '@/services/warehouse.service';
+import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/components/ui/use-toast';
+import { cn } from '@/lib/utils';
 import { fetchManagers, updateManager } from '@/services/manager.service';
+import { createWarehouse, fetchWarehouses } from '@/services/warehouse.service';
 import type { Manager } from '@/types/manager';
+import {
+  IconAlertTriangle,
+  IconBarcode,
+  IconClockHour4,
+  IconDroplet,
+  IconEye,
+  IconPackage,
+  IconPlus,
+  IconTemperature,
+  IconTrendingUp
+} from '@tabler/icons-react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 
 interface WarehouseOverviewPageProps {}
 

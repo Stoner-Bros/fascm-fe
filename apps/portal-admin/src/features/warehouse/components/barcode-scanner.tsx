@@ -1,29 +1,23 @@
 'use client';
-import { useState, useRef, useEffect } from 'react';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import {
-  IconScan,
-  IconCamera,
-  IconX,
-  IconCheck,
-  IconPackage,
-  IconBarcode,
-  IconHistory,
-  IconPlus,
-  IconMinus
-} from '@tabler/icons-react';
 import { cn } from '@/lib/utils';
+import {
+  IconBarcode,
+  IconCamera,
+  IconCheck,
+  IconHistory,
+  IconMinus,
+  IconPackage,
+  IconPlus,
+  IconScan,
+  IconX
+} from '@tabler/icons-react';
+import { useEffect, useRef, useState } from 'react';
 
 interface BarcodeScannerProps {
   className?: string;

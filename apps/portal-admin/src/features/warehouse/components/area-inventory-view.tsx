@@ -1,27 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  IconPackage,
-  IconArrowLeft,
-  IconSettings,
-  IconExternalLink
-} from '@tabler/icons-react';
-import { AreaProductsTable } from './area-products-table';
-import type { Product } from '@/types/product';
-import type { Batch } from '@/types/batch';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchAreaById } from '@/services/area.service';
 import { fetchWarehouseById } from '@/services/warehouse.service';
+import type { Batch } from '@/types/batch';
+import type { Product } from '@/types/product';
+import { IconArrowLeft, IconSettings } from '@tabler/icons-react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+// import { AreaProductsTable } from './area-products-table';
 
 interface AreaInventoryViewProps {
   warehouseId: string;
@@ -162,14 +151,14 @@ export default function AreaInventoryView({
       )}
 
       {/* Products Table */}
-      <AreaProductsTable
+      {/* <AreaProductsTable
         areaName={areaName || `Khu vực ${areaId}`}
         products={areaProducts}
         batches={areaBatches}
         onViewProduct={handleViewProduct}
         onEditBatch={handleEditBatch}
         onNavigateToInventory={handleNavigateToInventory}
-      />
+      /> */}
     </div>
   );
 }

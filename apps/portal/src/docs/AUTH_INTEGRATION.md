@@ -53,20 +53,24 @@ export const LoginForm = () => {
   return (
     <form onSubmit={handleSubmit}>
       <input
-        type="email"
+        type='email'
         value={credentials.email}
-        onChange={(e) => setCredentials(prev => ({ ...prev, email: e.target.value }))}
-        placeholder="Email"
+        onChange={(e) =>
+          setCredentials((prev) => ({ ...prev, email: e.target.value }))
+        }
+        placeholder='Email'
         required
       />
       <input
-        type="password"
+        type='password'
         value={credentials.password}
-        onChange={(e) => setCredentials(prev => ({ ...prev, password: e.target.value }))}
-        placeholder="Password"
+        onChange={(e) =>
+          setCredentials((prev) => ({ ...prev, password: e.target.value }))
+        }
+        placeholder='Password'
         required
       />
-      <button type="submit" disabled={isLoading}>
+      <button type='submit' disabled={isLoading}>
         {isLoading ? 'Logging in...' : 'Login'}
       </button>
     </form>
@@ -80,13 +84,8 @@ export const LoginForm = () => {
 import { useAuth } from '@/hooks/use-auth';
 
 export const UserProfile = () => {
-  const {
-    user,
-    isAuthenticated,
-    userDisplayName,
-    userRole,
-    logout
-  } = useAuth();
+  const { user, isAuthenticated, userDisplayName, userRole, logout } =
+    useAuth();
 
   if (!isAuthenticated) {
     return <div>Please log in</div>;
@@ -148,7 +147,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   }, [initialize]);
 
   return (
-    <html lang="en">
+    <html lang='en'>
       <body>{children}</body>
     </html>
   );
@@ -162,22 +161,22 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 ```tsx
 const {
   // State
-  user,              // Current user object
-  isAuthenticated,   // Boolean authentication status
-  isLoading,         // Loading state for async operations
-  userDisplayName,   // Formatted display name
-  userRole,          // User's role
+  user, // Current user object
+  isAuthenticated, // Boolean authentication status
+  isLoading, // Loading state for async operations
+  userDisplayName, // Formatted display name
+  userRole, // User's role
 
   // Actions
-  login,             // (credentials) => Promise<AuthLoginResponse>
-  logout,            // () => void
-  register,          // (data) => Promise<AuthMeResponse>
-  updateProfile,     // (updates) => Promise<AuthMeResponse>
-  refreshUserData,   // () => Promise<AuthMeResponse>
+  login, // (credentials) => Promise<AuthLoginResponse>
+  logout, // () => void
+  register, // (data) => Promise<AuthMeResponse>
+  updateProfile, // (updates) => Promise<AuthMeResponse>
+  refreshUserData, // () => Promise<AuthMeResponse>
 
   // Utilities
-  checkPermission,   // (role: string) => boolean
-  hasRole,           // (role: string) => boolean
+  checkPermission, // (role: string) => boolean
+  hasRole // (role: string) => boolean
 } = useAuth();
 ```
 
