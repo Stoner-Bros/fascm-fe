@@ -1,67 +1,67 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
-  CardTitle,
-  CardDescription
+  CardTitle
 } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
-  DialogFooter
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
 } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
 import {
   Popover,
   PopoverContent,
   PopoverTrigger
 } from '@/components/ui/popover';
-import {
-  IconTruck,
-  IconCpu,
-  IconMapPin,
-  IconWeight,
-  IconPlus,
-  IconRefresh,
-  IconEdit,
-  IconTrash,
-  IconSearch,
-  IconSettings,
-  IconBell
-} from '@tabler/icons-react';
-import {
-  createTruck,
-  fetchTrucks,
-  updateTruck,
-  deleteTruck,
-  fetchTruckSettings,
-  createTruckSetting,
-  updateTruckSetting,
-  fetchTruckAlerts,
-  fetchTruckSettingByTruckId,
-  fetchActiveTruckAlertByTruckId
-} from '@/services/truck.service';
-import type {
-  Truck,
-  CreateTruckDto,
-  TruckSetting,
-  CreateTruckSettingDto,
-  UpdateTruckSettingDto,
-  TruckAlert
-} from '@/types/truck';
-import { useTranslations } from 'next-intl';
+import { useToast } from '@/components/ui/use-toast';
 import { useDebounce } from '@/hooks/use-debounce';
 import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
+import {
+  createTruck,
+  createTruckSetting,
+  deleteTruck,
+  fetchActiveTruckAlertByTruckId,
+  fetchTruckAlerts,
+  fetchTrucks,
+  fetchTruckSettingByTruckId,
+  fetchTruckSettings,
+  updateTruck,
+  updateTruckSetting
+} from '@/services/truck.service';
+import {
+  type CreateTruckDto,
+  type CreateTruckSettingDto,
+  type Truck,
+  type TruckAlert,
+  type TruckSetting,
+  TruckStatusEnum,
+  type UpdateTruckSettingDto
+} from '@/types/truck';
+import {
+  IconBell,
+  IconCpu,
+  IconEdit,
+  IconMapPin,
+  IconPlus,
+  IconSearch,
+  IconSettings,
+  IconTrash,
+  IconTruck,
+  IconWeight
+} from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
+import { useEffect, useRef, useState } from 'react';
 
 function StatusBadge({ status, t }: { status?: string | null; t: any }) {
   if (!status) return <Badge variant='outline'>{t('status.unknown')}</Badge>;
@@ -149,7 +149,7 @@ export function TruckManagement() {
     licensePlate: '',
     model: '',
     capacity: null,
-    status: 'active',
+    status: TruckStatusEnum.AVAILABLE,
     currentLocation: '',
     licensePhoto: ''
   });
@@ -265,7 +265,7 @@ export function TruckManagement() {
       licensePlate: '',
       model: '',
       capacity: null,
-      status: 'active',
+      status: TruckStatusEnum.AVAILABLE,
       currentLocation: '',
       licensePhoto: ''
     });
@@ -378,7 +378,7 @@ export function TruckManagement() {
       licensePlate: truck.licensePlate || '',
       model: truck.model || '',
       capacity: truck.capacity,
-      status: truck.status || 'active',
+      status: truck.status || TruckStatusEnum.AVAILABLE,
       currentLocation: truck.currentLocation || '',
       licensePhoto: truck.licensePhoto || ''
     });
@@ -865,17 +865,26 @@ export function TruckManagement() {
               <Label htmlFor='status'>{t('fields.status')}</Label>
               <select
                 id='status'
-                value={form.status || 'active'}
-                onChange={(e) => setForm({ ...form, status: e.target.value })}
+                value={form.status || TruckStatusEnum.AVAILABLE}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    status: e.target.value as TruckStatusEnum
+                  })
+                }
                 className='border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm'
               >
-                <option value='active'>{t('status.active')}</option>
-                <option value='inactive'>{t('status.inactive')}</option>
-                <option value='maintenance'>{t('status.maintenance')}</option>
-                <option value='available'>{t('status.available')}</option>
-                <option value='in_use'>{t('status.inUse')}</option>
-                <option value='out_of_service'>
-                  {t('status.outOfService')}
+                <option value={TruckStatusEnum.AVAILABLE}>
+                  {t('status.available')}
+                </option>
+                <option value={TruckStatusEnum.UNAVAILABLE}>
+                  {t('status.unavailable')}
+                </option>
+                <option value={TruckStatusEnum.MAINTENANCE}>
+                  {t('status.maintenance')}
+                </option>
+                <option value={TruckStatusEnum.IN_USE}>
+                  {t('status.inUse')}
                 </option>
               </select>
             </div>
@@ -983,17 +992,26 @@ export function TruckManagement() {
               <Label htmlFor='edit-status'>{t('fields.status')}</Label>
               <select
                 id='edit-status'
-                value={form.status || 'active'}
-                onChange={(e) => setForm({ ...form, status: e.target.value })}
+                value={form.status || TruckStatusEnum.AVAILABLE}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    status: e.target.value as TruckStatusEnum
+                  })
+                }
                 className='border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm'
               >
-                <option value='active'>{t('status.active')}</option>
-                <option value='inactive'>{t('status.inactive')}</option>
-                <option value='maintenance'>{t('status.maintenance')}</option>
-                <option value='available'>{t('status.available')}</option>
-                <option value='in_use'>{t('status.inUse')}</option>
-                <option value='out_of_service'>
-                  {t('status.outOfService')}
+                <option value={TruckStatusEnum.AVAILABLE}>
+                  {t('status.available')}
+                </option>
+                <option value={TruckStatusEnum.UNAVAILABLE}>
+                  {t('status.unavailable')}
+                </option>
+                <option value={TruckStatusEnum.MAINTENANCE}>
+                  {t('status.maintenance')}
+                </option>
+                <option value={TruckStatusEnum.IN_USE}>
+                  {t('status.inUse')}
                 </option>
               </select>
             </div>

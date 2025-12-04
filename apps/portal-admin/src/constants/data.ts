@@ -19,7 +19,22 @@ export const navItems: NavItem[] = [
     icon: 'dashboard',
     isActive: false,
     shortcut: ['d', 'd'],
-    items: [] // Empty array as there are no child items for Dashboard
+    items: []
+  },
+  {
+    title: 'Category',
+    url: '/dashboard/category',
+    icon: 'tag',
+    shortcut: ['c', 'c'],
+    isActive: true,
+    items: [
+      {
+        title: 'Product',
+        url: '/dashboard/product',
+        icon: 'product',
+        shortcut: ['p', 'p']
+      }
+    ]
   },
   {
     title: 'Harvest',
@@ -27,7 +42,7 @@ export const navItems: NavItem[] = [
     icon: 'product',
     shortcut: ['h', 'h'],
     isActive: true,
-    items: [] // No child items
+    items: []
   },
   {
     title: 'Order',
@@ -77,12 +92,6 @@ export const navItems: NavItem[] = [
         shortcut: ['d', 'o']
       },
       {
-        title: 'Truck',
-        url: '/dashboard/delivery/truck',
-        icon: 'delivery',
-        shortcut: ['d', 't']
-      },
-      {
         title: 'Tracking',
         url: '/dashboard/delivery/tracking',
         icon: 'delivery',
@@ -97,19 +106,12 @@ export const navItems: NavItem[] = [
     ]
   },
   {
-    title: 'Category',
-    url: '/dashboard/category',
-    icon: 'tag',
-    shortcut: ['c', 'c'],
+    title: 'Truck',
+    url: '/dashboard/truck',
+    icon: 'truck',
+    shortcut: ['t', 't'],
     isActive: true,
-    items: [
-      {
-        title: 'Product',
-        url: '/dashboard/product',
-        icon: 'product',
-        shortcut: ['p', 'p']
-      }
-    ]
+    items: []
   },
   {
     title: 'IoT Device',
@@ -117,50 +119,43 @@ export const navItems: NavItem[] = [
     icon: 'iotDevice',
     shortcut: ['w', 'a'],
     isActive: true,
-    items: [] // No child items
+    items: []
   },
   {
     title: 'Account',
-    url: '/dashboard/profile', // Navigate to profile page
+    url: '',
     icon: 'billing',
     isActive: true,
-
     items: [
       {
-        title: 'Profile',
-        url: '/dashboard/profile',
-        icon: 'userPen',
-        shortcut: ['m', 'm']
-      },
-      {
-        title: 'Managers Accounts',
+        title: 'Manager',
         url: '/dashboard/account/managers',
         icon: 'userPen',
         shortcut: ['a', 'm']
       },
       {
-        title: 'Consignees Accounts',
-        url: '/dashboard/account/consignees',
-        icon: 'user',
-        shortcut: ['a', 'c']
-      },
-      {
-        title: 'Suppliers Accounts',
-        url: '/dashboard/account/suppliers',
-        icon: 'inventory',
-        shortcut: ['a', 's']
-      },
-      {
-        title: 'Staff Accounts',
+        title: 'Staff',
         url: '/dashboard/account/staffs',
         icon: 'employee',
         shortcut: ['a', 'f']
       },
       {
-        title: 'Delivery Staff Accounts',
+        title: 'Delivery Staff',
         url: '/dashboard/account/delivery-staffs',
         icon: 'delivery',
         shortcut: ['a', 'd']
+      },
+      {
+        title: 'Supplier',
+        url: '/dashboard/account/suppliers',
+        icon: 'inventory',
+        shortcut: ['a', 's']
+      },
+      {
+        title: 'Consignee',
+        url: '/dashboard/account/consignees',
+        icon: 'user',
+        shortcut: ['a', 'c']
       }
     ]
   }

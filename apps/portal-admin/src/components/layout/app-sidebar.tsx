@@ -1,9 +1,5 @@
 'use client';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,7 +29,6 @@ import { navItems } from '@/constants/data';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import {
   IconBell,
-  IconChevronRight,
   IconChevronsDown,
   IconCreditCard,
   IconLogout,
@@ -117,26 +112,25 @@ export default function AppSidebar() {
                 <Collapsible
                   key={item.title}
                   asChild
-                  defaultOpen={item.isActive}
+                  open={true}
                   className='group/collapsible'
                 >
                   <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton
-                        tooltip={translatedTitle}
-                        isActive={pathname === item.url}
-                        onClick={(e) => {
-                          if (item.url && item.url !== '#') {
-                            e.preventDefault();
-                            router.push(item.url);
-                          }
-                        }}
-                      >
-                        {item.icon && <Icon />}
-                        <span>{translatedTitle}</span>
-                        <IconChevronRight className='ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
+                    <SidebarMenuButton
+                      tooltip={translatedTitle}
+                      onClick={(e) => {
+                        if (item.url && item.url !== '#') {
+                          e.preventDefault();
+                          router.push(item.url);
+                        }
+                      }}
+                      className={
+                        item.url ? 'cursor-pointer' : 'hover:bg-transparent'
+                      }
+                    >
+                      {item.icon && <Icon />}
+                      <span>{translatedTitle}</span>
+                    </SidebarMenuButton>
                     <CollapsibleContent>
                       <SidebarMenuSub>
                         {item.items?.map((subItem) => (
