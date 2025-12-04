@@ -254,8 +254,9 @@ export default function OrderDetailPage() {
                         : new Date().toLocaleString('vi-VN')}
                     </div>
                   </div>
-                ) : String(order.orderSchedule?.status ?? '').toLowerCase() ===
-                    'delivering' && order.orderSchedule?.address ? (
+                ) : ['delivering', 'delivered', 'preparing'].includes(
+                    String(order.orderSchedule?.status ?? '').toLowerCase()
+                  ) && order.orderSchedule?.address ? (
                   <DeliveryRouteSim
                     cargo={`Khối lượng ${String(order.totalMass ?? '')} kg`}
                     startAddress={'Trung tâm TP. Hồ Chí Minh'}
@@ -269,7 +270,7 @@ export default function OrderDetailPage() {
                   />
                 ) : (
                   <div className='text-muted-foreground text-sm'>
-                    Bản đồ chỉ hiển thị khi trạng thái đang giao hàng
+                    Bản đồ hiển thị khi trạng thái chuẩn bị/giao/đã giao hàng
                   </div>
                 )}
               </CardContent>
