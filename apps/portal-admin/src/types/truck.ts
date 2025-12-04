@@ -1,8 +1,15 @@
 import { IoTDeviceBE } from './iot-device';
 
+export enum TruckStatusEnum {
+  AVAILABLE = 'available',
+  UNAVAILABLE = 'unavailable',
+  MAINTENANCE = 'maintenance',
+  IN_USE = 'in_use'
+}
+
 export type Truck = {
   id: string;
-  status?: string | null;
+  status?: TruckStatusEnum | null;
   currentLocation?: string | null;
   model?: string | null;
   licensePhoto?: string | null;
@@ -14,7 +21,7 @@ export type Truck = {
 };
 
 export type CreateTruckDto = {
-  status?: string | null;
+  status?: TruckStatusEnum | null;
   currentLocation?: string | null;
   model?: string | null;
   licensePhoto?: string | null;
