@@ -1,21 +1,13 @@
+import { User } from './auth';
 import type { AccountUserPayload } from './common';
+import { Warehouse } from './warehouse';
 
 export type Manager = {
+  warehouse: Warehouse | null;
+  user: User;
   id: string;
-  warehouse?: {
-    id: string;
-    name?: string;
-    address?: string;
-  } | null;
-  user?: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    phone?: string;
-  };
-  createdAt?: string;
-  updatedAt?: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type CreateManagerDto = {

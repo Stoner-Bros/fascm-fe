@@ -3,7 +3,10 @@ import {
   useAuthStore,
   useUser,
   useIsAuthenticated,
-  useFullInfo
+  useFullInfo,
+  useUserRole,
+  useAuthLoading,
+  useUserDisplayName
 } from '@/stores/auth.store';
 import {
   login as authLogin,
@@ -18,9 +21,9 @@ export const useAuth = () => {
   const user = useUser();
   const fullInfo = useFullInfo();
   const isAuthenticated = useIsAuthenticated();
-  const isLoading = useAuthStore((state) => state.isLoading);
-  const userDisplayName = useAuthStore((state) => state.userDisplayName);
-  const userRole = useAuthStore((state) => state.userRole);
+  const isLoading = useAuthLoading();
+  const userDisplayName = useUserDisplayName();
+  const userRole = useUserRole();
   const setLoading = useAuthStore((state) => state.setLoading);
   const setUser = useAuthStore((state) => state.setUser);
   const setFullInfo = useAuthStore((state) => state.setFullInfo);

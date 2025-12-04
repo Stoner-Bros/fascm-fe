@@ -1,21 +1,14 @@
+import { User } from './auth';
 import type { AccountUserPayload } from './common';
+import { Warehouse } from './warehouse';
 
 export type Staff = {
-  id: string;
+  warehouse: Warehouse | null;
   position: string;
-  warehouse?: {
-    id: string;
-    name?: string;
-    address?: string;
-  } | null;
-  user?: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-  };
-  createdAt?: string;
-  updatedAt?: string;
+  user: User;
+  id: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type CreateStaffDto = {

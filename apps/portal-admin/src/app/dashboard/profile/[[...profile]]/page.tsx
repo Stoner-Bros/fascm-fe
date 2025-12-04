@@ -1,3 +1,4 @@
+import ProfileRole from '@/features/profile/components/profile-role';
 import ProfileViewPage from '@/features/profile/components/profile-view-page';
 
 export const metadata = {
@@ -5,5 +6,9 @@ export const metadata = {
 };
 
 export default async function Page() {
-  return <ProfileViewPage />;
+  return (
+    <ProfileRole>
+      <ProfileViewPage />
+    </ProfileRole>
+  );
 }

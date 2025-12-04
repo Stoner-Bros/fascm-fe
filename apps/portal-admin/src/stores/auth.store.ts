@@ -33,11 +33,6 @@ interface AuthState {
   isInitialized: boolean;
   lastSyncTime: number;
 
-  // Computed getters
-  isAuthenticated: boolean;
-  userDisplayName: string;
-  userRole: string | null;
-
   // Actions
   setUser: (user: User | null) => void;
   setFullInfo: (info: any) => void;
@@ -54,26 +49,10 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       // Initial state
       user: null,
+      fullInfo: null,
       isLoading: false,
       isInitialized: false,
       lastSyncTime: 0,
-
-      // Computed properties
-      get isAuthenticated() {
-        return !!get()?.user && checkIsAuthenticated();
-      },
-
-      get userDisplayName() {
-        const user = get()?.user;
-        if (!user) return '';
-        return user.firstName && user.lastName
-          ? `${user.firstName} ${user.lastName}`.trim()
-          : user.email;
-      },
-
-      get userRole() {
-        return get()?.user?.role.name || null;
-      },
 
       // Actions
       setUser: (user) => {
@@ -104,6 +83,7 @@ export const useAuthStore = create<AuthState>()(
       clearAuth: () =>
         set({
           user: null,
+          fullInfo: null,
           isLoading: false,
           lastSyncTime: Date.now()
         }),
@@ -118,7 +98,8 @@ export const useAuthStore = create<AuthState>()(
           get().syncFromCookie();
 
           // Start refresh timer if authenticated
-          if (get().isAuthenticated) {
+          const state = get();
+          if (state.user && checkIsAuthenticated()) {
             const { startTokenRefreshTimer } = await import(
               '@/services/auth.service'
             );
@@ -182,7 +163,6 @@ export const useAuthStore = create<AuthState>()(
       partialize: (state: any) => ({
         // Only persist certain fields in DevTools
         user: state.user,
-        isAuthenticated: state.isAuthenticated,
         lastSyncTime: state.lastSyncTime
       })
     }
@@ -193,10 +173,17 @@ export const useAuthStore = create<AuthState>()(
 export const useUser = () => useAuthStore((state) => state.user);
 export const useFullInfo = () => useAuthStore((state) => state.fullInfo);
 export const useIsAuthenticated = () =>
-  useAuthStore((state) => state.isAuthenticated);
+  useAuthStore((state) => !!state.user && checkIsAuthenticated());
 export const useUserDisplayName = () =>
-  useAuthStore((state) => state.userDisplayName);
-export const useUserRole = () => useAuthStore((state) => state.userRole);
+  useAuthStore((state) => {
+    const user = state.user;
+    if (!user) return '';
+    return user.firstName && user.lastName
+      ? `${user.firstName} ${user.lastName}`.trim()
+      : user.email;
+  });
+export const useUserRole = () =>
+  useAuthStore((state) => state.user?.role?.name || null);
 export const useAuthLoading = () => useAuthStore((state) => state.isLoading);
 
 // Initialize the store when the module loads

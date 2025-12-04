@@ -21,6 +21,8 @@ import {
   getUserSession as getUserSessionShared,
   isAuthenticated as isAuthenticatedShared
 } from '../lib/auth-utils';
+import { RoleEnum } from '@/constants/enums';
+import { DeliveryStaff, Manager, Staff } from '@/types';
 
 // Create client-side cookie getter
 const clientCookieGetter = new ClientCookieGetter();
@@ -169,6 +171,16 @@ export async function me(): Promise<AuthMeResponse> {
   }
 
   return res;
+}
+
+export async function fetchMine(
+  role: RoleEnum
+): Promise<Staff | Manager | DeliveryStaff> {
+  const BASE_PATH = `/${role.toLowerCase().replace(' ', '-')}s`;
+
+  return await fetchJSON<Staff | Manager | DeliveryStaff>(`${BASE_PATH}/mine`, {
+    method: 'GET'
+  });
 }
 
 let refreshPromise: Promise<RefreshResponse | null> | null = null;
