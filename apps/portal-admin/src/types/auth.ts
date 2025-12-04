@@ -10,6 +10,30 @@ export type AuthLoginResponse = {
   user: any;
 };
 
+export type User = {
+  id: number;
+  email: string;
+  provider?: string;
+  socialId?: string | null;
+  firstName?: string;
+  lastName?: string;
+  photo?: {
+    id: string;
+    path: string;
+  } | null;
+  role: {
+    id: number;
+    name: string;
+  };
+  status: {
+    id: number;
+    name: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+};
+
 export type AuthMeResponse = {
   id: number;
   email: string;

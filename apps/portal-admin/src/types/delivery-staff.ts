@@ -1,28 +1,18 @@
+import { User } from './auth';
 import type { AccountUserPayload } from './common';
+import { Truck } from './truck';
+import { Warehouse } from './warehouse';
 
 export type DeliveryStaff = {
-  id: string;
+  truck: Truck | null;
+  warehouse: Warehouse | null;
+  licenseExpiredAt: string;
+  licensePhoto: string;
   licenseNumber: string;
-  licensePhoto?: string;
-  licenseExpiredAt?: string;
-  truck?: {
-    id: string;
-    licenseNumber?: string;
-    model?: string;
-  } | null;
-  warehouse?: {
-    id: string;
-    name?: string;
-    address?: string;
-  } | null;
-  user?: {
-    id: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-  };
-  createdAt?: string;
-  updatedAt?: string;
+  user: User;
+  id: string;
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type CreateDeliveryStaffDto = {
