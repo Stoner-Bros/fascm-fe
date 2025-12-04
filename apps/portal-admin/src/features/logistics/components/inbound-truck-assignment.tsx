@@ -156,10 +156,10 @@ export function InboundTruckAssignment() {
   // Load available trucks
   const loadTrucks = async () => {
     try {
-      const res = await fetchTrucks({ page: 1, limit: 100 });
+      const res = await fetchTrucks({ page: 1, limit: 10 });
       // Filter only active trucks (not maintenance or inactive)
       const availableTrucks = res.data.filter(
-        (t: Truck) => t.status === 'active'
+        (t: Truck) => t.status === 'available'
       );
       setTrucks(availableTrucks);
     } catch (error) {
@@ -407,7 +407,7 @@ export function InboundTruckAssignment() {
   };
 
   return (
-    <div className='space-y-4'>
+    <div className='w-full space-y-4'>
       <Card className='w-full'>
         <CardHeader>
           <div className='flex items-center justify-between'>

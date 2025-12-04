@@ -57,7 +57,7 @@ export interface Delivery {
   endLng?: number | null;
   startAddress?: string | null;
   endAddress?: string | null;
-  status?: string | null;
+  status?: DeliveryStatusEnum | null;
   startTime?: string | null;
   endTime?: string | null;
   truck?: Truck | null;
@@ -77,7 +77,7 @@ export interface CreateDeliveryDto {
   endLng?: number | null;
   startAddress?: string | null;
   endAddress?: string | null;
-  status?: string | null;
+  status?: DeliveryStatusEnum | null;
   startTime?: string | null;
   endTime?: string | null;
   truck?: { id: string } | null;
@@ -97,13 +97,21 @@ export interface FindAllDeliveriesDto {
   page?: number;
   limit?: number;
   orderScheduleId?: string;
-  status?: string;
+  status?: DeliveryStatusEnum;
   sort?: 'asc' | 'desc';
 }
 
 // ============================================================================
 // Real-time Delivery Tracking (WebSocket)
 // ============================================================================
+export type DeliveryStatusEnum =
+  | 'scheduled'
+  | 'rejected'
+  | 'completed'
+  | 'delivering'
+  | 'delivered'
+  | 'returning'
+  | 'canceled';
 
 /**
  * Payload for starting a delivery tracking session
@@ -259,44 +267,44 @@ export interface Order {
 /**
  * @deprecated Legacy outbound delivery type
  */
-export interface OutboundDelivery {
-  id: string;
-  warehouseId: string;
-  warehouseName: string;
-  warehouseAddress: string;
-  truckId: string;
-  truck: Truck;
-  orders: Order[];
-  totalWeight: number;
-  totalVolume: number;
-  totalValue: number;
-  departureTime: string;
-  estimatedArrival: string;
-  actualArrival?: string;
-  status:
-    | 'scheduled'
-    | 'loading'
-    | 'departed'
-    | 'in_transit'
-    | 'delivering'
-    | 'completed'
-    | 'returned'
-    | 'cancelled';
-  monitoring?: TruckMonitoring;
-  route: {
-    orderId: string;
-    customerName: string;
-    customerAddress: string;
-    estimatedArrival: string;
-    actualArrival?: string;
-    status: 'pending' | 'arrived' | 'delivered' | 'failed';
-  }[];
-  priorityLevel: 'low' | 'medium' | 'high' | 'urgent';
-  specialHandling?: string;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
-}
+// export interface OutboundDelivery {
+//   id: string;
+//   warehouseId: string;
+//   warehouseName: string;
+//   warehouseAddress: string;
+//   truckId: string;
+//   truck: Truck;
+//   orders: Order[];
+//   totalWeight: number;
+//   totalVolume: number;
+//   totalValue: number;
+//   departureTime: string;
+//   estimatedArrival: string;
+//   actualArrival?: string;
+//   status:
+//     | 'scheduled'
+//     | 'loading'
+//     | 'departed'
+//     | 'in_transit'
+//     | 'delivering'
+//     | 'completed'
+//     | 'returned'
+//     | 'cancelled';
+//   monitoring?: TruckMonitoring;
+//   route: {
+//     orderId: string;
+//     customerName: string;
+//     customerAddress: string;
+//     estimatedArrival: string;
+//     actualArrival?: string;
+//     status: 'pending' | 'arrived' | 'delivered' | 'failed';
+//   }[];
+//   priorityLevel: 'low' | 'medium' | 'high' | 'urgent';
+//   specialHandling?: string;
+//   notes?: string;
+//   createdAt: string;
+//   updatedAt: string;
+// }
 
 /**
  * @deprecated Legacy validation type

@@ -147,7 +147,7 @@ export function OutboundTruckAssignment() {
       const res = await fetchTrucks({ page: 1, limit: 100 });
       // Filter only active trucks (not maintenance or inactive)
       const availableTrucks = res.data.filter(
-        (t: Truck) => t.status === 'active'
+        (t: Truck) => t.status === 'available'
       );
       setTrucks(availableTrucks);
     } catch (error) {
@@ -248,8 +248,8 @@ export function OutboundTruckAssignment() {
   };
 
   return (
-    <div className='space-y-4'>
-      <Card>
+    <div className='w-full space-y-4'>
+      <Card className='w-full'>
         <CardHeader>
           <div className='flex items-center justify-between'>
             <div>
@@ -325,29 +325,31 @@ export function OutboundTruckAssignment() {
                         />
                       </TableCell>
                       <TableCell className='text-right'>
-                        <div className='flex justify-end gap-2'>
-                          <Button
-                            variant='ghost'
-                            size='sm'
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setIsDetailDialogOpen(true);
-                            }}
-                          >
-                            <IconEye className='h-4 w-4' />
-                          </Button>
-                          <Button
-                            variant='default'
-                            size='sm'
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setIsAssignDialogOpen(true);
-                            }}
-                          >
-                            <IconTruck className='mr-1 h-4 w-4' />
-                            Phân công xe
-                          </Button>
-                        </div>
+                        {order.orderSchedule?.status === 'approved' && (
+                          <div className='flex justify-end gap-2'>
+                            <Button
+                              variant='ghost'
+                              size='sm'
+                              onClick={() => {
+                                setSelectedOrder(order);
+                                setIsDetailDialogOpen(true);
+                              }}
+                            >
+                              <IconEye className='h-4 w-4' />
+                            </Button>
+                            <Button
+                              variant='default'
+                              size='sm'
+                              onClick={() => {
+                                setSelectedOrder(order);
+                                setIsAssignDialogOpen(true);
+                              }}
+                            >
+                              <IconTruck className='mr-1 h-4 w-4' />
+                              Phân công xe
+                            </Button>
+                          </div>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))

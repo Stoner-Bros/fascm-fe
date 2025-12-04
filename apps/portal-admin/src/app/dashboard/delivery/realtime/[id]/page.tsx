@@ -24,9 +24,12 @@ const Polyline = dynamic(
 import type { Icon, Map as LeafletMap } from 'leaflet';
 import { io } from 'socket.io-client';
 import { useParams } from 'next/navigation';
-import { fetchDeliveryById, updateDelivery } from '@/services/delivery.service';
-import PageContainer from '@/components/layout/page-container';
+import {
+  fetchDeliveryById,
+  updateDeliveryStatus
+} from '@/services/delivery.service';
 import { Delivery } from '@/types';
+import PageContainer from '@/components/layout/page-container';
 type LatLng = { lat: number; lng: number };
 
 function distanceSq(a: [number, number], b: LatLng) {
@@ -185,7 +188,7 @@ export default function DeliveryDetailPage() {
       if (Array.isArray(p.route)) setRoute(p.route as [number, number][]);
       if (typeof p.orderId === 'string') setOrderId(p.orderId);
       try {
-        await updateDelivery(id, { status: 'delivering' });
+        await updateDeliveryStatus(id, 'delivering');
         const d = await fetchDeliveryById(id);
         setSelected(d);
       } catch {}
@@ -209,7 +212,7 @@ export default function DeliveryDetailPage() {
       setEnd({ lat: p.endLat, lng: p.endLng });
       setPos({ lat: p.endLat, lng: p.endLng });
       try {
-        await updateDelivery(id, { status: 'delivered' });
+        await updateDeliveryStatus(id, 'delivered');
         const d = await fetchDeliveryById(id);
         setSelected(d);
       } catch {}
@@ -241,7 +244,7 @@ export default function DeliveryDetailPage() {
       route: route
     });
     try {
-      await updateDelivery(deliveryId, { status: 'delivering' });
+      await updateDeliveryStatus(deliveryId, 'delivering');
       const d = await fetchDeliveryById(deliveryId);
       setSelected(d);
     } catch {}
@@ -261,7 +264,7 @@ export default function DeliveryDetailPage() {
         setProgress(100);
         setCurrentIndex(Math.max(route.length - 1, 0));
         try {
-          await updateDelivery(deliveryId, { status: 'delivered' });
+          await updateDeliveryStatus(deliveryId, 'delivered');
           const d = await fetchDeliveryById(deliveryId);
           setSelected(d);
         } catch {}
@@ -282,7 +285,7 @@ export default function DeliveryDetailPage() {
       i += 1;
     }, 1000);
     try {
-      await updateDelivery(deliveryId, { status: 'delivering' });
+      await updateDeliveryStatus(deliveryId, 'delivering');
       const d = await fetchDeliveryById(deliveryId);
       setSelected(d);
     } catch {}
@@ -302,7 +305,7 @@ export default function DeliveryDetailPage() {
       });
     }
     try {
-      await updateDelivery(deliveryId, { status: 'delivered' });
+      await updateDeliveryStatus(deliveryId, 'delivered');
       const d = await fetchDeliveryById(deliveryId);
       setSelected(d);
     } catch {}
@@ -319,11 +322,11 @@ export default function DeliveryDetailPage() {
     if (timerRef.current) clearInterval(timerRef.current);
     try {
       if (String(selected?.status ?? '').toLowerCase() !== 'delivered') {
-        await updateDelivery(deliveryId, { status: 'delivered' });
+        await updateDeliveryStatus(deliveryId, 'delivered');
         const d1 = await fetchDeliveryById(deliveryId);
         setSelected(d1);
       }
-      await updateDelivery(deliveryId, { status: 'returning' });
+      await updateDeliveryStatus(deliveryId, 'returning');
       const d2 = await fetchDeliveryById(deliveryId);
       setSelected(d2);
     } catch {}
@@ -335,7 +338,7 @@ export default function DeliveryDetailPage() {
         setProgress(100);
         setCurrentIndex(0);
         try {
-          await updateDelivery(deliveryId, { status: 'completed' });
+          await updateDeliveryStatus(deliveryId, 'completed');
           const d = await fetchDeliveryById(deliveryId);
           setSelected(d);
         } catch {}
@@ -366,9 +369,26 @@ export default function DeliveryDetailPage() {
     setCurrentIndex(0);
     setProgress(0);
     try {
-      await updateDelivery(deliveryId, { status: 'completed' });
-      const d = await fetchDeliveryById(deliveryId);
-      setSelected(d);
+      const cur = String(selected?.status ?? '').toLowerCase();
+      if (cur === 'delivering') {
+        await updateDeliveryStatus(deliveryId, 'delivered');
+      }
+      let d1 = await fetchDeliveryById(deliveryId);
+      setSelected(d1);
+      if (String(d1.status ?? '').toLowerCase() !== 'returning') {
+        await updateDeliveryStatus(deliveryId, 'returning');
+      }
+      let attempts = 0;
+      while (attempts < 3) {
+        const d = await fetchDeliveryById(deliveryId);
+        setSelected(d);
+        if (String(d.status ?? '').toLowerCase() === 'returning') break;
+        await new Promise((r) => setTimeout(r, 400));
+        attempts += 1;
+      }
+      await updateDeliveryStatus(deliveryId, 'completed');
+      const d2 = await fetchDeliveryById(deliveryId);
+      setSelected(d2);
     } catch {}
   };
 
