@@ -153,7 +153,7 @@ export function DeliveryTracking() {
   const isDeliveryCompleted = (d: Delivery) => {
     return (
       d.status === 'completed' ||
-      d.status === 'cancelled' ||
+      d.status === 'canceled' ||
       d.harvestSchedule?.status === 'completed'
     );
   };
@@ -179,8 +179,8 @@ export function DeliveryTracking() {
   ).length;
 
   return (
-    <div className='space-y-4'>
-      <Card>
+    <div className='w-full space-y-4'>
+      <Card className='w-full'>
         <CardHeader>
           <div className='flex items-center justify-between'>
             <div>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -22,6 +22,11 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/components/ui/use-toast';
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from '@/components/ui/popover';
+import {
   IconTruck,
   IconCpu,
   IconMapPin,
@@ -30,17 +35,33 @@ import {
   IconRefresh,
   IconEdit,
   IconTrash,
-  IconSearch
+  IconSearch,
+  IconSettings,
+  IconBell
 } from '@tabler/icons-react';
 import {
   createTruck,
   fetchTrucks,
   updateTruck,
-  deleteTruck
+  deleteTruck,
+  fetchTruckSettings,
+  createTruckSetting,
+  updateTruckSetting,
+  fetchTruckAlerts,
+  fetchTruckSettingByTruckId,
+  fetchActiveTruckAlertByTruckId
 } from '@/services/truck.service';
-import type { Truck, CreateTruckDto } from '@/types/truck';
+import type {
+  Truck,
+  CreateTruckDto,
+  TruckSetting,
+  CreateTruckSettingDto,
+  UpdateTruckSettingDto,
+  TruckAlert
+} from '@/types/truck';
 import { useTranslations } from 'next-intl';
 import { useDebounce } from '@/hooks/use-debounce';
+import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
 
 function StatusBadge({ status, t }: { status?: string | null; t: any }) {
   if (!status) return <Badge variant='outline'>{t('status.unknown')}</Badge>;
@@ -97,6 +118,30 @@ export function TruckManagement() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
+  const [openSettingTruckId, setOpenSettingTruckId] = useState<string | null>(
+    null
+  );
+  const [settingForm, setSettingForm] = useState<{
+    id?: string;
+    minHumidity: number | null;
+    maxHumidity: number | null;
+    minTemperature: number | null;
+    maxTemperature: number | null;
+  }>({
+    minHumidity: null,
+    maxHumidity: null,
+    minTemperature: null,
+    maxTemperature: null
+  });
+  const [truckSettingsByTruckId, setTruckSettingsByTruckId] = useState<
+    Record<string, TruckSetting>
+  >({});
+  const [activeAlertsByTruck, setActiveAlertsByTruck] = useState<
+    Record<string, TruckAlert>
+  >({});
+  const [bellOpenId, setBellOpenId] = useState<string | null>(null);
+  const prevAlertsRef = useRef<Record<string, TruckAlert>>({});
+
   // Debounce search input for better performance
   const debouncedSearch = useDebounce(search, 300);
 
@@ -133,6 +178,87 @@ export function TruckManagement() {
     loadTrucks(page);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const [settingsRes, alertsRes] = await Promise.all([
+          fetchTruckSettings({ page: 1, limit: 200 }),
+          fetchTruckAlerts({ page: 1, limit: 200 })
+        ]);
+        const mapSettings: Record<string, TruckSetting> = {};
+        (settingsRes.data || []).forEach((s) => {
+          const tid = (s.truck as any)?.id || s.truck?.id || '';
+          if (tid) mapSettings[tid] = s;
+        });
+        setTruckSettingsByTruckId(mapSettings);
+        const mapAlerts: Record<string, TruckAlert> = {};
+        (alertsRes.data || [])
+          .filter((a) => String(a.status).toLowerCase() === 'active')
+          .forEach((a) => {
+            const tid = (a.truck as any)?.id || a.truck?.id || '';
+            if (tid) mapAlerts[tid] = a;
+          });
+        setActiveAlertsByTruck(mapAlerts);
+      } catch {}
+    })();
+  }, []);
+
+  useEffect(() => {
+    const unsubscribe = subscribeIoTDataUpdates((payload) => {
+      const tid = (payload as any)?.truckId || '';
+      if (!tid) return;
+      const setting = truckSettingsByTruckId[tid];
+      if (!setting) return;
+      const t = Number((payload as any)?.temperature);
+      const h = Number((payload as any)?.humidity);
+      const outOfRange =
+        (setting.minTemperature != null &&
+          !Number.isNaN(t) &&
+          t < Number(setting.minTemperature)) ||
+        (setting.maxTemperature != null &&
+          !Number.isNaN(t) &&
+          t > Number(setting.maxTemperature)) ||
+        (setting.minHumidity != null &&
+          !Number.isNaN(h) &&
+          h < Number(setting.minHumidity)) ||
+        (setting.maxHumidity != null &&
+          !Number.isNaN(h) &&
+          h > Number(setting.maxHumidity));
+      setActiveAlertsByTruck((prev) => {
+        const next = { ...prev };
+        if (outOfRange) {
+          next[tid] = {
+            id: next[tid]?.id || `local-${tid}`,
+            status: 'active',
+            message: `Nhiệt độ/độ ẩm vượt ngưỡng (${!Number.isNaN(t) ? `${t}°C` : '--'}, ${!Number.isNaN(h) ? `${h}%` : '--'})`,
+            alertType: 'sensor',
+            truck: { id: tid }
+          } as TruckAlert;
+        } else {
+          if (
+            next[tid]?.status === 'active' &&
+            next[tid]?.id?.startsWith('local-')
+          ) {
+            delete next[tid];
+          }
+        }
+        return next;
+      });
+    });
+    return () => unsubscribe();
+  }, [truckSettingsByTruckId]);
+
+  useEffect(() => {
+    const prev = prevAlertsRef.current;
+    Object.keys(activeAlertsByTruck).forEach((tid) => {
+      const curr = activeAlertsByTruck[tid];
+      if (!prev[tid] && String(curr?.status).toLowerCase() === 'active') {
+        toast({ title: 'Cảnh báo xe', description: curr?.message || '' });
+      }
+    });
+    prevAlertsRef.current = activeAlertsByTruck;
+  }, [activeAlertsByTruck, toast]);
 
   const resetForm = () => {
     setForm({
@@ -298,6 +424,28 @@ export function TruckManagement() {
     } catch {}
     return {};
   }
+
+  useEffect(() => {
+    if (!trucks || trucks.length === 0) return;
+    (async () => {
+      try {
+        const results = await Promise.all(
+          trucks.map((t) =>
+            fetchActiveTruckAlertByTruckId(t.id).catch(() => null)
+          )
+        );
+        const next: Record<string, TruckAlert> = {};
+        results.forEach((alert, idx) => {
+          const tid = trucks[idx].id;
+          if (alert && String(alert.status).toLowerCase() === 'active') {
+            next[tid] = alert;
+          }
+        });
+        setActiveAlertsByTruck((prev) => ({ ...prev, ...next }));
+      } catch {}
+    })();
+  }, [trucks]);
+
   return (
     <>
       <div className='w-full space-y-6'>
@@ -342,6 +490,37 @@ export function TruckManagement() {
                     <CardTitle className='flex items-center gap-2 text-lg font-semibold'>
                       <IconTruck className='h-4 w-4' />
                       {truck.licensePlate || 'N/A'}
+                      <span className='text-muted-foreground text-sm'>
+                        ({truck.id})
+                      </span>
+                      <span className='ml-2 inline-flex items-center'>
+                        <Popover
+                          open={bellOpenId === truck.id}
+                          onOpenChange={(o) =>
+                            setBellOpenId(o ? truck.id : null)
+                          }
+                        >
+                          <PopoverTrigger asChild>
+                            <button type='button'>
+                              <IconBell
+                                className={
+                                  (activeAlertsByTruck[truck.id]?.status ||
+                                    '') === 'active'
+                                    ? 'h-4 w-4 text-red-600'
+                                    : 'text-muted-foreground h-4 w-4'
+                                }
+                              />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className='w-64' side='top'>
+                            <div className='text-sm font-medium'>Cảnh báo</div>
+                            <div className='text-muted-foreground text-sm'>
+                              {activeAlertsByTruck[truck.id]?.message ||
+                                'Không có cảnh báo'}
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </span>
                     </CardTitle>
                     <StatusBadge status={truck.status} t={t} />
                   </div>
@@ -381,6 +560,48 @@ export function TruckManagement() {
                       onClick={() => setOpenDetailId(truck.id)}
                     >
                       {t('actions.details')}
+                    </Button>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      onClick={async () => {
+                        setOpenSettingTruckId(truck.id);
+                        try {
+                          const s = await fetchTruckSettingByTruckId(truck.id);
+                          if (s) {
+                            setTruckSettingsByTruckId((prev) => ({
+                              ...prev,
+                              [truck.id]: s
+                            }));
+                            setSettingForm({
+                              id: s.id,
+                              minHumidity: s.minHumidity ?? null,
+                              maxHumidity: s.maxHumidity ?? null,
+                              minTemperature: s.minTemperature ?? null,
+                              maxTemperature: s.maxTemperature ?? null
+                            });
+                          } else {
+                            setSettingForm({
+                              id: undefined,
+                              minHumidity: null,
+                              maxHumidity: null,
+                              minTemperature: null,
+                              maxTemperature: null
+                            });
+                          }
+                        } catch {
+                          const cached = truckSettingsByTruckId[truck.id];
+                          setSettingForm({
+                            id: cached?.id,
+                            minHumidity: cached?.minHumidity ?? null,
+                            maxHumidity: cached?.maxHumidity ?? null,
+                            minTemperature: cached?.minTemperature ?? null,
+                            maxTemperature: cached?.maxTemperature ?? null
+                          });
+                        }
+                      }}
+                    >
+                      <IconSettings className='h-4 w-4' />
                     </Button>
                     <Button
                       size='sm'
@@ -841,6 +1062,155 @@ export function TruckManagement() {
               {isDeleting ? t('actions.updating') : t('deleteModal.confirm')}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Truck Setting Dialog */}
+      <Dialog
+        open={!!openSettingTruckId}
+        onOpenChange={(open) => {
+          if (!open) {
+            setOpenSettingTruckId(null);
+            setSettingForm({
+              minHumidity: null,
+              maxHumidity: null,
+              minTemperature: null,
+              maxTemperature: null
+            });
+          }
+        }}
+      >
+        <DialogContent className='max-h-[90vh] max-w-xl overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle>Thiết lập ngưỡng cảm biến</DialogTitle>
+            <DialogDescription>
+              Nhập ngưỡng nhiệt độ và độ ẩm cho xe
+            </DialogDescription>
+          </DialogHeader>
+          <div className='space-y-4 py-4'>
+            <div className='space-y-2'>
+              <Label>Min Temperature (°C)</Label>
+              <Input
+                type='number'
+                value={settingForm.minTemperature ?? ''}
+                onChange={(e) =>
+                  setSettingForm((prev) => ({
+                    ...prev,
+                    minTemperature:
+                      e.target.value === '' ? null : Number(e.target.value)
+                  }))
+                }
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label>Max Temperature (°C)</Label>
+              <Input
+                type='number'
+                value={settingForm.maxTemperature ?? ''}
+                onChange={(e) =>
+                  setSettingForm((prev) => ({
+                    ...prev,
+                    maxTemperature:
+                      e.target.value === '' ? null : Number(e.target.value)
+                  }))
+                }
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label>Min Humidity (%)</Label>
+              <Input
+                type='number'
+                value={settingForm.minHumidity ?? ''}
+                onChange={(e) =>
+                  setSettingForm((prev) => ({
+                    ...prev,
+                    minHumidity:
+                      e.target.value === '' ? null : Number(e.target.value)
+                  }))
+                }
+              />
+            </div>
+            <div className='space-y-2'>
+              <Label>Max Humidity (%)</Label>
+              <Input
+                type='number'
+                value={settingForm.maxHumidity ?? ''}
+                onChange={(e) =>
+                  setSettingForm((prev) => ({
+                    ...prev,
+                    maxHumidity:
+                      e.target.value === '' ? null : Number(e.target.value)
+                  }))
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => {
+                setOpenSettingTruckId(null);
+                setSettingForm({
+                  minHumidity: null,
+                  maxHumidity: null,
+                  minTemperature: null,
+                  maxTemperature: null
+                });
+              }}
+              disabled={isSubmitting}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!openSettingTruckId) return;
+                try {
+                  setIsSubmitting(true);
+                  const payload: CreateTruckSettingDto = {
+                    minHumidity: settingForm.minHumidity ?? undefined,
+                    maxHumidity: settingForm.maxHumidity ?? undefined,
+                    minTemperature: settingForm.minTemperature ?? undefined,
+                    maxTemperature: settingForm.maxTemperature ?? undefined,
+                    truck: { id: openSettingTruckId }
+                  };
+                  if (settingForm.id) {
+                    const p: UpdateTruckSettingDto = { ...payload };
+                    const updated = await updateTruckSetting(settingForm.id, p);
+                    setTruckSettingsByTruckId((prev) => ({
+                      ...prev,
+                      [openSettingTruckId]: updated
+                    }));
+                  } else {
+                    const created = await createTruckSetting(payload);
+                    setTruckSettingsByTruckId((prev) => ({
+                      ...prev,
+                      [openSettingTruckId]: created
+                    }));
+                  }
+                  toast({ title: 'Đã lưu thiết lập' });
+                  setOpenSettingTruckId(null);
+                  setSettingForm({
+                    minHumidity: null,
+                    maxHumidity: null,
+                    minTemperature: null,
+                    maxTemperature: null
+                  });
+                } catch (error) {
+                  toast({
+                    variant: 'destructive',
+                    title: 'Lỗi lưu thiết lập',
+                    description:
+                      error instanceof Error ? error.message : undefined
+                  });
+                } finally {
+                  setIsSubmitting(false);
+                }
+              }}
+              disabled={isSubmitting}
+            >
+              Lưu
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

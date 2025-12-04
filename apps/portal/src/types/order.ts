@@ -26,6 +26,7 @@ export type Order = {
 };
 export type OrderScheduleStatus =
   | 'pending'
+  | 'preparing'
   | 'approved'
   | 'cancelled'
   | 'completed'

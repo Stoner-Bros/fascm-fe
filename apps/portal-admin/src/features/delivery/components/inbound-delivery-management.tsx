@@ -51,7 +51,11 @@ import {
 } from '@/services/delivery.service';
 import { fetchTrucks } from '@/services/truck.service';
 import { fetchHarvestSchedules } from '@/services/harvest-schedule.service';
-import type { Delivery, CreateDeliveryDto } from '@/types/delivery';
+import type {
+  Delivery,
+  CreateDeliveryDto,
+  DeliveryStatusEnum
+} from '@/types/delivery';
 import type { Truck } from '@/types/truck';
 import type { HarvestSchedule } from '@/types/harvest-schedule';
 import { useToast } from '@/components/ui/use-toast';
@@ -71,6 +75,25 @@ const defaultForm: CreateDeliveryDto = {
   truck: null,
   harvestSchedule: null,
   orderSchedule: null
+};
+
+const ENUM_TO_UI: Record<DeliveryStatusEnum, string> = {
+  scheduled: 'scheduled',
+  delivering: 'in_transit',
+  delivered: 'arrived',
+  completed: 'completed',
+  rejected: 'scheduled',
+  returning: 'in_transit',
+  canceled: 'cancelled'
+};
+
+const UI_TO_ENUM: Record<string, DeliveryStatusEnum> = {
+  scheduled: 'scheduled',
+  departed: 'delivering',
+  in_transit: 'delivering',
+  arrived: 'delivered',
+  completed: 'completed',
+  cancelled: 'canceled'
 };
 
 function StatusBadge({ status }: { status?: string | null }) {
@@ -638,9 +661,9 @@ export function InboundDeliveryManagement() {
             <div className='grid gap-2'>
               <Label>Trạng thái</Label>
               <Select
-                value={form.status || 'scheduled'}
+                value={form.status ? ENUM_TO_UI[form.status] : 'scheduled'}
                 onValueChange={(value) =>
-                  setForm((prev) => ({ ...prev, status: value }))
+                  setForm((prev) => ({ ...prev, status: UI_TO_ENUM[value] }))
                 }
               >
                 <SelectTrigger>
@@ -787,9 +810,9 @@ export function InboundDeliveryManagement() {
             <div className='grid gap-2'>
               <Label>Trạng thái</Label>
               <Select
-                value={form.status || 'scheduled'}
+                value={form.status ? ENUM_TO_UI[form.status] : 'scheduled'}
                 onValueChange={(value) =>
-                  setForm((prev) => ({ ...prev, status: value }))
+                  setForm((prev) => ({ ...prev, status: UI_TO_ENUM[value] }))
                 }
               >
                 <SelectTrigger>

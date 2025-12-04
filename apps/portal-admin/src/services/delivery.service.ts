@@ -2,6 +2,7 @@ import { fetchJSON } from '@/lib/client';
 import {
   CreateDeliveryDto,
   Delivery,
+  DeliveryStatusEnum,
   FindAllDeliveriesDto,
   InfinityPaginationResponse,
   UpdateDeliveryDto
@@ -44,13 +45,16 @@ export async function createDelivery(data: CreateDeliveryDto) {
 }
 
 export async function updateDelivery(id: string, data: UpdateDeliveryDto) {
-  return fetchJSON<Delivery>(`/deliveries/${id}/status`, {
+  return fetchJSON<Delivery>(`/deliveries/${id}`, {
     method: 'PATCH',
     body: data
   });
 }
 
-export async function updateDeliveryStatus(id: string, status: string) {
+export async function updateDeliveryStatus(
+  id: string,
+  status: DeliveryStatusEnum
+) {
   return fetchJSON<Delivery>(`/deliveries/${id}/status`, {
     method: 'PATCH',
     body: { status }
