@@ -76,13 +76,10 @@
     "noTrucks": "No trucks found",
     "noTrucksEmpty": "No trucks yet",
     "status": {
-      "active": "Active",
-      "inactive": "Inactive",
       "maintenance": "Maintenance",
       "available": "Available",
       "inUse": "In Use",
-      "outOfService": "Out of Service",
-      "unknown": "Unknown"
+      "unavailable": "Unavailable"
     },
     "fields": {
       "licensePlate": "License Plate",
@@ -108,6 +105,9 @@
       "cancel": "Cancel",
       "create": "Create Truck",
       "update": "Update",
+      "updateStatus": "Update Status",
+      "changeStatus": "Change Status",
+      "changeImage": "Change Image",
       "creating": "Creating...",
       "updating": "Updating..."
     },
@@ -116,11 +116,25 @@
       "createDescription": "Enter truck information to add to the system",
       "editTitle": "Edit Truck",
       "editDescription": "Update truck information {licensePlate}",
+      "statusTitle": "Update Truck Status",
+      "statusDescription": "Change status for truck {licensePlate}",
+      "currentStatus": "Current status",
+      "newStatus": "New status",
+      "selectStatus": "Select a status",
+      "iotTitle": "IoT Devices",
+      "iotDescription": "IoT devices attached to truck {licensePlate}",
       "detailsTitle": "Truck Details",
       "basicInfo": "Basic Information",
       "iotDevicesSection": "IoT Devices",
-      "noIotDevices": "No IoT devices yet",
+      "noIotDevices": "No IoT devices attached",
       "licensePhotoSection": "License Photo"
+    },
+    "iot": {
+      "online": "Online",
+      "offline": "Offline",
+      "temperature": "Temperature",
+      "humidity": "Humidity",
+      "lastUpdate": "Last update"
     },
     "pagination": {
       "previous": "Previous",
@@ -134,10 +148,16 @@
       "updateSuccess": "Truck updated",
       "updateSuccessDesc": "Truck {licensePlate} has been updated",
       "updateError": "Cannot update truck",
+      "statusUpdateSuccess": "Status updated",
+      "statusUpdateSuccessDesc": "Status for truck {licensePlate} has been updated",
+      "statusUpdateError": "Cannot update status",
       "deleteSuccess": "Truck deleted",
       "deleteSuccessDesc": "Truck {licensePlate} has been deleted",
       "deleteError": "Cannot delete truck",
       "loadError": "Cannot load truck list",
+      "uploadError": "Cannot upload photo",
+      "uploadSuccess": "Photo uploaded",
+      "uploadSuccessDesc": "Image uploaded successfully",
       "fillRequired": "Please fill in all required fields",
       "deleteConfirm": "Are you sure you want to delete truck {licensePlate}?",
       "tryAgain": "Please try again"
@@ -152,6 +172,30 @@
       "description": "This action cannot be undone. This will permanently delete the truck.",
       "cancel": "Cancel",
       "confirm": "Delete"
+    },
+    "detail": {
+      "notFound": "Truck not found",
+      "goBack": "Go Back",
+      "unknownPlate": "Unknown Plate",
+      "unknownModel": "Unknown Model",
+      "alert": "Alert",
+      "alertMessage": "There is an active alert for this truck",
+      "tabs": {
+        "basicInfo": "Basic Info",
+        "iotDevices": "IoT Devices",
+        "settings": "Settings"
+      },
+      "basicInfoDesc": "View and manage basic truck information",
+      "iotDesc": "IoT devices attached to this truck",
+      "createdAt": "Created At",
+      "updatedAt": "Updated At",
+      "environmentSettings": "Environment Settings",
+      "environmentSettingsDesc": "Temperature and humidity thresholds for this truck",
+      "min": "Min",
+      "max": "Max",
+      "noSettings": "No environment settings configured",
+      "noLicensePhoto": "No license photo uploaded",
+      "quickStats": "Quick Stats"
     }
   },
   "Auth": {

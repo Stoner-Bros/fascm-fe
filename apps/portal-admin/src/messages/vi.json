@@ -76,13 +76,10 @@
     "noTrucks": "Không tìm thấy xe tải nào",
     "noTrucksEmpty": "Chưa có xe tải nào",
     "status": {
-      "active": "Hoạt động",
-      "inactive": "Không hoạt động",
       "maintenance": "Bảo trì",
       "available": "Sẵn sàng",
       "inUse": "Đang sử dụng",
-      "outOfService": "Ngừng hoạt động",
-      "unknown": "Không xác định"
+      "unavailable": "Không sẵn sàng"
     },
     "fields": {
       "licensePlate": "Biển số xe",
@@ -108,6 +105,9 @@
       "cancel": "Hủy",
       "create": "Tạo xe tải",
       "update": "Cập nhật",
+      "updateStatus": "Cập nhật trạng thái",
+      "changeStatus": "Đổi trạng thái",
+      "changeImage": "Đổi ảnh",
       "creating": "Đang tạo...",
       "updating": "Đang cập nhật..."
     },
@@ -116,11 +116,25 @@
       "createDescription": "Nhập thông tin xe tải để thêm vào hệ thống",
       "editTitle": "Chỉnh sửa xe tải",
       "editDescription": "Cập nhật thông tin xe tải {licensePlate}",
+      "statusTitle": "Cập nhật trạng thái xe",
+      "statusDescription": "Thay đổi trạng thái cho xe {licensePlate}",
+      "currentStatus": "Trạng thái hiện tại",
+      "newStatus": "Trạng thái mới",
+      "selectStatus": "Chọn trạng thái",
+      "iotTitle": "Thiết bị IoT",
+      "iotDescription": "Các thiết bị IoT gắn với xe {licensePlate}",
       "detailsTitle": "Chi tiết xe tải",
       "basicInfo": "Thông tin cơ bản",
       "iotDevicesSection": "Thiết bị IoT",
       "noIotDevices": "Chưa có thiết bị IoT",
       "licensePhotoSection": "Ảnh giấy phép"
+    },
+    "iot": {
+      "online": "Hoạt động",
+      "offline": "Ngoại tuyến",
+      "temperature": "Nhiệt độ",
+      "humidity": "Độ ẩm",
+      "lastUpdate": "Cập nhật lần cuối"
     },
     "pagination": {
       "previous": "Trang trước",
@@ -134,10 +148,16 @@
       "updateSuccess": "Đã cập nhật xe tải",
       "updateSuccessDesc": "Xe {licensePlate} đã được cập nhật",
       "updateError": "Không thể cập nhật xe tải",
+      "statusUpdateSuccess": "Đã cập nhật trạng thái",
+      "statusUpdateSuccessDesc": "Trạng thái xe {licensePlate} đã được cập nhật",
+      "statusUpdateError": "Không thể cập nhật trạng thái",
       "deleteSuccess": "Đã xóa xe tải",
       "deleteSuccessDesc": "Xe {licensePlate} đã được xóa",
       "deleteError": "Không thể xóa xe tải",
       "loadError": "Không thể tải danh sách xe tải",
+      "uploadError": "Không thể tải lên ảnh",
+      "uploadSuccess": "Đã tải ảnh lên",
+      "uploadSuccessDesc": "Ảnh đã được tải lên thành công",
       "fillRequired": "Vui lòng điền đầy đủ thông tin bắt buộc",
       "deleteConfirm": "Bạn có chắc chắn muốn xóa xe {licensePlate}?",
       "tryAgain": "Vui lòng thử lại"
@@ -152,6 +172,30 @@
       "description": "Hành động này không thể hoàn tác. Xe tải sẽ bị xóa vĩnh viễn.",
       "cancel": "Hủy",
       "confirm": "Xóa"
+    },
+    "detail": {
+      "notFound": "Không tìm thấy xe tải",
+      "goBack": "Quay lại",
+      "unknownPlate": "Biển số không xác định",
+      "unknownModel": "Model không xác định",
+      "alert": "Cảnh báo",
+      "alertMessage": "Có cảnh báo đang hoạt động cho xe này",
+      "tabs": {
+        "basicInfo": "Thông tin cơ bản",
+        "iotDevices": "Thiết bị IoT",
+        "settings": "Cài đặt"
+      },
+      "basicInfoDesc": "Xem và quản lý thông tin cơ bản của xe",
+      "iotDesc": "Các thiết bị IoT được gắn vào xe này",
+      "createdAt": "Ngày tạo",
+      "updatedAt": "Ngày cập nhật",
+      "environmentSettings": "Cài đặt môi trường",
+      "environmentSettingsDesc": "Ngưỡng nhiệt độ và độ ẩm cho xe này",
+      "min": "Tối thiểu",
+      "max": "Tối đa",
+      "noSettings": "Chưa có cài đặt môi trường",
+      "noLicensePhoto": "Chưa tải lên ảnh giấy phép",
+      "quickStats": "Thống kê nhanh"
     }
   },
   "Auth": {

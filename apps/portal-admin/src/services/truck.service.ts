@@ -57,6 +57,13 @@ export async function deleteTruck(id: string) {
   });
 }
 
+export async function updateTruckStatus(id: string, status: string) {
+  return fetchJSON<Truck>(`${BASE_PATH}/${id}/status`, {
+    method: 'PATCH',
+    body: { status }
+  });
+}
+
 export async function createTruckSetting(body: CreateTruckSettingDto) {
   return fetchJSON<TruckSetting>(SETTINGS_PATH, { method: 'POST', body });
 }
