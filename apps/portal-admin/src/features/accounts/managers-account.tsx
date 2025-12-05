@@ -231,6 +231,7 @@ export default function ManagersAccount() {
     setIsDialogOpen(true);
   }, []);
 
+  // @ts-ignore
   const tableData = useMemo<ManagerRow[]>(() => {
     const sortedManagers = [...managers].sort((a, b) => {
       const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;

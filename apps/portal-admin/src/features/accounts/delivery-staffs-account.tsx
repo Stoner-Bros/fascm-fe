@@ -246,7 +246,7 @@ export default function DeliveryStaffsAccount() {
         lastName: last || '—',
         email: staff.user?.email ?? '—',
         warehouseName: staff.warehouse?.name ?? 'Không gán',
-        truckLabel: staff.truck?.licenseNumber ?? 'Không gán',
+        truckLabel: staff.truck?.licensePlate ?? 'Không gán',
         createdAtDisplay: formatDateTime(staff.createdAt),
         licenseExpiredDisplay: formatDateTime(staff.licenseExpiredAt)
       };

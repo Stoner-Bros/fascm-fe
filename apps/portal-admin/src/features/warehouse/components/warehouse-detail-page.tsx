@@ -359,12 +359,12 @@ export default function WarehouseDetailPage({
                       : '—'}
                   </p>
                 </div>
-                <div>
+                {/* <div>
                   <p className='text-muted-foreground text-sm'>Số điện thoại</p>
                   <p className='font-medium'>
                     {warehouseManager?.user?.phone || '—'}
                   </p>
-                </div>
+                </div> */}
                 <div>
                   <p className='text-muted-foreground text-sm'>Email</p>
                   <p className='font-medium'>
