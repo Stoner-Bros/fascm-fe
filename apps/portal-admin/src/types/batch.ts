@@ -49,4 +49,5 @@ export type FindAllBatchesDto = {
   search?: string;
   importTicketId?: string;
   productId?: string;
+  areaId?: string;
 };

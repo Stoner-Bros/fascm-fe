@@ -442,13 +442,13 @@ export function WarehouseActivitiesTable() {
                   <TableHead className='font-semibold'>Sản phẩm</TableHead>
                   <TableHead className='font-semibold'>Số lượng</TableHead>
                   <TableHead className='font-semibold'>Đơn vị</TableHead>
-                  <TableHead className='font-semibold'>Kho</TableHead>
-                  <TableHead className='font-semibold'>
+                  {/* <TableHead className='font-semibold'>Kho</TableHead> */}
+                  {/* <TableHead className='font-semibold'>
                     Người thực hiện
-                  </TableHead>
-                  <TableHead className='font-semibold'>
+                  </TableHead> */}
+                  {/* <TableHead className='font-semibold'>
                     Nhân viên giao hàng
-                  </TableHead>
+                  </TableHead> */}
                   <TableHead className='font-semibold'>Trạng thái</TableHead>
                   <TableHead className='text-right font-semibold'>
                     Hành động
@@ -494,16 +494,13 @@ export function WarehouseActivitiesTable() {
                           <div className='text-sm font-medium'>
                             {activity.productName}
                           </div>
-                          <div className='text-xs text-gray-500'>
-                            {activity.productCode}
-                          </div>
                         </div>
                       </TableCell>
-                      <TableCell className='text-right font-medium'>
+                      <TableCell className='text-sm font-medium'>
                         {activity.quantity.toLocaleString()}
                       </TableCell>
                       <TableCell>{activity.unit}</TableCell>
-                      <TableCell>
+                      {/* <TableCell>
                         <div className='flex items-center gap-2'>
                           <IconMapPin className='h-4 w-4 text-gray-400' />
                           <div>
@@ -517,14 +514,14 @@ export function WarehouseActivitiesTable() {
                             )}
                           </div>
                         </div>
-                      </TableCell>
-                      <TableCell>
+                      </TableCell> */}
+                      {/* <TableCell>
                         <div className='flex items-center gap-2'>
                           <IconUser className='h-4 w-4 text-gray-400' />
                           <span className='text-sm'>{activity.user}</span>
                         </div>
-                      </TableCell>
-                      <TableCell>
+                      </TableCell> */}
+                      {/* <TableCell>
                         {activity.deliveryStaff ? (
                           <div className='flex items-center gap-2'>
                             <IconUser className='h-4 w-4 text-gray-400' />
@@ -535,7 +532,7 @@ export function WarehouseActivitiesTable() {
                         ) : (
                           <span className='text-sm text-gray-400'>-</span>
                         )}
-                      </TableCell>
+                      </TableCell> */}
                       <TableCell>{getStatusBadge(activity.status)}</TableCell>
                       <TableCell className='text-right'>
                         <Button

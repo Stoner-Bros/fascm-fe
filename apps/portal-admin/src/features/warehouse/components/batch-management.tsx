@@ -244,6 +244,43 @@ export function BatchManagement() {
 
     try {
       setIsSubmitting(true);
+
+      // Nếu chọn area, kiểm tra availableCapacity trước khi tạo
+      let availableCapacityCheckOk = true;
+      let currentAvailableCapacity = 0;
+      if (importTicketForm.areaId) {
+        try {
+          const currentArea = await fetchAreaById(importTicketForm.areaId);
+          currentAvailableCapacity =
+            currentArea.availableCapacity ?? currentArea.capacity ?? 0;
+
+          if (importTicketForm.realityQuantity > currentAvailableCapacity) {
+            availableCapacityCheckOk = false;
+          }
+        } catch (areaError) {
+          console.error('Failed to check area availableCapacity', areaError);
+          toast({
+            variant: 'destructive',
+            title: 'Không thể kiểm tra sức chứa khu vực',
+            description:
+              'Vui lòng thử lại sau khi hệ thống lấy được availableCapacity.'
+          });
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
+      if (!availableCapacityCheckOk) {
+        toast({
+          variant: 'destructive',
+          title: 'Không đủ sức chứa',
+          description:
+            'Số lượng nhập vượt quá sức chứa khả dụng của khu vực được chọn.'
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
       const payload = {
         realityQuantity: Number(importTicketForm.realityQuantity),
         importDate: importTicketForm.importDate,
@@ -386,10 +423,6 @@ export function BatchManagement() {
             <IconArchive className='h-8 w-8 text-emerald-600' />
             Quản lý Import Tickets
           </h1>
-          <p className='text-muted-foreground'>
-            Quản lý hàng nhập theo inbound batch, tạo import ticket và batches
-            theo nguyên tắc nhập trước xuất trước (FIFO).
-          </p>
         </div>
         {/* <div className='flex flex-wrap gap-2'>
           <Button variant='outline' onClick={loadInboundBatches}>
@@ -504,10 +537,8 @@ export function BatchManagement() {
               <TableHeader>
                 <TableRow>
                   <TableHead>ID</TableHead>
-                  <TableHead>Inbound Batch</TableHead>
                   <TableHead>Sản phẩm</TableHead>
                   <TableHead>Percent</TableHead>
-                  <TableHead>Area</TableHead>
                   <TableHead>Ngày nhập</TableHead>
                   <TableHead>Số batch</TableHead>
                   <TableHead>Thao tác</TableHead>
@@ -536,7 +567,6 @@ export function BatchManagement() {
                         <TableCell className='font-medium'>
                           {ticket.id}
                         </TableCell>
-                        <TableCell>{ticket.inboundBatch?.id ?? '—'}</TableCell>
                         <TableCell>
                           {product?.name || product?.id || '—'}
                         </TableCell>
@@ -545,7 +575,6 @@ export function BatchManagement() {
                             ? `${ticket.percent}%`
                             : '—'}
                         </TableCell>
-                        <TableCell>{ticket.area?.id ?? '—'}</TableCell>
                         <TableCell className='text-muted-foreground text-sm'>
                           {ticket.importDate
                             ? new Date(ticket.importDate).toLocaleString(
@@ -734,22 +763,22 @@ export function BatchManagement() {
           }
         }}
       >
-        <DialogContent className='w-full max-w-[95vw] space-y-4 overflow-hidden p-0 sm:p-6'>
+        <DialogContent className='max-h-[95vh] w-[98vw] !max-w-[80vw] space-y-4 overflow-hidden p-6'>
           <DialogHeader>
-            <DialogTitle>
+            <DialogTitle className='text-xl'>
               Batches của import ticket {selectedTicketForBatches?.id ?? ''}
             </DialogTitle>
           </DialogHeader>
-          <div className='bg-background w-full overflow-auto rounded-md border p-2 shadow-inner'>
+          <div className='bg-background w-full overflow-auto rounded-md border p-4 shadow-inner'>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Batch code</TableHead>
-                  <TableHead>Product</TableHead>
-                  <TableHead>Số lượng</TableHead>
-                  <TableHead>Area</TableHead>
-                  <TableHead>Ngày tạo</TableHead>
+                  <TableHead className='min-w-[200px]'>ID</TableHead>
+                  <TableHead className='min-w-[120px]'>Batch code</TableHead>
+                  <TableHead className='min-w-[150px]'>Sản phẩm</TableHead>
+                  <TableHead className='min-w-[120px]'>Số lượng</TableHead>
+                  <TableHead className='min-w-[150px]'>Khu vực</TableHead>
+                  <TableHead className='min-w-[180px]'>Ngày tạo</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -765,14 +794,33 @@ export function BatchManagement() {
                 ) : (
                   batchesOfSelectedTicket.map((batch) => (
                     <TableRow key={batch.id}>
-                      <TableCell className='font-medium'>{batch.id}</TableCell>
-                      <TableCell>{batch.batchCode ?? '—'}</TableCell>
-                      <TableCell>{batch.product?.id ?? '—'}</TableCell>
-                      <TableCell>
-                        {batch.quantity} {batch.unit}
+                      <TableCell className='font-medium break-all'>
+                        {batch.id}
                       </TableCell>
-                      <TableCell>{batch.area?.id ?? '—'}</TableCell>
-                      <TableCell className='text-muted-foreground text-sm'>
+                      <TableCell className='break-all'>
+                        {batch.batchCode ?? '—'}
+                      </TableCell>
+                      <TableCell>
+                        <div>
+                          <div className='font-medium'>
+                            {batch.product?.name || batch.product?.id || '—'}
+                          </div>
+                          {batch.product?.name && batch.product?.id && (
+                            <div className='text-muted-foreground text-xs'>
+                              ID: {batch.product.id}
+                            </div>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className='font-medium'>
+                          {batch.quantity} {batch.unit || ''}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {batch.area?.name || batch.area?.id || '—'}
+                      </TableCell>
+                      <TableCell className='text-muted-foreground text-sm whitespace-nowrap'>
                         {batch.createdAt
                           ? new Date(batch.createdAt).toLocaleString('vi-VN')
                           : '—'}

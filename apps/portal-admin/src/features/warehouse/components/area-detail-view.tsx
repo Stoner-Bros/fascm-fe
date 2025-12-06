@@ -12,6 +12,22 @@ import {
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
 import {
   createAreaSetting,
   fetchAreaSettings,
@@ -20,27 +36,40 @@ import {
 import { fetchAreaById } from '@/services/area.service';
 import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
 import { fetchWarehouseById } from '@/services/warehouse.service';
+import { fetchImportTickets } from '@/services/import-ticket.service';
+import { fetchBatches } from '@/services/batch.service';
+import { fetchExportTickets } from '@/services/export-ticket.service';
 import type { Area as AreaEntity } from '@/types/area';
 import type { AreaSetting } from '@/types/area-setting';
 import type { Warehouse } from '@/types/warehouse';
+import type { Batch } from '@/types/batch';
+import type { ImportTicket } from '@/types/import-ticket';
 import {
   IconActivity,
   IconAlertTriangle,
+  IconArrowDown,
   IconArrowLeft,
+  IconArrowUp,
   IconBell,
   IconBox,
+  IconCalendar,
   IconClock,
   IconDroplet,
+  IconFilter,
   IconHistory,
   IconMapPin,
   IconPackage,
   IconRefresh,
+  IconSearch,
   IconSettings,
   IconShield,
   IconThermometer
 } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { format } from 'date-fns';
+import { vi } from 'date-fns/locale';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface AreaDetailViewProps {
   warehouseId: string;
@@ -72,6 +101,23 @@ export default function AreaDetailView({
     maxHumidity: '',
     minCapacity: ''
   });
+  const [areaBatches, setAreaBatches] = useState<Batch[]>([]);
+  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(
+    null
+  );
+  const [areaImportTickets, setAreaImportTickets] = useState<ImportTicket[]>(
+    []
+  );
+  const [areaExportTickets, setAreaExportTickets] = useState<any[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [historySearchTerm, setHistorySearchTerm] = useState('');
+  const [selectedActivityType, setSelectedActivityType] = useState('Tất cả');
+  const [selectedProduct, setSelectedProduct] = useState('Tất cả');
+  const [selectedStatus, setSelectedStatus] = useState('Tất cả');
+  const [overviewBatches, setOverviewBatches] = useState<Batch[]>([]);
+  const [isLoadingOverviewBatches, setIsLoadingOverviewBatches] =
+    useState(false);
 
   type EnvironmentReadings = {
     temperature?: number | null;
@@ -402,6 +448,361 @@ export default function AreaDetailView({
     };
   }, [areaId, activeTab]);
 
+  // Load batches cho overview tab (để hiển thị phân bố sản phẩm)
+  useEffect(() => {
+    if (activeTab !== 'overview' || !areaId) return;
+
+    const loadOverviewBatches = async () => {
+      setIsLoadingOverviewBatches(true);
+      try {
+        const res = await fetchBatches({
+          page: 1,
+          limit: 200,
+          areaId
+        });
+        const list = (res.data || []).filter(
+          (b) => b.area?.id && b.area.id === areaId
+        );
+        setOverviewBatches(list);
+      } catch (error) {
+        console.error('Unable to load overview batches', error);
+        setOverviewBatches([]);
+      } finally {
+        setIsLoadingOverviewBatches(false);
+      }
+    };
+
+    void loadOverviewBatches();
+  }, [activeTab, areaId]);
+
+  // Load batches theo area khi mở tab Products
+  useEffect(() => {
+    if (activeTab !== 'products' || !areaId) return;
+
+    const loadAreaBatches = async () => {
+      setIsLoadingProducts(true);
+      try {
+        const res = await fetchBatches({
+          page: 1,
+          limit: 200,
+          areaId
+        });
+        const list = (res.data || []).filter(
+          (b) => b.area?.id && b.area.id === areaId
+        );
+        setAreaBatches(list);
+        if (list.length > 0) {
+          // Chọn sẵn product đầu tiên
+          setSelectedProductId(list[0].product?.id ?? null);
+        } else {
+          setSelectedProductId(null);
+        }
+      } catch (error) {
+        console.error('Unable to load area batches', error);
+        setAreaBatches([]);
+        setSelectedProductId(null);
+      } finally {
+        setIsLoadingProducts(false);
+      }
+    };
+
+    void loadAreaBatches();
+  }, [activeTab, areaId]);
+
+  // Load lịch sử import và export tickets theo area khi mở tab History
+  useEffect(() => {
+    if (activeTab !== 'history' || !areaId) return;
+
+    const loadAreaHistory = async () => {
+      setIsLoadingHistory(true);
+      try {
+        const [ticketsRes, batchesRes, exportsRes] = await Promise.all([
+          fetchImportTickets({
+            page: 1,
+            limit: 200
+          }),
+          fetchBatches({
+            page: 1,
+            limit: 200,
+            areaId
+          }),
+          fetchExportTickets({
+            page: 1,
+            limit: 200
+          })
+        ]);
+
+        const batchesInArea: Batch[] = (batchesRes.data || []).filter(
+          (b) => b.area?.id && b.area.id === areaId
+        );
+        const importIdsFromBatches = new Set(
+          batchesInArea
+            .map((b) => b.importTicket?.id)
+            .filter((id): id is string => !!id)
+        );
+        const orderDetailIdsFromBatches = new Set(
+          batchesInArea
+            .map((b) => b.orderDetail?.id)
+            .filter((id): id is string => !!id)
+        );
+
+        const tickets: ImportTicket[] = (ticketsRes.data || []).filter(
+          (it) =>
+            (it.area?.id && it.area.id === areaId) ||
+            importIdsFromBatches.has(it.id)
+        );
+
+        const exportTickets = (exportsRes.data || []).filter((et: any) =>
+          orderDetailIdsFromBatches.has(et.orderDetail?.id)
+        );
+
+        setAreaImportTickets(tickets);
+        setAreaExportTickets(exportTickets);
+      } catch (error) {
+        console.error('Unable to load area history', error);
+        setAreaImportTickets([]);
+        setAreaExportTickets([]);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    void loadAreaHistory();
+  }, [activeTab, areaId]);
+
+  // Tạo activities từ import và export tickets
+  const historyActivities = useMemo(() => {
+    const importActivities = (areaImportTickets || []).map((it) => {
+      const productName =
+        it.inboundBatch?.product?.name ??
+        it.inboundBatch?.harvestDetail?.product?.name ??
+        '-';
+      const productId =
+        it.inboundBatch?.product?.id ??
+        it.inboundBatch?.harvestDetail?.product?.id ??
+        '';
+
+      return {
+        id: it.id,
+        date: it.importDate ?? it.createdAt ?? new Date().toISOString(),
+        type: 'import' as const,
+        productName,
+        productId,
+        quantity: Number(
+          it.realityQuantity ??
+            it.inboundBatch?.quantity ??
+            it.inboundBatch?.harvestTicket?.quantity ??
+            0
+        ),
+        unit:
+          it.inboundBatch?.unit ?? it.inboundBatch?.harvestTicket?.unit ?? 'kg',
+        status: 'completed' as
+          | 'completed'
+          | 'pending_assignment'
+          | 'assigned'
+          | 'delivering'
+          | 'cancelled'
+      };
+    });
+
+    const exportActivities = (areaExportTickets || []).map((et: any) => ({
+      id: et.id ?? '',
+      date: et.ExportDate ?? et.createdAt ?? new Date().toISOString(),
+      type: 'export' as const,
+      productName: et.orderDetail?.product?.name ?? '-',
+      productId: et.orderDetail?.product?.id ?? '',
+      quantity: Number(et.orderDetail?.quantity ?? 0),
+      unit: et.orderDetail?.unit ?? 'kg',
+      status: 'completed' as
+        | 'completed'
+        | 'pending_assignment'
+        | 'assigned'
+        | 'delivering'
+        | 'cancelled'
+    }));
+
+    return [...importActivities, ...exportActivities];
+  }, [areaImportTickets, areaExportTickets]);
+
+  // Lấy danh sách sản phẩm unique cho filter
+  const historyProducts = useMemo(() => {
+    const productSet = new Set<string>();
+    historyActivities.forEach((activity) => {
+      if (activity.productId) {
+        productSet.add(activity.productId);
+      }
+    });
+    return Array.from(productSet).map((id) => {
+      const activity = historyActivities.find((a) => a.productId === id);
+      return { id, name: activity?.productName ?? id };
+    });
+  }, [historyActivities]);
+
+  // Filter activities
+  const filteredHistoryActivities = useMemo(() => {
+    return historyActivities.filter((activity) => {
+      const matchesSearch =
+        activity.productName
+          .toLowerCase()
+          .includes(historySearchTerm.toLowerCase()) ||
+        activity.productId
+          .toLowerCase()
+          .includes(historySearchTerm.toLowerCase());
+
+      const matchesActivityType =
+        selectedActivityType === 'Tất cả' ||
+        (selectedActivityType === 'Nhập kho' && activity.type === 'import') ||
+        (selectedActivityType === 'Xuất kho' && activity.type === 'export');
+
+      const matchesProduct =
+        selectedProduct === 'Tất cả' || activity.productId === selectedProduct;
+
+      const matchesStatus =
+        selectedStatus === 'Tất cả' ||
+        (selectedStatus === 'completed' && activity.status === 'completed') ||
+        (selectedStatus === 'Đang xử lý' &&
+          activity.status !== 'completed' &&
+          activity.status !== 'cancelled') ||
+        (selectedStatus === 'cancelled' && activity.status === 'cancelled');
+
+      return (
+        matchesSearch && matchesActivityType && matchesProduct && matchesStatus
+      );
+    });
+  }, [
+    historyActivities,
+    historySearchTerm,
+    selectedActivityType,
+    selectedProduct,
+    selectedStatus
+  ]);
+
+  const getActivityTypeIcon = (type: 'import' | 'export') => {
+    return type === 'import' ? (
+      <IconArrowDown className='h-4 w-4 text-green-600' />
+    ) : (
+      <IconArrowUp className='h-4 w-4 text-blue-600' />
+    );
+  };
+
+  const getActivityTypeBadge = (type: 'import' | 'export') => {
+    return type === 'import' ? (
+      <Badge variant='secondary' className='bg-green-100 text-green-800'>
+        Nhập kho
+      </Badge>
+    ) : (
+      <Badge variant='secondary' className='bg-blue-100 text-blue-800'>
+        Xuất kho
+      </Badge>
+    );
+  };
+
+  const getHistoryStatusBadge = (status: string) => {
+    const statusConfig: Record<string, { label: string; className: string }> = {
+      pending_assignment: {
+        label: 'Chờ phân công',
+        className: 'bg-yellow-100 text-yellow-800 border-yellow-200'
+      },
+      assigned: {
+        label: 'Đã phân công',
+        className: 'bg-blue-100 text-blue-800 border-blue-200'
+      },
+      delivering: {
+        label: 'Đang giao hàng',
+        className: 'bg-purple-100 text-purple-800 border-purple-200'
+      },
+      completed: {
+        label: 'Hoàn tất',
+        className: 'bg-green-100 text-green-800 border-green-200'
+      },
+      cancelled: {
+        label: 'Đã hủy',
+        className: 'bg-red-100 text-red-800 border-red-200'
+      }
+    };
+
+    const config = statusConfig[status] ?? {
+      label: 'Không xác định',
+      className: 'bg-gray-100 text-gray-800 border-gray-200'
+    };
+
+    return (
+      <span
+        className={`rounded-full border px-2 py-1 text-xs font-medium ${config.className}`}
+      >
+        {config.label}
+      </span>
+    );
+  };
+
+  const productsInArea = useMemo(() => {
+    const map = new Map<
+      string,
+      { id: string; name?: string; totalQuantity: number; batchCount: number }
+    >();
+
+    for (const b of areaBatches) {
+      const id = b.product?.id;
+      if (!id) continue;
+      const name = b.product?.name;
+      const prev = map.get(id) ?? {
+        id,
+        name,
+        totalQuantity: 0,
+        batchCount: 0
+      };
+      prev.totalQuantity += b.quantity;
+      prev.batchCount += 1;
+      map.set(id, prev);
+    }
+
+    return Array.from(map.values());
+  }, [areaBatches]);
+
+  const palette = [
+    '#8884d8',
+    '#82ca9d',
+    '#ffc658',
+    '#ff7300',
+    '#00ff88',
+    '#0088FE',
+    '#FFBB28',
+    '#FF8042'
+  ];
+
+  const toNumber = (value: unknown) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const productDistributionData = useMemo(() => {
+    const productMap = new Map<string, { name: string; value: number }>();
+    overviewBatches.forEach((batch) => {
+      const key = batch.product?.id || 'unknown';
+      const name = batch.product?.name || 'Sản phẩm khác';
+      const quantity = toNumber(batch.quantity);
+      const prev = productMap.get(key);
+      productMap.set(key, { name, value: (prev?.value ?? 0) + quantity });
+    });
+
+    const distribution = Array.from(productMap.values()).map((item, idx) => ({
+      ...item,
+      color: palette[idx % palette.length]
+    }));
+
+    return distribution.length
+      ? distribution
+      : [{ name: 'Chưa có dữ liệu', value: 1, color: palette[0] }];
+  }, [overviewBatches]);
+
+  const batchesOfSelectedProduct = useMemo(
+    () =>
+      selectedProductId
+        ? areaBatches.filter((b) => b.product?.id === selectedProductId)
+        : [],
+    [areaBatches, selectedProductId]
+  );
+
   const handleSaveSettings = async () => {
     if (
       !settingForm.minTemperature ||
@@ -495,6 +896,7 @@ export default function AreaDetailView({
   const activeAlertCount = 0; // sẽ nối API cảnh báo sau
   const areaName = area?.name || `Khu vực ${areaId}`;
   const areaCode = area?.id || areaId;
+  const areaDescription = area?.description || '';
   const warehouseName = warehouse?.name || `Kho ${warehouseId}`;
 
   return (
@@ -666,7 +1068,7 @@ export default function AreaDetailView({
                     <p className='text-muted-foreground text-sm font-medium'>
                       Loại khu vực
                     </p>
-                    <Badge variant='outline'>—</Badge>
+                    <p className='font-semibold'>{areaDescription}</p>
                   </div>
                   <div>
                     <p className='text-muted-foreground text-sm font-medium'>
@@ -678,7 +1080,12 @@ export default function AreaDetailView({
                     <p className='text-muted-foreground text-sm font-medium'>
                       Số sản phẩm
                     </p>
-                    <p className='font-semibold'>—</p>
+                    <p className='font-semibold'>
+                      {productDistributionData.length > 0 &&
+                      productDistributionData[0].name !== 'Chưa có dữ liệu'
+                        ? productDistributionData.length
+                        : '—'}
+                    </p>
                   </div>
                 </div>
                 <div>
@@ -694,52 +1101,186 @@ export default function AreaDetailView({
               </CardContent>
             </Card>
 
-            {/* Sensor Status */}
+            {/* Product Distribution */}
             <Card>
               <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <IconActivity className='h-5 w-5' />
-                  Trạng thái cảm biến
-                </CardTitle>
+                <CardTitle>Phân bố sản phẩm</CardTitle>
+                <CardDescription>
+                  Tỷ lệ các loại sản phẩm trong khu vực
+                </CardDescription>
               </CardHeader>
-              <CardContent className='text-muted-foreground space-y-2 text-sm'>
-                <p>Chưa có dữ liệu cảm biến chi tiết cho khu vực này.</p>
+              <CardContent>
+                {isLoadingOverviewBatches ? (
+                  <div className='flex h-[250px] items-center justify-center'>
+                    <p className='text-muted-foreground text-sm'>
+                      Đang tải dữ liệu...
+                    </p>
+                  </div>
+                ) : (
+                  <ResponsiveContainer width='100%' height={250}>
+                    <PieChart>
+                      <Pie
+                        data={productDistributionData}
+                        cx='50%'
+                        cy='50%'
+                        labelLine={false}
+                        label={({ name, percent }) =>
+                          `${name} ${(percent * 100).toFixed(0)}%`
+                        }
+                        outerRadius={80}
+                        fill='#8884d8'
+                        dataKey='value'
+                      >
+                        {productDistributionData.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip />
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
               </CardContent>
             </Card>
           </div>
 
           {/* Charts Section */}
           <AreaCharts areaId={areaId} />
-
-          {/* Recent Activities */}
-          <Card>
-            <CardHeader>
-              <CardTitle className='flex items-center gap-2'>
-                <IconHistory className='h-5 w-5' />
-                Hoạt động gần đây
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className='text-muted-foreground text-sm'>
-                Chưa có dữ liệu lịch sử hoạt động cho khu vực này.
-              </p>
-            </CardContent>
-          </Card>
         </TabsContent>
 
         {/* Products Tab */}
         <TabsContent value='products' className='space-y-4'>
           <div className='flex items-center justify-between'>
             <h3 className='text-lg font-semibold'>Sản phẩm trong khu vực</h3>
-            <Button>
+            <Button
+              size='sm'
+              variant='outline'
+              onClick={() => router.push('/dashboard/warehouse/batches')}
+            >
               <IconPackage className='mr-2 h-4 w-4' />
-              Thêm sản phẩm
+              Quản lý nhập hàng
             </Button>
           </div>
 
-          <div className='text-muted-foreground text-sm'>
-            Chưa có dữ liệu sản phẩm cho khu vực này.
-          </div>
+          {isLoadingProducts ? (
+            <div className='text-muted-foreground text-sm'>
+              Đang tải danh sách sản phẩm...
+            </div>
+          ) : productsInArea.length === 0 ? (
+            <div className='text-muted-foreground text-sm'>
+              Chưa có sản phẩm nào trong khu vực này. Vui lòng tạo Import Ticket
+              và gán batch vào khu vực để hiển thị tại đây.
+            </div>
+          ) : (
+            <div className='grid gap-4 lg:grid-cols-[2fr,3fr]'>
+              <Card className='overflow-hidden'>
+                <CardHeader>
+                  <CardTitle>Danh sách sản phẩm</CardTitle>
+                </CardHeader>
+                <CardContent className='p-0'>
+                  <div className='w-full overflow-x-auto'>
+                    <table className='w-full text-sm'>
+                      <thead className='bg-muted'>
+                        <tr>
+                          <th className='px-4 py-2 text-left'>Sản phẩm</th>
+                          <th className='px-4 py-2 text-left'>Số lô</th>
+                          <th className='px-4 py-2 text-left'>Tổng số lượng</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {productsInArea.map((p) => (
+                          <tr
+                            key={p.id}
+                            className={`hover:bg-muted/50 cursor-pointer border-t ${
+                              selectedProductId === p.id
+                                ? 'bg-muted/80 font-semibold'
+                                : ''
+                            }`}
+                            onClick={() => setSelectedProductId(p.id)}
+                          >
+                            <td className='px-4 py-2'>
+                              <div className='font-medium'>
+                                {p.name || p.id}
+                              </div>
+                            </td>
+                            <td className='px-4 py-2'>{p.batchCount}</td>
+                            <td className='px-4 py-2'>
+                              {p.totalQuantity.toLocaleString()} kg
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card className='overflow-hidden'>
+                <CardHeader>
+                  <CardTitle>
+                    {selectedProductId
+                      ? 'Các lô hàng trong khu vực'
+                      : 'Chọn một sản phẩm để xem các lô hàng'}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className='p-0'>
+                  {selectedProductId &&
+                    batchesOfSelectedProduct.length === 0 && (
+                      <div className='text-muted-foreground px-4 py-6 text-sm'>
+                        Không tìm thấy lô hàng nào cho sản phẩm này trong khu
+                        vực.
+                      </div>
+                    )}
+                  {selectedProductId && batchesOfSelectedProduct.length > 0 && (
+                    <div className='w-full overflow-x-auto'>
+                      <table className='w-full text-sm'>
+                        <thead className='bg-muted'>
+                          <tr>
+                            <th className='px-4 py-2 text-left'>Batch code</th>
+                            <th className='px-4 py-2 text-left'>Số lượng</th>
+                            <th className='px-4 py-2 text-left'>Đơn vị</th>
+                            <th className='px-4 py-2 text-left'>
+                              Ngày tạo batch
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {batchesOfSelectedProduct.map((b) => (
+                            <tr key={b.id} className='border-t'>
+                              <td className='px-4 py-2'>
+                                <div className='font-mono text-xs'>
+                                  {b.batchCode}
+                                </div>
+                                <div className='text-muted-foreground text-xs'>
+                                  ID: {b.id}
+                                </div>
+                              </td>
+                              <td className='px-4 py-2'>
+                                {b.quantity.toLocaleString()}
+                              </td>
+                              <td className='px-4 py-2'>{b.unit}</td>
+                              <td className='px-4 py-2 text-xs'>
+                                {b.createdAt
+                                  ? new Date(b.createdAt).toLocaleString(
+                                      'vi-VN'
+                                    )
+                                  : '—'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                  {!selectedProductId && (
+                    <div className='text-muted-foreground px-4 py-6 text-sm'>
+                      Hãy chọn một sản phẩm ở bảng bên trái để xem chi tiết các
+                      lô hàng đang có trong khu vực.
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </TabsContent>
 
         {/* Alerts Tab */}
@@ -759,19 +1300,193 @@ export default function AreaDetailView({
 
         {/* History Tab */}
         <TabsContent value='history' className='space-y-4'>
-          <div className='flex items-center justify-between'>
-            <h3 className='text-lg font-semibold'>Lịch sử hoạt động</h3>
-            <Button variant='outline'>
-              <IconClock className='mr-2 h-4 w-4' />
-              Xuất báo cáo
-            </Button>
-          </div>
-
           <Card>
-            <CardContent className='pt-4'>
-              <p className='text-muted-foreground text-sm'>
-                Chưa có dữ liệu lịch sử chi tiết cho khu vực này.
-              </p>
+            <CardHeader>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <CardTitle className='flex items-center gap-2'>
+                    <IconHistory className='h-5 w-5' />
+                    Lịch sử hoạt động
+                  </CardTitle>
+                  <CardDescription>
+                    Theo dõi tất cả các hoạt động xuất nhập kho trong khu vực
+                  </CardDescription>
+                </div>
+                <Button variant='outline' size='sm'>
+                  <IconClock className='mr-2 h-4 w-4' />
+                  Xuất báo cáo
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoadingHistory ? (
+                <div className='py-8 text-center text-sm text-gray-500'>
+                  Đang tải lịch sử hoạt động...
+                </div>
+              ) : (
+                <>
+                  {/* Filters and Search */}
+                  <div className='mb-6 space-y-4'>
+                    <div className='flex flex-wrap items-center gap-4'>
+                      <div className='min-w-[200px] flex-1'>
+                        <div className='relative'>
+                          <IconSearch className='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400' />
+                          <Input
+                            placeholder='Tìm kiếm sản phẩm...'
+                            value={historySearchTerm}
+                            onChange={(e) =>
+                              setHistorySearchTerm(e.target.value)
+                            }
+                            className='pl-10'
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className='flex flex-wrap items-center gap-4'>
+                      <div className='flex items-center gap-2'>
+                        <IconFilter className='h-4 w-4 text-gray-500' />
+                        <span className='text-sm font-medium text-gray-700'>
+                          Bộ lọc:
+                        </span>
+                      </div>
+
+                      <Select
+                        value={selectedActivityType}
+                        onValueChange={setSelectedActivityType}
+                      >
+                        <SelectTrigger className='w-[140px]'>
+                          <SelectValue placeholder='Loại hoạt động' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='Tất cả'>Tất cả</SelectItem>
+                          <SelectItem value='Nhập kho'>Nhập kho</SelectItem>
+                          <SelectItem value='Xuất kho'>Xuất kho</SelectItem>
+                        </SelectContent>
+                      </Select>
+
+                      <Select
+                        value={selectedProduct}
+                        onValueChange={setSelectedProduct}
+                      >
+                        <SelectTrigger className='w-[180px]'>
+                          <SelectValue placeholder='Sản phẩm' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='Tất cả'>
+                            Tất cả sản phẩm
+                          </SelectItem>
+                          {historyProducts.map((product) => (
+                            <SelectItem key={product.id} value={product.id}>
+                              {product.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <Select
+                        value={selectedStatus}
+                        onValueChange={setSelectedStatus}
+                      >
+                        <SelectTrigger className='w-[180px]'>
+                          <SelectValue placeholder='Tất cả trạng thái' />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value='Tất cả'>
+                            Tất cả trạng thái
+                          </SelectItem>
+                          <SelectItem value='completed'>Hoàn tất</SelectItem>
+                          <SelectItem value='Đang xử lý'>Đang xử lý</SelectItem>
+                          <SelectItem value='cancelled'>Đã hủy</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Results Summary */}
+                  <div className='mb-4 text-sm text-gray-600'>
+                    Hiển thị {filteredHistoryActivities.length} kết quả từ tổng
+                    số {historyActivities.length} hoạt động
+                  </div>
+
+                  {/* Activities Table */}
+                  {filteredHistoryActivities.length === 0 ? (
+                    <div className='py-8 text-center text-sm text-gray-500'>
+                      Không tìm thấy hoạt động nào phù hợp với bộ lọc
+                    </div>
+                  ) : (
+                    <div className='overflow-hidden rounded-lg border'>
+                      <Table>
+                        <TableHeader>
+                          <TableRow className='bg-gray-50'>
+                            <TableHead className='font-semibold'>
+                              Ngày và giờ
+                            </TableHead>
+                            <TableHead className='font-semibold'>
+                              Loại hoạt động
+                            </TableHead>
+                            <TableHead className='font-semibold'>
+                              Sản phẩm
+                            </TableHead>
+                            <TableHead className='font-semibold'>
+                              Số lượng
+                            </TableHead>
+                            <TableHead className='font-semibold'>
+                              Trạng thái
+                            </TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {filteredHistoryActivities.map((activity) => (
+                            <TableRow
+                              key={activity.id}
+                              className='hover:bg-gray-50'
+                            >
+                              <TableCell>
+                                <div className='flex items-center gap-2'>
+                                  <IconCalendar className='h-4 w-4 text-gray-400' />
+                                  <span className='text-sm'>
+                                    {format(
+                                      new Date(activity.date),
+                                      'dd/MM/yyyy HH:mm',
+                                      {
+                                        locale: vi
+                                      }
+                                    )}
+                                  </span>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div className='flex items-center gap-2'>
+                                  {getActivityTypeIcon(activity.type)}
+                                  {getActivityTypeBadge(activity.type)}
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <div>
+                                  <div className='text-sm font-medium'>
+                                    {activity.productName}
+                                  </div>
+                                  <div className='text-xs text-gray-500'>
+                                    {activity.productId}
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className='text-right font-medium'>
+                                {activity.quantity.toLocaleString()}{' '}
+                                {activity.unit}
+                              </TableCell>
+                              <TableCell>
+                                {getHistoryStatusBadge(activity.status)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

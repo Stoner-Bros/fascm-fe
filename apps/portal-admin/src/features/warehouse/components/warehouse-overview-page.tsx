@@ -33,7 +33,12 @@ import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { fetchManagers, updateManager } from '@/services/manager.service';
 import { createWarehouse, fetchWarehouses } from '@/services/warehouse.service';
+import { fetchAreas } from '@/services/area.service';
+import { fetchBatches } from '@/services/batch.service';
+import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
 import type { Manager } from '@/types/manager';
+import type { Area } from '@/types/area';
+import type { Batch } from '@/types/batch';
 import {
   IconAlertTriangle,
   IconBarcode,
@@ -58,6 +63,15 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
   const [apiWarehouses, setApiWarehouses] = useState<
     { id: string; name: string; address: string }[]
   >([]);
+  const [warehouseAreas, setWarehouseAreas] = useState<Record<string, Area[]>>(
+    {}
+  );
+  const [warehouseBatches, setWarehouseBatches] = useState<
+    Record<string, Batch[]>
+  >({});
+  const [areaEnv, setAreaEnv] = useState<
+    Record<string, { temperature?: number | null; humidity?: number | null }>
+  >({});
   const [managersWithoutWarehouse, setManagersWithoutWarehouse] = useState<
     Manager[]
   >([]);
@@ -67,78 +81,124 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
     name: '',
     address: ''
   });
-  // Mock data cho kho trung tâm Hà Nội - giữ làm mẫu design
-  const mockWarehouses = [
-    {
-      id: 'WH001',
-      name: 'Kho Trung tâm Hà Nội',
-      location: 'Hà Nội',
-      capacity: 85,
-      totalItems: 10,
-      lowStockItems: 23,
-      expiringSoon: 8,
-      outOfStock: 5,
-      todayImport: 10,
-      todayExport: 15,
-      status: 'active',
-      areas: [
-        {
-          id: 'A1',
-          name: 'Khu vực A1 - Rau củ',
-          temperature: 4.2,
-          humidity: 65,
-          capacity: 90,
-          products: 3
-        },
-        {
-          id: 'A2',
-          name: 'Khu vực A2 - Trái cây',
-          temperature: 7.2,
-          humidity: 70,
-          capacity: 75,
-          products: 2
-        },
-        {
-          id: 'A3',
-          name: 'Khu vực A3 - Ngũ cốc',
-          temperature: 18.5,
-          humidity: 45,
-          capacity: 95,
-          products: 5
-        }
-      ]
+  const toNumeric = (value: unknown) => {
+    if (typeof value === 'number') return value;
+    if (typeof value === 'string' && value.trim().length > 0) {
+      const parsed = Number(value);
+      return Number.isNaN(parsed) ? null : parsed;
     }
-  ];
+    return null;
+  };
 
-  // Ghép tên / id kho từ API vào mock kho trung tâm, đồng thời thêm các kho API còn lại
+  const parseDeviceData = (device: any) => {
+    try {
+      const raw = device?.data;
+      if (typeof raw === 'string' && raw.trim().length > 0) {
+        const obj = JSON.parse(raw);
+        return {
+          temperature: obj.temperature ?? obj.temp ?? obj.t ?? null,
+          humidity: obj.humidity ?? obj.humid ?? obj.h ?? null
+        };
+      }
+      if (Array.isArray(raw) && raw.length > 0) {
+        const last = raw[raw.length - 1];
+        return {
+          temperature: last?.temperature ?? last?.temp ?? last?.t ?? null,
+          humidity: last?.humidity ?? last?.humid ?? last?.h ?? null
+        };
+      }
+      if (raw && typeof raw === 'object') {
+        return {
+          temperature:
+            raw.temperature ?? raw.temp ?? raw.t ?? (raw as any).Temperature,
+          humidity: raw.humidity ?? raw.humid ?? raw.h ?? (raw as any).Humidity
+        };
+      }
+    } catch {
+      // ignore parse errors
+    }
+    return { temperature: null, humidity: null };
+  };
+
+  // Tính toán warehouses từ API với areas và batches
   const mergedWarehouses = useMemo(() => {
-    if (apiWarehouses.length === 0) return mockWarehouses;
+    return apiWarehouses.map((w) => {
+      const areas = warehouseAreas[w.id] || [];
+      const batches = warehouseBatches[w.id] || [];
 
-    const [firstApi, ...restApis] = apiWarehouses;
+      // Tính tổng capacity = tổng capacity của các area
+      const totalCapacity = areas.reduce(
+        (sum, a) => sum + (a.capacity ?? 0),
+        0
+      );
 
-    const centralWarehouse = {
-      ...mockWarehouses[0],
-      id: firstApi?.id ?? mockWarehouses[0].id,
-      name: firstApi?.name || mockWarehouses[0].name
-    };
+      // Tính used capacity = tổng (capacity - availableCapacity) của các area
+      const usedCapacity = areas.reduce((sum, a) => {
+        const capacity = a.capacity ?? 0;
+        const availableCapacity = a.availableCapacity ?? capacity;
+        return sum + Math.max(0, capacity - availableCapacity);
+      }, 0);
 
-    const apiOnlyWarehouses = restApis.map((w) => ({
-      id: w.id,
-      name: w.name,
-      location: w.address,
-      capacity: 70,
-      totalItems: 5,
-      lowStockItems: 0,
-      expiringSoon: 0,
-      outOfStock: 0,
-      todayImport: 0,
-      todayExport: 0,
-      status: 'active',
-      areas: []
-    }));
+      // Tính capacity percentage
+      const capacityPercentage =
+        totalCapacity > 0 ? (usedCapacity / totalCapacity) * 100 : 0;
 
-    return [centralWarehouse, ...apiOnlyWarehouses];
-  }, [apiWarehouses]);
+      // Tính số sản phẩm unique trong các area
+      const productSet = new Set<string>();
+      batches.forEach((b) => {
+        if (b.product?.id) {
+          productSet.add(b.product.id);
+        }
+      });
+
+      // Map areas với nhiệt độ, độ ẩm, số sản phẩm
+      const areasWithData = areas.map((area) => {
+        const env = areaEnv[area.id] ?? { temperature: null, humidity: null };
+        const areaBatches = batches.filter((b) => b.area?.id === area.id);
+        const areaProductSet = new Set<string>();
+        areaBatches.forEach((b) => {
+          if (b.product?.id) {
+            areaProductSet.add(b.product.id);
+          }
+        });
+
+        const areaCapacity = area.capacity ?? 0;
+        const areaAvailableCapacity = area.availableCapacity ?? areaCapacity;
+        const areaUsedCapacity = Math.max(
+          0,
+          areaCapacity - areaAvailableCapacity
+        );
+        const areaCapacityPercentage =
+          areaCapacity > 0 ? (areaUsedCapacity / areaCapacity) * 100 : 0;
+
+        return {
+          id: area.id,
+          name: area.name,
+          temperature: env.temperature ?? null,
+          humidity: env.humidity ?? null,
+          capacity: areaCapacityPercentage,
+          products: areaProductSet.size
+        };
+      });
+
+      return {
+        id: w.id,
+        name: w.name,
+        location: w.address,
+        capacity: capacityPercentage,
+        totalCapacity,
+        usedCapacity,
+        totalItems: productSet.size,
+        lowStockItems: 0,
+        expiringSoon: 0,
+        outOfStock: 0,
+        todayImport: 0,
+        todayExport: 0,
+        status: 'active' as const,
+        areas: areasWithData
+      };
+    });
+  }, [apiWarehouses, warehouseAreas, warehouseBatches, areaEnv]);
 
   const totalStats = useMemo(() => {
     const list = mergedWarehouses;
@@ -153,15 +213,21 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
       };
     }
 
+    const totalCapacity = list.reduce((sum, wh) => sum + wh.totalCapacity, 0);
+    const totalUsedCapacity = list.reduce(
+      (sum, wh) => sum + wh.usedCapacity,
+      0
+    );
+    const avgCapacityPercentage =
+      totalCapacity > 0 ? (totalUsedCapacity / totalCapacity) * 100 : 0;
+
     return {
       totalWarehouses: list.length,
       totalItems: list.reduce((sum, wh) => sum + wh.totalItems, 0),
       totalLowStock: list.reduce((sum, wh) => sum + wh.lowStockItems, 0),
       totalExpiring: list.reduce((sum, wh) => sum + wh.expiringSoon, 0),
       totalOutOfStock: list.reduce((sum, wh) => sum + wh.outOfStock, 0),
-      avgCapacity: Math.round(
-        list.reduce((sum, wh) => sum + wh.capacity, 0) / list.length
-      )
+      avgCapacity: Math.round(avgCapacityPercentage)
     };
   }, [mergedWarehouses]);
 
@@ -170,25 +236,121 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
       setIsLoadingWarehouses(true);
       try {
         const res = await fetchWarehouses({ page: 1, limit: 10 });
-        setApiWarehouses(
-          (res.data || []).map((w) => ({
-            id: w.id,
-            name: w.name,
-            address: w.address
-          }))
+        const warehouses = (res.data || []).map((w) => ({
+          id: w.id,
+          name: w.name,
+          address: w.address
+        }));
+        setApiWarehouses(warehouses);
+
+        // Load areas và batches cho mỗi warehouse
+        const areasMap: Record<string, Area[]> = {};
+        const batchesMap: Record<string, Batch[]> = {};
+        const envMap: Record<
+          string,
+          { temperature?: number | null; humidity?: number | null }
+        > = {};
+
+        await Promise.all(
+          warehouses.map(async (w) => {
+            try {
+              // Load areas
+              const areasRes = await fetchAreas({
+                page: 1,
+                limit: 50,
+                warehouseId: w.id
+              });
+              const areas = (areasRes.data || []).filter(
+                (a) => a.warehouse?.id === w.id
+              );
+              areasMap[w.id] = areas;
+
+              // Load batches cho tất cả areas
+              const batchPromises = areas.map((area) =>
+                fetchBatches({ page: 1, limit: 200, areaId: area.id })
+              );
+              const batchResults = await Promise.all(batchPromises);
+              const allBatches = batchResults.flatMap((res) => res.data || []);
+              batchesMap[w.id] = allBatches.filter((b) =>
+                areas.some((a) => a.id === b.area?.id)
+              );
+
+              // Parse environment data từ IoT devices
+              areas.forEach((area) => {
+                const iot = (area as any)?.iotDevice;
+                const devices: any[] = Array.isArray(iot)
+                  ? iot
+                  : iot
+                    ? [iot]
+                    : [];
+                let readings: {
+                  temperature?: number | null;
+                  humidity?: number | null;
+                } = {
+                  temperature: null,
+                  humidity: null
+                };
+
+                for (const d of devices) {
+                  const r = parseDeviceData(d);
+                  const temperature = toNumeric(r.temperature);
+                  const humidity = toNumeric(r.humidity);
+                  if (temperature != null || humidity != null) {
+                    readings = { temperature, humidity };
+                    break;
+                  }
+                }
+
+                envMap[area.id] = readings;
+              });
+            } catch (error) {
+              console.error(`Unable to load data for warehouse ${w.id}`, error);
+            }
+          })
         );
+
+        setWarehouseAreas(areasMap);
+        setWarehouseBatches(batchesMap);
+        setAreaEnv(envMap);
       } catch (error) {
-        // Chỉ log nhẹ, vẫn dùng mock nếu API lỗi
-        console.error(
-          'Unable to load warehouses, fallback to mock data',
-          error
-        );
+        console.error('Unable to load warehouses', error);
       } finally {
         setIsLoadingWarehouses(false);
       }
     };
 
     void loadWarehouses();
+  }, []);
+
+  // Subscribe IoT updates
+  useEffect(() => {
+    const unsubscribe = subscribeIoTDataUpdates((payload) => {
+      const readings = parseDeviceData(payload as any);
+      const temperature = toNumeric(readings.temperature);
+      const humidity = toNumeric(readings.humidity);
+      if (temperature == null && humidity == null) return;
+
+      const payloadAreaId = (payload as any)?.area?.id as string | undefined;
+      if (!payloadAreaId) return;
+
+      setAreaEnv((prev) => ({
+        ...prev,
+        [payloadAreaId]: {
+          temperature:
+            temperature != null
+              ? temperature
+              : (prev[payloadAreaId]?.temperature ?? null),
+          humidity:
+            humidity != null
+              ? humidity
+              : (prev[payloadAreaId]?.humidity ?? null)
+        }
+      }));
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
   // Fetch managers chưa gắn warehouse
@@ -371,23 +533,6 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
               <p className='text-muted-foreground text-xs'>Trong 2 ngày tới</p>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-sm font-medium'>
-                Công suất TB
-              </CardTitle>
-              <IconTrendingUp className='text-muted-foreground h-4 w-4' />
-            </CardHeader>
-            <CardContent>
-              <div className='text-2xl font-bold'>
-                {totalStats.avgCapacity}%
-              </div>
-              <p className='text-muted-foreground text-xs'>
-                Trung bình các kho
-              </p>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Danh sách kho */}
@@ -418,7 +563,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
             {mergedWarehouses.map((warehouse) => (
               <Card
                 key={warehouse.id}
-                className='transition-shadow hover:shadow-lg'
+                className='flex h-full flex-col transition-shadow hover:shadow-lg'
               >
                 <CardHeader>
                   <div className='flex items-start justify-between'>
@@ -440,7 +585,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
                     </Badge>
                   </div>
                 </CardHeader>
-                <CardContent className='space-y-4'>
+                <CardContent className='flex flex-1 flex-col space-y-4'>
                   {/* Thống kê kho */}
                   <div className='grid grid-cols-2 gap-4 text-sm'>
                     <div className='space-y-1'>
@@ -457,9 +602,13 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
                           className='flex-1'
                         />
                         <span className='font-semibold'>
-                          {warehouse.capacity}%
+                          {warehouse.capacity.toFixed(1)}%
                         </span>
                       </div>
+                      <p className='text-muted-foreground text-xs'>
+                        {warehouse.usedCapacity.toLocaleString()} /{' '}
+                        {warehouse.totalCapacity.toLocaleString()} kg
+                      </p>
                     </div>
                     <div className='space-y-1'>
                       <p className='text-muted-foreground'>Nhập hôm nay</p>
@@ -513,7 +662,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
                   )}
 
                   {/* Khu vực trong kho */}
-                  <div className='space-y-2'>
+                  <div className='flex-1 space-y-2'>
                     <p className='text-sm font-medium'>
                       Khu vực ({warehouse.areas.length}):
                     </p>
@@ -530,11 +679,15 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
                             <div className='text-muted-foreground flex items-center space-x-4 text-xs'>
                               <span className='flex items-center dark:text-black'>
                                 <IconTemperature className='mr-1 h-3 w-3' />
-                                {area.temperature}°C
+                                {area.temperature != null
+                                  ? `${area.temperature}°C`
+                                  : '—'}
                               </span>
                               <span className='flex items-center dark:text-black'>
                                 <IconDroplet className='mr-1 h-3 w-3' />
-                                {area.humidity}%
+                                {area.humidity != null
+                                  ? `${area.humidity}%`
+                                  : '—'}
                               </span>
                               <span className='dark:text-black'>
                                 {area.products} sản phẩm
@@ -548,7 +701,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
                                 className='h-2 w-12'
                               />
                               <span className='text-xs font-medium dark:text-black'>
-                                {area.capacity}%
+                                {area.capacity.toFixed(1)}%
                               </span>
                             </div>
                           </div>
@@ -558,7 +711,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
                   </div>
 
                   {/* Actions */}
-                  <div className='flex gap-2 pt-2'>
+                  <div className='mt-auto flex gap-2 pt-4'>
                     <Link
                       href={`/dashboard/warehouse/${warehouse.id}`}
                       className={cn(

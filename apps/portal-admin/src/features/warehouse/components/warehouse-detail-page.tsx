@@ -25,9 +25,56 @@ import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
 import { createArea, fetchAreas } from '@/services/area.service';
 import { fetchManagers } from '@/services/manager.service';
+import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
 import { fetchWarehouseById } from '@/services/warehouse.service';
+import { fetchBatches } from '@/services/batch.service';
+import type { Batch } from '@/types/batch';
 import type { Area } from '@/types/area';
 import type { Manager } from '@/types/manager';
+
+type EnvironmentReadings = {
+  temperature?: number | null;
+  humidity?: number | null;
+};
+
+const toNumeric = (value: unknown) => {
+  if (typeof value === 'number') return value;
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isNaN(parsed) ? null : parsed;
+  }
+  return null;
+};
+
+const parseDeviceData = (device: any): EnvironmentReadings => {
+  try {
+    const raw = device?.data;
+    if (typeof raw === 'string' && raw.trim().length > 0) {
+      const obj = JSON.parse(raw);
+      return {
+        temperature: obj.temperature ?? obj.temp ?? obj.t ?? null,
+        humidity: obj.humidity ?? obj.humid ?? obj.h ?? null
+      };
+    }
+    if (Array.isArray(raw) && raw.length > 0) {
+      const last = raw[raw.length - 1];
+      return {
+        temperature: last?.temperature ?? last?.temp ?? last?.t ?? null,
+        humidity: last?.humidity ?? last?.humid ?? last?.h ?? null
+      };
+    }
+    if (raw && typeof raw === 'object') {
+      return {
+        temperature:
+          raw.temperature ?? raw.temp ?? raw.t ?? (raw as any).Temperature,
+        humidity: raw.humidity ?? raw.humid ?? raw.h ?? (raw as any).Humidity
+      };
+    }
+  } catch {
+    // ignore parse errors
+  }
+  return {};
+};
 import type { Warehouse } from '@/types/warehouse';
 import {
   IconArrowLeft,
@@ -42,6 +89,7 @@ import {
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { WarehouseActivitiesTable } from './warehouse-activities-table';
 
 interface WarehouseDetailPageProps {
   warehouseId: string;
@@ -107,6 +155,22 @@ export default function WarehouseDetailPage({
   );
   const [apiAreas, setApiAreas] = useState<Area[]>([]);
   const [isLoadingAreas, setIsLoadingAreas] = useState(false);
+  const [areaBatches, setAreaBatches] = useState<Batch[]>([]);
+  const [areaEnv, setAreaEnv] = useState<Record<string, EnvironmentReadings>>(
+    {}
+  );
+  const [areaDeviceMap, setAreaDeviceMap] = useState<Record<string, string[]>>(
+    {}
+  );
+  const deviceToAreaMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    Object.entries(areaDeviceMap).forEach(([areaId, deviceIds]) => {
+      deviceIds.forEach((deviceId) => {
+        map[deviceId] = areaId;
+      });
+    });
+    return map;
+  }, [areaDeviceMap]);
 
   const [isCreateAreaDialogOpen, setIsCreateAreaDialogOpen] = useState(false);
   const [isCreatingArea, setIsCreatingArea] = useState(false);
@@ -162,7 +226,71 @@ export default function WarehouseDetailPage({
     setIsLoadingAreas(true);
     try {
       const res = await fetchAreas({ page: 1, limit: 50, warehouseId });
-      setApiAreas(res.data || []);
+      const areas = res.data || [];
+      setApiAreas(areas);
+
+      const nextEnv: Record<string, EnvironmentReadings> = {};
+      const nextDeviceMap: Record<string, string[]> = {};
+
+      areas.forEach((area) => {
+        const iot = (area as any)?.iotDevice;
+        const devices: any[] = Array.isArray(iot) ? iot : iot ? [iot] : [];
+        nextDeviceMap[area.id] = devices
+          .map((d) => (d && typeof d === 'object' ? (d as any).id : null))
+          .filter(
+            (v): v is string => typeof v === 'string' && v.trim().length > 0
+          );
+
+        let readings: EnvironmentReadings = {
+          temperature: null,
+          humidity: null
+        };
+
+        for (const d of devices) {
+          const r = parseDeviceData(d);
+          const temperature = toNumeric(r.temperature);
+          const humidity = toNumeric(r.humidity);
+          if (temperature != null || humidity != null) {
+            readings = { temperature, humidity };
+            break;
+          }
+        }
+
+        nextEnv[area.id] = readings;
+      });
+
+      setAreaEnv((prev) => {
+        const merged: Record<string, EnvironmentReadings> = {};
+        areas.forEach((area) => {
+          const readings = nextEnv[area.id];
+          const hasFresh =
+            typeof readings.temperature === 'number' ||
+            typeof readings.humidity === 'number';
+          if (hasFresh) {
+            merged[area.id] = readings;
+          } else {
+            merged[area.id] = prev[area.id] ?? readings;
+          }
+        });
+        return merged;
+      });
+
+      setAreaDeviceMap(nextDeviceMap);
+
+      // Load batches cho tất cả areas để tính số sản phẩm
+      try {
+        const batchPromises = areas.map((area) =>
+          fetchBatches({ page: 1, limit: 200, areaId: area.id })
+        );
+        const batchResults = await Promise.all(batchPromises);
+        const allBatches = batchResults.flatMap((res) => res.data || []);
+        setAreaBatches(
+          allBatches.filter((b) => areas.some((a) => a.id === b.area?.id))
+        );
+      } catch (error) {
+        console.error('Unable to load batches for areas', error);
+        setAreaBatches([]);
+      }
     } catch (error) {
       console.error('Unable to load areas', error);
       toast({
@@ -181,6 +309,40 @@ export default function WarehouseDetailPage({
     void loadWarehouseManager();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [warehouseId]);
+
+  useEffect(() => {
+    const unsubscribe = subscribeIoTDataUpdates((payload) => {
+      const readings = parseDeviceData(payload as any);
+      const temperature = toNumeric(readings.temperature);
+      const humidity = toNumeric(readings.humidity);
+      if (temperature == null && humidity == null) return;
+
+      const payloadAreaId = (payload as any)?.area?.id as string | undefined;
+      let targetAreaId = payloadAreaId;
+      if (!targetAreaId) {
+        const payloadId = String((payload as any)?.id ?? '').trim();
+        if (!payloadId) return;
+        targetAreaId = deviceToAreaMap[payloadId];
+      }
+      if (!targetAreaId) return;
+
+      setAreaEnv((prev) => ({
+        ...prev,
+        [targetAreaId]: {
+          temperature:
+            temperature != null
+              ? temperature
+              : (prev[targetAreaId]?.temperature ?? null),
+          humidity:
+            humidity != null ? humidity : (prev[targetAreaId]?.humidity ?? null)
+        }
+      }));
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [deviceToAreaMap]);
 
   const resetAreaForm = () => {
     setAreaForm({
@@ -241,19 +403,38 @@ export default function WarehouseDetailPage({
   const apiAreaCards = useMemo(() => {
     return apiAreas
       .filter((a) => a.warehouse?.id === warehouseId)
-      .map((a) => ({
-        id: a.id,
-        name: a.name,
-        temperature: 0,
-        description: a.description,
-        humidity: 0,
-        products: 0,
-        capacity: a.capacity ?? 0,
-        status: 'normal' as const,
-        lastUpdated: '—',
-        sensors: []
-      }));
-  }, [apiAreas, warehouseId]);
+      .map((a) => {
+        const env = areaEnv[a.id] ?? { temperature: null, humidity: null };
+
+        // Tính số sản phẩm unique trong area
+        const areaBatchesList = areaBatches.filter((b) => b.area?.id === a.id);
+        const productSet = new Set<string>();
+        areaBatchesList.forEach((b) => {
+          if (b.product?.id) {
+            productSet.add(b.product.id);
+          }
+        });
+
+        // Tính capacity percentage = ((capacity - availableCapacity) / capacity) * 100
+        const capacity = a.capacity ?? 0;
+        const availableCapacity = a.availableCapacity ?? capacity;
+        const usedCapacity = Math.max(0, capacity - availableCapacity);
+        const capacityPercentage =
+          capacity > 0 ? (usedCapacity / capacity) * 100 : 0;
+
+        return {
+          id: a.id,
+          name: a.name,
+          description: a.description,
+          temperature: env.temperature ?? null,
+          humidity: env.humidity ?? null,
+          products: productSet.size,
+          capacity: capacityPercentage,
+          status: 'normal' as const,
+          lastUpdated: '—'
+        };
+      });
+  }, [apiAreas, warehouseId, areaEnv, areaBatches]);
 
   const allAreas = useMemo(() => apiAreaCards, [apiAreaCards]);
 
@@ -313,12 +494,12 @@ export default function WarehouseDetailPage({
               <h1 className='truncate text-lg font-bold sm:text-xl md:text-2xl'>
                 {warehouse.name}
               </h1>
-              <p className='text-muted-foreground text-xs sm:text-sm'>
+              {/* <p className='text-muted-foreground text-xs sm:text-sm'>
                 ID: {warehouse.id} • {warehouse.location}
-              </p>
+              </p> */}
             </div>
           </div>
-          <div className='flex shrink-0 items-center space-x-1 md:space-x-2'>
+          {/* <div className='flex shrink-0 items-center space-x-1 md:space-x-2'>
             <Button
               variant='outline'
               size='sm'
@@ -335,10 +516,10 @@ export default function WarehouseDetailPage({
               <IconSettings className='mr-1 h-3 w-3 md:mr-2 md:h-4 md:w-4' />
               <span className='hidden sm:inline'>Cài đặt</span>
             </Button>
-          </div>
+          </div> */}
         </div>
 
-        <Separator className='my-2 md:my-3' />
+        {/* <Separator className='my-2 md:my-3' /> */}
 
         {/* Warehouse Info */}
         <div className='grid grid-cols-1 gap-3 md:gap-4 lg:grid-cols-3 2xl:grid-cols-4'>
@@ -371,7 +552,7 @@ export default function WarehouseDetailPage({
                     {warehouseManager?.user?.email || '—'}
                   </p>
                 </div>
-                <div>
+                {/* <div>
                   <p className='text-muted-foreground text-sm'>Trạng thái</p>
                   <Badge
                     variant={
@@ -380,7 +561,7 @@ export default function WarehouseDetailPage({
                   >
                     {warehouse.status === 'active' ? 'Hoạt động' : 'Tạm dừng'}
                   </Badge>
-                </div>
+                </div> */}
               </div>
               <div className='mt-3'>
                 <p className='text-muted-foreground text-sm'>Địa chỉ</p>
@@ -393,7 +574,9 @@ export default function WarehouseDetailPage({
 
           <Card>
             <CardHeader className='pb-3'>
-              <CardTitle className='text-lg'>Thống kê tổng quan</CardTitle>
+              <CardTitle className='text-lg'>
+                Thống kê tổng quan (Để xong hết nhập xuất thì sửa lại bảng này)
+              </CardTitle>
             </CardHeader>
             <CardContent className='space-y-3 pt-0'>
               <div className='space-y-2'>
@@ -523,7 +706,9 @@ export default function WarehouseDetailPage({
                         </span>
                       </div>
                       <p className='truncate text-xs font-bold text-blue-600'>
-                        {area.temperature}°C
+                        {area.temperature != null
+                          ? `${area.temperature}°C`
+                          : '—'}
                       </p>
                     </div>
                     <div className='ml-3 min-w-0 space-y-0.5'>
@@ -534,7 +719,7 @@ export default function WarehouseDetailPage({
                         </span>
                       </div>
                       <p className='truncate text-xs font-bold text-cyan-600'>
-                        {area.humidity}%
+                        {area.humidity != null ? `${area.humidity}%` : '—'}
                       </p>
                     </div>
                     <div className='min-w-0 space-y-0.5'>
@@ -557,7 +742,7 @@ export default function WarehouseDetailPage({
                         Công suất khu vực
                       </span>
                       <span className='text-xs font-semibold'>
-                        {area.capacity}%
+                        {area.capacity.toFixed(1)}%
                       </span>
                     </div>
                     <Progress value={area.capacity} className='h-1' />
@@ -628,54 +813,7 @@ export default function WarehouseDetailPage({
         </div>
 
         {/* Recent Activities */}
-        <Card>
-          <CardHeader className='pb-3'>
-            <CardTitle className='text-lg'>Hoạt động gần đây</CardTitle>
-            <CardDescription>
-              Các giao dịch mới nhất trong kho này
-            </CardDescription>
-          </CardHeader>
-          <CardContent className='pt-0'>
-            <div className='space-y-2'>
-              {warehouse.recentActivities.map((activity) => (
-                <div
-                  key={activity.id}
-                  className='flex items-center justify-between rounded border p-2'
-                >
-                  <div className='flex min-w-0 flex-1 items-center space-x-2'>
-                    <div
-                      className={cn(
-                        'h-2 w-2 shrink-0 rounded-full',
-                        activity.type === 'import'
-                          ? 'bg-green-500'
-                          : activity.type === 'export'
-                            ? 'bg-blue-500'
-                            : 'bg-yellow-500'
-                      )}
-                    />
-                    <div className='min-w-0 flex-1'>
-                      <p className='truncate text-sm font-medium'>
-                        {activity.item}
-                      </p>
-                      <p className='text-muted-foreground truncate text-xs'>
-                        {activity.type === 'import'
-                          ? 'Nhập'
-                          : activity.type === 'export'
-                            ? 'Xuất'
-                            : 'Kiểm tra'}
-                        {activity.quantity > 0 && `: ${activity.quantity} kg`} •
-                        Khu vực {activity.area} • {activity.staff}
-                      </p>
-                    </div>
-                  </div>
-                  <span className='text-muted-foreground ml-2 shrink-0 text-xs'>
-                    {activity.time}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+        <WarehouseActivitiesTable />
       </div>
 
       {/* Dialog tạo khu vực mới */}

@@ -26,6 +26,7 @@ import {
   IconMinus
 } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Product, fetchProducts } from '@/services/product.service';
@@ -38,6 +39,11 @@ import {
 } from '@/features/supplier';
 import type { Supplier } from '@/types/supplier';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
+
+const AddressPickerMap = dynamic(
+  () => import('@/components/map/osrm-map').then((m) => m.AddressPickerMap),
+  { ssr: false }
+);
 
 type HarvestDetailForm = {
   productId: string;
@@ -52,6 +58,10 @@ export default function NewHarvestBatchPage() {
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
   const [supplierId, setSupplierId] = useState<string | null>(null);
+  const [showMap, setShowMap] = useState(false);
+  const [harvestPosition, setHarvestPosition] = useState<
+    { lat: number; lng: number } | undefined
+  >(undefined);
 
   // Step 1: Harvest Schedule
   const [scheduleData, setScheduleData] = useState({
@@ -418,6 +428,33 @@ export default function NewHarvestBatchPage() {
                     onChange={handleScheduleChange}
                     placeholder='Enter harvest address'
                   />
+                </div>
+                <div className='space-y-3'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    size='sm'
+                    onClick={() => setShowMap((v) => !v)}
+                  >
+                    {showMap ? 'Close map' : 'Pick location on map'}
+                  </Button>
+                  {showMap && (
+                    <div className='rounded-lg border p-2'>
+                      <AddressPickerMap
+                        value={{
+                          position: harvestPosition,
+                          address: scheduleData.address
+                        }}
+                        onChange={(v) => {
+                          setHarvestPosition(v.position);
+                          setScheduleData((prev) => ({
+                            ...prev,
+                            address: v.address || prev.address
+                          }));
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
                 <div className='space-y-2'>
                   <Label htmlFor='description'>Description</Label>
