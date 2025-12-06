@@ -27,6 +27,7 @@ import {
   IconEdit,
   IconFileText,
   IconId,
+  IconLock,
   IconMail,
   IconMapPin,
   IconPhone,
@@ -52,6 +53,8 @@ export default function ConsigneeProfilePage() {
     firstName: user?.firstName || '',
     lastName: user?.lastName || '',
     email: user?.email || '',
+    oldPassword: '',
+    password: '',
     organizationName: consigneeInfo?.organizationName || '',
     representativeName: consigneeInfo?.representativeName || '',
     contact: consigneeInfo?.contact || '',
@@ -67,6 +70,8 @@ export default function ConsigneeProfilePage() {
         firstName: user?.firstName || '',
         lastName: user?.lastName || '',
         email: user?.email || '',
+        oldPassword: '',
+        password: '',
         organizationName: consigneeInfo?.organizationName || '',
         representativeName: consigneeInfo?.representativeName || '',
         contact: consigneeInfo?.contact || '',
@@ -128,17 +133,39 @@ export default function ConsigneeProfilePage() {
         handleFileUpload(userPhotoFiles, 'userPhoto')
       ]);
 
-      // Update user profile
-      await updateProfile({
+      // Prepare update payload - only include password if both are provided
+      const updatePayload: {
+        firstName: string;
+        lastName: string;
+        oldPassword?: string;
+        password?: string;
+        photo?: { id: string; path: string };
+      } = {
         firstName: formData.firstName,
-        lastName: formData.lastName,
-        ...(userPhotoUrl && {
-          photo: {
-            id: userPhotoUrl.id,
-            path: userPhotoUrl.path
-          }
-        })
-      });
+        lastName: formData.lastName
+      };
+
+      // Only include password fields if both are provided and not empty
+      if (
+        formData.oldPassword &&
+        formData.oldPassword.trim() !== '' &&
+        formData.password &&
+        formData.password.trim() !== ''
+      ) {
+        updatePayload.oldPassword = formData.oldPassword;
+        updatePayload.password = formData.password;
+      }
+
+      // Include photo if uploaded
+      if (userPhotoUrl) {
+        updatePayload.photo = {
+          id: userPhotoUrl.id,
+          path: userPhotoUrl.path
+        };
+      }
+
+      // Update user profile
+      await updateProfile(updatePayload);
 
       // Update consignee information
       await updateConsignee(consigneeInfo.id, {
@@ -187,6 +214,8 @@ export default function ConsigneeProfilePage() {
       firstName: user?.firstName || '',
       lastName: user?.lastName || '',
       email: user?.email || '',
+      oldPassword: '',
+      password: '',
       organizationName: consigneeInfo?.organizationName || '',
       representativeName: consigneeInfo?.representativeName || '',
       contact: consigneeInfo?.contact || '',
@@ -387,6 +416,41 @@ export default function ConsigneeProfilePage() {
                     Email cannot be changed here. Contact support if needed.
                   </p>
                 </div>
+                {isEditing && (
+                  <div className='space-y-2'>
+                    <Label htmlFor='oldPassword'>Old Password</Label>
+                    <Input
+                      id='oldPassword'
+                      name='oldPassword'
+                      type='password'
+                      value={formData.oldPassword}
+                      onChange={handleInputChange}
+                      placeholder='Enter old password (optional)'
+                      className='h-[42px] !text-base'
+                    />
+                    <p className='text-muted-foreground text-xs'>
+                      Leave blank if you don't want to change password
+                    </p>
+                  </div>
+                )}
+
+                {isEditing && (
+                  <div className='space-y-2'>
+                    <Label htmlFor='password'>New Password</Label>
+                    <Input
+                      id='password'
+                      name='password'
+                      type='password'
+                      value={formData.password}
+                      onChange={handleInputChange}
+                      placeholder='Enter new password (optional)'
+                      className='h-[42px] !text-base'
+                    />
+                    <p className='text-muted-foreground text-xs'>
+                      Leave blank if you don't want to change password
+                    </p>
+                  </div>
+                )}
 
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
                   <div className='space-y-2'>
