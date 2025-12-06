@@ -1,6 +1,10 @@
 import { fetchJSON } from '@/lib/client';
 import type { InfinityPaginationResponse } from '@/types/common';
-import type { OrderBE, FindAllOrdersDto } from '@/types/order';
+import type {
+  OrderBE,
+  FindAllOrdersDto,
+  OrderWithDetailsResponseDto
+} from '@/types/order';
 
 export async function fetchOrders({
   page = 1,
@@ -13,6 +17,9 @@ export async function fetchOrders({
   return fetchJSON<InfinityPaginationResponse<OrderBE>>(
     `/orders?${params.toString()}`
   );
+}
+export async function fetchOrderWithDetails(id: string) {
+  return fetchJSON<OrderWithDetailsResponseDto>(`/orders/${id}/full-info`);
 }
 export async function fetchOrdersByStatus({
   status,

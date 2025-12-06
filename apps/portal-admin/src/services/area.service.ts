@@ -6,6 +6,7 @@ import type {
   FindAllAreasDto
 } from '@/types/area';
 import type { InfinityPaginationResponse } from '@/types/common';
+import type { Area as AreaEntity } from '@/types/area';
 
 const BASE_PATH = '/areas';
 
@@ -50,4 +51,31 @@ export async function deleteArea(id: string) {
   return fetchJSON<void>(`${BASE_PATH}/${id}`, {
     method: 'DELETE'
   });
+}
+
+export type AreaAlert = {
+  id: string;
+  status?: string | null;
+  message?: string | null;
+  alertType?: string | null;
+  area?: { id: string } | null;
+  createdAt?: string;
+  updatedAt?: string;
+};
+
+export async function fetchAreaAlerts({
+  page = 1,
+  limit = 50
+}: { page?: number; limit?: number } = {}) {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit)
+  });
+  return fetchJSON<InfinityPaginationResponse<AreaAlert>>(
+    `/area-alerts?${params.toString()}`
+  );
+}
+
+export async function fetchActiveAreaAlertByAreaId(areaId: string) {
+  return fetchJSON<AreaAlert | null>(`/area-alerts/active/area/${areaId}`);
 }

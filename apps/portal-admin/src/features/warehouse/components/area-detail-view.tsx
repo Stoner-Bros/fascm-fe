@@ -34,7 +34,11 @@ import {
   updateAreaSetting
 } from '@/services/area-setting.service';
 import { fetchAreaById } from '@/services/area.service';
+import { fetchActiveAreaAlertByAreaId } from '@/services/area.service';
+import { io } from 'socket.io-client';
+import { getApiBase } from '@/lib/client';
 import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
+import IotDeviceCard from '@/components/iot/iot-device-card';
 import { fetchWarehouseById } from '@/services/warehouse.service';
 import { fetchImportTickets } from '@/services/import-ticket.service';
 import { fetchBatches } from '@/services/batch.service';
@@ -45,7 +49,6 @@ import type { Warehouse } from '@/types/warehouse';
 import type { Batch } from '@/types/batch';
 import type { ImportTicket } from '@/types/import-ticket';
 import {
-  IconActivity,
   IconAlertTriangle,
   IconArrowDown,
   IconArrowLeft,
@@ -81,7 +84,7 @@ export default function AreaDetailView({
   areaId
 }: AreaDetailViewProps) {
   const router = useRouter();
-  const [realTimeData, setRealTimeData] = useState(new Date());
+  const [realTimeData, setRealTimeData] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [area, setArea] = useState<AreaEntity | null>(null);
   const [warehouse, setWarehouse] = useState<Warehouse | null>(null);
@@ -109,6 +112,15 @@ export default function AreaDetailView({
   const [areaImportTickets, setAreaImportTickets] = useState<ImportTicket[]>(
     []
   );
+  const [activeAlert, setActiveAlert] = useState<{
+    id: string;
+    status?: string | null;
+    message?: string | null;
+    alertType?: string | null;
+    area?: { id: string } | null;
+    createdAt?: string;
+    updatedAt?: string;
+  } | null>(null);
   const [areaExportTickets, setAreaExportTickets] = useState<any[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [historySearchTerm, setHistorySearchTerm] = useState('');
@@ -118,6 +130,8 @@ export default function AreaDetailView({
   const [overviewBatches, setOverviewBatches] = useState<Batch[]>([]);
   const [isLoadingOverviewBatches, setIsLoadingOverviewBatches] =
     useState(false);
+  const [iotDevices, setIotDevices] = useState<any[]>([]);
+  const [isLoadingIoT, setIsLoadingIoT] = useState(false);
 
   type EnvironmentReadings = {
     temperature?: number | null;
@@ -126,6 +140,28 @@ export default function AreaDetailView({
 
   const parseDeviceData = (device: any): EnvironmentReadings => {
     try {
+      // Support direct payload with top-level fields
+      if (
+        device &&
+        typeof device === 'object' &&
+        (device.temperature !== undefined || device.humidity !== undefined)
+      ) {
+        return {
+          temperature:
+            device.temperature ??
+            device.temp ??
+            device.t ??
+            device.Temperature ??
+            null,
+          humidity:
+            device.humidity ??
+            device.humid ??
+            device.h ??
+            device.Humidity ??
+            null
+        };
+      }
+
       const raw = device?.data;
 
       if (typeof raw === 'string' && raw.trim().length > 0) {
@@ -231,6 +267,18 @@ export default function AreaDetailView({
     void loadWarehouse();
   }, [areaId, warehouseId]);
 
+  useEffect(() => {
+    if (!areaId) return;
+    (async () => {
+      try {
+        const alert = await fetchActiveAreaAlertByAreaId(areaId);
+        const isActive =
+          alert && String(alert.status ?? '').toLowerCase() === 'active';
+        setActiveAlert(isActive ? alert : null);
+      } catch {}
+    })();
+  }, [areaId]);
+
   // tạm thời vẫn dùng mock area/warehouse, nhưng ngưỡng cảnh báo lấy theo API area-settings
   useEffect(() => {
     if (areaId) {
@@ -321,14 +369,12 @@ export default function AreaDetailView({
     if (!areaId) return;
 
     const unsubscribe = subscribeIoTDataUpdates((payload) => {
-      // 1) Nếu payload có area, phải trùng area hiện tại
-      const payloadAreaId = (payload as any)?.area?.id as string | undefined;
-      if (payloadAreaId && payloadAreaId !== areaId) return;
+      const payloadAreaId = (payload as any)?.areaId as string | undefined;
+      if (payloadAreaId && String(payloadAreaId) !== String(areaId)) return;
 
-      // 2) Nếu không có area trong payload, fallback theo device id của area
-      const payloadId = String((payload as any)?.id ?? '').trim();
+      const payloadDeviceId = String((payload as any)?.deviceId ?? '').trim();
       if (!payloadAreaId) {
-        if (!payloadId || !areaDeviceIds.includes(payloadId)) {
+        if (!payloadDeviceId || !areaDeviceIds.includes(payloadDeviceId)) {
           return;
         }
       }
@@ -447,6 +493,39 @@ export default function AreaDetailView({
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, [areaId, activeTab]);
+
+  useEffect(() => {
+    if (!areaId) return;
+    const base = getApiBase().replace(/\/api\/v1$/, '');
+    const socket = io(`${base}/iot`, {
+      path: '/socket.io',
+      transports: ['websocket']
+    });
+    const onAlert = (payload: any) => {
+      const aid = String(payload?.areaId ?? payload?.area?.id ?? '');
+      if (!aid || aid !== String(areaId)) return;
+      const alert = {
+        id: String(payload?.id ?? Date.now()),
+        status: payload?.status ?? 'active',
+        message: payload?.message ?? '',
+        alertType: payload?.alertType ?? payload?.type ?? 'Alert',
+        area: { id: aid },
+        createdAt: String(payload?.createdAt ?? new Date().toISOString()),
+        updatedAt: String(payload?.updatedAt ?? new Date().toISOString())
+      };
+      if (String(payload?.status ?? '').toLowerCase() === 'resolved') {
+        setActiveAlert(null);
+      } else {
+        setActiveAlert(alert);
+      }
+    };
+    socket.emit('alert:subscribeArea', { areaId });
+    socket.on('area-alert', onAlert);
+    return () => {
+      socket.off('area-alert', onAlert);
+      socket.disconnect();
+    };
+  }, [areaId]);
 
   // Load batches cho overview tab (để hiển thị phân bố sản phẩm)
   useEffect(() => {
@@ -795,6 +874,77 @@ export default function AreaDetailView({
       : [{ name: 'Chưa có dữ liệu', value: 1, color: palette[0] }];
   }, [overviewBatches]);
 
+  useEffect(() => {
+    if (activeTab !== 'iot' || !areaId) return;
+    const loadIoTDevices = async () => {
+      setIsLoadingIoT(true);
+      try {
+        const area: any = await fetchAreaById(areaId);
+        const iot = area?.iotDevice;
+        const devices: any[] = Array.isArray(iot) ? iot : iot ? [iot] : [];
+        const deviceIds = devices
+          .map((d) => (d && typeof d === 'object' ? (d as any).id : null))
+          .filter(
+            (v): v is string => typeof v === 'string' && v.trim().length > 0
+          );
+        setAreaDeviceIds(deviceIds);
+        const normalized = devices.map((d) => {
+          const parsed = parseDeviceData(d);
+          return {
+            id: String((d as any)?.id ?? ''),
+            type: (d as any)?.type ?? (d as any)?.deviceType ?? 'sensor',
+            status: (d as any)?.status ?? 'unknown',
+            lastDataTime: String(
+              (d as any)?.lastDataTime ??
+                (d as any)?.updatedAt ??
+                (d as any)?.createdAt ??
+                ''
+            ),
+            data: parsed
+          };
+        });
+        setIotDevices(normalized);
+      } catch (error) {
+        setIotDevices([]);
+      } finally {
+        setIsLoadingIoT(false);
+      }
+    };
+    void loadIoTDevices();
+  }, [activeTab, areaId]);
+
+  useEffect(() => {
+    if (!areaId) return;
+    const unsubscribe = subscribeIoTDataUpdates((payload) => {
+      const payloadAreaId = (payload as any)?.areaId as string | undefined;
+      if (payloadAreaId && String(payloadAreaId) !== String(areaId)) return;
+      const payloadDeviceId = String((payload as any)?.deviceId ?? '').trim();
+      if (!payloadAreaId) {
+        if (!payloadDeviceId || !areaDeviceIds.includes(payloadDeviceId))
+          return;
+      }
+      const parsed = parseDeviceData(payload as any);
+      setIotDevices((prev) => {
+        const idx = prev.findIndex((d) => String(d.id) === payloadDeviceId);
+        if (idx >= 0) {
+          const next = [...prev];
+          next[idx] = {
+            ...next[idx],
+            data: parsed,
+            lastDataTime: String(
+              (payload as any)?.timestamp ?? new Date().toISOString()
+            )
+          };
+          return next;
+        }
+        return prev;
+      });
+    });
+    return () => {
+      unsubscribe();
+    };
+  }, [areaId, areaDeviceIds]);
+
   const batchesOfSelectedProduct = useMemo(
     () =>
       selectedProductId
@@ -841,9 +991,10 @@ export default function AreaDetailView({
 
   // Cập nhật dữ liệu thời gian thực
   useEffect(() => {
+    setRealTimeData(new Date());
     const interval = setInterval(() => {
       setRealTimeData(new Date());
-    }, 30000); // Cập nhật mỗi 30 giây
+    }, 30000);
 
     return () => clearInterval(interval);
   }, []);
@@ -893,7 +1044,7 @@ export default function AreaDetailView({
       : 0;
   const capacityPercentage =
     capacity > 0 ? (usedCapacity / Math.max(capacity, 1)) * 100 : 0;
-  const activeAlertCount = 0; // sẽ nối API cảnh báo sau
+  const activeAlertCount = activeAlert ? 1 : 0;
   const areaName = area?.name || `Khu vực ${areaId}`;
   const areaCode = area?.id || areaId;
   const areaDescription = area?.description || '';
@@ -921,7 +1072,7 @@ export default function AreaDetailView({
             <p className='text-muted-foreground'>
               {warehouseName}
               {isLoadingWarehouse && ' (đang tải...)'} • Cập nhật lần cuối:{' '}
-              {realTimeData.toLocaleTimeString()}
+              {realTimeData ? realTimeData.toLocaleTimeString('vi-VN') : '—'}
             </p>
           </div>
         </div>
@@ -1016,17 +1167,27 @@ export default function AreaDetailView({
             <IconAlertTriangle className='text-muted-foreground h-4 w-4' />
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold text-yellow-600'>
-              {activeAlertCount}
-            </div>
-            <p className='text-muted-foreground text-xs'>
-              Cảnh báo đang hoạt động
-            </p>
-            <div className='mt-2'>
-              <Badge variant='outline' className='text-yellow-600'>
-                Cần xử lý
-              </Badge>
-            </div>
+            {activeAlert ? (
+              <div className='space-y-1'>
+                <div className='text-2xl font-bold text-yellow-600'>1</div>
+                <p className='text-muted-foreground text-xs'>
+                  Cảnh báo đang hoạt động
+                </p>
+                <div className='mt-2'>
+                  <Badge variant='outline' className='text-yellow-600'>
+                    {activeAlert.alertType || 'Alert'}
+                  </Badge>
+                </div>
+                <p className='mt-1 text-sm'>{activeAlert.message || ''}</p>
+              </div>
+            ) : (
+              <div className='space-y-1'>
+                <div className='text-2xl font-bold'>0</div>
+                <p className='text-muted-foreground text-xs'>
+                  Không có cảnh báo
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -1037,12 +1198,13 @@ export default function AreaDetailView({
         onValueChange={setActiveTab}
         className='space-y-4'
       >
-        <TabsList className='grid w-full grid-cols-5'>
+        <TabsList className='grid w-full grid-cols-6'>
           <TabsTrigger value='overview'>Tổng quan</TabsTrigger>
           <TabsTrigger value='products'>Sản phẩm</TabsTrigger>
           <TabsTrigger value='alerts'>Cảnh báo</TabsTrigger>
           <TabsTrigger value='history'>Lịch sử</TabsTrigger>
           <TabsTrigger value='settings'>Cài đặt</TabsTrigger>
+          <TabsTrigger value='iot'>Thiết bị IoT</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -1292,10 +1454,25 @@ export default function AreaDetailView({
               Cài đặt thông báo
             </Button>
           </div>
-
-          <div className='text-muted-foreground text-sm'>
-            Chưa có dữ liệu cảnh báo cho khu vực này.
-          </div>
+          {activeAlert &&
+          String(activeAlert.status ?? '').toLowerCase() === 'active' ? (
+            <Card>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2'>
+                  <IconAlertTriangle className='h-5 w-5 text-amber-600' />
+                  {activeAlert.alertType || 'Alert'}
+                </CardTitle>
+                <CardDescription>Cảnh báo môi trường khu vực</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className='text-sm'>{activeAlert.message || ''}</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className='text-muted-foreground text-sm'>
+              Chưa có dữ liệu cảnh báo cho khu vực này.
+            </div>
+          )}
         </TabsContent>
 
         {/* History Tab */}
@@ -1611,6 +1788,40 @@ export default function AreaDetailView({
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* IoT Tab */}
+        <TabsContent value='iot' className='space-y-4'>
+          <Card>
+            <CardHeader>
+              <CardTitle>Thiết bị IoT</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {isLoadingIoT ? (
+                <div className='py-8 text-center text-sm text-gray-500'>
+                  Đang tải thiết bị IoT...
+                </div>
+              ) : iotDevices && iotDevices.length > 0 ? (
+                <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+                  {iotDevices.map((device: any) => (
+                    <IotDeviceCard
+                      key={String(device.id)}
+                      id={String(device.id)}
+                      type={device.type}
+                      status={device.status}
+                      lastDataTime={String(device?.lastDataTime ?? '')}
+                      data={device.data}
+                      locationLabel={`Area ${areaId}`}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className='py-8 text-center text-sm text-gray-500'>
+                  Chưa có thiết bị IoT
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

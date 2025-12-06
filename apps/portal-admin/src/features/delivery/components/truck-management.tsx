@@ -30,7 +30,8 @@ import {
   deleteTruck,
   fetchTrucks
 } from '@/services/truck.service';
-import type { Truck, TruckStatusEnum } from '@/types/truck';
+import type { Truck, TruckStatusEnum, TruckAlert } from '@/types/truck';
+import { fetchTruckAlerts } from '@/services/truck.service';
 import {
   IconChevronLeft,
   IconChevronRight,
@@ -40,8 +41,11 @@ import {
   IconRefresh,
   IconSearch,
   IconTrash,
-  IconTruck
+  IconTruck,
+  IconAlertTriangle
 } from '@tabler/icons-react';
+import { getApiBase } from '@/lib/client';
+import { io } from 'socket.io-client';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -125,6 +129,9 @@ export function TruckManagement() {
 
   const LIMIT = 10;
   const isMounted = useRef(false);
+  const [alertsByTruck, setAlertsByTruck] = useState<
+    Record<string, TruckAlert | null>
+  >({});
 
   const loadTrucks = async () => {
     setLoading(true);
@@ -147,6 +154,61 @@ export function TruckManagement() {
     if (!isMounted.current) {
       isMounted.current = true;
       loadTrucks();
+      (async () => {
+        try {
+          const res = await fetchTruckAlerts({ page: 1, limit: 10 });
+          const map: Record<string, TruckAlert | null> = {};
+          (res.data || []).forEach((a) => {
+            const tid = String(a.truck?.id ?? '');
+            if (!tid) return;
+            const prev = map[tid];
+            if (!prev) map[tid] = a;
+            else {
+              const p = new Date(
+                prev.createdAt || prev.updatedAt || ''
+              ).getTime();
+              const c = new Date(a.createdAt || a.updatedAt || '').getTime();
+              if (c >= p) map[tid] = a;
+            }
+          });
+          setAlertsByTruck(map);
+        } catch {}
+      })();
+      const base = getApiBase().replace(/\/api\/v1$/, '');
+      const socket = io(`${base}/iot`, {
+        path: '/socket.io',
+        transports: ['websocket']
+      });
+      const events = [
+        'truck-alert',
+        'truck:alert',
+        'truck-alert-update',
+        'alert:update',
+        'alert'
+      ];
+      const onAlert = (payload: any) => {
+        const tid = String(payload?.truckId ?? payload?.truck?.id ?? '');
+        if (!tid) return;
+        const alert: TruckAlert = {
+          id: String(payload?.id ?? Date.now()),
+          status: payload?.status ?? 'active',
+          message: payload?.message ?? '',
+          alertType: payload?.alertType ?? payload?.type ?? 'Alert',
+          truck: { id: tid },
+          createdAt: String(payload?.createdAt ?? new Date().toISOString()),
+          updatedAt: String(payload?.updatedAt ?? new Date().toISOString())
+        };
+        setAlertsByTruck((prev) => ({
+          ...prev,
+          [tid]:
+            String(alert.status).toLowerCase() === 'resolved' ? null : alert
+        }));
+      };
+      events.forEach((evt) => socket.on(evt, onAlert));
+      return () => {
+        events.forEach((evt) => socket.off(evt, onAlert));
+        socket.disconnect();
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -346,12 +408,14 @@ export function TruckManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>ID</TableHead>
                   <TableHead>{t('fields.licensePlate')}</TableHead>
                   <TableHead>{t('fields.model')}</TableHead>
                   <TableHead>{t('fields.capacity')}</TableHead>
                   <TableHead>{t('fields.currentLocation')}</TableHead>
                   <TableHead>{t('fields.status')}</TableHead>
                   <TableHead>{t('fields.iotDevices')}</TableHead>
+                  <TableHead>Alert</TableHead>
                   <TableHead className='text-right'></TableHead>
                 </TableRow>
               </TableHeader>
@@ -362,6 +426,7 @@ export function TruckManagement() {
                     className='hover:bg-accent cursor-pointer'
                     key={truck.id}
                   >
+                    <TableCell>{truck.id || '-'}</TableCell>
                     <TableCell className='font-medium'>
                       {truck.licensePlate || '-'}
                     </TableCell>
@@ -384,6 +449,19 @@ export function TruckManagement() {
                           {truck.iotDevice.length === 1
                             ? t('units.device')
                             : t('units.devices')}
+                        </Badge>
+                      ) : (
+                        <span className='text-muted-foreground'>-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {alertsByTruck[truck.id] ? (
+                        <Badge
+                          variant='outline'
+                          className='gap-1.5 bg-amber-50 text-amber-600'
+                        >
+                          <IconAlertTriangle className='h-3 w-3 text-amber-600' />
+                          {alertsByTruck[truck.id]?.alertType || 'Alert'}
                         </Badge>
                       ) : (
                         <span className='text-muted-foreground'>-</span>

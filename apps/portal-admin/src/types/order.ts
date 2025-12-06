@@ -12,7 +12,10 @@ export type Consignee = {
   createdAt?: Date;
   updatedAt?: Date;
 };
-
+export type OrderWithDetailsResponseDto = {
+  order: OrderBE;
+  orderDetails: OrderDetailBE[];
+};
 export type OrderSchedule = {
   id: string;
   status?: OrderScheduleStatus | null;

@@ -136,12 +136,8 @@ export function WarehouseActivitiesTable() {
           ),
           warehouseArea: it.area?.name ?? undefined,
           user: String(
-            it.inboundBatch?.harvestTicket?.harvestScheduleId?.supplierId?.user
-              ?.firstName &&
-              it.inboundBatch?.harvestTicket?.harvestScheduleId?.supplierId
-                ?.user?.lastName
-              ? `${it.inboundBatch.harvestTicket.harvestScheduleId.supplierId.user.firstName} ${it.inboundBatch.harvestTicket.harvestScheduleId.supplierId.user.lastName}`
-              : '-'
+            it.inboundBatch?.harvestTicket?.harvestScheduleId?.supplierId
+              ?.representativeName ?? '-'
           ),
           notes: undefined,
           status: 'completed',

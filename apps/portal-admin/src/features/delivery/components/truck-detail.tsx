@@ -35,8 +35,17 @@ import {
   updateTruck,
   updateTruckStatus,
   fetchTruckSettingByTruckId,
-  fetchActiveTruckAlertByTruckId
+  fetchActiveTruckAlertByTruckId,
+  createTruckSetting,
+  updateTruckSetting
 } from '@/services/truck.service';
+import {
+  subscribeIoTDeviceUpdates,
+  subscribeIoTDataUpdates
+} from '@/services/iotdevice.service';
+import IotDeviceCard from '@/components/iot/iot-device-card';
+import { getApiBase } from '@/lib/client';
+import { io } from 'socket.io-client';
 import { uploadFile } from '@/services/file.service';
 import type {
   Truck,
@@ -57,7 +66,7 @@ import {
   IconTruck,
   IconAlertTriangle
 } from '@tabler/icons-react';
-import { formatDistanceToNow, format } from 'date-fns';
+import { format } from 'date-fns';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -74,6 +83,10 @@ type TruckFormData = {
   currentLocation: string;
   licensePhoto: string;
 };
+
+function normalizeSettingValue(v?: number | null) {
+  return v != null && v !== -1 ? String(v) : '';
+}
 
 function getStatusBadge(status: TruckStatusEnum | null | undefined, t: any) {
   switch (status) {
@@ -140,11 +153,17 @@ export function TruckDetail({ truckId }: TruckDetailProps) {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [minTemp, setMinTemp] = useState<string>('');
+  const [maxTemp, setMaxTemp] = useState<string>('');
+  const [minHum, setMinHum] = useState<string>('');
+  const [maxHum, setMaxHum] = useState<string>('');
+  const [creatingSetting, setCreatingSetting] = useState(false);
+  const [updatingSetting, setUpdatingSetting] = useState(false);
 
   const loadTruckData = async () => {
     setLoading(true);
     try {
-      const [truckData, settingData, alertData] = await Promise.all([
+      const [truckData, settingData] = await Promise.all([
         fetchTruckById(truckId),
         fetchTruckSettingByTruckId(truckId).catch(() => null),
         fetchActiveTruckAlertByTruckId(truckId).catch(() => null)
@@ -152,8 +171,6 @@ export function TruckDetail({ truckId }: TruckDetailProps) {
 
       setTruck(truckData);
       setTruckSetting(settingData);
-      setActiveAlert(alertData);
-
       // Initialize form data
       setFormData({
         licensePlate: truckData.licensePlate ?? '',
@@ -162,6 +179,10 @@ export function TruckDetail({ truckId }: TruckDetailProps) {
         currentLocation: truckData.currentLocation ?? '',
         licensePhoto: truckData.licensePhoto ?? ''
       });
+      setMinTemp(normalizeSettingValue(settingData?.minTemperature));
+      setMaxTemp(normalizeSettingValue(settingData?.maxTemperature));
+      setMinHum(normalizeSettingValue(settingData?.minHumidity));
+      setMaxHum(normalizeSettingValue(settingData?.maxHumidity));
     } catch {
       toast({
         variant: 'destructive',
@@ -176,6 +197,237 @@ export function TruckDetail({ truckId }: TruckDetailProps) {
   useEffect(() => {
     loadTruckData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [truckId]);
+
+  useEffect(() => {
+    const unsubscribeDevice = subscribeIoTDeviceUpdates((payload) => {
+      const deviceId = String(
+        (payload as any)?.id ?? (payload as any)?.deviceId ?? ''
+      );
+      const tid = String(
+        (payload as any)?.truck?.id ?? (payload as any)?.truckId ?? ''
+      );
+      setTruck((prev) => {
+        if (!prev) return prev;
+        const list = Array.isArray(prev.iotDevice) ? prev.iotDevice : [];
+        const idx = list.findIndex((d) => String(d.id) === deviceId);
+        const next = list.slice();
+        if (idx >= 0) {
+          next[idx] = {
+            ...next[idx],
+            status: (payload as any)?.status ?? next[idx].status,
+            lastDataTime: String(
+              (payload as any)?.lastDataTime ??
+                (payload as any)?.timestamp ??
+                next[idx].lastDataTime ??
+                ''
+            ),
+            data:
+              (payload as any)?.data != null
+                ? (payload as any)?.data
+                : {
+                    temperature:
+                      (payload as any)?.temperature ??
+                      (payload as any)?.temp ??
+                      undefined,
+                    humidity:
+                      (payload as any)?.humidity ??
+                      (payload as any)?.humid ??
+                      undefined
+                  }
+          } as any;
+        } else {
+          if (tid && tid === String(truckId)) {
+            next.unshift({
+              id: deviceId,
+              type: String((payload as any)?.type ?? 'sensor'),
+              status: (payload as any)?.status ?? 'online',
+              lastDataTime: String(
+                (payload as any)?.lastDataTime ??
+                  (payload as any)?.timestamp ??
+                  ''
+              ),
+              data:
+                (payload as any)?.data != null
+                  ? (payload as any)?.data
+                  : {
+                      temperature:
+                        (payload as any)?.temperature ??
+                        (payload as any)?.temp ??
+                        undefined,
+                      humidity:
+                        (payload as any)?.humidity ??
+                        (payload as any)?.humid ??
+                        undefined
+                    }
+            } as any);
+          }
+        }
+        return { ...prev, iotDevice: next };
+      });
+      fetchActiveTruckAlertByTruckId(truckId)
+        .then((alert) => setActiveAlert(alert))
+        .catch(() => {});
+    });
+
+    const unsubscribeData = subscribeIoTDataUpdates((payload) => {
+      const deviceId = String(
+        (payload as any)?.id ?? (payload as any)?.deviceId ?? ''
+      );
+      const tid = String(
+        (payload as any)?.truck?.id ?? (payload as any)?.truckId ?? ''
+      );
+      setTruck((prev) => {
+        if (!prev) return prev;
+        const list = Array.isArray(prev.iotDevice) ? prev.iotDevice : [];
+        const idx = list.findIndex((d) => String(d.id) === deviceId);
+        const next = list.slice();
+        if (idx >= 0) {
+          next[idx] = {
+            ...next[idx],
+            lastDataTime: String(
+              (payload as any)?.lastDataTime ??
+                (payload as any)?.timestamp ??
+                next[idx].lastDataTime ??
+                ''
+            ),
+            data:
+              (payload as any)?.data != null
+                ? (payload as any)?.data
+                : {
+                    temperature:
+                      (payload as any)?.temperature ??
+                      (payload as any)?.temp ??
+                      undefined,
+                    humidity:
+                      (payload as any)?.humidity ??
+                      (payload as any)?.humid ??
+                      undefined
+                  }
+          } as any;
+        } else {
+          if (tid && tid === String(truckId)) {
+            next.unshift({
+              id: deviceId,
+              type: 'sensor',
+              status: 'online',
+              lastDataTime: String(
+                (payload as any)?.lastDataTime ??
+                  (payload as any)?.timestamp ??
+                  ''
+              ),
+              data:
+                (payload as any)?.data != null
+                  ? (payload as any)?.data
+                  : {
+                      temperature:
+                        (payload as any)?.temperature ??
+                        (payload as any)?.temp ??
+                        undefined,
+                      humidity:
+                        (payload as any)?.humidity ??
+                        (payload as any)?.humid ??
+                        undefined
+                    }
+            } as any);
+          }
+        }
+        return { ...prev, iotDevice: next };
+      });
+      fetchActiveTruckAlertByTruckId(truckId)
+        .then((alert) => setActiveAlert(alert))
+        .catch(() => {});
+    });
+
+    return () => {
+      unsubscribeDevice();
+      unsubscribeData();
+    };
+  }, [truckId]);
+
+  useEffect(() => {
+    const base = getApiBase().replace(/\/api\/v1$/, '');
+    const socket = io(`${base}/iot`, {
+      path: '/socket.io',
+      transports: ['websocket']
+    });
+    const onUpdate = (payload: any) => {
+      const tid = String(payload?.truckId ?? (payload as any)?.truck?.id ?? '');
+      if (!tid || tid !== String(truckId)) return;
+      const deviceId = String(payload?.deviceId ?? payload?.id ?? '');
+      const temperature = payload?.temperature ?? payload?.temp ?? undefined;
+      const humidity = payload?.humidity ?? payload?.humid ?? undefined;
+      const timestamp = String(
+        payload?.timestamp ?? payload?.lastDataTime ?? new Date().toISOString()
+      );
+      setTruck((prev) => {
+        if (!prev) return prev;
+        const list = Array.isArray(prev.iotDevice) ? prev.iotDevice : [];
+        const idx = list.findIndex((d) => String(d.id) === deviceId);
+        const next = list.slice();
+        if (idx >= 0) {
+          next[idx] = {
+            ...next[idx],
+            lastDataTime: timestamp,
+            data: { temperature, humidity }
+          } as any;
+        } else if (deviceId) {
+          next.unshift({
+            id: deviceId,
+            type: 'sensor',
+            status: 'online',
+            lastDataTime: timestamp,
+            data: { temperature, humidity }
+          } as any);
+        }
+        return { ...prev, iotDevice: next };
+      });
+    };
+    socket.emit('iot:subscribeTruck', { truckId });
+    socket.on('iot:update', onUpdate);
+    return () => {
+      socket.off('iot:update', onUpdate);
+      socket.disconnect();
+    };
+  }, [truckId]);
+
+  useEffect(() => {
+    const base = getApiBase().replace(/\/api\/v1$/, '');
+    const socket = io(`${base}/iot`, {
+      path: '/socket.io',
+      transports: ['websocket']
+    });
+    const events = [
+      'truck-alert',
+      'truck:alert',
+      'truck-alert-update',
+      'alert:update',
+      'alert'
+    ];
+    const onAlert = (payload: any) => {
+      const tid = String(payload?.truckId ?? payload?.truck?.id ?? '');
+      if (!tid || tid !== String(truckId)) return;
+      const alert: TruckAlert = {
+        id: String(payload?.id ?? Date.now()),
+        status: payload?.status ?? 'active',
+        message: payload?.message ?? '',
+        alertType: payload?.alertType ?? payload?.type ?? 'Alert',
+        truck: { id: tid },
+        createdAt: String(payload?.createdAt ?? new Date().toISOString()),
+        updatedAt: String(payload?.updatedAt ?? new Date().toISOString())
+      };
+      if (String(payload?.status ?? '').toLowerCase() === 'resolved') {
+        setActiveAlert(null);
+      } else {
+        setActiveAlert(alert);
+      }
+    };
+    socket.emit('alert:subscribeTruck', { truckId });
+    events.forEach((evt) => socket.on(evt, onAlert));
+    return () => {
+      events.forEach((evt) => socket.off(evt, onAlert));
+      socket.disconnect();
+    };
   }, [truckId]);
 
   // Handle form input change
@@ -491,119 +743,18 @@ export function TruckDetail({ truckId }: TruckDetailProps) {
                 </CardHeader>
                 <CardContent>
                   {truck.iotDevice && truck.iotDevice.length > 0 ? (
-                    <div className='space-y-4'>
-                      {truck.iotDevice.map((device) => {
-                        // Parse device data
-                        let temperature: number | null = null;
-                        let humidity: number | null = null;
-                        try {
-                          if (
-                            typeof device.data === 'string' &&
-                            (device.data as string).startsWith('{')
-                          ) {
-                            const parsed = JSON.parse(device.data);
-                            temperature =
-                              parsed.temperature ?? parsed.temp ?? null;
-                            humidity = parsed.humidity ?? parsed.humid ?? null;
-                          }
-                        } catch {
-                          // Ignore parse errors
-                        }
-
-                        const isOnline =
-                          device.status === 'active' ||
-                          device.status === 'online';
-                        const lastUpdate = device.lastDataTime
-                          ? formatDistanceToNow(new Date(device.lastDataTime), {
-                              addSuffix: true
-                            })
-                          : null;
-
-                        return (
-                          <div
-                            key={device.id}
-                            className={`rounded-lg border p-4 ${
-                              isOnline
-                                ? 'border-emerald-200 bg-emerald-50/50'
-                                : 'border-slate-200 bg-slate-50/50'
-                            }`}
-                          >
-                            <div className='flex items-start justify-between'>
-                              <div className='flex items-center gap-3'>
-                                <div
-                                  className={`rounded-lg p-2 ${
-                                    isOnline ? 'bg-emerald-100' : 'bg-slate-100'
-                                  }`}
-                                >
-                                  <IconCpu
-                                    className={`h-5 w-5 ${
-                                      isOnline
-                                        ? 'text-emerald-600'
-                                        : 'text-slate-500'
-                                    }`}
-                                  />
-                                </div>
-                                <div>
-                                  <div className='font-mono font-medium'>
-                                    {device.id}
-                                  </div>
-                                  <div className='text-muted-foreground text-xs'>
-                                    {device.type || 'Sensor'}
-                                  </div>
-                                </div>
-                              </div>
-                              <Badge
-                                className={
-                                  isOnline
-                                    ? 'bg-emerald-100 text-emerald-800'
-                                    : 'bg-slate-100 text-slate-600'
-                                }
-                              >
-                                {isOnline ? t('iot.online') : t('iot.offline')}
-                              </Badge>
-                            </div>
-
-                            {/* Sensor Data */}
-                            {(temperature !== null || humidity !== null) && (
-                              <div className='mt-4 grid grid-cols-2 gap-3'>
-                                {temperature !== null && (
-                                  <div className='flex items-center gap-2 rounded-md border bg-white p-3'>
-                                    <IconTemperature className='h-5 w-5 text-orange-500' />
-                                    <div>
-                                      <div className='text-muted-foreground text-xs'>
-                                        {t('iot.temperature')}
-                                      </div>
-                                      <div className='text-lg font-semibold'>
-                                        {temperature}°C
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                                {humidity !== null && (
-                                  <div className='flex items-center gap-2 rounded-md border bg-white p-3'>
-                                    <IconDroplet className='h-5 w-5 text-blue-500' />
-                                    <div>
-                                      <div className='text-muted-foreground text-xs'>
-                                        {t('iot.humidity')}
-                                      </div>
-                                      <div className='text-lg font-semibold'>
-                                        {humidity}%
-                                      </div>
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Last Update */}
-                            {lastUpdate && (
-                              <div className='text-muted-foreground mt-3 text-xs'>
-                                {t('iot.lastUpdate')}: {lastUpdate}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                    <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
+                      {truck.iotDevice.map((device) => (
+                        <IotDeviceCard
+                          key={device.id}
+                          id={String(device.id)}
+                          type={device.type}
+                          status={device.status}
+                          lastDataTime={device.lastDataTime ?? ''}
+                          data={device.data}
+                          locationLabel={`Truck ${truck.id}`}
+                        />
+                      ))}
                     </div>
                   ) : (
                     <div className='flex flex-col items-center justify-center py-8'>
@@ -628,66 +779,284 @@ export function TruckDetail({ truckId }: TruckDetailProps) {
                 </CardHeader>
                 <CardContent>
                   {truckSetting ? (
-                    <div className='grid gap-6 sm:grid-cols-2'>
-                      <div className='rounded-lg border p-4'>
-                        <div className='flex items-center gap-2'>
-                          <IconTemperature className='h-5 w-5 text-orange-500' />
-                          <span className='font-medium'>
-                            {t('iot.temperature')}
-                          </span>
-                        </div>
-                        <div className='mt-2 grid grid-cols-2 gap-4'>
-                          <div>
-                            <Label className='text-muted-foreground text-xs'>
-                              {t('detail.min')}
-                            </Label>
-                            <p className='text-lg font-semibold'>
-                              {truckSetting.minTemperature ?? '-'}°C
-                            </p>
+                    <div className='space-y-6'>
+                      <div className='grid gap-6 sm:grid-cols-2'>
+                        <div className='rounded-lg border p-4'>
+                          <div className='flex items-center gap-2'>
+                            <IconTemperature className='h-5 w-5 text-orange-500' />
+                            <span className='font-medium'>
+                              {t('iot.temperature')}
+                            </span>
                           </div>
-                          <div>
-                            <Label className='text-muted-foreground text-xs'>
-                              {t('detail.max')}
-                            </Label>
-                            <p className='text-lg font-semibold'>
-                              {truckSetting.maxTemperature ?? '-'}°C
-                            </p>
+                          <div className='mt-2 grid grid-cols-2 gap-4'>
+                            <div className='grid gap-2'>
+                              <Label className='text-muted-foreground text-xs'>
+                                {t('detail.min')}
+                              </Label>
+                              <Input
+                                type='number'
+                                step='any'
+                                inputMode='decimal'
+                                placeholder='°C'
+                                value={minTemp}
+                                onChange={(e) => setMinTemp(e.target.value)}
+                              />
+                            </div>
+                            <div className='grid gap-2'>
+                              <Label className='text-muted-foreground text-xs'>
+                                {t('detail.max')}
+                              </Label>
+                              <Input
+                                type='number'
+                                step='any'
+                                inputMode='decimal'
+                                placeholder='°C'
+                                value={maxTemp}
+                                onChange={(e) => setMaxTemp(e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div className='rounded-lg border p-4'>
+                          <div className='flex items-center gap-2'>
+                            <IconDroplet className='h-5 w-5 text-blue-500' />
+                            <span className='font-medium'>
+                              {t('iot.humidity')}
+                            </span>
+                          </div>
+                          <div className='mt-2 grid grid-cols-2 gap-4'>
+                            <div className='grid gap-2'>
+                              <Label className='text-muted-foreground text-xs'>
+                                {t('detail.min')}
+                              </Label>
+                              <Input
+                                type='number'
+                                step='any'
+                                inputMode='decimal'
+                                placeholder='%'
+                                value={minHum}
+                                onChange={(e) => setMinHum(e.target.value)}
+                              />
+                            </div>
+                            <div className='grid gap-2'>
+                              <Label className='text-muted-foreground text-xs'>
+                                {t('detail.max')}
+                              </Label>
+                              <Input
+                                type='number'
+                                step='any'
+                                inputMode='decimal'
+                                placeholder='%'
+                                value={maxHum}
+                                onChange={(e) => setMaxHum(e.target.value)}
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>
-                      <div className='rounded-lg border p-4'>
-                        <div className='flex items-center gap-2'>
-                          <IconDroplet className='h-5 w-5 text-blue-500' />
-                          <span className='font-medium'>
-                            {t('iot.humidity')}
-                          </span>
-                        </div>
-                        <div className='mt-2 grid grid-cols-2 gap-4'>
-                          <div>
-                            <Label className='text-muted-foreground text-xs'>
-                              {t('detail.min')}
-                            </Label>
-                            <p className='text-lg font-semibold'>
-                              {truckSetting.minHumidity ?? '-'}%
-                            </p>
-                          </div>
-                          <div>
-                            <Label className='text-muted-foreground text-xs'>
-                              {t('detail.max')}
-                            </Label>
-                            <p className='text-lg font-semibold'>
-                              {truckSetting.maxHumidity ?? '-'}%
-                            </p>
-                          </div>
-                        </div>
+                      <div className='flex justify-end gap-2'>
+                        <Button
+                          variant='outline'
+                          onClick={() => {
+                            setMinTemp(
+                              truckSetting.minTemperature != null
+                                ? String(truckSetting.minTemperature)
+                                : ''
+                            );
+                            setMaxTemp(
+                              truckSetting.maxTemperature != null
+                                ? String(truckSetting.maxTemperature)
+                                : ''
+                            );
+                            setMinHum(
+                              truckSetting.minHumidity != null
+                                ? String(truckSetting.minHumidity)
+                                : ''
+                            );
+                            setMaxHum(
+                              truckSetting.maxHumidity != null
+                                ? String(truckSetting.maxHumidity)
+                                : ''
+                            );
+                          }}
+                          disabled={updatingSetting}
+                        >
+                          {t('actions.cancel')}
+                        </Button>
+                        <Button
+                          onClick={async () => {
+                            if (!truckSetting) return;
+                            setUpdatingSetting(true);
+                            try {
+                              const updated = await updateTruckSetting(
+                                truckSetting.id,
+                                {
+                                  minTemperature: minTemp
+                                    ? Number(minTemp)
+                                    : null,
+                                  maxTemperature: maxTemp
+                                    ? Number(maxTemp)
+                                    : null,
+                                  minHumidity: minHum ? Number(minHum) : null,
+                                  maxHumidity: maxHum ? Number(maxHum) : null
+                                }
+                              );
+                              setTruckSetting(updated);
+                              toast({ title: t('toast.updateSuccess') });
+                            } catch {
+                              toast({
+                                variant: 'destructive',
+                                title: t('toast.updateError'),
+                                description: t('toast.tryAgain')
+                              });
+                            } finally {
+                              setUpdatingSetting(false);
+                            }
+                          }}
+                          disabled={updatingSetting}
+                        >
+                          {updatingSetting ? (
+                            <>
+                              <IconLoader2 className='mr-2 h-4 w-4 animate-spin' />
+                              {t('actions.updating')}
+                            </>
+                          ) : (
+                            t('actions.update')
+                          )}
+                        </Button>
                       </div>
                     </div>
                   ) : (
-                    <div className='flex flex-col items-center justify-center py-8'>
-                      <IconTemperature className='text-muted-foreground h-12 w-12' />
-                      <p className='text-muted-foreground mt-2'>
-                        {t('detail.noSettings')}
-                      </p>
+                    <div className='space-y-6'>
+                      <div className='grid gap-6 sm:grid-cols-2'>
+                        <div className='rounded-lg border p-4'>
+                          <div className='flex items-center gap-2'>
+                            <IconTemperature className='h-5 w-5 text-orange-500' />
+                            <span className='font-medium'>
+                              {t('iot.temperature')}
+                            </span>
+                          </div>
+                          <div className='mt-2 grid grid-cols-2 gap-4'>
+                            <div className='grid gap-2'>
+                              <Label className='text-muted-foreground text-xs'>
+                                {t('detail.min')}
+                              </Label>
+                              <Input
+                                type='number'
+                                step='any'
+                                inputMode='decimal'
+                                placeholder='°C'
+                                value={minTemp}
+                                onChange={(e) => setMinTemp(e.target.value)}
+                              />
+                            </div>
+                            <div className='grid gap-2'>
+                              <Label className='text-muted-foreground text-xs'>
+                                {t('detail.max')}
+                              </Label>
+                              <Input
+                                type='number'
+                                step='any'
+                                inputMode='decimal'
+                                placeholder='°C'
+                                value={maxTemp}
+                                onChange={(e) => setMaxTemp(e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        <div className='rounded-lg border p-4'>
+                          <div className='flex items-center gap-2'>
+                            <IconDroplet className='h-5 w-5 text-blue-500' />
+                            <span className='font-medium'>
+                              {t('iot.humidity')}
+                            </span>
+                          </div>
+                          <div className='mt-2 grid grid-cols-2 gap-4'>
+                            <div className='grid gap-2'>
+                              <Label className='text-muted-foreground text-xs'>
+                                {t('detail.min')}
+                              </Label>
+                              <Input
+                                type='number'
+                                step='any'
+                                inputMode='decimal'
+                                placeholder='%'
+                                value={minHum}
+                                onChange={(e) => setMinHum(e.target.value)}
+                              />
+                            </div>
+                            <div className='grid gap-2'>
+                              <Label className='text-muted-foreground text-xs'>
+                                {t('detail.max')}
+                              </Label>
+                              <Input
+                                type='number'
+                                step='any'
+                                inputMode='decimal'
+                                placeholder='%'
+                                value={maxHum}
+                                onChange={(e) => setMaxHum(e.target.value)}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className='flex justify-end gap-2'>
+                        <Button
+                          variant='outline'
+                          onClick={() => {
+                            setMinTemp('');
+                            setMaxTemp('');
+                            setMinHum('');
+                            setMaxHum('');
+                          }}
+                          disabled={creatingSetting}
+                        >
+                          {t('actions.cancel')}
+                        </Button>
+                        <Button
+                          onClick={async () => {
+                            if (!truck) return;
+                            setCreatingSetting(true);
+                            try {
+                              const created = await createTruckSetting({
+                                truck: { id: truck.id },
+                                minTemperature: minTemp
+                                  ? Number(minTemp)
+                                  : null,
+                                maxTemperature: maxTemp
+                                  ? Number(maxTemp)
+                                  : null,
+                                minHumidity: minHum ? Number(minHum) : null,
+                                maxHumidity: maxHum ? Number(maxHum) : null
+                              });
+                              setTruckSetting(created);
+                              toast({
+                                title: t('toast.updateSuccess')
+                              });
+                            } catch {
+                              toast({
+                                variant: 'destructive',
+                                title: t('toast.updateError'),
+                                description: t('toast.tryAgain')
+                              });
+                            } finally {
+                              setCreatingSetting(false);
+                            }
+                          }}
+                          disabled={creatingSetting}
+                        >
+                          {creatingSetting ? (
+                            <>
+                              <IconLoader2 className='mr-2 h-4 w-4 animate-spin' />
+                              {t('actions.updating')}
+                            </>
+                          ) : (
+                            t('actions.create')
+                          )}
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </CardContent>

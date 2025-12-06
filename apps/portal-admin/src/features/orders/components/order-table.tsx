@@ -48,10 +48,22 @@ function badgeForSchedule(status?: OrderScheduleStatus | null) {
           Chờ lấy hàng
         </span>
       );
+    case 'delivered':
+      return (
+        <span className='rounded bg-green-100 px-2 py-1 text-xs text-green-700'>
+          Đã giao
+        </span>
+      );
     case 'rejected':
       return (
         <span className='rounded bg-red-100 px-2 py-1 text-xs text-red-700'>
           Từ chối
+        </span>
+      );
+    case 'completed':
+      return (
+        <span className='rounded bg-green-100 px-2 py-1 text-xs text-green-700'>
+          Đã hoàn thành
         </span>
       );
     case 'canceled':
@@ -147,35 +159,34 @@ export default function OrderTable() {
                 </TableCell>
                 <TableCell className='text-right'>
                   <div className='flex items-center justify-end gap-2'>
-                    {o.orderSchedule?.status !== 'approved' &&
-                      o.orderSchedule?.status !== 'rejected' && (
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button
-                              size='sm'
-                              variant='outline'
-                              disabled={updatingId === o.id}
-                            >
-                              Cập nhật
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent
-                            align='end'
-                            className='min-w-[180px]'
+                    {o.orderSchedule?.status === 'pending' && (
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            size='sm'
+                            variant='outline'
+                            disabled={updatingId === o.id}
                           >
-                            <DropdownMenuItem
-                              onClick={() => doUpdate(o, 'approved')}
-                            >
-                              Duyệt
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              onClick={() => doUpdate(o, 'rejected')}
-                            >
-                              Từ chối
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      )}
+                            Cập nhật
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                          align='end'
+                          className='min-w-[180px]'
+                        >
+                          <DropdownMenuItem
+                            onClick={() => doUpdate(o, 'approved')}
+                          >
+                            Duyệt
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => doUpdate(o, 'rejected')}
+                          >
+                            Từ chối
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    )}
                     <Button asChild size='sm' variant='outline'>
                       <Link href={`/dashboard/order/${o.id}`}>
                         Xem chi tiết

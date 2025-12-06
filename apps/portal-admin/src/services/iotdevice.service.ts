@@ -23,22 +23,34 @@ function getSocketBase(): string {
 }
 
 export function connectIoTSocket(): Socket {
-  const url = getSocketBase();
+  const url = `${getSocketBase()}/iot`;
   return io(url, { path: '/socket.io', transports: ['websocket'] });
 }
 
-export type IoTEventPayload = Partial<IoTDeviceBE> & { id: string };
+export type IoTEventPayload = Partial<IoTDeviceBE> & {
+  id?: string;
+  deviceId?: string;
+  areaId?: string | null;
+  truckId?: string | null;
+  temperature?: number;
+  humidity?: number;
+  timestamp?: string;
+};
 
 export function subscribeIoTDeviceUpdates(
   onUpdate: (payload: IoTEventPayload) => void
 ): () => void {
   const socket = connectIoTSocket();
   const handler = (payload: any) => {
-    if (payload && typeof payload === 'object' && payload.id) {
+    if (
+      payload &&
+      typeof payload === 'object' &&
+      (payload.deviceId || payload.id)
+    ) {
       onUpdate(payload as IoTEventPayload);
     }
   };
-  const events = ['io-t-devices', 'iot-device', 'iot-device-update', 'iot'];
+  const events = ['iot:update'];
   events.forEach((evt) => socket.on(evt, handler));
   return () => {
     events.forEach((evt) => socket.off(evt, handler));
@@ -51,11 +63,15 @@ export function subscribeIoTDataUpdates(
 ): () => void {
   const socket = connectIoTSocket();
   const handler = (payload: any) => {
-    if (payload && typeof payload === 'object' && payload.id) {
+    if (
+      payload &&
+      typeof payload === 'object' &&
+      (payload.deviceId || payload.id)
+    ) {
       onData(payload as IoTEventPayload);
     }
   };
-  const events = ['iot-data', 'io-t-device-data', 'sensor-data'];
+  const events = ['iot:update'];
   events.forEach((evt) => socket.on(evt, handler));
   return () => {
     events.forEach((evt) => socket.off(evt, handler));

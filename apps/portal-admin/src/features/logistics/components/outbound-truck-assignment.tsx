@@ -42,10 +42,10 @@ import {
   IconMapPin,
   IconTruck
 } from '@tabler/icons-react';
-import { fetchOrders } from '@/services/order.service';
+import { fetchOrders, fetchOrderWithDetails } from '@/services/order.service';
 import { fetchTrucks } from '@/services/truck.service';
 import { createDelivery, fetchDeliveries } from '@/services/delivery.service';
-import type { OrderBE } from '@/types/order';
+import type { OrderBE, OrderDetailBE } from '@/types/order';
 import type { Truck } from '@/types/truck';
 import type { Delivery } from '@/types/delivery';
 import { useToast } from '@/components/ui/use-toast';
@@ -95,6 +95,8 @@ export function OutboundTruckAssignment() {
   const [selectedOrder, setSelectedOrder] = useState<OrderBE | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
+  const [details, setDetails] = useState<OrderDetailBE[]>([]);
+  const [isDetailLoading, setIsDetailLoading] = useState(false);
 
   const [assignmentForm, setAssignmentForm] = useState({
     truckId: '',
@@ -171,6 +173,22 @@ export function OutboundTruckAssignment() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.page, deliveries]);
+
+  useEffect(() => {
+    const loadOrderDetails = async () => {
+      if (!isDetailDialogOpen || !selectedOrder?.id) return;
+      setIsDetailLoading(true);
+      try {
+        const res = await fetchOrderWithDetails(selectedOrder.id);
+        setDetails(res.orderDetails ?? []);
+      } catch {
+        setDetails([]);
+      } finally {
+        setIsDetailLoading(false);
+      }
+    };
+    loadOrderDetails();
+  }, [isDetailDialogOpen, selectedOrder?.id]);
 
   // Handle assign truck for outbound delivery
   const handleAssignTruck = async () => {
@@ -325,7 +343,7 @@ export function OutboundTruckAssignment() {
                         />
                       </TableCell>
                       <TableCell className='text-right'>
-                        {order.orderSchedule?.status === 'approved' && (
+                        {order.orderSchedule?.status === 'preparing' && (
                           <div className='flex justify-end gap-2'>
                             <Button
                               variant='ghost'
@@ -441,7 +459,7 @@ export function OutboundTruckAssignment() {
 
       {/* Detail Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className='max-w-3xl'>
+        <DialogContent className='max-h-[90vh] w-full max-w-7xl overflow-y-auto'>
           <DialogHeader>
             <DialogTitle>Chi tiết đơn hàng</DialogTitle>
           </DialogHeader>
@@ -510,6 +528,57 @@ export function OutboundTruckAssignment() {
                   <p className='font-semibold'>
                     {formatCurrency(selectedOrder.totalAmount)}
                   </p>
+                </div>
+              </div>
+              <div className='border-t pt-4'>
+                <Label className='text-muted-foreground'>Sản phẩm</Label>
+                <div className='mt-2 rounded-md border'>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Hình ảnh</TableHead>
+                        <TableHead>Sản phẩm</TableHead>
+                        <TableHead>Số lượng</TableHead>
+                        <TableHead>Đơn vị</TableHead>
+                        <TableHead>Đơn giá</TableHead>
+                        <TableHead>VAT</TableHead>
+                        <TableHead>Thành tiền</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {isDetailLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className='text-center'>
+                            Đang tải...
+                          </TableCell>
+                        </TableRow>
+                      ) : details.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={7} className='text-center'>
+                            Không có sản phẩm
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        details.map((d) => (
+                          <TableRow key={d.id}>
+                            <TableCell>
+                              <img
+                                src={d.product?.image ?? '/placeholder.svg'}
+                                alt={d.product?.name ?? '-'}
+                                className='h-10 w-10 rounded-md'
+                              />
+                            </TableCell>
+                            <TableCell>{d.product?.name ?? '-'}</TableCell>
+                            <TableCell>{d.quantity ?? '-'}</TableCell>
+                            <TableCell>{d.unit ?? '-'}</TableCell>
+                            <TableCell>{d.unitPrice ?? '-'}</TableCell>
+                            <TableCell>{d.taxRate ?? '-'}</TableCell>
+                            <TableCell>{d.amount ?? '-'}</TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
                 </div>
               </div>
             </div>

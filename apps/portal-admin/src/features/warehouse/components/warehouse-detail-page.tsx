@@ -23,7 +23,11 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import { createArea, fetchAreas } from '@/services/area.service';
+import {
+  createArea,
+  fetchAreas,
+  fetchActiveAreaAlertByAreaId
+} from '@/services/area.service';
 import { fetchManagers } from '@/services/manager.service';
 import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
 import { fetchWarehouseById } from '@/services/warehouse.service';
@@ -159,6 +163,7 @@ export default function WarehouseDetailPage({
   const [areaEnv, setAreaEnv] = useState<Record<string, EnvironmentReadings>>(
     {}
   );
+  const [areaAlerts, setAreaAlerts] = useState<Record<string, boolean>>({});
   const [areaDeviceMap, setAreaDeviceMap] = useState<Record<string, string[]>>(
     {}
   );
@@ -276,6 +281,24 @@ export default function WarehouseDetailPage({
       });
 
       setAreaDeviceMap(nextDeviceMap);
+
+      const alertResults = await Promise.all(
+        areas.map(async (area) => {
+          try {
+            const alert = await fetchActiveAreaAlertByAreaId(area.id);
+            const isActive =
+              !!alert && String(alert.status ?? '').toLowerCase() === 'active';
+            return { areaId: area.id, isActive };
+          } catch {
+            return { areaId: area.id, isActive: false };
+          }
+        })
+      );
+      const alertMap: Record<string, boolean> = {};
+      alertResults.forEach(({ areaId, isActive }) => {
+        alertMap[areaId] = isActive;
+      });
+      setAreaAlerts(alertMap);
 
       // Load batches cho tất cả areas để tính số sản phẩm
       try {
@@ -431,10 +454,11 @@ export default function WarehouseDetailPage({
           products: productSet.size,
           capacity: capacityPercentage,
           status: 'normal' as const,
-          lastUpdated: '—'
+          lastUpdated: '—',
+          hasAlert: !!areaAlerts[a.id]
         };
       });
-  }, [apiAreas, warehouseId, areaEnv, areaBatches]);
+  }, [apiAreas, warehouseId, areaEnv, areaBatches, areaAlerts]);
 
   const allAreas = useMemo(() => apiAreaCards, [apiAreaCards]);
 
@@ -678,6 +702,14 @@ export default function WarehouseDetailPage({
                         {area.description || 'Không có mô tả'}
                       </CardDescription>
                     </div>
+                    {area.hasAlert && (
+                      <Badge
+                        variant='outline'
+                        className='shrink-0 border-orange-300 bg-orange-100 px-1 py-0.5 text-xs text-orange-700'
+                      >
+                        Cảnh báo
+                      </Badge>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className='space-y-2 px-3 pt-0 pb-3'>

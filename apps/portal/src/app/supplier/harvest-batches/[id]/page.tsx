@@ -265,10 +265,9 @@ export default function HarvestBatchDetailPage() {
   const statusNormalized = String(status).toLowerCase();
   const showMap = [
     'preparing',
-    'scheduled',
     'delivering',
     'delivered',
-    'completed'
+    'returning'
   ].includes(statusNormalized);
 
   // Dùng useMemo để tránh tính lại khi details không đổi
@@ -512,7 +511,7 @@ export default function HarvestBatchDetailPage() {
                     Create New Batch
                   </Button>
                 </Link>
-                {status.toUpperCase() === 'DELIVERED' && (
+                {/* {status.toUpperCase() === 'DELIVERED' && (
                   <Button
                     className='w-full'
                     onClick={handleConfirmComplete}
@@ -520,7 +519,7 @@ export default function HarvestBatchDetailPage() {
                   >
                     Xác nhận hoàn thành
                   </Button>
-                )}
+                )} */}
               </CardContent>
             </Card>
           </div>

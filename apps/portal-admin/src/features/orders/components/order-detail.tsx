@@ -12,8 +12,7 @@ import {
 import { IconArrowLeft, IconPackage } from '@tabler/icons-react';
 import { useRouter } from 'next/navigation';
 import { updateOrderSchedule } from '@/services/order-schedule.service';
-import { fetchOrderDetailsByOrderId } from '@/services/order-detail.service';
-import { fetchOrderById } from '@/services/order.service';
+import { fetchOrderWithDetails } from '@/services/order.service';
 import type {
   OrderBE,
   OrderScheduleStatus,
@@ -128,24 +127,22 @@ export function OrderDetail({
     }
   };
 
-  // Load order details
-  useEffect(() => {
-    if (!localOrder?.id) return;
-    setLoadingDetails(true);
-    fetchOrderDetailsByOrderId(localOrder.id)
-      .then((res) => setDetails(res.data))
-      .finally(() => setLoadingDetails(false));
-  }, [localOrder?.id]);
-
-  // Load order by id if not provided
+  // Load order + details using combined API when opening
   useEffect(() => {
     if (!!localOrder || !orderId) return;
     setLoadingOrder(true);
+    setLoadingDetails(true);
     setErrorOrder(null);
-    fetchOrderById(orderId)
-      .then((o) => setLocalOrder(o))
+    fetchOrderWithDetails(orderId)
+      .then((res) => {
+        setLocalOrder(res.order);
+        setDetails(res.orderDetails ?? []);
+      })
       .catch((e) => setErrorOrder(String(e?.message ?? e)))
-      .finally(() => setLoadingOrder(false));
+      .finally(() => {
+        setLoadingOrder(false);
+        setLoadingDetails(false);
+      });
   }, [orderId, localOrder]);
 
   return (

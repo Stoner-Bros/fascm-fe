@@ -159,17 +159,18 @@ export function IoTDeviceManagement() {
   useEffect(() => {
     const unsubscribe = subscribeIoTDeviceUpdates((payload) => {
       setDevices((prev) => {
-        const idx = prev.findIndex((d) => d.id === payload.id);
+        const pId = String(payload.id ?? payload.deviceId ?? '').trim();
+        const idx = prev.findIndex((d) => d.id === pId);
         const next: UIIoTDevice = {
           truckId: (payload as any)?.truck?.id || (prev[idx]?.truckId ?? ''),
           areaId: (payload as any)?.area?.id || (prev[idx]?.areaId ?? ''),
-          id: payload.id,
+          id: pId || (prev[idx]?.id ?? ''),
           type: String(payload.type ?? prev[idx]?.type ?? 'sensor'),
           status: toUiStatus(payload.status) ?? prev[idx]?.status ?? 'offline',
           lastDataTime: String(
-            payload.lastDataTime ?? prev[idx]?.lastDataTime ?? ''
+            (payload as any)?.lastDataTime ?? prev[idx]?.lastDataTime ?? ''
           ).trim(),
-          data: payload.data ?? prev[idx]?.data ?? null
+          data: (payload as any)?.data ?? prev[idx]?.data ?? null
         };
         if (idx >= 0) {
           const copy = prev.slice();
@@ -184,17 +185,21 @@ export function IoTDeviceManagement() {
 
   useEffect(() => {
     const unsubscribe = subscribeIoTDataUpdates((payload) => {
-      setDevices((prev) =>
-        prev.map((d) =>
-          d.id === payload.id
+      setDevices((prev) => {
+        const pId = String(payload.id ?? payload.deviceId ?? '').trim();
+        if (!pId) return prev;
+        return prev.map((d) =>
+          d.id === pId
             ? {
                 ...d,
-                lastDataTime: String(payload.lastDataTime ?? d.lastDataTime),
-                data: payload.data ?? d.data
+                lastDataTime: String(
+                  (payload as any)?.lastDataTime ?? d.lastDataTime
+                ),
+                data: (payload as any)?.data ?? d.data
               }
             : d
-        )
-      );
+        );
+      });
     });
     return () => unsubscribe();
   }, []);
