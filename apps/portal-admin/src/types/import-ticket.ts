@@ -37,6 +37,7 @@ export type ImportTicket = {
             firstName?: string;
             lastName?: string;
           };
+          gardenName?: string;
           representativeName?: string;
         };
       };
@@ -69,4 +70,5 @@ export type FindAllImportTicketsDto = {
   limit?: number;
   search?: string;
   inboundBatchId?: string;
+  areaId?: string;
 };

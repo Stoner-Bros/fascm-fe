@@ -13,7 +13,8 @@ export async function fetchImportTickets({
   page = 1,
   limit = 10,
   search,
-  inboundBatchId
+  inboundBatchId,
+  areaId
 }: FindAllImportTicketsDto = {}) {
   const params = new URLSearchParams({
     page: String(page),
@@ -21,6 +22,7 @@ export async function fetchImportTickets({
   });
   if (search) params.set('search', search);
   if (inboundBatchId) params.set('inboundBatchId', inboundBatchId);
+  if (areaId) params.set('areaId', areaId);
 
   return fetchJSON<InfinityPaginationResponse<ImportTicket>>(
     `${BASE_PATH}?${params.toString()}`

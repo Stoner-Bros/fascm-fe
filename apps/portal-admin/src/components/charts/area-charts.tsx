@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Card,
   CardContent,
@@ -20,27 +20,21 @@ import {
 import {
   LineChart,
   Line,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
+  ResponsiveContainer
 } from 'recharts';
 import {
   IconTrendingUp,
   IconTrendingDown,
   IconMinus,
-  IconCalendar,
   IconDownload
 } from '@tabler/icons-react';
+import { fetchBatches } from '@/services/batch.service';
+import type { Batch } from '@/types/batch';
 
 interface AreaChartsProps {
   areaId: string;
@@ -49,26 +43,14 @@ interface AreaChartsProps {
 
 export default function AreaCharts({ areaId, className }: AreaChartsProps) {
   const [timeRange, setTimeRange] = useState('7d');
-  const [chartType, setChartType] = useState('temperature');
-
-  // Mock data cho biểu đồ
-  const temperatureData = [
-    { time: '00:00', value: 24, optimal: 25 },
-    { time: '04:00', value: 23, optimal: 25 },
-    { time: '08:00', value: 26, optimal: 25 },
-    { time: '12:00', value: 28, optimal: 25 },
-    { time: '16:00', value: 27, optimal: 25 },
-    { time: '20:00', value: 25, optimal: 25 }
-  ];
-
-  const humidityData = [
-    { time: '00:00', value: 65, optimal: 60 },
-    { time: '04:00', value: 68, optimal: 60 },
-    { time: '08:00', value: 58, optimal: 60 },
-    { time: '12:00', value: 55, optimal: 60 },
-    { time: '16:00', value: 62, optimal: 60 },
-    { time: '20:00', value: 64, optimal: 60 }
-  ];
+  const [chartType, setChartType] = useState('inbound');
+  const [inboundTrendData, setInboundTrendData] = useState<
+    { date: string; value: number }[]
+  >([]);
+  const [outboundTrendData, setOutboundTrendData] = useState<
+    { date: string; value: number }[]
+  >([]);
+  const [batches, setBatches] = useState<Batch[]>([]);
 
   const inventoryTrendData = [
     { date: '01/01', inbound: 120, outbound: 80, stock: 450 },
@@ -80,13 +62,140 @@ export default function AreaCharts({ areaId, className }: AreaChartsProps) {
     { date: '07/01', inbound: 110, outbound: 95, stock: 525 }
   ];
 
-  const productDistributionData = [
-    { name: 'Cà chua', value: 150, color: '#8884d8' },
-    { name: 'Cà rốt', value: 80, color: '#82ca9d' },
-    { name: 'Khoai tây', value: 120, color: '#ffc658' },
-    { name: 'Hành tây', value: 95, color: '#ff7300' },
-    { name: 'Khác', value: 80, color: '#00ff88' }
-  ];
+  const toNumber = (value: unknown) => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  };
+
+  const formatDate = (date: Date): string => {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    return `${day}/${month}`;
+  };
+
+  const getDateRange = () => {
+    const endDate = new Date();
+    const startDate = new Date();
+
+    switch (timeRange) {
+      case '24h':
+        startDate.setDate(endDate.getDate() - 1);
+        break;
+      case '7d':
+        startDate.setDate(endDate.getDate() - 7);
+        break;
+      case '30d':
+        startDate.setDate(endDate.getDate() - 30);
+        break;
+      case '90d':
+        startDate.setDate(endDate.getDate() - 90);
+        break;
+      default:
+        startDate.setDate(endDate.getDate() - 7);
+    }
+
+    return { startDate, endDate };
+  };
+
+  const buildInboundTrend = (batches: Batch[], targetAreaId: string) => {
+    const { startDate, endDate } = getDateRange();
+    const dateMap = new Map<string, number>();
+
+    // Tạo map với tất cả các ngày trong khoảng thời gian
+    const currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      const dateKey = formatDate(currentDate);
+      dateMap.set(dateKey, 0);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // Chỉ tính các batch thuộc area hiện tại và có importTicket (nhập kho)
+    batches
+      .filter((batch) => batch.area?.id === targetAreaId && batch.importTicket)
+      .forEach((batch) => {
+        if (batch.createdAt) {
+          const batchDate = new Date(batch.createdAt);
+          if (batchDate >= startDate && batchDate <= endDate) {
+            const dateKey = formatDate(batchDate);
+            const quantity = toNumber(batch.quantity);
+            const currentValue = dateMap.get(dateKey) ?? 0;
+            dateMap.set(dateKey, currentValue + quantity);
+          }
+        }
+      });
+
+    // Chuyển đổi map thành array và sắp xếp theo ngày
+    const trend = Array.from(dateMap.entries())
+      .map(([date, value]) => ({ date, value }))
+      .sort((a, b) => {
+        const [dayA, monthA] = a.date.split('/').map(Number);
+        const [dayB, monthB] = b.date.split('/').map(Number);
+        if (monthA !== monthB) return monthA - monthB;
+        return dayA - dayB;
+      });
+
+    return trend.length ? trend : [{ date: formatDate(new Date()), value: 0 }];
+  };
+
+  const buildOutboundTrend = (batches: Batch[], targetAreaId: string) => {
+    const { startDate, endDate } = getDateRange();
+    const dateMap = new Map<string, number>();
+
+    // Tạo map với tất cả các ngày trong khoảng thời gian
+    const currentDate = new Date(startDate);
+    while (currentDate <= endDate) {
+      const dateKey = formatDate(currentDate);
+      dateMap.set(dateKey, 0);
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // Chỉ tính các batch thuộc area hiện tại và có orderDetail (xuất kho)
+    batches
+      .filter((batch) => batch.area?.id === targetAreaId && batch.orderDetail)
+      .forEach((batch) => {
+        if (batch.createdAt) {
+          const batchDate = new Date(batch.createdAt);
+          if (batchDate >= startDate && batchDate <= endDate) {
+            const dateKey = formatDate(batchDate);
+            const quantity = toNumber(batch.quantity);
+            const currentValue = dateMap.get(dateKey) ?? 0;
+            dateMap.set(dateKey, currentValue + quantity);
+          }
+        }
+      });
+
+    // Chuyển đổi map thành array và sắp xếp theo ngày
+    const trend = Array.from(dateMap.entries())
+      .map(([date, value]) => ({ date, value }))
+      .sort((a, b) => {
+        const [dayA, monthA] = a.date.split('/').map(Number);
+        const [dayB, monthB] = b.date.split('/').map(Number);
+        if (monthA !== monthB) return monthA - monthB;
+        return dayA - dayB;
+      });
+
+    return trend.length ? trend : [{ date: formatDate(new Date()), value: 0 }];
+  };
+
+  useEffect(() => {
+    const loadBatches = async () => {
+      try {
+        const res = await fetchBatches({ areaId, limit: 200 });
+        const loadedBatches = res?.data ?? [];
+        // Filter chỉ lấy batches thuộc area hiện tại
+        const areaBatches = loadedBatches.filter((b) => b.area?.id === areaId);
+        setBatches(areaBatches);
+        setInboundTrendData(buildInboundTrend(areaBatches, areaId));
+        setOutboundTrendData(buildOutboundTrend(areaBatches, areaId));
+      } catch (error) {
+        console.error('Unable to load batches for area', error);
+        setInboundTrendData([{ date: formatDate(new Date()), value: 0 }]);
+        setOutboundTrendData([{ date: formatDate(new Date()), value: 0 }]);
+      }
+    };
+
+    void loadBatches();
+  }, [areaId, timeRange]);
 
   const alertsData = [
     { date: '01/01', temperature: 2, humidity: 1, inventory: 0 },
@@ -100,29 +209,21 @@ export default function AreaCharts({ areaId, className }: AreaChartsProps) {
 
   const getCurrentData = () => {
     switch (chartType) {
-      case 'temperature':
-        return temperatureData;
-      case 'humidity':
-        return humidityData;
-      case 'inventory':
-        return inventoryTrendData;
-      case 'alerts':
-        return alertsData;
+      case 'inbound':
+        return inboundTrendData;
+      case 'outbound':
+        return outboundTrendData;
       default:
-        return temperatureData;
+        return inboundTrendData;
     }
   };
 
   const getChartTitle = () => {
     switch (chartType) {
-      case 'temperature':
-        return 'Xu hướng nhiệt độ';
-      case 'humidity':
-        return 'Xu hướng độ ẩm';
-      case 'inventory':
-        return 'Xu hướng tồn kho';
-      case 'alerts':
-        return 'Thống kê cảnh báo';
+      case 'inbound':
+        return 'Xu hướng nhập kho';
+      case 'outbound':
+        return 'Xu hướng xuất kho';
       default:
         return 'Biểu đồ thống kê';
     }
@@ -142,72 +243,43 @@ export default function AreaCharts({ areaId, className }: AreaChartsProps) {
     const data = getCurrentData();
 
     switch (chartType) {
-      case 'temperature':
-      case 'humidity':
+      case 'inbound':
         return (
           <ResponsiveContainer width='100%' height={300}>
             <LineChart data={data}>
               <CartesianGrid strokeDasharray='3 3' />
-              <XAxis dataKey='time' />
+              <XAxis dataKey='date' />
               <YAxis />
               <Tooltip />
               <Legend />
               <Line
                 type='monotone'
                 dataKey='value'
-                stroke='#8884d8'
-                strokeWidth={2}
-                name={
-                  chartType === 'temperature' ? 'Nhiệt độ (°C)' : 'Độ ẩm (%)'
-                }
-              />
-              <Line
-                type='monotone'
-                dataKey='optimal'
                 stroke='#82ca9d'
-                strokeDasharray='5 5'
-                name='Mức tối ưu'
+                strokeWidth={2}
+                name='Số lượng nhập kho'
               />
             </LineChart>
           </ResponsiveContainer>
         );
 
-      case 'inventory':
+      case 'outbound':
         return (
           <ResponsiveContainer width='100%' height={300}>
-            <AreaChart data={data}>
+            <LineChart data={data}>
               <CartesianGrid strokeDasharray='3 3' />
               <XAxis dataKey='date' />
               <YAxis />
               <Tooltip />
               <Legend />
-              <Area
+              <Line
                 type='monotone'
-                dataKey='stock'
-                stackId='1'
-                stroke='#8884d8'
-                fill='#8884d8'
-                name='Tồn kho'
+                dataKey='value'
+                stroke='#ffc658'
+                strokeWidth={2}
+                name='Số lượng xuất kho'
               />
-              <Bar dataKey='inbound' fill='#82ca9d' name='Nhập kho' />
-              <Bar dataKey='outbound' fill='#ffc658' name='Xuất kho' />
-            </AreaChart>
-          </ResponsiveContainer>
-        );
-
-      case 'alerts':
-        return (
-          <ResponsiveContainer width='100%' height={300}>
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray='3 3' />
-              <XAxis dataKey='date' />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey='temperature' fill='#ff7300' name='Nhiệt độ' />
-              <Bar dataKey='humidity' fill='#00ff88' name='Độ ẩm' />
-              <Bar dataKey='inventory' fill='#8884d8' name='Tồn kho' />
-            </BarChart>
+            </LineChart>
           </ResponsiveContainer>
         );
 
@@ -222,29 +294,41 @@ export default function AreaCharts({ areaId, className }: AreaChartsProps) {
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Nhiệt độ trung bình
-            </CardTitle>
-            {getTrendIndicator(25.2, 24.8)}
+            <CardTitle className='text-sm font-medium'>Tổng nhập kho</CardTitle>
+            {getTrendIndicator(
+              inboundTrendData.reduce((sum, item) => sum + item.value, 0),
+              inboundTrendData.length > 1
+                ? inboundTrendData[inboundTrendData.length - 2].value
+                : 0
+            )}
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>25.2°C</div>
+            <div className='text-2xl font-bold'>
+              {inboundTrendData.reduce((sum, item) => sum + item.value, 0)}
+            </div>
             <p className='text-muted-foreground text-xs'>
-              +0.4°C so với hôm qua
+              Tổng số lượng nhập kho
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>
-              Độ ẩm trung bình
-            </CardTitle>
-            {getTrendIndicator(62, 65)}
+            <CardTitle className='text-sm font-medium'>Tổng xuất kho</CardTitle>
+            {getTrendIndicator(
+              outboundTrendData.reduce((sum, item) => sum + item.value, 0),
+              outboundTrendData.length > 1
+                ? outboundTrendData[outboundTrendData.length - 2].value
+                : 0
+            )}
           </CardHeader>
           <CardContent>
-            <div className='text-2xl font-bold'>62%</div>
-            <p className='text-muted-foreground text-xs'>-3% so với hôm qua</p>
+            <div className='text-2xl font-bold'>
+              {outboundTrendData.reduce((sum, item) => sum + item.value, 0)}
+            </div>
+            <p className='text-muted-foreground text-xs'>
+              Tổng số lượng xuất kho
+            </p>
           </CardContent>
         </Card>
 
@@ -289,10 +373,8 @@ export default function AreaCharts({ areaId, className }: AreaChartsProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='temperature'>Nhiệt độ</SelectItem>
-                  <SelectItem value='humidity'>Độ ẩm</SelectItem>
-                  <SelectItem value='inventory'>Tồn kho</SelectItem>
-                  <SelectItem value='alerts'>Cảnh báo</SelectItem>
+                  <SelectItem value='inbound'>Nhập kho</SelectItem>
+                  <SelectItem value='outbound'>Xuất kho</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={timeRange} onValueChange={setTimeRange}>
@@ -315,89 +397,6 @@ export default function AreaCharts({ areaId, className }: AreaChartsProps) {
         </CardHeader>
         <CardContent>{renderChart()}</CardContent>
       </Card>
-
-      {/* Product Distribution */}
-      <div className='grid gap-4 md:grid-cols-2'>
-        <Card>
-          <CardHeader>
-            <CardTitle>Phân bố sản phẩm</CardTitle>
-            <CardDescription>
-              Tỷ lệ các loại sản phẩm trong khu vực
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width='100%' height={250}>
-              <PieChart>
-                <Pie
-                  data={productDistributionData}
-                  cx='50%'
-                  cy='50%'
-                  labelLine={false}
-                  label={({ name, percent }) =>
-                    `${name} ${(percent * 100).toFixed(0)}%`
-                  }
-                  outerRadius={80}
-                  fill='#8884d8'
-                  dataKey='value'
-                >
-                  {productDistributionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Hiệu suất khu vực</CardTitle>
-            <CardDescription>
-              Các chỉ số hiệu suất trong 7 ngày qua
-            </CardDescription>
-          </CardHeader>
-          <CardContent className='space-y-4'>
-            <div className='flex items-center justify-between'>
-              <span className='text-sm font-medium'>
-                Tỷ lệ sử dụng dung tích
-              </span>
-              <div className='flex items-center gap-2'>
-                <Badge variant='outline'>82%</Badge>
-                <IconTrendingUp className='h-4 w-4 text-green-600' />
-              </div>
-            </div>
-            <div className='flex items-center justify-between'>
-              <span className='text-sm font-medium'>Thời gian hoạt động</span>
-              <div className='flex items-center gap-2'>
-                <Badge variant='outline'>99.2%</Badge>
-                <IconTrendingUp className='h-4 w-4 text-green-600' />
-              </div>
-            </div>
-            <div className='flex items-center justify-between'>
-              <span className='text-sm font-medium'>Số lần cảnh báo</span>
-              <div className='flex items-center gap-2'>
-                <Badge variant='outline'>8</Badge>
-                <IconTrendingDown className='h-4 w-4 text-red-600' />
-              </div>
-            </div>
-            <div className='flex items-center justify-between'>
-              <span className='text-sm font-medium'>Tốc độ xử lý</span>
-              <div className='flex items-center gap-2'>
-                <Badge variant='outline'>95%</Badge>
-                <IconTrendingUp className='h-4 w-4 text-green-600' />
-              </div>
-            </div>
-            <div className='flex items-center justify-between'>
-              <span className='text-sm font-medium'>Độ chính xác cảm biến</span>
-              <div className='flex items-center gap-2'>
-                <Badge variant='outline'>98.5%</Badge>
-                <IconMinus className='h-4 w-4 text-gray-600' />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

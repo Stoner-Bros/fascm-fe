@@ -21,7 +21,8 @@ export async function fetchBatches({
   limit = 10,
   search,
   importTicketId,
-  productId
+  productId,
+  areaId
 }: FindAllBatchesDto = {}) {
   const params = new URLSearchParams({
     page: String(page),
@@ -31,6 +32,7 @@ export async function fetchBatches({
   if (search) params.set('search', search);
   if (importTicketId) params.set('importTicketId', importTicketId);
   if (productId) params.set('productId', productId);
+  if (areaId) params.set('areaId', areaId);
 
   return fetchJSON<InfinityPaginationResponse<Batch>>(
     `${BASE_PATH}?${params.toString()}`

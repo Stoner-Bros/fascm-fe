@@ -222,11 +222,14 @@ export default function HarvestBatchDetailPage() {
                 new Date(String(b.updatedAt ?? b.createdAt ?? 0)).getTime() -
                 new Date(String(a.updatedAt ?? a.createdAt ?? 0)).getTime()
             )[0];
-        if (prefer?.id) setActiveDeliveryId(String(prefer.id));
+        if (prefer?.id) {
+          setActiveDeliveryId(String(prefer.id));
+        }
       })
       .catch(() => {});
   }, [schedule?.id]);
 
+  // Realtime: keep delivery events but refresh harvest schedule status when any event arrives
   const handleCancelBatch = () => {
     // TODO: call cancelHarvestSchedule(scheduleId)
     toast({
@@ -258,7 +261,15 @@ export default function HarvestBatchDetailPage() {
     }
   };
 
-  const status = schedule?.status ?? 'PENDING';
+  const status = loading ? 'LOADING' : (schedule?.status ?? 'PENDING');
+  const statusNormalized = String(status).toLowerCase();
+  const showMap = [
+    'preparing',
+    'scheduled',
+    'delivering',
+    'delivered',
+    'completed'
+  ].includes(statusNormalized);
 
   // Dùng useMemo để tránh tính lại khi details không đổi
   const totalQuantity = useMemo(
@@ -331,7 +342,7 @@ export default function HarvestBatchDetailPage() {
 
         <div className='grid gap-6 md:grid-cols-3'>
           <div className='space-y-6 md:col-span-2'>
-            {status.toUpperCase() !== 'COMPLETED' && (
+            {showMap && (
               <HarvestRouteSim
                 cargo={`Khối lượng ${String(
                   details.reduce((sum, d) => sum + d.quantity, 0)
