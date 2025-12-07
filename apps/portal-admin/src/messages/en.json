@@ -109,7 +109,8 @@
       "changeStatus": "Change Status",
       "changeImage": "Change Image",
       "creating": "Creating...",
-      "updating": "Updating..."
+      "updating": "Updating...",
+      "refresh": "Refresh"
     },
     "dialog": {
       "createTitle": "Add New Truck",

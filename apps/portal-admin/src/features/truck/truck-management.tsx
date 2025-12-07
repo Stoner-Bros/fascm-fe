@@ -1,9 +1,16 @@
 'use client';
 
+import PageContainer from '@/components/layout/page-container';
 import { FileUploader } from '@/components/file-uploader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -15,6 +22,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Modal } from '@/components/ui/modal';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import {
   Table,
   TableBody,
@@ -42,13 +56,16 @@ import {
   IconSearch,
   IconTrash,
   IconTruck,
-  IconAlertTriangle
+  IconAlertTriangle,
+  IconCheck,
+  IconClock,
+  IconTools
 } from '@tabler/icons-react';
 import { connectIoTSocket } from '@/services/iotdevice.service';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 function getStatusBadge(status: TruckStatusEnum | null | undefined, t: any) {
   switch (status) {
@@ -111,6 +128,9 @@ export function TruckManagement() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<
+    'ALL' | 'available' | 'in_use' | 'maintenance' | 'unavailable'
+  >('ALL');
 
   // Dialog state
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -217,16 +237,32 @@ export function TruckManagement() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
 
-  // Filter trucks by search term
-  const filteredTrucks = trucks.filter((truck) => {
-    if (!searchTerm.trim()) return true;
+  // Filter trucks by search term and status
+  const filteredTrucks = useMemo(() => {
     const term = searchTerm.toLowerCase();
-    return (
-      truck.licensePlate?.toLowerCase().includes(term) ||
-      truck.model?.toLowerCase().includes(term) ||
-      truck.currentLocation?.toLowerCase().includes(term)
-    );
-  });
+    return trucks.filter((truck) => {
+      const matchesSearch =
+        !term ||
+        truck.licensePlate?.toLowerCase().includes(term) ||
+        truck.model?.toLowerCase().includes(term) ||
+        truck.currentLocation?.toLowerCase().includes(term);
+      const matchesStatus =
+        statusFilter === 'ALL' || truck.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [trucks, searchTerm, statusFilter]);
+
+  // Status counts
+  const statusCounts = useMemo(
+    () => ({
+      all: trucks.length,
+      available: trucks.filter((t) => t.status === 'available').length,
+      in_use: trucks.filter((t) => t.status === 'in_use').length,
+      maintenance: trucks.filter((t) => t.status === 'maintenance').length,
+      unavailable: trucks.filter((t) => t.status === 'unavailable').length
+    }),
+    [trucks]
+  );
 
   // Reset form
   const resetForm = () => {
@@ -351,169 +387,309 @@ export function TruckManagement() {
   };
 
   return (
-    <div className='flex-1 space-y-6'>
-      {/* Header */}
-      <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
-        <div>
-          <h1 className='flex items-center gap-2 text-3xl font-bold tracking-tight'>
-            <IconTruck className='h-8 w-8 text-blue-600' />
-            {t('title')}
-          </h1>
+    <>
+      <div className='w-full space-y-6'>
+        {/* Header */}
+        <div className='flex items-center justify-between'>
+          <div>
+            <h2 className='flex items-center gap-2 text-3xl font-bold tracking-tight'>
+              <IconTruck className='h-8 w-8 text-blue-600' />
+              {t('title')}
+            </h2>
+            <p className='text-muted-foreground'>
+              Manage and track your trucks
+            </p>
+          </div>
+          <div className='flex gap-2'>
+            <Button variant='outline' onClick={loadTrucks} disabled={loading}>
+              <IconRefresh
+                className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`}
+              />
+              {t('actions.refresh')}
+            </Button>
+            <Button onClick={handleOpenCreate}>
+              <IconPlus className='mr-2 h-4 w-4' />
+              {t('addTruck')}
+            </Button>
+          </div>
         </div>
-        <div className='flex gap-2'>
-          <Button variant='outline' onClick={loadTrucks} disabled={loading}>
-            <IconRefresh
-              className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`}
-            />
-          </Button>
-          <Button onClick={handleOpenCreate}>
-            <IconPlus className='mr-2 h-4 w-4' />
-            {t('addTruck')}
-          </Button>
-        </div>
-      </div>
 
-      {/* Search */}
-      <div className='flex items-center gap-4'>
-        <div className='relative flex-1'>
-          <IconSearch className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2' />
-          <Input
-            placeholder={t('searchPlaceholder')}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className='pl-10'
-          />
+        {/* Status Cards */}
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-5'>
+          <Card
+            className='hover:border-primary cursor-pointer'
+            onClick={() => setStatusFilter('ALL')}
+          >
+            <CardHeader className='pb-3'>
+              <CardDescription>Total Trucks</CardDescription>
+              <CardTitle className='text-3xl'>
+                {loading ? (
+                  <div className='bg-muted h-8 w-16 animate-pulse rounded' />
+                ) : (
+                  statusCounts.all
+                )}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card
+            className='hover:border-primary cursor-pointer'
+            onClick={() => setStatusFilter('available')}
+          >
+            <CardHeader className='pb-3'>
+              <CardDescription className='flex items-center gap-2'>
+                <IconCheck className='h-4 w-4' />
+                {t('status.available')}
+              </CardDescription>
+              <CardTitle className='text-3xl'>
+                {loading ? (
+                  <div className='bg-muted h-8 w-16 animate-pulse rounded' />
+                ) : (
+                  statusCounts.available
+                )}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card
+            className='hover:border-primary cursor-pointer'
+            onClick={() => setStatusFilter('in_use')}
+          >
+            <CardHeader className='pb-3'>
+              <CardDescription className='flex items-center gap-2'>
+                <IconTruck className='h-4 w-4' />
+                {t('status.inUse')}
+              </CardDescription>
+              <CardTitle className='text-3xl'>
+                {loading ? (
+                  <div className='bg-muted h-8 w-16 animate-pulse rounded' />
+                ) : (
+                  statusCounts.in_use
+                )}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card
+            className='hover:border-primary cursor-pointer'
+            onClick={() => setStatusFilter('maintenance')}
+          >
+            <CardHeader className='pb-3'>
+              <CardDescription className='flex items-center gap-2'>
+                <IconTools className='h-4 w-4' />
+                {t('status.maintenance')}
+              </CardDescription>
+              <CardTitle className='text-3xl'>
+                {loading ? (
+                  <div className='bg-muted h-8 w-16 animate-pulse rounded' />
+                ) : (
+                  statusCounts.maintenance
+                )}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card
+            className='hover:border-primary cursor-pointer'
+            onClick={() => setStatusFilter('unavailable')}
+          >
+            <CardHeader className='pb-3'>
+              <CardDescription className='flex items-center gap-2'>
+                <IconClock className='h-4 w-4' />
+                {t('status.unavailable')}
+              </CardDescription>
+              <CardTitle className='text-3xl'>
+                {loading ? (
+                  <div className='bg-muted h-8 w-16 animate-pulse rounded' />
+                ) : (
+                  statusCounts.unavailable
+                )}
+              </CardTitle>
+            </CardHeader>
+          </Card>
         </div>
-      </div>
 
-      {/* Table */}
-      <Card>
-        <CardContent className='p-0'>
-          {loading ? (
-            <div className='flex items-center justify-center py-16'>
-              <IconLoader2 className='text-muted-foreground h-8 w-8 animate-spin' />
-              <span className='text-muted-foreground ml-2'>{t('loading')}</span>
+        {/* Filters and Search */}
+        <Card>
+          <CardHeader>
+            <div className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
+              <div className='flex flex-1 items-center space-x-2'>
+                <div className='relative flex-1'>
+                  <IconSearch className='text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4' />
+                  <Input
+                    placeholder={t('searchPlaceholder')}
+                    className='pl-8'
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <Select
+                  value={statusFilter}
+                  onValueChange={(v) =>
+                    setStatusFilter(
+                      (v as
+                        | 'ALL'
+                        | 'available'
+                        | 'in_use'
+                        | 'maintenance'
+                        | 'unavailable') || 'ALL'
+                    )
+                  }
+                >
+                  <SelectTrigger className='w-[180px]'>
+                    <SelectValue placeholder='Filter by status' />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value='ALL'>All Status</SelectItem>
+                    <SelectItem value='available'>
+                      {t('status.available')}
+                    </SelectItem>
+                    <SelectItem value='in_use'>{t('status.inUse')}</SelectItem>
+                    <SelectItem value='maintenance'>
+                      {t('status.maintenance')}
+                    </SelectItem>
+                    <SelectItem value='unavailable'>
+                      {t('status.unavailable')}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          ) : filteredTrucks.length === 0 ? (
-            <div className='flex flex-col items-center justify-center py-16'>
-              <IconTruck className='text-muted-foreground h-12 w-12' />
-              <p className='text-muted-foreground mt-2'>
-                {searchTerm ? t('noTrucks') : t('noTrucksEmpty')}
-              </p>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>{t('fields.licensePlate')}</TableHead>
-                  <TableHead>{t('fields.model')}</TableHead>
-                  <TableHead>{t('fields.capacity')}</TableHead>
-                  <TableHead>{t('fields.currentLocation')}</TableHead>
-                  <TableHead>{t('fields.status')}</TableHead>
-                  <TableHead>{t('fields.iotDevices')}</TableHead>
-                  <TableHead>Alert</TableHead>
-                  <TableHead className='text-right'></TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTrucks.map((truck) => (
-                  <TableRow
-                    onClick={() => router.push(`/dashboard/truck/${truck.id}`)}
-                    className='hover:bg-accent cursor-pointer'
-                    key={truck.id}
-                  >
-                    <TableCell>{truck.id || '-'}</TableCell>
-                    <TableCell className='font-medium'>
-                      {truck.licensePlate || '-'}
-                    </TableCell>
-                    <TableCell>{truck.model || '-'}</TableCell>
-                    <TableCell>
-                      {truck.capacity
-                        ? `${truck.capacity} ${t('units.kg')}`
-                        : '-'}
-                    </TableCell>
-                    <TableCell>{truck.currentLocation || '-'}</TableCell>
-                    <TableCell>{getStatusBadge(truck.status, t)}</TableCell>
-                    <TableCell>
-                      {truck.iotDevice && truck.iotDevice.length > 0 ? (
-                        <Badge
-                          variant='outline'
-                          className='hover:bg-accent cursor-pointer'
-                        >
-                          <IconCpu className='mr-1 h-3 w-3' />
-                          {truck.iotDevice.length}{' '}
-                          {truck.iotDevice.length === 1
-                            ? t('units.device')
-                            : t('units.devices')}
-                        </Badge>
-                      ) : (
-                        <span className='text-muted-foreground'>-</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {alertsByTruck[truck.id] ? (
-                        <Badge
-                          variant='outline'
-                          className='gap-1.5 bg-amber-50 text-amber-600'
-                        >
-                          <IconAlertTriangle className='h-3 w-3 text-amber-600' />
-                          {alertsByTruck[truck.id]?.alertType || 'Alert'}
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant='outline'
-                          className='gap-1.5 bg-emerald-50 text-emerald-600'
-                        >
-                          OK
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className='text-right'>
-                      <Button
-                        variant='ghost'
-                        size='icon'
-                        onClick={() => handleOpenDelete(truck)}
-                        title={t('actions.delete')}
-                        className='text-destructive hover:text-destructive'
+          </CardHeader>
+          <CardContent>
+            <div className='rounded-md border'>
+              {loading ? (
+                <div className='flex items-center justify-center py-16'>
+                  <IconLoader2 className='text-muted-foreground h-8 w-8 animate-spin' />
+                  <span className='text-muted-foreground ml-2'>
+                    {t('loading')}
+                  </span>
+                </div>
+              ) : filteredTrucks.length === 0 ? (
+                <div className='flex flex-col items-center justify-center py-16'>
+                  <IconTruck className='text-muted-foreground h-12 w-12' />
+                  <p className='text-muted-foreground mt-2'>
+                    {searchTerm || statusFilter !== 'ALL'
+                      ? t('noTrucks')
+                      : t('noTrucksEmpty')}
+                  </p>
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>ID</TableHead>
+                      <TableHead>{t('fields.licensePlate')}</TableHead>
+                      <TableHead>{t('fields.model')}</TableHead>
+                      <TableHead>{t('fields.capacity')}</TableHead>
+                      <TableHead>{t('fields.currentLocation')}</TableHead>
+                      <TableHead>{t('fields.status')}</TableHead>
+                      <TableHead>{t('fields.iotDevices')}</TableHead>
+                      <TableHead>Alert</TableHead>
+                      <TableHead className='text-right'></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredTrucks.map((truck) => (
+                      <TableRow
+                        onClick={() =>
+                          router.push(`/dashboard/truck/${truck.id}`)
+                        }
+                        className='hover:bg-accent cursor-pointer'
+                        key={truck.id}
                       >
-                        <IconTrash className='h-4 w-4' />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+                        <TableCell>{truck.id || '-'}</TableCell>
+                        <TableCell className='font-medium'>
+                          {truck.licensePlate || '-'}
+                        </TableCell>
+                        <TableCell>{truck.model || '-'}</TableCell>
+                        <TableCell>
+                          {truck.capacity
+                            ? `${truck.capacity} ${t('units.kg')}`
+                            : '-'}
+                        </TableCell>
+                        <TableCell>{truck.currentLocation || '-'}</TableCell>
+                        <TableCell>{getStatusBadge(truck.status, t)}</TableCell>
+                        <TableCell>
+                          {truck.iotDevice && truck.iotDevice.length > 0 ? (
+                            <Badge
+                              variant='outline'
+                              className='hover:bg-accent cursor-pointer'
+                            >
+                              <IconCpu className='mr-1 h-3 w-3' />
+                              {truck.iotDevice.length}{' '}
+                              {truck.iotDevice.length === 1
+                                ? t('units.device')
+                                : t('units.devices')}
+                            </Badge>
+                          ) : (
+                            <span className='text-muted-foreground'>-</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {alertsByTruck[truck.id] ? (
+                            <Badge
+                              variant='outline'
+                              className='gap-1.5 bg-amber-50 text-amber-600'
+                            >
+                              <IconAlertTriangle className='h-3 w-3 text-amber-600' />
+                              {alertsByTruck[truck.id]?.alertType || 'Alert'}
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant='outline'
+                              className='gap-1.5 bg-emerald-50 text-emerald-600'
+                            >
+                              OK
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className='text-right'>
+                          <Button
+                            variant='ghost'
+                            size='icon'
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenDelete(truck);
+                            }}
+                            title={t('actions.delete')}
+                            className='text-destructive hover:text-destructive'
+                          >
+                            <IconTrash className='h-4 w-4' />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Pagination */}
-      {!loading && trucks.length > 0 && (
-        <div className='flex items-center justify-center gap-2'>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-          >
-            <IconChevronLeft className='h-4 w-4' />
-            {t('pagination.previous')}
-          </Button>
-          <span className='text-muted-foreground text-sm'>
-            {t('pagination.page', { page })}
-          </span>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => setPage((p) => p + 1)}
-            disabled={!hasMore}
-          >
-            {t('pagination.next')}
-            <IconChevronRight className='h-4 w-4' />
-          </Button>
-        </div>
-      )}
+        {/* Pagination */}
+        {!loading && trucks.length > 0 && (
+          <div className='flex items-center justify-center gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              <IconChevronLeft className='h-4 w-4' />
+              {t('pagination.previous')}
+            </Button>
+            <span className='text-muted-foreground text-sm'>
+              {t('pagination.page', { page })}
+            </span>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => setPage((p) => p + 1)}
+              disabled={!hasMore}
+            >
+              {t('pagination.next')}
+              <IconChevronRight className='h-4 w-4' />
+            </Button>
+          </div>
+        )}
+      </div>
 
       {/* Create Dialog */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
@@ -659,6 +835,6 @@ export function TruckManagement() {
           </Button>
         </div>
       </Modal>
-    </div>
+    </>
   );
 }

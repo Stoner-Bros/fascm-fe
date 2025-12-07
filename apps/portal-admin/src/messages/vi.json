@@ -109,7 +109,8 @@
       "changeStatus": "Đổi trạng thái",
       "changeImage": "Đổi ảnh",
       "creating": "Đang tạo...",
-      "updating": "Đang cập nhật..."
+      "updating": "Đang cập nhật...",
+      "refresh": "Làm mới"
     },
     "dialog": {
       "createTitle": "Thêm xe tải mới",
