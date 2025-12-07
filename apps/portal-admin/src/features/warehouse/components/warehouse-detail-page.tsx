@@ -29,7 +29,10 @@ import {
   fetchActiveAreaAlertByAreaId
 } from '@/services/area.service';
 import { fetchManagers } from '@/services/manager.service';
-import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
+import {
+  subscribeIoTDataUpdates,
+  connectIoTSocket
+} from '@/services/iotdevice.service';
 import { fetchWarehouseById } from '@/services/warehouse.service';
 import { fetchBatches } from '@/services/batch.service';
 import type { Batch } from '@/types/batch';
@@ -52,6 +55,13 @@ const toNumeric = (value: unknown) => {
 
 const parseDeviceData = (device: any): EnvironmentReadings => {
   try {
+    const directTemp =
+      device?.temperature ?? device?.temp ?? device?.t ?? device?.Temperature;
+    const directHum =
+      device?.humidity ?? device?.humid ?? device?.h ?? device?.Humidity;
+    if (directTemp != null || directHum != null) {
+      return { temperature: directTemp ?? null, humidity: directHum ?? null };
+    }
     const raw = device?.data;
     if (typeof raw === 'string' && raw.trim().length > 0) {
       const obj = JSON.parse(raw);
@@ -74,9 +84,7 @@ const parseDeviceData = (device: any): EnvironmentReadings => {
         humidity: raw.humidity ?? raw.humid ?? raw.h ?? (raw as any).Humidity
       };
     }
-  } catch {
-    // ignore parse errors
-  }
+  } catch {}
   return {};
 };
 import type { Warehouse } from '@/types/warehouse';
@@ -92,7 +100,7 @@ import {
   IconTemperature
 } from '@tabler/icons-react';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { WarehouseActivitiesTable } from './warehouse-activities-table';
 
 interface WarehouseDetailPageProps {
@@ -167,6 +175,8 @@ export default function WarehouseDetailPage({
   const [areaDeviceMap, setAreaDeviceMap] = useState<Record<string, string[]>>(
     {}
   );
+  const alertSocketRef = useRef<any>(null);
+  const subscribedAreasRef = useRef<Set<string>>(new Set());
   const deviceToAreaMap = useMemo(() => {
     const map: Record<string, string> = {};
     Object.entries(areaDeviceMap).forEach(([areaId, deviceIds]) => {
@@ -342,11 +352,14 @@ export default function WarehouseDetailPage({
       const temperature = toNumeric(readings.temperature);
       const humidity = toNumeric(readings.humidity);
       if (temperature == null && humidity == null) return;
-
-      const payloadAreaId = (payload as any)?.area?.id as string | undefined;
+      const payloadAreaId = String(
+        (payload as any)?.areaId ?? (payload as any)?.area?.id ?? ''
+      ).trim();
       let targetAreaId = payloadAreaId;
       if (!targetAreaId) {
-        const payloadId = String((payload as any)?.id ?? '').trim();
+        const payloadId = String(
+          (payload as any)?.deviceId ?? (payload as any)?.id ?? ''
+        ).trim();
         if (!payloadId) return;
         targetAreaId = deviceToAreaMap[payloadId];
       }
@@ -369,6 +382,39 @@ export default function WarehouseDetailPage({
       unsubscribe();
     };
   }, [deviceToAreaMap]);
+
+  useEffect(() => {
+    const socket = connectIoTSocket();
+    alertSocketRef.current = socket;
+    const onAlert = (payload: any) => {
+      const aid = String(payload?.areaId ?? payload?.area?.id ?? '').trim();
+      if (!aid) return;
+      const status = String(payload?.status ?? '').toLowerCase();
+      setAreaAlerts((prev) => ({ ...prev, [aid]: status === 'active' }));
+    };
+    const events = ['area-alert', 'area:alert', 'alert:update', 'alert'];
+    events.forEach((evt) => socket.on(evt, onAlert));
+    return () => {
+      events.forEach((evt) => socket.off(evt, onAlert));
+      socket.disconnect();
+      alertSocketRef.current = null;
+      subscribedAreasRef.current.clear();
+    };
+  }, []);
+
+  useEffect(() => {
+    const socket = alertSocketRef.current;
+    if (!socket) return;
+    const areaIds = apiAreas
+      .filter((a) => a.warehouse?.id === warehouseId)
+      .map((a) => String(a.id || ''))
+      .filter((id) => !!id);
+    areaIds.forEach((id) => {
+      if (subscribedAreasRef.current.has(id)) return;
+      socket.emit('alert:subscribeArea', { areaId: id });
+      subscribedAreasRef.current.add(id);
+    });
+  }, [apiAreas, warehouseId]);
 
   const resetAreaForm = () => {
     setAreaForm({
@@ -705,14 +751,6 @@ export default function WarehouseDetailPage({
                         {area.description || 'Không có mô tả'}
                       </CardDescription>
                     </div>
-                    {area.hasAlert && (
-                      <Badge
-                        variant='outline'
-                        className='shrink-0 border-orange-300 bg-orange-100 px-1 py-0.5 text-xs text-orange-700'
-                      >
-                        Cảnh báo
-                      </Badge>
-                    )}
                   </div>
                 </CardHeader>
                 <CardContent className='space-y-2 px-3 pt-0 pb-3'>
@@ -720,15 +758,13 @@ export default function WarehouseDetailPage({
                     variant='outline'
                     className={cn(
                       'max-w-fit shrink-0 px-1 py-0.5 text-xs',
-                      getStatusBadgeColor(area.status)
+                      area.hasAlert
+                        ? 'border-orange-300 bg-orange-100 text-orange-700'
+                        : getStatusBadgeColor(area.status)
                     )}
                   >
                     <span className='truncate'>
-                      {area.status === 'normal'
-                        ? 'Bình thường'
-                        : area.status === 'warning'
-                          ? 'Cảnh báo'
-                          : 'Nguy hiểm'}
+                      {area.hasAlert ? 'Cảnh báo' : 'Bình thường'}
                     </span>
                   </Badge>
                   {/* Environmental Stats */}

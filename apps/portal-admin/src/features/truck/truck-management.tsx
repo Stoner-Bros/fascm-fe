@@ -42,7 +42,8 @@ import { uploadFile } from '@/services/file.service';
 import {
   createTruck,
   deleteTruck,
-  fetchTrucks
+  fetchTrucks,
+  fetchActiveTruckAlertByTruckId
 } from '@/services/truck.service';
 import type { Truck, TruckStatusEnum, TruckAlert } from '@/types/truck';
 import { fetchTruckAlerts } from '@/services/truck.service';
@@ -229,6 +230,26 @@ export function TruckManagement() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (!isMounted.current) return;
+    const ids = trucks.map((t) => String(t.id || '')).filter((id) => !!id);
+    if (ids.length === 0) return;
+    (async () => {
+      try {
+        const results = await Promise.all(
+          ids.map((id) => fetchActiveTruckAlertByTruckId(id).catch(() => null))
+        );
+        const next: Record<string, TruckAlert | null> = {};
+        ids.forEach((id, idx) => {
+          const a = results[idx];
+          next[id] =
+            a && String(a.status).toLowerCase() !== 'resolved' ? a : null;
+        });
+        setAlertsByTruck((prev) => ({ ...prev, ...next }));
+      } catch {}
+    })();
+  }, [trucks]);
 
   useEffect(() => {
     if (isMounted.current) {

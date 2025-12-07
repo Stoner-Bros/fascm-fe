@@ -30,7 +30,8 @@ import {
   createIoTDevice,
   fetchIoTDeviceById,
   fetchIoTDevices,
-  connectIoTSocket
+  connectIoTSocket,
+  updateIoTDevice
 } from '@/services/iotdevice.service';
 import {
   IconEye,
@@ -153,6 +154,10 @@ export function IoTDeviceManagement() {
   const [createError, setCreateError] = useState('');
   const [creating, setCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [editAreaIdInput, setEditAreaIdInput] = useState('');
+  const [editTruckIdInput, setEditTruckIdInput] = useState('');
+  const [updating, setUpdating] = useState(false);
+  const [updateError, setUpdateError] = useState('');
   // Tính toán statistics
   const stats = useMemo(() => {
     return {
@@ -375,7 +380,7 @@ export function IoTDeviceManagement() {
                     setCreating(true);
                     try {
                       const body: any = {
-                        status: 'active',
+                        status: 'inactive',
                         type: 'sensor'
                       };
                       if (hasArea) body.area = { id: areaIdInput.trim() };
@@ -693,6 +698,135 @@ export function IoTDeviceManagement() {
                                     selectedDevice.lastDataTime
                                   )}
                                 </p>
+                              </div>
+                            </div>
+
+                            <Separator />
+                            <div className='space-y-4'>
+                              <div className='grid gap-4 md:grid-cols-2'>
+                                <div className='space-y-2'>
+                                  <Label>Area ID</Label>
+                                  <Input
+                                    placeholder='VD: AREA_0001'
+                                    value={editAreaIdInput}
+                                    onChange={(e) => {
+                                      setEditAreaIdInput(e.target.value);
+                                      if (e.target.value)
+                                        setEditTruckIdInput('');
+                                    }}
+                                  />
+                                  <p className='text-muted-foreground text-xs'>
+                                    Để trống nếu muốn gán theo Truck
+                                  </p>
+                                </div>
+                                <div className='space-y-2'>
+                                  <Label>Truck ID</Label>
+                                  <Input
+                                    placeholder='VD: TRUCK_0001'
+                                    value={editTruckIdInput}
+                                    onChange={(e) => {
+                                      setEditTruckIdInput(e.target.value);
+                                      if (e.target.value)
+                                        setEditAreaIdInput('');
+                                    }}
+                                  />
+                                  <p className='text-muted-foreground text-xs'>
+                                    Để trống nếu muốn gán theo Area
+                                  </p>
+                                </div>
+                              </div>
+                              {updateError && (
+                                <div className='rounded-md border border-red-200 bg-red-50 p-2 text-sm text-red-700'>
+                                  {updateError}
+                                </div>
+                              )}
+                              <div className='flex items-center justify-end gap-2'>
+                                <Button
+                                  variant='outline'
+                                  onClick={() => {
+                                    setEditAreaIdInput('');
+                                    setEditTruckIdInput('');
+                                    setUpdateError('');
+                                  }}
+                                  disabled={updating}
+                                >
+                                  Xóa nhập
+                                </Button>
+                                <Button
+                                  onClick={async () => {
+                                    const hasArea = !!editAreaIdInput.trim();
+                                    const hasTruck = !!editTruckIdInput.trim();
+                                    if (hasArea && hasTruck) {
+                                      setUpdateError(
+                                        'Chỉ được chọn một trong Area hoặc Truck'
+                                      );
+                                      return;
+                                    }
+                                    if (!hasArea && !hasTruck) {
+                                      setUpdateError(
+                                        'Nhập Area ID hoặc Truck ID để cập nhật'
+                                      );
+                                      return;
+                                    }
+                                    setUpdating(true);
+                                    try {
+                                      const body: any = {};
+                                      if (hasArea)
+                                        body.area = {
+                                          id: editAreaIdInput.trim()
+                                        };
+                                      if (hasTruck)
+                                        body.truck = {
+                                          id: editTruckIdInput.trim()
+                                        };
+                                      await updateIoTDevice(
+                                        selectedDevice.id,
+                                        body
+                                      );
+                                      const refreshed =
+                                        await fetchIoTDeviceById(
+                                          selectedDevice.id
+                                        );
+                                      setDevices((prev) =>
+                                        prev.map((d) =>
+                                          d.id === selectedDevice.id
+                                            ? {
+                                                ...d,
+                                                areaId: String(
+                                                  (refreshed as any)?.area
+                                                    ?.id ?? ''
+                                                ),
+                                                truckId: String(
+                                                  (refreshed as any)?.truck
+                                                    ?.id ?? ''
+                                                ),
+                                                lastDataTime: String(
+                                                  (refreshed as any)
+                                                    ?.lastDataTime ??
+                                                    d.lastDataTime
+                                                ),
+                                                data:
+                                                  (refreshed as any)?.data ??
+                                                  d.data
+                                              }
+                                            : d
+                                        )
+                                      );
+                                      setUpdateError('');
+                                      setEditAreaIdInput('');
+                                      setEditTruckIdInput('');
+                                    } catch (e) {
+                                      setUpdateError('Cập nhật thất bại');
+                                    } finally {
+                                      setUpdating(false);
+                                    }
+                                  }}
+                                  disabled={updating}
+                                >
+                                  {updating
+                                    ? 'Đang cập nhật...'
+                                    : 'Cập nhật vị trí'}
+                                </Button>
                               </div>
                             </div>
                           </div>

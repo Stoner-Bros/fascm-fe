@@ -17,6 +17,19 @@ export async function fetchIoTDeviceById(id: string) {
   return fetchJSON<IoTDeviceBE>(`${BASE_PATH}/${id}`);
 }
 
+export async function updateIoTDevice(
+  id: string,
+  body: Partial<IoTDeviceBE> & {
+    truck?: { id: string } | null;
+    area?: { id: string } | null;
+  }
+) {
+  return fetchJSON<IoTDeviceBE>(`${BASE_PATH}/${id}`, {
+    method: 'PATCH',
+    body
+  });
+}
+
 function getSocketBase(): string {
   const base = getApiBase();
   return base.replace(/\/api\/v1$/, '');
