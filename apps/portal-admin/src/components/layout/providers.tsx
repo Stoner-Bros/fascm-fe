@@ -2,6 +2,7 @@
 import { useTheme } from 'next-themes';
 import React from 'react';
 import { ActiveThemeProvider } from '../active-theme';
+import NotificationListener from '../notifications/notification-listener';
 
 export default function Providers({
   activeThemeValue,
@@ -16,6 +17,7 @@ export default function Providers({
   return (
     <>
       <ActiveThemeProvider initialTheme={activeThemeValue}>
+        <NotificationListener />
         {children}
       </ActiveThemeProvider>
     </>

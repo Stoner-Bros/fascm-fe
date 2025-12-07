@@ -94,3 +94,73 @@ export function subscribeSupplierNotifications(
     socket.disconnect();
   };
 }
+
+export function subscribeGlobalNotifications(
+  onNotify: (p: NotificationPayload) => void
+): () => void {
+  const socket = connectNotifications();
+  const handler = (p: any) => {
+    if (p && typeof p === 'object' && typeof p.type === 'string') {
+      onNotify(p as NotificationPayload);
+    }
+  };
+  socket.on('notify', handler);
+  return () => {
+    socket.off('notify', handler);
+    socket.disconnect();
+  };
+}
+
+export function subscribeManagerNotifications(
+  managerId: string,
+  onNotify: (p: NotificationPayload) => void
+): () => void {
+  const socket = connectNotifications();
+  const handler = (p: any) => {
+    if (p && typeof p === 'object' && typeof p.type === 'string') {
+      onNotify(p as NotificationPayload);
+    }
+  };
+  socket.emit('notify:subscribeManager', { managerId });
+  socket.on('notify', handler);
+  return () => {
+    socket.off('notify', handler);
+    socket.disconnect();
+  };
+}
+
+export function subscribeStaffNotifications(
+  staffId: string,
+  onNotify: (p: NotificationPayload) => void
+): () => void {
+  const socket = connectNotifications();
+  const handler = (p: any) => {
+    if (p && typeof p === 'object' && typeof p.type === 'string') {
+      onNotify(p as NotificationPayload);
+    }
+  };
+  socket.emit('notify:subscribeStaff', { staffId });
+  socket.on('notify', handler);
+  return () => {
+    socket.off('notify', handler);
+    socket.disconnect();
+  };
+}
+
+export function subscribeDeliveryStaffNotifications(
+  deliveryStaffId: string,
+  onNotify: (p: NotificationPayload) => void
+): () => void {
+  const socket = connectNotifications();
+  const handler = (p: any) => {
+    if (p && typeof p === 'object' && typeof p.type === 'string') {
+      onNotify(p as NotificationPayload);
+    }
+  };
+  socket.emit('notify:subscribeDeliveryStaff', { deliveryStaffId });
+  socket.on('notify', handler);
+  return () => {
+    socket.off('notify', handler);
+    socket.disconnect();
+  };
+}

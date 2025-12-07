@@ -39,13 +39,9 @@ import {
   createTruckSetting,
   updateTruckSetting
 } from '@/services/truck.service';
-import {
-  subscribeIoTDeviceUpdates,
-  subscribeIoTDataUpdates
-} from '@/services/iotdevice.service';
+import { connectIoTSocket } from '@/services/iotdevice.service';
 import IotDeviceCard from '@/components/iot/iot-device-card';
-import { getApiBase } from '@/lib/client';
-import { io } from 'socket.io-client';
+
 import { uploadFile } from '@/services/file.service';
 import type {
   Truck,
@@ -200,7 +196,8 @@ export function TruckDetail({ truckId }: TruckDetailProps) {
   }, [truckId]);
 
   useEffect(() => {
-    const unsubscribeDevice = subscribeIoTDeviceUpdates((payload) => {
+    const socket = connectIoTSocket();
+    const onIotUpdate = (payload: any) => {
       const deviceId = String(
         (payload as any)?.id ?? (payload as any)?.deviceId ?? ''
       );
@@ -265,138 +262,18 @@ export function TruckDetail({ truckId }: TruckDetailProps) {
         }
         return { ...prev, iotDevice: next };
       });
-      fetchActiveTruckAlertByTruckId(truckId)
-        .then((alert) => setActiveAlert(alert))
-        .catch(() => {});
-    });
-
-    const unsubscribeData = subscribeIoTDataUpdates((payload) => {
-      const deviceId = String(
-        (payload as any)?.id ?? (payload as any)?.deviceId ?? ''
-      );
-      const tid = String(
-        (payload as any)?.truck?.id ?? (payload as any)?.truckId ?? ''
-      );
-      setTruck((prev) => {
-        if (!prev) return prev;
-        const list = Array.isArray(prev.iotDevice) ? prev.iotDevice : [];
-        const idx = list.findIndex((d) => String(d.id) === deviceId);
-        const next = list.slice();
-        if (idx >= 0) {
-          next[idx] = {
-            ...next[idx],
-            lastDataTime: String(
-              (payload as any)?.lastDataTime ??
-                (payload as any)?.timestamp ??
-                next[idx].lastDataTime ??
-                ''
-            ),
-            data:
-              (payload as any)?.data != null
-                ? (payload as any)?.data
-                : {
-                    temperature:
-                      (payload as any)?.temperature ??
-                      (payload as any)?.temp ??
-                      undefined,
-                    humidity:
-                      (payload as any)?.humidity ??
-                      (payload as any)?.humid ??
-                      undefined
-                  }
-          } as any;
-        } else {
-          if (tid && tid === String(truckId)) {
-            next.unshift({
-              id: deviceId,
-              type: 'sensor',
-              status: 'online',
-              lastDataTime: String(
-                (payload as any)?.lastDataTime ??
-                  (payload as any)?.timestamp ??
-                  ''
-              ),
-              data:
-                (payload as any)?.data != null
-                  ? (payload as any)?.data
-                  : {
-                      temperature:
-                        (payload as any)?.temperature ??
-                        (payload as any)?.temp ??
-                        undefined,
-                      humidity:
-                        (payload as any)?.humidity ??
-                        (payload as any)?.humid ??
-                        undefined
-                    }
-            } as any);
-          }
-        }
-        return { ...prev, iotDevice: next };
-      });
-      fetchActiveTruckAlertByTruckId(truckId)
-        .then((alert) => setActiveAlert(alert))
-        .catch(() => {});
-    });
-
-    return () => {
-      unsubscribeDevice();
-      unsubscribeData();
     };
-  }, [truckId]);
 
-  useEffect(() => {
-    const base = getApiBase().replace(/\/api\/v1$/, '');
-    const socket = io(`${base}/iot`, {
-      path: '/socket.io',
-      transports: ['websocket']
-    });
-    const onUpdate = (payload: any) => {
-      const tid = String(payload?.truckId ?? (payload as any)?.truck?.id ?? '');
-      if (!tid || tid !== String(truckId)) return;
-      const deviceId = String(payload?.deviceId ?? payload?.id ?? '');
-      const temperature = payload?.temperature ?? payload?.temp ?? undefined;
-      const humidity = payload?.humidity ?? payload?.humid ?? undefined;
-      const timestamp = String(
-        payload?.timestamp ?? payload?.lastDataTime ?? new Date().toISOString()
-      );
-      setTruck((prev) => {
-        if (!prev) return prev;
-        const list = Array.isArray(prev.iotDevice) ? prev.iotDevice : [];
-        const idx = list.findIndex((d) => String(d.id) === deviceId);
-        const next = list.slice();
-        if (idx >= 0) {
-          next[idx] = {
-            ...next[idx],
-            lastDataTime: timestamp,
-            data: { temperature, humidity }
-          } as any;
-        } else if (deviceId) {
-          next.unshift({
-            id: deviceId,
-            type: 'sensor',
-            status: 'online',
-            lastDataTime: timestamp,
-            data: { temperature, humidity }
-          } as any);
-        }
-        return { ...prev, iotDevice: next };
-      });
-    };
     socket.emit('iot:subscribeTruck', { truckId });
-    socket.on('iot:update', onUpdate);
+    socket.on('iot:update', onIotUpdate);
     return () => {
-      socket.off('iot:update', onUpdate);
+      socket.off('iot:update', onIotUpdate);
       socket.disconnect();
     };
   }, [truckId]);
 
   useEffect(() => {
-    const base = getApiBase().replace(/\/api\/v1$/, '');
-    const socket = io(`${base}/iot`, {
-      path: '/socket.io',
-      transports: ['websocket']
-    });
+    const socket = connectIoTSocket();
     const events = [
       'truck-alert',
       'truck:alert',

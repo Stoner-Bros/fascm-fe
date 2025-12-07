@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { RoleEnum } from '@/constants/enums';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
+import { ModeToggle } from '@/components/layout/ThemeToggle/theme-toggle';
 
 export const metadata: Metadata = {
   title: 'Authentication',
@@ -57,35 +58,47 @@ export default function SignInViewPage() {
 
   return (
     <div className='relative h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0'>
-      <div className='bg-muted relative hidden h-full flex-col p-10 text-white lg:flex dark:border-r'>
-        <div className='absolute inset-0 bg-zinc-900' />
-        <div className='relative z-20 flex items-center text-lg font-medium'>
-          <svg
-            xmlns='http://www.w3.org/2000/svg'
-            viewBox='0 0 24 24'
-            fill='none'
-            stroke='currentColor'
-            strokeWidth='2'
-            strokeLinecap='round'
-            strokeLinejoin='round'
-            className='mr-2 h-6 w-6'
-          >
-            <path d='M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3' />
-          </svg>
-          Logo
-        </div>
-        <div className='relative z-20 mt-auto'>
-          <blockquote className='space-y-2'>
-            <p className='text-lg'>
-              &ldquo;This starter template has saved me countless hours of work
-              and helped me deliver projects to my clients faster than ever
-              before.&rdquo;
-            </p>
-            <footer className='text-sm'>Random Dude</footer>
-          </blockquote>
+      {/* Left Side */}
+      <div className='relative h-full w-full overflow-hidden'>
+        <img
+          src='/images/background.jpg'
+          alt='Fresh agricultural products'
+          className='absolute inset-0 h-full w-full object-cover'
+        />
+        <div className='absolute inset-0 bg-black/50' />
+
+        <div className='absolute top-0 right-1/4 h-96 w-96 rounded-full bg-gradient-to-b from-white/10 to-transparent blur-3xl' />
+
+        <div className='absolute inset-0 flex flex-col items-start justify-center px-12 py-16 text-white'>
+          <h1 className='mb-6 max-w-4xl bg-gradient-to-r from-green-300 via-lime-200 to-green-400 bg-clip-text text-6xl leading-tight font-extrabold text-transparent drop-shadow-[0_4px_20px_rgba(0,255,150,0.4)]'>
+            Kết nối nông sản tươi Mang chất lượng đến từng gia đình
+          </h1>
+
+          <p className='mb-8 max-w-2xl text-xl leading-relaxed text-gray-200'>
+            Hệ thống quản lý thu hoạch, vận chuyển và phân phối nông sản theo
+            thời gian thực.
+          </p>
+
+          <div className='space-y-4'>
+            <div className='flex items-center gap-3 text-lg'>
+              <span className='font-bold text-green-400'>✔</span>
+              <span>Nguồn gốc minh bạch</span>
+            </div>
+            <div className='flex items-center gap-3 text-lg'>
+              <span className='font-bold text-green-400'>✔</span>
+              <span>Thu hoạch trong ngày</span>
+            </div>
+            <div className='flex items-center gap-3 text-lg'>
+              <span className='font-bold text-green-400'>✔</span>
+              <span>Giao hàng chuẩn lạnh</span>
+            </div>
+          </div>
         </div>
       </div>
       <div className='flex h-full items-center justify-center p-4 lg:p-8'>
+        <div className='absolute top-4 right-4 z-10 h-16 w-16'>
+          <ModeToggle />
+        </div>
         <div className='flex w-full max-w-md flex-col items-center justify-center space-y-6'>
           <div className='w-full space-y-4'>
             <div className='flex flex-col space-y-2 text-center'>

@@ -1,6 +1,5 @@
 import { LandingHeader } from '@/features/landing/header';
 import { HeroSection } from '@/features/landing/hero-section';
-import { TopProductsSection } from '@/features/landing/top-products-section';
 import { AboutSection } from '@/features/landing/about-section';
 import { FeaturesSection } from '@/features/landing/features-section';
 import { HowItWorksSection } from '@/features/landing/how-it-works-section';
@@ -10,11 +9,10 @@ import { TrackingSection } from '@/features/landing';
 
 export default function LandingPage() {
   return (
-    <div className='min-h-screen'>
+    <div className='min-h-screen overflow-y-auto'>
       <LandingHeader />
       <main>
         <HeroSection />
-        <TopProductsSection />
         <AboutSection />
         <FeaturesSection />
         <HowItWorksSection />

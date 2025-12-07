@@ -44,8 +44,7 @@ import {
   IconTruck,
   IconAlertTriangle
 } from '@tabler/icons-react';
-import { getApiBase } from '@/lib/client';
-import { io } from 'socket.io-client';
+import { connectIoTSocket } from '@/services/iotdevice.service';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -158,27 +157,25 @@ export function TruckManagement() {
         try {
           const res = await fetchTruckAlerts({ page: 1, limit: 10 });
           const map: Record<string, TruckAlert | null> = {};
-          (res.data || []).forEach((a) => {
-            const tid = String(a.truck?.id ?? '');
-            if (!tid) return;
-            const prev = map[tid];
-            if (!prev) map[tid] = a;
-            else {
-              const p = new Date(
-                prev.createdAt || prev.updatedAt || ''
-              ).getTime();
-              const c = new Date(a.createdAt || a.updatedAt || '').getTime();
-              if (c >= p) map[tid] = a;
-            }
-          });
+          (res.data || [])
+            .filter((a) => String(a.status).toLowerCase() !== 'resolved')
+            .forEach((a) => {
+              const tid = String(a.truck?.id ?? '');
+              if (!tid) return;
+              const prev = map[tid];
+              if (!prev) map[tid] = a;
+              else {
+                const p = new Date(
+                  prev.createdAt || prev.updatedAt || ''
+                ).getTime();
+                const c = new Date(a.createdAt || a.updatedAt || '').getTime();
+                if (c >= p) map[tid] = a;
+              }
+            });
           setAlertsByTruck(map);
         } catch {}
       })();
-      const base = getApiBase().replace(/\/api\/v1$/, '');
-      const socket = io(`${base}/iot`, {
-        path: '/socket.io',
-        transports: ['websocket']
-      });
+      const socket = connectIoTSocket();
       const events = [
         'truck-alert',
         'truck:alert',
@@ -464,7 +461,12 @@ export function TruckManagement() {
                           {alertsByTruck[truck.id]?.alertType || 'Alert'}
                         </Badge>
                       ) : (
-                        <span className='text-muted-foreground'>-</span>
+                        <Badge
+                          variant='outline'
+                          className='gap-1.5 bg-emerald-50 text-emerald-600'
+                        >
+                          OK
+                        </Badge>
                       )}
                     </TableCell>
                     <TableCell className='text-right'>

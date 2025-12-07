@@ -8,9 +8,10 @@ import SearchInput from '../search-input';
 import { UserNav } from './user-nav';
 import { ThemeSelector } from '../theme-selector';
 import { ModeToggle } from './ThemeToggle/theme-toggle';
-import CtaGithub from './cta-github';
+import CtaGithub from './cta-notify';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import CtaNotify from './cta-notify';
 
 export default function Header() {
   const [locale, setLocale] = useState<string>('');
@@ -43,9 +44,8 @@ export default function Header() {
         <Separator orientation='vertical' className='mr-2 h-4' />
         <Breadcrumbs />
       </div>
-
       <div className='flex items-center gap-2 px-4'>
-        <CtaGithub />
+        <CtaNotify />
         <div className='hidden md:flex'>
           <SearchInput />
         </div>

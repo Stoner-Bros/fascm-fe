@@ -15,12 +15,11 @@ import {
   createIoTDevice,
   fetchIoTDeviceById,
   fetchIoTDevices,
-  subscribeIoTDataUpdates,
-  subscribeIoTDeviceUpdates
+  connectIoTSocket
 } from '@/services/iotdevice.service';
 import { IconEye, IconRefresh, IconTemperature } from '@tabler/icons-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type UIIoTDevice = {
   truckId: string;
@@ -124,6 +123,8 @@ const getStatusBadge = (status: string) => {
 
 export function IoTDeviceManagement() {
   const [devices, setDevices] = useState<UIIoTDevice[]>([]);
+  const socketRef = useRef<any>(null);
+  const subscribedRef = useRef<Set<string>>(new Set());
   const [selectedDevice, setSelectedDevice] = useState<UIIoTDevice | null>(
     null
   );
@@ -157,20 +158,45 @@ export function IoTDeviceManagement() {
   }, []);
 
   useEffect(() => {
-    const unsubscribe = subscribeIoTDeviceUpdates((payload) => {
+    const socket = connectIoTSocket();
+    socketRef.current = socket;
+    const onUpdate = (payload: any) => {
       setDevices((prev) => {
-        const pId = String(payload.id ?? payload.deviceId ?? '').trim();
+        const pId = String(
+          (payload as any)?.id ?? (payload as any)?.deviceId ?? ''
+        ).trim();
+        if (!pId) return prev;
+        const readings = {
+          temperature:
+            (payload as any)?.temperature ?? (payload as any)?.temp ?? null,
+          humidity:
+            (payload as any)?.humidity ?? (payload as any)?.humid ?? null
+        };
         const idx = prev.findIndex((d) => d.id === pId);
         const next: UIIoTDevice = {
-          truckId: (payload as any)?.truck?.id || (prev[idx]?.truckId ?? ''),
-          areaId: (payload as any)?.area?.id || (prev[idx]?.areaId ?? ''),
-          id: pId || (prev[idx]?.id ?? ''),
-          type: String(payload.type ?? prev[idx]?.type ?? 'sensor'),
-          status: toUiStatus(payload.status) ?? prev[idx]?.status ?? 'offline',
+          truckId:
+            (payload as any)?.truck?.id || (idx >= 0 ? prev[idx].truckId : ''),
+          areaId:
+            (payload as any)?.area?.id || (idx >= 0 ? prev[idx].areaId : ''),
+          id: pId || (idx >= 0 ? prev[idx].id : ''),
+          type: String(
+            (payload as any)?.type ?? (idx >= 0 ? prev[idx].type : 'sensor')
+          ),
+          status:
+            toUiStatus((payload as any)?.status) ??
+            (idx >= 0 ? prev[idx].status : 'offline'),
           lastDataTime: String(
-            (payload as any)?.lastDataTime ?? prev[idx]?.lastDataTime ?? ''
+            (payload as any)?.lastDataTime ??
+              (payload as any)?.timestamp ??
+              (idx >= 0 ? prev[idx].lastDataTime : '')
           ).trim(),
-          data: (payload as any)?.data ?? prev[idx]?.data ?? null
+          data:
+            (payload as any)?.data ??
+            (readings.temperature != null || readings.humidity != null
+              ? readings
+              : idx >= 0
+                ? prev[idx].data
+                : null)
         };
         if (idx >= 0) {
           const copy = prev.slice();
@@ -179,37 +205,25 @@ export function IoTDeviceManagement() {
         }
         return [next, ...prev];
       });
-    });
-    return () => unsubscribe();
+    };
+    socket.on('iot:update', onUpdate);
+    return () => {
+      socket.off('iot:update', onUpdate);
+      socket.disconnect();
+      socketRef.current = null;
+    };
   }, []);
 
   useEffect(() => {
-    const unsubscribe = subscribeIoTDataUpdates((payload) => {
-      setDevices((prev) => {
-        const pId = String(payload.id ?? payload.deviceId ?? '').trim();
-        if (!pId) return prev;
-        return prev.map((d) =>
-          d.id === pId
-            ? {
-                ...d,
-                lastDataTime: String(
-                  (payload as any)?.lastDataTime ?? d.lastDataTime
-                ),
-                data: (payload as any)?.data ?? d.data
-              }
-            : d
-        );
-      });
+    const socket = socketRef.current;
+    if (!socket) return;
+    devices.forEach((d) => {
+      const id = (d.id ?? '').trim();
+      if (!id || subscribedRef.current.has(id)) return;
+      socket.emit('iot:subscribeDevice', { deviceId: id });
+      subscribedRef.current.add(id);
     });
-    return () => unsubscribe();
-  }, []);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      loadDevices();
-    }, 10000);
-    return () => clearInterval(timer);
-  }, []);
+  }, [devices]);
 
   const refreshDevice = async (id: string) => {
     try {
