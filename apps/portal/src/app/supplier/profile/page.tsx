@@ -435,7 +435,7 @@ export default function SupplierProfilePage() {
                       className='h-[42px] !text-base'
                     />
                     <p className='text-muted-foreground text-xs'>
-                      Leave blank if you don't want to change password
+                      Leave blank if you don&apos;t want to change password
                     </p>
                   </div>
                 )}
@@ -453,7 +453,7 @@ export default function SupplierProfilePage() {
                       className='h-[42px] !text-base'
                     />
                     <p className='text-muted-foreground text-xs'>
-                      Leave blank if you don't want to change password
+                      Leave blank if you don&apos;t want to change password
                     </p>
                   </div>
                 )}
