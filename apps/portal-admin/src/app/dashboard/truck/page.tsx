@@ -1,5 +1,5 @@
 import PageContainer from '@/components/layout/page-container';
-import { TruckManagement } from '@/features/delivery/components/truck-management';
+import { TruckManagement } from '@/features/truck/truck-management';
 
 export default function TruckPage() {
   return (

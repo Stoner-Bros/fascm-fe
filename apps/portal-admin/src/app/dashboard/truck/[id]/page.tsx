@@ -1,6 +1,6 @@
 'use client';
 import PageContainer from '@/components/layout/page-container';
-import { TruckDetail } from '@/features/delivery/components/truck-detail';
+import { TruckDetail } from '@/features/truck/truck-detail';
 import { useParams } from 'next/navigation';
 
 export default function TruckDetailPage() {
