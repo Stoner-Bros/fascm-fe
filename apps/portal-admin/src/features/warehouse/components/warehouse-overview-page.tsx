@@ -243,71 +243,76 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
         }));
         setApiWarehouses(warehouses);
 
-        // Load areas và batches cho mỗi warehouse
+        // Fetch tất cả areas một lần (không filter theo warehouseId)
+        const allAreasRes = await fetchAreas({
+          page: 1,
+          limit: 200 // Fetch nhiều areas để cover tất cả warehouses
+        });
+        const allAreas = allAreasRes.data || [];
+
+        // Fetch tất cả batches một lần (không filter theo areaId)
+        const allBatchesRes = await fetchBatches({
+          page: 1,
+          limit: 500 // Fetch nhiều batches để cover tất cả areas
+        });
+        const allBatches = allBatchesRes.data || [];
+
+        // Group areas theo warehouseId
         const areasMap: Record<string, Area[]> = {};
-        const batchesMap: Record<string, Batch[]> = {};
         const envMap: Record<
           string,
           { temperature?: number | null; humidity?: number | null }
         > = {};
 
-        await Promise.all(
-          warehouses.map(async (w) => {
-            try {
-              // Load areas
-              const areasRes = await fetchAreas({
-                page: 1,
-                limit: 50,
-                warehouseId: w.id
-              });
-              const areas = (areasRes.data || []).filter(
-                (a) => a.warehouse?.id === w.id
-              );
-              areasMap[w.id] = areas;
-
-              // Load batches cho tất cả areas
-              const batchPromises = areas.map((area) =>
-                fetchBatches({ page: 1, limit: 200, areaId: area.id })
-              );
-              const batchResults = await Promise.all(batchPromises);
-              const allBatches = batchResults.flatMap((res) => res.data || []);
-              batchesMap[w.id] = allBatches.filter((b) =>
-                areas.some((a) => a.id === b.area?.id)
-              );
-
-              // Parse environment data từ IoT devices
-              areas.forEach((area) => {
-                const iot = (area as any)?.iotDevice;
-                const devices: any[] = Array.isArray(iot)
-                  ? iot
-                  : iot
-                    ? [iot]
-                    : [];
-                let readings: {
-                  temperature?: number | null;
-                  humidity?: number | null;
-                } = {
-                  temperature: null,
-                  humidity: null
-                };
-
-                for (const d of devices) {
-                  const r = parseDeviceData(d);
-                  const temperature = toNumeric(r.temperature);
-                  const humidity = toNumeric(r.humidity);
-                  if (temperature != null || humidity != null) {
-                    readings = { temperature, humidity };
-                    break;
-                  }
-                }
-
-                envMap[area.id] = readings;
-              });
-            } catch (error) {
-              console.error(`Unable to load data for warehouse ${w.id}`, error);
+        for (const area of allAreas) {
+          const warehouseId = area.warehouse?.id;
+          if (warehouseId) {
+            if (!areasMap[warehouseId]) {
+              areasMap[warehouseId] = [];
             }
-          })
-        );
+            areasMap[warehouseId].push(area);
+
+            // Parse environment data từ IoT devices
+            const iot = (area as any)?.iotDevice;
+            const devices: any[] = Array.isArray(iot) ? iot : iot ? [iot] : [];
+            let readings: {
+              temperature?: number | null;
+              humidity?: number | null;
+            } = {
+              temperature: null,
+              humidity: null
+            };
+
+            for (const d of devices) {
+              const r = parseDeviceData(d);
+              const temperature = toNumeric(r.temperature);
+              const humidity = toNumeric(r.humidity);
+              if (temperature != null || humidity != null) {
+                readings = { temperature, humidity };
+                break;
+              }
+            }
+
+            envMap[area.id] = readings;
+          }
+        }
+
+        // Group batches theo warehouseId (thông qua area.warehouse.id)
+        const batchesMap: Record<string, Batch[]> = {};
+        for (const batch of allBatches) {
+          const areaId = batch.area?.id;
+          if (areaId) {
+            // Tìm area tương ứng để lấy warehouseId
+            const area = allAreas.find((a) => a.id === areaId);
+            const warehouseId = area?.warehouse?.id;
+            if (warehouseId) {
+              if (!batchesMap[warehouseId]) {
+                batchesMap[warehouseId] = [];
+              }
+              batchesMap[warehouseId].push(batch);
+            }
+          }
+        }
 
         setWarehouseAreas(areasMap);
         setWarehouseBatches(batchesMap);

@@ -300,15 +300,18 @@ export default function WarehouseDetailPage({
       });
       setAreaAlerts(alertMap);
 
-      // Load batches cho tất cả areas để tính số sản phẩm
+      // Fetch tất cả batches một lần (không filter theo areaId)
       try {
-        const batchPromises = areas.map((area) =>
-          fetchBatches({ page: 1, limit: 200, areaId: area.id })
-        );
-        const batchResults = await Promise.all(batchPromises);
-        const allBatches = batchResults.flatMap((res) => res.data || []);
+        const allBatchesRes = await fetchBatches({
+          page: 1,
+          limit: 500 // Fetch nhiều batches để cover tất cả areas
+        });
+        const allBatches = allBatchesRes.data || [];
+
+        // Filter batches chỉ lấy những batches thuộc các areas của warehouse này
+        const areaIds = new Set(areas.map((a) => a.id));
         setAreaBatches(
-          allBatches.filter((b) => areas.some((a) => a.id === b.area?.id))
+          allBatches.filter((b) => b.area?.id && areaIds.has(b.area.id))
         );
       } catch (error) {
         console.error('Unable to load batches for areas', error);

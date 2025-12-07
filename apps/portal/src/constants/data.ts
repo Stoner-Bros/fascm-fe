@@ -85,14 +85,14 @@ export const supplierNavItems: NavItem[] = [
     isActive: false,
     items: []
   },
-  {
-    title: 'Pickup Confirmation',
-    url: '/supplier/pickup-confirmation',
-    icon: 'truck',
-    shortcut: ['p', 'c'],
-    isActive: false,
-    items: []
-  },
+  // {
+  //   title: 'Pickup Confirmation',
+  //   url: '/supplier/pickup-confirmation',
+  //   icon: 'truck',
+  //   shortcut: ['p', 'c'],
+  //   isActive: false,
+  //   items: []
+  // },
   {
     title: 'Account',
     url: '/supplier/profile',
