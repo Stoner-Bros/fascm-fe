@@ -18,7 +18,7 @@ import {
   IconFilter,
   IconX
 } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { Label } from '@/components/ui/label';
 import { Product } from '../../../types/product';
@@ -33,9 +33,13 @@ export default function SupplierProductsFeature() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const didFetchRef = useRef(false);
+  const skipFirstCatRef = useRef(true);
 
   useEffect(() => {
     let mounted = true;
+    if (didFetchRef.current) return;
+    didFetchRef.current = true;
     setLoading(true);
     setError(null);
     console.log('[UI] Using API base', getApiBase());
@@ -75,6 +79,12 @@ export default function SupplierProductsFeature() {
 
   useEffect(() => {
     let mounted = true;
+    if (skipFirstCatRef.current) {
+      skipFirstCatRef.current = false;
+      return () => {
+        mounted = false;
+      };
+    }
     setLoading(true);
     fetchProducts({
       page: 1,
@@ -93,7 +103,6 @@ export default function SupplierProductsFeature() {
         if (!mounted) return;
         setLoading(false);
       });
-
     return () => {
       mounted = false;
     };
@@ -110,11 +119,13 @@ export default function SupplierProductsFeature() {
   }));
 
   const filteredProducts = products.filter((product) => {
+    // Filter by search query only (category filtering requires server-side filtering)
     const matchesSearch =
       (product.name ?? '').toLowerCase().includes(searchQuery.toLowerCase()) ||
       (product.description ?? '')
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
+
     return matchesSearch;
   });
 
@@ -241,7 +252,19 @@ export default function SupplierProductsFeature() {
               </Card>
             )}
 
-            {filteredProducts.length === 0 ? (
+            {loading ? (
+              <Card>
+                <CardContent className='flex flex-col items-center justify-center py-12'>
+                  <div className='border-primary mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
+                  <h3 className='mb-2 text-lg font-semibold'>
+                    Loading products...
+                  </h3>
+                  <p className='text-muted-foreground mb-4'>
+                    Please wait while we fetch the products
+                  </p>
+                </CardContent>
+              </Card>
+            ) : filteredProducts.length === 0 ? (
               <Card>
                 <CardContent className='flex flex-col items-center justify-center py-12'>
                   <IconSearch className='text-muted-foreground mb-4 h-12 w-12' />
@@ -278,7 +301,7 @@ export default function SupplierProductsFeature() {
                           <CardTitle className='text-lg'>
                             {product.name}
                           </CardTitle>
-                          <CardDescription className='max-h-16 overflow-hidden break-words whitespace-pre-wrap'>
+                          <CardDescription className='max-h-12 overflow-hidden'>
                             {product.description ?? '—'}
                           </CardDescription>
                         </div>
@@ -287,7 +310,12 @@ export default function SupplierProductsFeature() {
                     <CardContent className='flex h-full flex-col space-y-4'>
                       <div className='flex items-center justify-between'>
                         <div>
-                          <p className='text-muted-foreground text-sm'>
+                          <p className='text-sm font-bold'>
+                            {product.pricePerKg
+                              ? `${product.pricePerKg} VND/kg`
+                              : 'N/A'}
+                          </p>
+                          <p className='text-muted-foreground text-xs'>
                             Status: {product.status ?? 'N/A'}
                           </p>
                         </div>

@@ -62,9 +62,9 @@ import {
 import {
   fetchHarvestSchedules,
   fetchHarvestTickets,
-  fetchHarvestDetailsByHarvestTicketId,
-  fetchSupplierById
+  fetchHarvestDetailsByHarvestTicketId
 } from '@/features/supplier';
+import { fetchSupplier } from '@/services/supplier.service';
 import type { HarvestSchedule } from '@/types/harvest-schedule';
 import type { HarvestDetail } from '@/types/harvest-detail';
 import type { Supplier } from '@/types/supplier';
@@ -183,7 +183,19 @@ export default function SupplierHarvestBatchesFeature() {
     const loadData = async () => {
       setLoading(true);
       try {
-        // 1. Fetch schedules
+        // 1. Fetch supplier info (mine) - chỉ fetch 1 lần
+        let supplierInfo: Supplier | null = null;
+        let location = '-';
+        try {
+          supplierInfo = await fetchSupplier();
+          location = supplierInfo?.gardenName || supplierInfo?.address || '-';
+        } catch (err) {
+          console.error('Failed to fetch supplier info', err);
+        }
+
+        if (cancelled) return;
+
+        // 2. Fetch schedules
         const schedulesRes = await fetchHarvestSchedules({
           page: 1,
           limit: 50
@@ -192,52 +204,42 @@ export default function SupplierHarvestBatchesFeature() {
 
         if (cancelled) return;
 
-        const supplierCache = new Map<string, Supplier>();
+        // 3. Fetch tất cả harvest tickets một lần (không filter theo scheduleId)
+        const allTicketsRes = await fetchHarvestTickets({
+          page: 1,
+          limit: 200 // Fetch nhiều tickets để cover tất cả schedules
+        });
+        const allTickets = allTicketsRes.data ?? [];
 
-        // 2. Process từng schedule để lấy đầy đủ thông tin
+        if (cancelled) return;
+
+        // 4. Group tickets theo scheduleId
+        const ticketsByScheduleId = new Map<string, typeof allTickets>();
+        for (const ticket of allTickets) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const ticketScheduleId =
+            (ticket as any)?.harvestScheduleId?.id ??
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (ticket as any)?.harvestScheduleId ??
+            '';
+          if (ticketScheduleId) {
+            const scheduleIdStr = String(ticketScheduleId);
+            if (!ticketsByScheduleId.has(scheduleIdStr)) {
+              ticketsByScheduleId.set(scheduleIdStr, []);
+            }
+            ticketsByScheduleId.get(scheduleIdStr)!.push(ticket);
+          }
+        }
+
+        if (cancelled) return;
+
+        // 5. Process từng schedule để lấy đầy đủ thông tin
         const rows: HarvestBatchRow[] = await Promise.all(
           schedules.map(async (schedule) => {
             const scheduleId = schedule.id;
 
-            // ===== Location (Supplier) – cached =====
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const supplierRef = (schedule as any)?.supplierId;
-            const supplierKey =
-              supplierRef?.id !== undefined ? supplierRef.id : supplierRef;
-
-            let location = '-';
-            if (supplierKey) {
-              let supplier = supplierCache.get(String(supplierKey));
-              if (!supplier) {
-                try {
-                  supplier = await fetchSupplierById(String(supplierKey));
-                  supplierCache.set(String(supplierKey), supplier);
-                } catch {
-                  // ignore supplier errors
-                }
-              }
-              if (supplier) {
-                location = supplier.gardenName || supplier.address || '-';
-              }
-            }
-
-            // ===== Tickets & Details của schedule này =====
-            const ticketsRes = await fetchHarvestTickets({
-              page: 1,
-              limit: 20,
-              harvestScheduleId: scheduleId
-            });
-
-            const tickets =
-              ticketsRes.data?.filter((ticket) => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const ticketScheduleId =
-                  (ticket as any)?.harvestScheduleId?.id ??
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  (ticket as any)?.harvestScheduleId ??
-                  '';
-                return String(ticketScheduleId) === String(scheduleId);
-              }) ?? [];
+            // ===== Tickets của schedule này (từ cache) =====
+            const tickets = ticketsByScheduleId.get(String(scheduleId)) ?? [];
 
             const detailResponses = await Promise.all(
               tickets.map(async (ticket) => {
@@ -407,7 +409,13 @@ export default function SupplierHarvestBatchesFeature() {
           >
             <CardHeader className='pb-3'>
               <CardDescription>Total Batches</CardDescription>
-              <CardTitle className='text-3xl'>{statusCounts.all}</CardTitle>
+              <CardTitle className='text-3xl'>
+                {loading ? (
+                  <div className='bg-muted h-8 w-16 animate-pulse rounded' />
+                ) : (
+                  statusCounts.all
+                )}
+              </CardTitle>
             </CardHeader>
           </Card>
           <Card
@@ -419,7 +427,13 @@ export default function SupplierHarvestBatchesFeature() {
                 <IconClock className='h-4 w-4' />
                 Chờ duyệt đơn
               </CardDescription>
-              <CardTitle className='text-3xl'>{statusCounts.pending}</CardTitle>
+              <CardTitle className='text-3xl'>
+                {loading ? (
+                  <div className='bg-muted h-8 w-16 animate-pulse rounded' />
+                ) : (
+                  statusCounts.pending
+                )}
+              </CardTitle>
             </CardHeader>
           </Card>
           <Card
@@ -432,7 +446,11 @@ export default function SupplierHarvestBatchesFeature() {
                 Đã duyệt đơn
               </CardDescription>
               <CardTitle className='text-3xl'>
-                {statusCounts.approved}
+                {loading ? (
+                  <div className='bg-muted h-8 w-16 animate-pulse rounded' />
+                ) : (
+                  statusCounts.approved
+                )}
               </CardTitle>
             </CardHeader>
           </Card>
@@ -446,7 +464,11 @@ export default function SupplierHarvestBatchesFeature() {
                 Đã hoàn thành
               </CardDescription>
               <CardTitle className='text-3xl'>
-                {statusCounts.completed}
+                {loading ? (
+                  <div className='bg-muted h-8 w-16 animate-pulse rounded' />
+                ) : (
+                  statusCounts.completed
+                )}
               </CardTitle>
             </CardHeader>
           </Card>
@@ -515,12 +537,21 @@ export default function SupplierHarvestBatchesFeature() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredBatches.length === 0 ? (
+                  {loading ? (
                     <TableRow>
                       <TableCell colSpan={6} className='text-center'>
-                        {loading
-                          ? 'Loading harvest batches...'
-                          : 'No harvest batches found'}
+                        <div className='flex flex-col items-center justify-center py-12'>
+                          <div className='border-primary mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
+                          <p className='text-muted-foreground'>
+                            Loading harvest batches...
+                          </p>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : filteredBatches.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={6} className='text-center'>
+                        No harvest batches found
                       </TableCell>
                     </TableRow>
                   ) : (

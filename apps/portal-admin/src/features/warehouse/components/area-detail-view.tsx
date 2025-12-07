@@ -132,6 +132,10 @@ export default function AreaDetailView({
     useState(false);
   const [iotDevices, setIotDevices] = useState<any[]>([]);
   const [isLoadingIoT, setIsLoadingIoT] = useState(false);
+  const [allBatches, setAllBatches] = useState<Batch[]>([]);
+  const [allImportTickets, setAllImportTickets] = useState<ImportTicket[]>([]);
+  const [allExportTickets, setAllExportTickets] = useState<any[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(false);
 
   type EnvironmentReadings = {
     temperature?: number | null;
@@ -527,83 +531,25 @@ export default function AreaDetailView({
     };
   }, [areaId]);
 
-  // Load batches cho overview tab (để hiển thị phân bố sản phẩm)
+  // Fetch tất cả data một lần khi areaId thay đổi
   useEffect(() => {
-    if (activeTab !== 'overview' || !areaId) return;
+    if (!areaId) return;
 
-    const loadOverviewBatches = async () => {
+    const loadAllData = async () => {
+      setIsLoadingData(true);
       setIsLoadingOverviewBatches(true);
-      try {
-        const res = await fetchBatches({
-          page: 1,
-          limit: 200,
-          areaId
-        });
-        const list = (res.data || []).filter(
-          (b) => b.area?.id && b.area.id === areaId
-        );
-        setOverviewBatches(list);
-      } catch (error) {
-        console.error('Unable to load overview batches', error);
-        setOverviewBatches([]);
-      } finally {
-        setIsLoadingOverviewBatches(false);
-      }
-    };
-
-    void loadOverviewBatches();
-  }, [activeTab, areaId]);
-
-  // Load batches theo area khi mở tab Products
-  useEffect(() => {
-    if (activeTab !== 'products' || !areaId) return;
-
-    const loadAreaBatches = async () => {
       setIsLoadingProducts(true);
-      try {
-        const res = await fetchBatches({
-          page: 1,
-          limit: 200,
-          areaId
-        });
-        const list = (res.data || []).filter(
-          (b) => b.area?.id && b.area.id === areaId
-        );
-        setAreaBatches(list);
-        if (list.length > 0) {
-          // Chọn sẵn product đầu tiên
-          setSelectedProductId(list[0].product?.id ?? null);
-        } else {
-          setSelectedProductId(null);
-        }
-      } catch (error) {
-        console.error('Unable to load area batches', error);
-        setAreaBatches([]);
-        setSelectedProductId(null);
-      } finally {
-        setIsLoadingProducts(false);
-      }
-    };
-
-    void loadAreaBatches();
-  }, [activeTab, areaId]);
-
-  // Load lịch sử import và export tickets theo area khi mở tab History
-  useEffect(() => {
-    if (activeTab !== 'history' || !areaId) return;
-
-    const loadAreaHistory = async () => {
       setIsLoadingHistory(true);
       try {
-        const [ticketsRes, batchesRes, exportsRes] = await Promise.all([
+        // Fetch tất cả data một lần
+        const [batchesRes, ticketsRes, exportsRes] = await Promise.all([
+          fetchBatches({
+            page: 1,
+            limit: 500 // Fetch nhiều batches để cover tất cả
+          }),
           fetchImportTickets({
             page: 1,
             limit: 200
-          }),
-          fetchBatches({
-            page: 1,
-            limit: 200,
-            areaId
           }),
           fetchExportTickets({
             page: 1,
@@ -611,43 +557,71 @@ export default function AreaDetailView({
           })
         ]);
 
+        // Filter batches theo areaId
         const batchesInArea: Batch[] = (batchesRes.data || []).filter(
           (b) => b.area?.id && b.area.id === areaId
         );
+        setAllBatches(batchesInArea);
+
+        // Filter import tickets theo areaId hoặc importTicketId từ batches
         const importIdsFromBatches = new Set(
           batchesInArea
             .map((b) => b.importTicket?.id)
             .filter((id): id is string => !!id)
         );
-        const orderDetailIdsFromBatches = new Set(
-          batchesInArea
-            .map((b) => b.orderDetail?.id)
-            .filter((id): id is string => !!id)
-        );
-
         const tickets: ImportTicket[] = (ticketsRes.data || []).filter(
           (it) =>
             (it.area?.id && it.area.id === areaId) ||
             importIdsFromBatches.has(it.id)
         );
+        setAllImportTickets(tickets);
 
+        // Filter export tickets theo orderDetailId từ batches
+        const orderDetailIdsFromBatches = new Set(
+          batchesInArea
+            .map((b) => b.orderDetail?.id)
+            .filter((id): id is string => !!id)
+        );
         const exportTickets = (exportsRes.data || []).filter((et: any) =>
           orderDetailIdsFromBatches.has(et.orderDetail?.id)
         );
-
-        setAreaImportTickets(tickets);
-        setAreaExportTickets(exportTickets);
+        setAllExportTickets(exportTickets);
       } catch (error) {
-        console.error('Unable to load area history', error);
-        setAreaImportTickets([]);
-        setAreaExportTickets([]);
+        console.error('Unable to load area data', error);
+        setAllBatches([]);
+        setAllImportTickets([]);
+        setAllExportTickets([]);
       } finally {
+        setIsLoadingData(false);
+        setIsLoadingOverviewBatches(false);
+        setIsLoadingProducts(false);
         setIsLoadingHistory(false);
       }
     };
 
-    void loadAreaHistory();
-  }, [activeTab, areaId]);
+    void loadAllData();
+  }, [areaId]);
+
+  // Update overviewBatches và areaBatches từ allBatches khi cần
+  useEffect(() => {
+    setOverviewBatches(allBatches);
+  }, [allBatches]);
+
+  useEffect(() => {
+    setAreaBatches(allBatches);
+    if (allBatches.length > 0) {
+      // Chọn sẵn product đầu tiên
+      setSelectedProductId(allBatches[0].product?.id ?? null);
+    } else {
+      setSelectedProductId(null);
+    }
+  }, [allBatches]);
+
+  // Update areaImportTickets và areaExportTickets từ all data
+  useEffect(() => {
+    setAreaImportTickets(allImportTickets);
+    setAreaExportTickets(allExportTickets);
+  }, [allImportTickets, allExportTickets]);
 
   // Tạo activities từ import và export tickets
   const historyActivities = useMemo(() => {
