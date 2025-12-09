@@ -25,6 +25,7 @@ import { Product } from '../../../types/product';
 import { fetchProducts } from '@/services/product.service';
 import { Category, fetchCategories } from '@/services/category.service';
 import { getApiBase } from '@/lib/client';
+import { formatCurrency } from '@/lib/utils';
 
 export default function SupplierProductsFeature() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -311,8 +312,8 @@ export default function SupplierProductsFeature() {
                       <div className='flex items-center justify-between'>
                         <div>
                           <p className='text-sm font-bold'>
-                            {product.pricePerKg
-                              ? `${product.pricePerKg} VND/kg`
+                            {product.price?.[0]?.price
+                              ? `${formatCurrency(Number(product.price?.[0]?.price ?? 0))} VND/kg`
                               : 'N/A'}
                           </p>
                           <p className='text-muted-foreground text-xs'>

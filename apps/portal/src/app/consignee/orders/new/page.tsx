@@ -1,7 +1,7 @@
 'use client';
 
-import ConsigneeNewOrderFeature from '@/features/consignee/orders/new-order';
+import NewOrderPage from '@/features/consignee/orders/new-order';
 
 export default function OrdersNewPage() {
-  return <ConsigneeNewOrderFeature />;
+  return <NewOrderPage />;
 }

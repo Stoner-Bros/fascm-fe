@@ -1,17 +1,16 @@
 'use client';
 
+import { cn } from '@/lib/utils';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { SidebarTrigger } from '../ui/sidebar';
-import { Separator } from '../ui/separator';
 import { Breadcrumbs } from '../breadcrumbs';
 import SearchInput from '../search-input';
-import { UserNav } from './user-nav';
 import { ThemeSelector } from '../theme-selector';
+import { Separator } from '../ui/separator';
+import { SidebarTrigger } from '../ui/sidebar';
 import { ModeToggle } from './ThemeToggle/theme-toggle';
-import CtaGithub from './cta-notify';
-import { useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
 import CtaNotify from './cta-notify';
+import { UserNav } from './user-nav';
 
 export default function Header() {
   const [locale, setLocale] = useState<string>('');

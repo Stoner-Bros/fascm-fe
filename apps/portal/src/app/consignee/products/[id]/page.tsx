@@ -143,7 +143,7 @@ export default function ProductDetailPage() {
                   <div className='mt-4 flex items-center justify-between'>
                     <span className='text-sm'>Giá</span>
                     <span className='text-xl font-semibold'>
-                      {formatCurrency(Number(product.pricePerKg ?? 0))}
+                      {formatCurrency(Number(product.price?.[0]?.price ?? 0))}
                       /kg
                     </span>
                   </div>

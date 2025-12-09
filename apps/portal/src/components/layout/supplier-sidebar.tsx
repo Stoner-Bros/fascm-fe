@@ -1,9 +1,5 @@
 'use client';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,13 +25,12 @@ import {
   SidebarRail
 } from '@/components/ui/sidebar';
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
-import { supplierNavItems } from '@/constants/data';
+import { supplierNavItems } from '@/constants/nav-data';
+import useAuth from '@/hooks/use-auth';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import {
   IconBell,
-  IconChevronRight,
   IconChevronsDown,
-  IconCreditCard,
   IconLogout,
   IconPhotoUp,
   IconUserCircle
@@ -45,7 +40,6 @@ import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
 import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
-import useAuth from '@/hooks/use-auth';
 export const company = {
   name: 'Acme Inc',
   logo: IconPhotoUp,
@@ -92,26 +86,25 @@ export default function SupplierSidebar() {
                 <Collapsible
                   key={item.title}
                   asChild
-                  defaultOpen={item.isActive}
+                  open={true}
                   className='group/collapsible'
                 >
                   <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton
-                        tooltip={item.title}
-                        isActive={pathname === item.url}
-                        onClick={(e) => {
-                          if (item.url && item.url !== '#') {
-                            e.preventDefault();
-                            router.push(item.url);
-                          }
-                        }}
-                      >
-                        {item.icon && <Icon />}
-                        <span>{item.title}</span>
-                        <IconChevronRight className='ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
+                    <SidebarMenuButton
+                      tooltip={item.title}
+                      onClick={(e) => {
+                        if (item.url && item.url !== '#') {
+                          e.preventDefault();
+                          router.push(item.url);
+                        }
+                      }}
+                      className={
+                        item.url ? 'cursor-pointer' : 'hover:bg-transparent'
+                      }
+                    >
+                      {item.icon && <Icon />}
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
                     <CollapsibleContent>
                       <SidebarMenuSub>
                         {item.items?.map((subItem) => (
@@ -192,12 +185,6 @@ export default function SupplierSidebar() {
                   >
                     <IconUserCircle className='mr-2 h-4 w-4' />
                     Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push('/supplier/profile/farm')}
-                  >
-                    <IconCreditCard className='mr-2 h-4 w-4' />
-                    Farm Information
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <IconBell className='mr-2 h-4 w-4' />

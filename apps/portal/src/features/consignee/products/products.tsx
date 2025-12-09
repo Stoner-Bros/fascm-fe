@@ -28,6 +28,7 @@ import { Category, fetchCategories } from '@/services/category.service';
 import { getApiBase } from '@/lib/client';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useRouter } from 'next/navigation';
+import { formatCurrency } from '@/lib/utils';
 
 export default function ConsigneeProductsFeature() {
   const router = useRouter();
@@ -333,8 +334,8 @@ export default function ConsigneeProductsFeature() {
                       <div className='flex items-center justify-between'>
                         <div>
                           <p className='text-sm font-bold'>
-                            {product.pricePerKg
-                              ? `${product.pricePerKg} VND/kg`
+                            {product.price?.[0]?.price
+                              ? `${formatCurrency(Number(product.price?.[0]?.price ?? 0))} VND/kg`
                               : 'N/A'}
                           </p>
                           <p className='text-muted-foreground text-xs'>
