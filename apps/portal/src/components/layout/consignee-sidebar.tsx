@@ -1,9 +1,5 @@
 'use client';
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger
-} from '@/components/ui/collapsible';
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,24 +25,23 @@ import {
   SidebarRail
 } from '@/components/ui/sidebar';
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
-import { consigneeNavItems } from '@/constants/data';
+import { consigneeNavItems } from '@/constants/nav-data';
+import useAuth from '@/hooks/use-auth';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import {
   IconBell,
-  IconChevronRight,
+  IconBuilding,
   IconChevronsDown,
   IconCreditCard,
   IconLogout,
   IconPhotoUp,
-  IconUserCircle,
-  IconBuilding
+  IconUserCircle
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
 import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
-import useAuth from '@/hooks/use-auth';
 
 export const company = {
   name: 'Retail Corp',
@@ -94,26 +89,25 @@ export default function ConsigneeSidebar() {
                 <Collapsible
                   key={item.title}
                   asChild
-                  defaultOpen={item.isActive}
+                  open={true}
                   className='group/collapsible'
                 >
                   <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton
-                        tooltip={item.title}
-                        isActive={pathname === item.url}
-                        onClick={(e) => {
-                          if (item.url && item.url !== '#') {
-                            e.preventDefault();
-                            router.push(item.url);
-                          }
-                        }}
-                      >
-                        {item.icon && <Icon />}
-                        <span>{item.title}</span>
-                        <IconChevronRight className='ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
+                    <SidebarMenuButton
+                      tooltip={item.title}
+                      onClick={(e) => {
+                        if (item.url && item.url !== '#') {
+                          e.preventDefault();
+                          router.push(item.url);
+                        }
+                      }}
+                      className={
+                        item.url ? 'cursor-pointer' : 'hover:bg-transparent'
+                      }
+                    >
+                      {item.icon && <Icon />}
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
                     <CollapsibleContent>
                       <SidebarMenuSub>
                         {item.items?.map((subItem) => (

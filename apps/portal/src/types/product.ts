@@ -1,6 +1,10 @@
-export type InfinityPaginationResponse<T> = {
-  data: T[];
-  hasNextPage: boolean;
+export type ProductPrice = {
+  id: string;
+  price: number;
+  quantity: number;
+  unit: string;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 };
 
 export type Product = {
@@ -13,7 +17,8 @@ export type Product = {
   minStorageTemperature?: string | null;
   maxStorageHumidity?: string | null;
   maxStorageTemperature?: string | null;
-  pricePerKg?: number | null;
+  price?: ProductPrice[];
+  category?: any | null;
   createdAt?: string | Date;
   updatedAt?: string | Date;
 };

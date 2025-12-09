@@ -1,5 +1,7 @@
 'use client';
-import { navItems } from '@/constants/data';
+import { RoleEnum } from '@/constants/enums';
+import { consigneeNavItems, supplierNavItems } from '@/constants/nav-data';
+import useAuth from '@/hooks/use-auth';
 import {
   KBarAnimator,
   KBarPortal,
@@ -14,6 +16,7 @@ import useThemeSwitching from './use-theme-switching';
 
 export default function KBar({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const { userRole } = useAuth();
 
   // These action are for the navigation
   const actions = useMemo(() => {
@@ -21,6 +24,14 @@ export default function KBar({ children }: { children: React.ReactNode }) {
     const navigateTo = (url: string) => {
       router.push(url);
     };
+
+    // Determine which nav items to use based on user role
+    const navItems =
+      userRole === RoleEnum.SUPPLIER
+        ? supplierNavItems
+        : userRole === RoleEnum.CONSIGNEE
+          ? consigneeNavItems
+          : [];
 
     return navItems.flatMap((navItem) => {
       // Only include base action if the navItem has a real URL and is not just a container
@@ -52,7 +63,7 @@ export default function KBar({ children }: { children: React.ReactNode }) {
       // Return only valid actions (ignoring null base actions for containers)
       return baseAction ? [baseAction, ...childActions] : childActions;
     });
-  }, [router]);
+  }, [router, userRole]);
 
   return (
     <KBarProvider actions={actions}>

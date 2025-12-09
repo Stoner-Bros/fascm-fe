@@ -1,6 +1,15 @@
 'use client';
 
+import { useReducer, useEffect, useRef } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import PageContainer from '@/components/layout/page-container';
+
+const AddressPickerMap = dynamic(
+  () => import('@/components/map/osrm-map').then((m) => m.AddressPickerMap),
+  { ssr: false }
+);
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -11,6 +20,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
@@ -19,703 +29,961 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { IconLoader2, IconPlus, IconTrash } from '@tabler/icons-react';
-import { useEffect, useRef, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Product } from '@/types/product';
 import {
-  CreateOrderRequest,
-  CreateOrderDetailRequest
-} from '../../../types/order';
-import { createOrder } from '@/services/order.service';
-import { fetchProducts } from '@/services/product.service';
-import { createOrderDetail } from '@/services/order-detail.service';
-import { createOrderSchedule } from '@/services/order-schedule.service';
-import { fetchMyConsignee } from '@/services/consignee.service';
-import type { Consignee } from '@/types/consignee';
-import dynamic from 'next/dynamic';
-const AddressPickerMap = dynamic(
-  () => import('@/components/map/osrm-map').then((m) => m.AddressPickerMap),
-  { ssr: false }
-);
+  IconShoppingCart,
+  IconCalendar,
+  IconMapPin,
+  IconTrash,
+  IconLoader2,
+  IconCheck,
+  IconPackage,
+  IconArrowRight,
+  IconArrowLeft
+} from '@tabler/icons-react';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
-import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
-type OrderLine = {
-  productId?: string;
-  quantity: number;
-  unit?: string;
-  unitPrice?: number;
+// Services
+import { createOrderSchedule } from '@/services/order-schedule.service';
+import { fetchProducts } from '@/services/product.service';
+
+// Types
+import type { Product } from '@/types/product';
+import type {
+  CreateOrderScheduleDto,
+  CreateOrderDto,
+  CreateOrderDetailDto
+} from '@/types/order';
+import type { NewOrderState, NewOrderAction, OrderLine } from './types';
+import { useAuth } from '@/hooks/use-auth';
+
+// Initial state
+const getInitialState = (): NewOrderState => {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+
+  return {
+    currentStep: 'products',
+    products: [],
+    orderLines: [],
+    selectedProducts: new Set<string>(),
+    deliveryDate: `${yyyy}-${mm}-${dd}T09:00`,
+    deliveryAddress: '',
+    orderDescription: '',
+    deliveryPos: undefined,
+    showMap: false,
+    loading: true,
+    submitting: false
+  };
 };
 
-export default function ConsigneeNewOrderFeature() {
-  const { toast } = useToast();
+// Reducer
+const newOrderReducer = (
+  state: NewOrderState,
+  action: NewOrderAction
+): NewOrderState => {
+  switch (action.type) {
+    case 'SET_STEP':
+      return { ...state, currentStep: action.payload };
+
+    case 'SET_PRODUCTS':
+      return { ...state, products: action.payload, loading: false };
+
+    case 'SET_ORDER_LINES':
+      return { ...state, orderLines: action.payload };
+
+    case 'ADD_ORDER_LINE':
+      return { ...state, orderLines: [...state.orderLines, action.payload] };
+
+    case 'UPDATE_ORDER_LINE':
+      return {
+        ...state,
+        orderLines: state.orderLines.map((line) =>
+          line.productId === action.payload.productId
+            ? { ...line, [action.payload.field]: action.payload.value }
+            : line
+        )
+      };
+
+    case 'REMOVE_ORDER_LINE':
+      return {
+        ...state,
+        orderLines: state.orderLines.filter(
+          (l) => l.productId !== action.payload
+        )
+      };
+
+    case 'TOGGLE_PRODUCT': {
+      const { product, orderLine } = action.payload;
+      const newSelected = new Set(state.selectedProducts);
+      const isSelected = newSelected.has(product.id);
+
+      if (isSelected) {
+        newSelected.delete(product.id);
+        return {
+          ...state,
+          selectedProducts: newSelected,
+          orderLines: state.orderLines.filter((l) => l.productId !== product.id)
+        };
+      } else {
+        newSelected.add(product.id);
+        return {
+          ...state,
+          selectedProducts: newSelected,
+          orderLines: [...state.orderLines, orderLine]
+        };
+      }
+    }
+
+    case 'SET_SELECTED_PRODUCTS':
+      return { ...state, selectedProducts: action.payload };
+
+    case 'SET_DELIVERY_DATE':
+      return { ...state, deliveryDate: action.payload };
+
+    case 'SET_DELIVERY_ADDRESS':
+      return { ...state, deliveryAddress: action.payload };
+
+    case 'SET_ORDER_DESCRIPTION':
+      return { ...state, orderDescription: action.payload };
+
+    case 'SET_DELIVERY_POS':
+      return { ...state, deliveryPos: action.payload };
+
+    case 'TOGGLE_MAP':
+      return { ...state, showMap: !state.showMap };
+
+    case 'SET_LOADING':
+      return { ...state, loading: action.payload };
+
+    case 'SET_SUBMITTING':
+      return { ...state, submitting: action.payload };
+
+    case 'PREFILL_FROM_URL': {
+      const { products, preSelectedIds } = action.payload;
+      const validProducts = products.filter((p) =>
+        preSelectedIds.includes(p.id)
+      );
+
+      return {
+        ...state,
+        selectedProducts: new Set(preSelectedIds),
+        orderLines: validProducts.map((p) => {
+          const unit =
+            p.price && Array.isArray(p.price) && p.price.length > 0
+              ? p.price[0].unit || 'kg'
+              : 'kg';
+          const unitPrice =
+            p.price && Array.isArray(p.price) && p.price.length > 0
+              ? p.price[0].price || 0
+              : 0;
+
+          return {
+            productId: p.id,
+            quantity: 1,
+            unit,
+            unitPrice
+          };
+        })
+      };
+    }
+
+    default:
+      return state;
+  }
+};
+
+export default function NewOrderPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [lines, setLines] = useState<OrderLine[]>([{ quantity: 0 }]);
-  const [submitting, setSubmitting] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
-  const didFetchRef = useRef(false);
-  const didPrefillRef = useRef(false);
-  const [scheduleDescription, setScheduleDescription] = useState('');
-  const SCHEDULE_STATUS = 'pending';
-  const [scheduleDateTime, setScheduleDateTime] = useState<string>(() => {
-    const d = new Date();
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, '0');
-    const dd = String(d.getDate()).padStart(2, '0');
-    const hh = String(d.getHours()).padStart(2, '0');
-    const min = String(d.getMinutes()).padStart(2, '0');
-    return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
-  });
-  const [consignee, setConsignee] = useState<Consignee | null>(null);
-  const [deliveryAddress, setDeliveryAddress] = useState<string>('');
-  const [contact, setContact] = useState<string>('');
-  const [deliveryPos, setDeliveryPos] = useState<
-    { lat: number; lng: number } | undefined
-  >(undefined);
-  const [showMap, setShowMap] = useState<boolean>(false);
+  const { toast } = useToast();
+  const { fullInfo } = useAuth();
 
+  const [state, dispatch] = useReducer(newOrderReducer, getInitialState());
+  const didFetchRef = useRef(false);
+  const didPrefillAddressRef = useRef(false);
+
+  // Prefill address from fullInfo when available
+  useEffect(() => {
+    if (fullInfo?.address && !didPrefillAddressRef.current) {
+      dispatch({ type: 'SET_DELIVERY_ADDRESS', payload: fullInfo.address });
+      didPrefillAddressRef.current = true;
+    }
+  }, [fullInfo?.address]);
+
+  // Helper function to get product price
+  const getProductPrice = (product: Product): number => {
+    if (
+      product.price &&
+      Array.isArray(product.price) &&
+      product.price.length > 0
+    ) {
+      // Get the first price entry (or you can add logic to select the right one)
+      return product.price[0].price || 0;
+    }
+    return 0;
+  };
+
+  // Helper function to get product unit
+  const getProductUnit = (product: Product): string => {
+    if (
+      product.price &&
+      Array.isArray(product.price) &&
+      product.price.length > 0
+    ) {
+      return product.price[0].unit || 'kg';
+    }
+    return 'kg';
+  };
+
+  // Fetch initial data
   useEffect(() => {
     if (didFetchRef.current) return;
     didFetchRef.current = true;
-    fetchProducts({ page: 1, limit: 50 })
-      .then((res) => {
-        const data = Array.isArray(res?.data) ? res.data : [];
-        const mapped: Product[] = data.map((p: any) => ({
-          id: p.id,
-          name: p.name ?? undefined,
-          image: p.image ?? null,
-          pricePerKg:
-            typeof p.pricePerKg === 'number'
-              ? p.pricePerKg
-              : Number(p.pricePerKg) || null
-        }));
-        setProducts(mapped);
-      })
-      .catch((err) => {
-        if (err?.status === 401) {
-          router.push('/auth/sign-in');
-          return;
+
+    fetchProducts({ page: 1, limit: 100 })
+      .then((productsRes) => {
+        const productsData = Array.isArray(productsRes?.data)
+          ? productsRes.data
+          : [];
+
+        dispatch({ type: 'SET_PRODUCTS', payload: productsData });
+
+        // Check for pre-selected products from URL
+        const preSelectedIds = searchParams.getAll('product');
+        if (preSelectedIds.length > 0) {
+          dispatch({
+            type: 'PREFILL_FROM_URL',
+            payload: { products: productsData, preSelectedIds }
+          });
         }
+      })
+      .catch(() => {
+        dispatch({ type: 'SET_LOADING', payload: false });
         toast({
-          title: 'Lỗi tải sản phẩm',
-          description: 'Không thể tải danh sách sản phẩm'
+          title: 'Lỗi',
+          description: 'Không thể tải dữ liệu. Vui lòng thử lại.',
+          variant: 'destructive'
         });
       });
-    fetchMyConsignee()
-      .then((c) => {
-        setConsignee(c ?? null);
-        setDeliveryAddress(String(c?.address ?? ''));
-        setContact(String(c?.contact ?? ''));
-      })
-      .catch(() => {})
-      .finally(() => {});
-  }, [router, toast]);
+  }, [searchParams, toast]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
-    const pids = params.getAll('product');
-    if (pids.length === 0) return;
-    if (didPrefillRef.current) return;
-    const linesPrefill = pids
-      .map((pid) => {
-        const selected = products.find((p) => p.id === pid);
-        if (!selected) return null;
-        return {
-          productId: pid,
-          quantity: 1,
-          unit: 'kg',
-          unitPrice: Number(selected.pricePerKg ?? 0)
-        } as OrderLine;
-      })
-      .filter(Boolean) as OrderLine[];
-    if (linesPrefill.length === 0) return;
-    setLines(linesPrefill);
-    didPrefillRef.current = true;
-  }, [searchParams, products]);
+  // Product selection handlers
+  const toggleProduct = (product: Product) => {
+    const orderLine: OrderLine = {
+      productId: product.id,
+      quantity: 1,
+      unit: getProductUnit(product),
+      unitPrice: getProductPrice(product)
+    };
 
-  const findProduct = (id: string) => products.find((p) => p.id === id);
-  const addLine = () => {
-    setLines((prev) => [...prev, { quantity: 0 }]);
+    dispatch({ type: 'TOGGLE_PRODUCT', payload: { product, orderLine } });
   };
 
-  const removeLine = (index: number) => {
-    setLines((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const setProductForLine = (index: number, productId: string) => {
-    setLines((prev) => {
-      const next = [...prev];
-      const selected = products.find((p) => p.id === productId);
-      next[index] = {
-        ...next[index],
-        productId,
-        unitPrice: Number(selected?.pricePerKg ?? 0)
-      };
-      return next;
+  // Update order line
+  const updateOrderLine = (
+    productId: string,
+    field: keyof OrderLine,
+    value: any
+  ) => {
+    dispatch({
+      type: 'UPDATE_ORDER_LINE',
+      payload: { productId, field, value }
     });
   };
 
-  const setQtyForLine = (index: number, quantity: number) => {
-    setLines((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], quantity };
-      return next;
-    });
+  // Calculate totals
+  const calculateTotal = () => {
+    return state.orderLines.reduce(
+      (sum, line) => sum + line.quantity * line.unitPrice,
+      0
+    );
   };
 
-  const setUnitForLine = (index: number, unit: string) => {
-    setLines((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], unit };
-      return next;
-    });
+  // Validation
+  const canProceedToDelivery = () => {
+    return (
+      state.orderLines.length > 0 &&
+      state.orderLines.every((l) => l.quantity > 0)
+    );
   };
 
-  const normalizeUnit = (u?: string) => (u ?? '').toLowerCase().trim();
-  const computeMassKg = (line: OrderLine) => {
-    const u = normalizeUnit(line.unit);
-    const q = Number.isFinite(line.quantity) ? line.quantity : 0;
-    if (u.includes('kg')) return q;
-    if (u.includes('tấn') || u.includes('ton') || u === 't') return q * 1000;
-    return 0;
-  };
-  const computeVolumeLiters = (line: OrderLine) => {
-    const u = normalizeUnit(line.unit);
-    const q = Number.isFinite(line.quantity) ? line.quantity : 0;
-    if (u === 'l' || u.includes('lit')) return q;
-    if (u === 'ml') return q / 1000;
-    if (u.includes('m3')) return q * 1000;
-    if (u.includes('kg')) return q;
-    if (u.includes('tấn') || u.includes('ton') || u === 't') return q * 1000;
-    return 0;
+  const canProceedToReview = () => {
+    return state.deliveryAddress.trim() !== '' && state.deliveryDate !== '';
   };
 
-  const lineError = (line: OrderLine) => {
-    if (!line.productId) return 'Chọn sản phẩm';
-    if (line.quantity <= 0) return 'Số lượng phải > 0';
-    return null;
-  };
-
-  const submitOrder = async () => {
-    const errors = lines.map(lineError).filter(Boolean);
-    if (errors.length > 0) {
-      toast({
-        title: 'Kiểm tra lại các dòng đặt hàng',
-        description: 'Có dòng chưa hợp lệ, vui lòng chỉnh sửa.'
-      });
-      return;
-    }
-    setSubmitting(true);
+  // Submit order
+  const handleSubmit = async () => {
+    dispatch({ type: 'SET_SUBMITTING', payload: true });
     try {
-      const totalAmount = lines.reduce(
-        (acc, l) =>
-          acc +
-          (Number.isFinite(l.quantity) ? l.quantity : 0) * (l.unitPrice ?? 0),
-        0
+      const orderData: CreateOrderDto = {
+        orderNumber: null,
+        orderUrl: null
+      };
+
+      const orderDetails: CreateOrderDetailDto[] = state.orderLines.map(
+        (line) => ({
+          unitPrice: line.unitPrice,
+          quantity: line.quantity,
+          unit: line.unit,
+          product: line.productId ? { id: line.productId } : null
+        })
       );
-      const taxRate = 5;
-      const vatAmount = totalAmount * (taxRate / 100);
-      const toInt = (n: number) => Math.round(n);
-      const totalMass = lines.reduce((acc, l) => acc + computeMassKg(l), 0);
-      const totalVolume = lines.reduce(
-        (acc, l) => acc + computeVolumeLiters(l),
-        0
-      );
-      // Không cập nhật consignee; chỉ set address trong schedule
-      const schedule = await createOrderSchedule({
-        description: scheduleDescription,
-        status: SCHEDULE_STATUS,
-        orderDate: new Date(scheduleDateTime).toISOString(),
-        address: deliveryAddress || null,
-        consignee: consignee?.id ? { id: consignee.id } : undefined
+
+      const payload: CreateOrderScheduleDto = {
+        description: state.orderDescription || null,
+        deliveryDate: new Date(state.deliveryDate).toISOString(),
+        address: state.deliveryAddress,
+        order: orderData,
+        orderDetails: orderDetails
+      };
+
+      await createOrderSchedule(payload);
+
+      toast({
+        title: 'Thành công!',
+        description: 'Đơn hàng của bạn đã được tạo thành công.',
+        variant: 'default'
       });
 
-      const orderPayload: CreateOrderRequest = {
-        totalAmount: toInt(totalAmount),
-        taxRate,
-        vatAmount: toInt(vatAmount),
-        totalPayment: toInt(totalAmount + vatAmount),
-        totalVolume,
-        totalMass,
-        orderDate: new Date().toISOString(),
-        orderUrl: '',
-        orderSchedule: { id: schedule.id }
-      };
-      const order = await createOrder(orderPayload);
-      for (const l of lines) {
-        const qty = Number.isFinite(l.quantity) ? l.quantity : 0;
-        const base = qty * (l.unitPrice ?? 0);
-        const gross = base * (1 + taxRate / 100);
-        const detailPayload: CreateOrderDetailRequest = {
-          order: { id: order.id },
-          product: l.productId ? { id: l.productId } : null,
-          quantity: qty,
-          unitPrice: l.unitPrice ?? 0,
-          unit: l.unit ?? '',
-          amount: toInt(gross),
-          taxRate: taxRate
-        };
-        await createOrderDetail(detailPayload);
-      }
-      toast({
-        title: 'Tạo đơn hàng thành công',
-        description: `${lines.length} dòng đã được lưu.`
-      });
-      router.push(`/consignee/orders`);
+      router.push('/consignee/orders');
     } catch (err: any) {
-      if (err?.status === 401) {
-        router.push('/auth/sign-in');
-        return;
-      }
-      const message =
-        typeof err?.message === 'string'
-          ? err.message
-          : 'Vui lòng thử lại sau.';
       toast({
-        title: 'Lỗi khi tạo đơn hàng',
-        description: message
+        title: 'Lỗi',
+        description:
+          err?.message || 'Không thể tạo đơn hàng. Vui lòng thử lại.',
+        variant: 'destructive'
       });
     } finally {
-      setSubmitting(false);
+      dispatch({ type: 'SET_SUBMITTING', payload: false });
     }
   };
+
+  // Steps navigation
+  const steps = [
+    { id: 'products', label: 'Chọn sản phẩm', icon: IconPackage },
+    { id: 'delivery', label: 'Thông tin giao hàng', icon: IconMapPin },
+    { id: 'review', label: 'Xác nhận', icon: IconCheck }
+  ];
+
+  const currentStepIndex = steps.findIndex((s) => s.id === state.currentStep);
+
+  if (state.loading) {
+    return (
+      <PageContainer>
+        <div className='flex h-[60vh] flex-1 items-center justify-center'>
+          <IconLoader2 className='text-muted-foreground h-8 w-8 animate-spin' />
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
-      <div className='mx-auto w-full max-w-7xl space-y-6'>
-        <div className='flex items-center justify-between'>
-          <div>
-            <h2 className='text-3xl font-bold tracking-tight'>Tạo đơn hàng</h2>
-            <p className='text-muted-foreground'>
-              Điền thông tin để tạo đơn đặt hàng mới
-            </p>
-          </div>
+      <div className='mx-auto w-full max-w-6xl space-y-6 pb-12'>
+        {/* Header */}
+        <div>
+          <h1 className='text-3xl font-bold tracking-tight'>
+            Tạo đơn hàng mới
+          </h1>
+          <p className='text-muted-foreground mt-2'>
+            Chọn sản phẩm và điền thông tin giao hàng
+          </p>
         </div>
 
-        {/* Order Schedule Information */}
+        {/* Progress Steps */}
         <Card>
-          <CardHeader>
-            <CardTitle>Thông tin lịch đặt hàng</CardTitle>
-            <CardDescription>
-              Chọn ngày giờ và ghi chú cho đơn hàng của bạn
-            </CardDescription>
-          </CardHeader>
-          <CardContent className='space-y-6'>
-            <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-              <div className='space-y-2'>
-                <Label htmlFor='schedule-datetime'>
-                  Ngày & Giờ nhận hàng{' '}
-                  <span className='text-destructive'>*</span>
-                </Label>
-                <DateTimePicker
-                  value={scheduleDateTime}
-                  onChange={(value) => setScheduleDateTime(value)}
-                  placeholder='Chọn ngày và giờ'
-                />
-                <p className='text-muted-foreground text-xs'>
-                  Chọn thời gian mong muốn nhận hàng
-                </p>
-              </div>
-              <div className='space-y-2'>
-                <Label htmlFor='schedule-description'>
-                  Mô tả lịch đặt hàng
-                </Label>
-                <Textarea
-                  id='schedule-description'
-                  value={scheduleDescription}
-                  onChange={(e) => setScheduleDescription(e.target.value)}
-                  placeholder='Nhập mô tả hoặc ghi chú cho đơn hàng...'
-                  rows={3}
-                  className='resize-none'
-                />
-              </div>
+          <CardContent className='flex items-center justify-center'>
+            <div className='flex w-full max-w-3xl items-center justify-center'>
+              {steps.map((step, index) => {
+                const Icon = step.icon;
+                const isActive = step.id === state.currentStep;
+                const isCompleted = index < currentStepIndex;
+
+                return (
+                  <div key={step.id} className='flex flex-1 items-center'>
+                    <div className='flex w-fit flex-1 flex-col items-center gap-2'>
+                      <div
+                        className={cn(
+                          'flex h-12 w-12 items-center justify-center rounded-full border-2 transition-colors',
+                          isActive &&
+                            'border-primary bg-primary text-primary-foreground',
+                          isCompleted &&
+                            'border-primary bg-primary text-primary-foreground',
+                          !isActive &&
+                            !isCompleted &&
+                            'border-muted bg-muted text-muted-foreground'
+                        )}
+                      >
+                        {isCompleted ? (
+                          <IconCheck className='h-5 w-5' />
+                        ) : (
+                          <Icon className='h-5 w-5' />
+                        )}
+                      </div>
+                      <span
+                        className={cn(
+                          'text-center text-sm font-medium',
+                          isActive && 'text-primary',
+                          !isActive && 'text-muted-foreground'
+                        )}
+                      >
+                        {step.label}
+                      </span>
+                    </div>
+                    {index < steps.length - 1 && (
+                      <div
+                        className={cn(
+                          'h-0.5 w-full max-w-[100px] transition-colors',
+                          isCompleted ? 'bg-primary' : 'bg-muted'
+                        )}
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
 
-        {/* Delivery Information */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Thông tin giao hàng</CardTitle>
-            <CardDescription>
-              Địa chỉ và thông tin liên hệ nhận hàng
-            </CardDescription>
-          </CardHeader>
-          <CardContent className='space-y-6'>
-            <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-              <div className='space-y-2'>
-                <Label>Tên tổ chức</Label>
-                <Input
-                  value={String(consignee?.organizationName ?? '')}
-                  disabled
-                  readOnly
-                  className='bg-muted'
-                />
-              </div>
-              <div className='space-y-2'>
-                <Label>Người đại diện</Label>
-                <Input
-                  value={String(consignee?.representativeName ?? '')}
-                  disabled
-                  readOnly
-                  className='bg-muted'
-                />
-              </div>
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='delivery-address'>
-                Địa chỉ giao hàng <span className='text-destructive'>*</span>
-              </Label>
-              <Input
-                id='delivery-address'
-                type='text'
-                placeholder='Nhập địa chỉ giao hàng chi tiết'
-                value={deliveryAddress}
-                onChange={(e) => setDeliveryAddress(e.target.value)}
-              />
-            </div>
-
-            <div className='space-y-3'>
-              <Button
-                type='button'
-                variant='outline'
-                size='sm'
-                onClick={() => setShowMap((v) => !v)}
-              >
-                {showMap ? 'Đóng bản đồ' : 'Chọn vị trí trên bản đồ'}
-              </Button>
-              {showMap && (
-                <div className='rounded-lg border p-2'>
-                  <AddressPickerMap
-                    value={{
-                      position: deliveryPos,
-                      address: deliveryAddress
-                    }}
-                    onChange={(v) => {
-                      setDeliveryAddress(v.address);
-                      setDeliveryPos(v.position);
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='contact'>Số điện thoại liên hệ</Label>
-              <Input
-                id='contact'
-                type='text'
-                placeholder='Nhập số điện thoại liên hệ'
-                value={contact}
-                onChange={(e) => setContact(e.target.value)}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Product Selection */}
-        <Card>
-          <CardHeader>
-            <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
-              <div>
-                <CardTitle>Danh sách sản phẩm đặt mua</CardTitle>
+        {/* Step Content */}
+        {state.currentStep === 'products' && (
+          <div className='space-y-6'>
+            <Card>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2'>
+                  <IconPackage className='h-5 w-5' />
+                  Chọn sản phẩm
+                </CardTitle>
                 <CardDescription>
-                  Chọn sản phẩm và số lượng cần đặt
+                  Chọn các sản phẩm bạn muốn đặt hàng
+                  {state.selectedProducts.size > 0 && (
+                    <Badge variant='secondary' className='ml-2'>
+                      Đã chọn: {state.selectedProducts.size}
+                    </Badge>
+                  )}
                 </CardDescription>
-              </div>
-              <Button onClick={addLine} size='sm'>
-                <IconPlus className='mr-2 h-4 w-4' /> Thêm sản phẩm
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {lines.length === 0 ? (
-              <div className='text-muted-foreground flex flex-col items-center justify-center rounded-lg border-2 border-dashed py-12'>
-                <p className='mb-4 text-lg'>Chưa có sản phẩm nào</p>
-                <Button onClick={addLine} variant='outline'>
-                  <IconPlus className='mr-2 h-4 w-4' /> Thêm sản phẩm đầu tiên
-                </Button>
-              </div>
-            ) : (
-              <div className='space-y-4'>
-                {lines.map((line, idx) => {
-                  const err = lineError(line);
-                  const selectedProduct = line.productId
-                    ? findProduct(line.productId)
-                    : undefined;
-                  return (
-                    <Card key={idx} className={err ? 'border-destructive' : ''}>
-                      <CardContent className='pt-6'>
-                        <div className='flex flex-col gap-4 sm:flex-row sm:items-start'>
-                          {/* Product Image & Select */}
-                          <div className='flex-1 space-y-2'>
-                            <Label>
-                              Sản phẩm{' '}
-                              <span className='text-destructive'>*</span>
-                            </Label>
-                            <div className='flex items-center gap-3'>
-                              {selectedProduct?.image ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={selectedProduct.image}
-                                  alt={selectedProduct?.name ?? 'Product'}
-                                  className='h-14 w-14 rounded-md border object-cover'
-                                />
+              </CardHeader>
+              <CardContent>
+                {state.products.length === 0 ? (
+                  <div className='flex flex-col items-center justify-center py-12 text-center'>
+                    <IconPackage className='text-muted-foreground mb-4 h-12 w-12' />
+                    <p className='text-muted-foreground'>
+                      Không có sản phẩm nào
+                    </p>
+                  </div>
+                ) : (
+                  <div className='grid gap-4 sm:grid-cols-2 lg:grid-cols-3'>
+                    {state.products.map((product) => {
+                      const isSelected = state.selectedProducts.has(product.id);
+                      return (
+                        <Card
+                          key={product.id}
+                          className={cn(
+                            'cursor-pointer transition-all hover:shadow-md',
+                            isSelected && 'ring-primary ring-2'
+                          )}
+                          onClick={() => toggleProduct(product)}
+                        >
+                          <CardContent className='p-4'>
+                            <div className='flex items-start gap-3'>
+                              {product.image ? (
+                                <div className='relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-md'>
+                                  <Image
+                                    src={product.image}
+                                    alt={product.name || 'Product'}
+                                    fill
+                                    className='object-cover'
+                                  />
+                                </div>
                               ) : (
-                                <div className='bg-muted flex h-14 w-14 items-center justify-center rounded-md border text-xs'>
-                                  Ảnh
+                                <div className='bg-muted flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-md'>
+                                  <IconPackage className='text-muted-foreground h-6 w-6' />
                                 </div>
                               )}
-                              <Select
-                                value={line.productId ?? ''}
-                                onValueChange={(val) =>
-                                  setProductForLine(idx, val)
-                                }
-                              >
-                                <SelectTrigger className='flex-1'>
-                                  <SelectValue placeholder='Chọn sản phẩm' />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {(products ?? []).map((p) => (
-                                    <SelectItem key={p.id} value={p.id}>
-                                      {p.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                              <div className='min-w-0 flex-1'>
+                                <h4 className='line-clamp-2 font-semibold'>
+                                  {product.name}
+                                </h4>
+                                <p className='text-primary mt-1 text-sm font-medium'>
+                                  {new Intl.NumberFormat('vi-VN', {
+                                    style: 'currency',
+                                    currency: 'VND'
+                                  }).format(getProductPrice(product))}
+                                  /{getProductUnit(product)}
+                                </p>
+                              </div>
+                              {isSelected && (
+                                <IconCheck className='text-primary h-5 w-5 flex-shrink-0' />
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {state.orderLines.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Nhập số lượng</CardTitle>
+                  <CardDescription>
+                    Điều chỉnh số lượng cho từng sản phẩm
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className='space-y-4'>
+                    {state.orderLines.map((line) => {
+                      const product = state.products.find(
+                        (p) => p.id === line.productId
+                      );
+                      if (!product) return null;
+
+                      const lineTotal = line.quantity * line.unitPrice;
+
+                      return (
+                        <div
+                          key={line.productId}
+                          className='bg-muted/50 flex flex-col gap-4 rounded-lg p-4 sm:flex-row sm:items-center'
+                        >
+                          <div className='flex flex-1 items-center gap-3'>
+                            {product.image ? (
+                              <div className='relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md'>
+                                <Image
+                                  src={product.image}
+                                  alt={product.name || 'Product'}
+                                  fill
+                                  className='object-cover'
+                                />
+                              </div>
+                            ) : (
+                              <div className='bg-muted flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md'>
+                                <IconPackage className='text-muted-foreground h-5 w-5' />
+                              </div>
+                            )}
+                            <div className='min-w-0 flex-1'>
+                              <h4 className='line-clamp-1 font-medium'>
+                                {product.name}
+                              </h4>
+                              <p className='text-muted-foreground text-sm'>
+                                {new Intl.NumberFormat('vi-VN', {
+                                  style: 'currency',
+                                  currency: 'VND'
+                                }).format(line.unitPrice)}
+                                /{line.unit}
+                              </p>
                             </div>
                           </div>
 
-                          {/* Unit */}
-                          <div className='w-full space-y-2 sm:w-32'>
-                            <Label>Đơn vị</Label>
-                            <Input
-                              type='text'
-                              value={line.unit ?? ''}
-                              onChange={(e) =>
-                                setUnitForLine(idx, e.target.value)
-                              }
-                              placeholder='Kg, Tấn...'
-                            />
-                          </div>
+                          <div className='flex items-center gap-3'>
+                            <div className='flex items-center gap-2'>
+                              <Label className='text-sm'>Số lượng:</Label>
+                              <Input
+                                type='number'
+                                min='1'
+                                step='1'
+                                value={line.quantity}
+                                onChange={(e) =>
+                                  updateOrderLine(
+                                    line.productId!,
+                                    'quantity',
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
+                                className='w-24'
+                              />
+                            </div>
 
-                          {/* Quantity */}
-                          <div className='w-full space-y-2 sm:w-32'>
-                            <Label>
-                              Số lượng{' '}
-                              <span className='text-destructive'>*</span>
-                            </Label>
-                            <Input
-                              type='number'
-                              min={0}
-                              value={
-                                Number.isFinite(line.quantity)
-                                  ? line.quantity
-                                  : 0
-                              }
-                              onChange={(e) =>
-                                setQtyForLine(idx, Number(e.target.value))
-                              }
-                              placeholder='0'
-                            />
-                          </div>
+                            <div className='flex items-center gap-2'>
+                              <Select
+                                value={line.unit}
+                                onValueChange={(value) =>
+                                  updateOrderLine(
+                                    line.productId!,
+                                    'unit',
+                                    value
+                                  )
+                                }
+                              >
+                                <SelectTrigger className='w-20'>
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value='kg'>Kg</SelectItem>
+                                  {/* <SelectItem value='tấn'>Tấn</SelectItem>
+                                  <SelectItem value='l'>L</SelectItem> */}
+                                </SelectContent>
+                              </Select>
+                            </div>
 
-                          {/* Unit Price */}
-                          <div className='w-full space-y-2 sm:w-36'>
-                            <Label>Đơn giá</Label>
-                            <Input
-                              type='text'
-                              value={
-                                Number.isFinite(line.unitPrice ?? 0)
-                                  ? new Intl.NumberFormat('vi-VN').format(
-                                      line.unitPrice ?? 0
-                                    )
-                                  : '0'
-                              }
-                              readOnly
-                              disabled
-                              className='bg-muted'
-                            />
-                          </div>
+                            <div className='text-primary min-w-[100px] text-right font-semibold'>
+                              {new Intl.NumberFormat('vi-VN', {
+                                style: 'currency',
+                                currency: 'VND'
+                              }).format(lineTotal)}
+                            </div>
 
-                          {/* Delete Button */}
-                          <div className='flex items-end'>
                             <Button
                               variant='ghost'
                               size='icon'
-                              onClick={() => removeLine(idx)}
-                              className='text-destructive hover:bg-destructive hover:text-destructive-foreground'
+                              onClick={() => toggleProduct(product)}
+                              className='text-destructive hover:text-destructive'
                             >
                               <IconTrash className='h-4 w-4' />
                             </Button>
                           </div>
                         </div>
-                        {err && (
-                          <p className='text-destructive mt-2 text-sm'>{err}</p>
-                        )}
-                        {selectedProduct && line.quantity > 0 && (
-                          <div className='bg-muted mt-4 rounded-md p-3'>
-                            <p className='text-sm font-medium'>
-                              Tổng:{' '}
-                              {new Intl.NumberFormat('vi-VN', {
-                                style: 'currency',
-                                currency: 'VND'
-                              }).format(line.quantity * (line.unitPrice ?? 0))}
-                            </p>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                      );
+                    })}
+                  </div>
 
-        {/* Order Summary */}
-        {lines.length > 0 && (
+                  <Separator className='my-6' />
+
+                  <div className='flex items-center justify-between'>
+                    <span className='text-lg font-semibold'>
+                      Tổng tạm tính:
+                    </span>
+                    <span className='text-primary text-2xl font-bold'>
+                      {new Intl.NumberFormat('vi-VN', {
+                        style: 'currency',
+                        currency: 'VND'
+                      }).format(calculateTotal())}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {state.currentStep === 'delivery' && (
           <Card>
             <CardHeader>
-              <CardTitle>Tổng quan đơn hàng</CardTitle>
+              <CardTitle className='flex items-center gap-2'>
+                <IconMapPin className='h-5 w-5' />
+                Thông tin giao hàng
+              </CardTitle>
               <CardDescription>
-                Xem lại thông tin trước khi gửi đơn hàng
+                Nhập địa chỉ và thời gian giao hàng mong muốn
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <div className='space-y-4'>
-                <div className='grid grid-cols-1 gap-4 sm:grid-cols-3'>
-                  <div className='bg-card rounded-lg border p-4'>
-                    <p className='text-muted-foreground text-sm font-medium'>
-                      Số sản phẩm
-                    </p>
-                    <p className='mt-2 text-2xl font-bold'>{lines.length}</p>
-                  </div>
-                  <div className='bg-card rounded-lg border p-4'>
-                    <p className='text-muted-foreground text-sm font-medium'>
-                      Tổng số lượng
-                    </p>
-                    <p className='mt-2 text-2xl font-bold'>
-                      {lines.reduce(
-                        (acc, l) =>
-                          acc + (Number.isFinite(l.quantity) ? l.quantity : 0),
-                        0
-                      )}
-                    </p>
-                  </div>
-                  <div className='bg-card rounded-lg border p-4'>
-                    <p className='text-muted-foreground text-sm font-medium'>
-                      Tổng khối lượng
-                    </p>
-                    <p className='mt-2 text-2xl font-bold'>
-                      {lines
-                        .reduce((acc, l) => acc + computeMassKg(l), 0)
-                        .toFixed(2)}{' '}
-                      kg
-                    </p>
+            <CardContent className='space-y-6'>
+              {fullInfo && (
+                <div className='bg-muted/50 rounded-lg p-4'>
+                  <h4 className='mb-3 font-semibold'>Thông tin người nhận</h4>
+                  <div className='grid gap-3 sm:grid-cols-2'>
+                    <div>
+                      <Label className='text-muted-foreground text-xs'>
+                        Tổ chức
+                      </Label>
+                      <p className='font-medium'>
+                        {fullInfo.organizationName || 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <Label className='text-muted-foreground text-xs'>
+                        Người đại diện
+                      </Label>
+                      <p className='font-medium'>
+                        {fullInfo.representativeName || 'N/A'}
+                      </p>
+                    </div>
                   </div>
                 </div>
+              )}
 
-                <div className='bg-muted rounded-lg p-4'>
-                  <div className='space-y-3'>
-                    <div className='flex justify-between text-sm'>
-                      <span className='text-muted-foreground'>Tạm tính</span>
-                      <span className='font-medium'>
-                        {new Intl.NumberFormat('vi-VN', {
-                          style: 'currency',
-                          currency: 'VND'
-                        }).format(
-                          lines.reduce(
-                            (acc, l) =>
-                              acc +
-                              (Number.isFinite(l.quantity) ? l.quantity : 0) *
-                                (l.unitPrice ?? 0),
-                            0
-                          )
-                        )}
-                      </span>
-                    </div>
-                    <div className='flex justify-between text-sm'>
-                      <span className='text-muted-foreground'>VAT (5%)</span>
-                      <span className='font-medium'>
-                        {new Intl.NumberFormat('vi-VN', {
-                          style: 'currency',
-                          currency: 'VND'
-                        }).format(
-                          lines.reduce(
-                            (acc, l) =>
-                              acc +
-                              (Number.isFinite(l.quantity) ? l.quantity : 0) *
-                                (l.unitPrice ?? 0),
-                            0
-                          ) * 0.05
-                        )}
-                      </span>
-                    </div>
-                    <div className='border-t pt-3'>
-                      <div className='flex justify-between'>
-                        <span className='text-lg font-semibold'>
-                          Tổng thanh toán
-                        </span>
-                        <span className='text-primary text-xl font-bold'>
-                          {new Intl.NumberFormat('vi-VN', {
-                            style: 'currency',
-                            currency: 'VND'
-                          }).format(
-                            lines.reduce(
-                              (acc, l) =>
-                                acc +
-                                (Number.isFinite(l.quantity) ? l.quantity : 0) *
-                                  (l.unitPrice ?? 0),
-                              0
-                            ) * 1.05
-                          )}
-                        </span>
-                      </div>
-                    </div>
+              <div className='space-y-2'>
+                <Label htmlFor='delivery-date'>
+                  Ngày & giờ giao hàng{' '}
+                  <span className='text-destructive'>*</span>
+                </Label>
+                <DateTimePicker
+                  value={state.deliveryDate}
+                  onChange={(value) =>
+                    dispatch({ type: 'SET_DELIVERY_DATE', payload: value })
+                  }
+                  placeholder='Chọn ngày và giờ giao hàng'
+                />
+                <p className='text-muted-foreground text-xs'>
+                  Chọn thời gian bạn muốn nhận hàng
+                </p>
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='delivery-address'>
+                  Địa chỉ giao hàng <span className='text-destructive'>*</span>
+                </Label>
+                <Textarea
+                  id='delivery-address'
+                  value={state.deliveryAddress}
+                  onChange={(e) =>
+                    dispatch({
+                      type: 'SET_DELIVERY_ADDRESS',
+                      payload: e.target.value
+                    })
+                  }
+                  placeholder='Nhập địa chỉ giao hàng chi tiết...'
+                  rows={3}
+                  className='resize-none'
+                />
+              </div>
+
+              <div className='space-y-3'>
+                <Button
+                  type='button'
+                  variant='outline'
+                  size='sm'
+                  onClick={() => dispatch({ type: 'TOGGLE_MAP' })}
+                >
+                  {state.showMap ? 'Đóng bản đồ' : 'Chọn vị trí trên bản đồ'}
+                </Button>
+                {state.showMap && (
+                  <div className='rounded-lg border p-2'>
+                    <AddressPickerMap
+                      value={{
+                        position: state.deliveryPos,
+                        address: state.deliveryAddress
+                      }}
+                      onChange={(v) => {
+                        dispatch({
+                          type: 'SET_DELIVERY_ADDRESS',
+                          payload: v.address
+                        });
+                        dispatch({
+                          type: 'SET_DELIVERY_POS',
+                          payload: v.position
+                        });
+                      }}
+                    />
                   </div>
-                </div>
+                )}
+              </div>
+
+              <div className='space-y-2'>
+                <Label htmlFor='order-description'>Ghi chú đơn hàng</Label>
+                <Textarea
+                  id='order-description'
+                  value={state.orderDescription}
+                  onChange={(e) =>
+                    dispatch({
+                      type: 'SET_ORDER_DESCRIPTION',
+                      payload: e.target.value
+                    })
+                  }
+                  placeholder='Thêm ghi chú hoặc yêu cầu đặc biệt...'
+                  rows={3}
+                  className='resize-none'
+                />
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Action Buttons */}
-        <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end'>
+        {state.currentStep === 'review' && (
+          <div className='space-y-6'>
+            <Card>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2'>
+                  <IconCheck className='h-5 w-5' />
+                  Xác nhận đơn hàng
+                </CardTitle>
+                <CardDescription>
+                  Kiểm tra lại thông tin trước khi gửi đơn hàng
+                </CardDescription>
+              </CardHeader>
+              <CardContent className='space-y-6'>
+                {/* Order items */}
+                <div>
+                  <h4 className='mb-3 font-semibold'>Sản phẩm đã chọn</h4>
+                  <div className='space-y-3'>
+                    {state.orderLines.map((line) => {
+                      const product = state.products.find(
+                        (p) => p.id === line.productId
+                      );
+                      if (!product) return null;
+
+                      return (
+                        <div
+                          key={line.productId}
+                          className='flex items-center justify-between rounded-lg border p-3'
+                        >
+                          <div className='flex items-center gap-3'>
+                            {product.image ? (
+                              <div className='relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md'>
+                                <Image
+                                  src={product.image}
+                                  alt={product.name || 'Product'}
+                                  fill
+                                  className='object-cover'
+                                />
+                              </div>
+                            ) : (
+                              <div className='bg-muted flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md'>
+                                <IconPackage className='text-muted-foreground h-5 w-5' />
+                              </div>
+                            )}
+                            <div>
+                              <p className='font-medium'>{product.name}</p>
+                              <p className='text-muted-foreground text-sm'>
+                                {line.quantity} {line.unit} ×{' '}
+                                {new Intl.NumberFormat('vi-VN', {
+                                  style: 'currency',
+                                  currency: 'VND'
+                                }).format(line.unitPrice)}
+                              </p>
+                            </div>
+                          </div>
+                          <p className='text-primary font-semibold'>
+                            {new Intl.NumberFormat('vi-VN', {
+                              style: 'currency',
+                              currency: 'VND'
+                            }).format(line.quantity * line.unitPrice)}
+                          </p>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Delivery info */}
+                <div>
+                  <h4 className='mb-3 font-semibold'>Thông tin giao hàng</h4>
+                  <div className='bg-muted/50 space-y-2 rounded-lg p-4'>
+                    <div className='flex items-start gap-2'>
+                      <IconCalendar className='text-muted-foreground mt-0.5 h-4 w-4' />
+                      <div>
+                        <p className='text-muted-foreground text-xs'>
+                          Thời gian giao hàng
+                        </p>
+                        <p className='font-medium'>
+                          {new Date(state.deliveryDate).toLocaleString(
+                            'vi-VN',
+                            {
+                              dateStyle: 'full',
+                              timeStyle: 'short'
+                            }
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className='flex items-start gap-2'>
+                      <IconMapPin className='text-muted-foreground mt-0.5 h-4 w-4' />
+                      <div>
+                        <p className='text-muted-foreground text-xs'>Địa chỉ</p>
+                        <p className='font-medium'>{state.deliveryAddress}</p>
+                      </div>
+                    </div>
+                    {state.orderDescription && (
+                      <div className='flex items-start gap-2'>
+                        <IconShoppingCart className='text-muted-foreground mt-0.5 h-4 w-4' />
+                        <div>
+                          <p className='text-muted-foreground text-xs'>
+                            Ghi chú
+                          </p>
+                          <p className='font-medium'>
+                            {state.orderDescription}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Total */}
+                <div className='bg-primary/5 rounded-lg p-4'>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-xl font-semibold'>
+                      Tổng thanh toán:
+                    </span>
+                    <span className='text-primary text-3xl font-bold'>
+                      {new Intl.NumberFormat('vi-VN', {
+                        style: 'currency',
+                        currency: 'VND'
+                      }).format(calculateTotal())}
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Navigation Buttons */}
+        <div className='flex items-center justify-between gap-4'>
           <Button
-            type='button'
             variant='outline'
-            onClick={() => router.push('/consignee/orders')}
-            disabled={submitting}
+            onClick={() => {
+              if (state.currentStep === 'products') {
+                router.push('/consignee/orders');
+              } else if (state.currentStep === 'delivery') {
+                dispatch({ type: 'SET_STEP', payload: 'products' });
+              } else if (state.currentStep === 'review') {
+                dispatch({ type: 'SET_STEP', payload: 'delivery' });
+              }
+            }}
+            disabled={state.submitting}
           >
-            Hủy bỏ
+            <IconArrowLeft className='mr-2 h-4 w-4' />
+            {state.currentStep === 'products' ? 'Hủy bỏ' : 'Quay lại'}
           </Button>
-          {lines.length > 0 && (
-            <Button
-              type='button'
-              variant='outline'
-              onClick={() => setLines([{ quantity: 0 }])}
-              disabled={submitting}
-              className='text-destructive hover:text-destructive'
-            >
-              Xóa tất cả
-            </Button>
-          )}
-          <Button
-            type='button'
-            onClick={submitOrder}
-            disabled={submitting || lines.length === 0}
-            size='lg'
-            className='sm:min-w-[200px]'
-          >
-            {submitting && (
-              <IconLoader2 className='mr-2 h-4 w-4 animate-spin' />
+
+          <div className='flex gap-3'>
+            {state.currentStep === 'products' && (
+              <Button
+                onClick={() =>
+                  dispatch({ type: 'SET_STEP', payload: 'delivery' })
+                }
+                disabled={!canProceedToDelivery()}
+              >
+                Tiếp theo
+                <IconArrowRight className='ml-2 h-4 w-4' />
+              </Button>
             )}
-            {submitting ? 'Đang xử lý...' : 'Gửi đơn hàng'}
-          </Button>
+
+            {state.currentStep === 'delivery' && (
+              <Button
+                onClick={() =>
+                  dispatch({ type: 'SET_STEP', payload: 'review' })
+                }
+                disabled={!canProceedToReview()}
+              >
+                Tiếp theo
+                <IconArrowRight className='ml-2 h-4 w-4' />
+              </Button>
+            )}
+
+            {state.currentStep === 'review' && (
+              <Button
+                onClick={handleSubmit}
+                disabled={state.submitting}
+                size='lg'
+              >
+                {state.submitting ? (
+                  <>
+                    <IconLoader2 className='mr-2 h-4 w-4 animate-spin' />
+                    Đang xử lý...
+                  </>
+                ) : (
+                  <>
+                    <IconCheck className='mr-2 h-4 w-4' />
+                    Xác nhận đặt hàng
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     </PageContainer>

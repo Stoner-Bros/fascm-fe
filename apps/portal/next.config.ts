@@ -17,6 +17,7 @@ const nextConfig: NextConfig = {
       }
     ]
   },
+  // reactStrictMode: false,
   transpilePackages: ['geist']
 };
 

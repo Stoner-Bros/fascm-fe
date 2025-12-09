@@ -10,15 +10,43 @@ type BreadcrumbItem = {
 
 // This allows to add custom title as well
 const routeMapping: Record<string, BreadcrumbItem[]> = {
-  '/dashboard': [{ title: 'Dashboard', link: '/dashboard' }],
-  '/dashboard/employee': [
-    { title: 'Dashboard', link: '/dashboard' },
-    { title: 'Employee', link: '/dashboard/employee' }
+  // Supplier routes
+  '/supplier/dashboard': [{ title: 'Dashboard', link: '/supplier/dashboard' }],
+  '/supplier/products': [{ title: 'Products', link: '/supplier/products' }],
+  '/supplier/harvest-batches': [
+    { title: 'Harvest Batches', link: '/supplier/harvest-batches' }
   ],
-  '/dashboard/product': [
-    { title: 'Dashboard', link: '/dashboard' },
-    { title: 'Product', link: '/dashboard/product' }
-  ]
+  '/supplier/harvest-batches/new': [
+    { title: 'Harvest Batches', link: '/supplier/harvest-batches' },
+    { title: 'New Harvest Batch', link: '/supplier/harvest-batches/new' }
+  ],
+  '/supplier/harvest-batches/[id]': [
+    { title: 'Harvest Batches', link: '/supplier/harvest-batches' },
+    { title: 'Harvest Batch Details', link: '/supplier/harvest-batches/[id]' }
+  ],
+  '/supplier/profile': [{ title: 'Profile', link: '/supplier/profile' }],
+
+  // Consignee routes
+  '/consignee/dashboard': [
+    { title: 'Dashboard', link: '/consignee/dashboard' }
+  ],
+  '/consignee/products': [{ title: 'Products', link: '/consignee/products' }],
+  '/consignee/orders': [{ title: 'Orders', link: '/consignee/orders' }],
+  '/consignee/orders/new': [
+    { title: 'Orders', link: '/consignee/orders' },
+    { title: 'New Order', link: '/consignee/orders/new' }
+  ],
+  '/consignee/orders/[id]': [
+    { title: 'Orders', link: '/consignee/orders' },
+    { title: 'Order Details', link: '/consignee/orders/[id]' }
+  ],
+  '/consignee/products/[id]': [
+    { title: 'Products', link: '/consignee/products' },
+    { title: 'Product Details', link: '/consignee/products/[id]' }
+  ],
+
+  '/consignee/profile': [{ title: 'Profile', link: '/consignee/profile' }]
+
   // Add more custom mappings as needed
 };
 

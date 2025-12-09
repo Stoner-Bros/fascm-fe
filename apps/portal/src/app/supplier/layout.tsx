@@ -1,9 +1,9 @@
 import KBar from '@/components/kbar';
-import SupplierSidebar from '@/components/layout/supplier-sidebar';
 import Header from '@/components/layout/header';
+import SupplierSidebar from '@/components/layout/supplier-sidebar';
+import SupplierNotificationListener from '@/components/notifications/supplier-notification-listener';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { cookies } from 'next/headers';
-import SupplierNotificationListener from '@/components/notifications/supplier-notification-listener';
 export default async function SupplierLayout({
   children
 }: {
