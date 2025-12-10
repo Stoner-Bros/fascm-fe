@@ -24,8 +24,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -44,13 +42,13 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { fetchOrderSchedulesByConsignee } from '@/services/order-schedule.service';
+import { fetchMyOrderSchedules } from '@/services/order-schedule.service';
 import type { OrderSchedule, OrderScheduleStatus } from '@/types/order';
 import {
   IconCheck,
   IconClock,
+  IconDotsVertical,
   IconEdit,
   IconEye,
   IconInfoCircle,
@@ -181,7 +179,6 @@ const getStatusLabel = (status: OrderScheduleStatus) => {
 
 export default function ConsigneeOrdersFeature() {
   const { toast } = useToast();
-  const { fullInfo } = useAuth();
 
   const [state, dispatch] = useReducer(orderSchedulesReducer, initialState);
 
@@ -189,7 +186,7 @@ export default function ConsigneeOrdersFeature() {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
       // Fetch order schedules by consignee
-      const schedulesRes = await fetchOrderSchedulesByConsignee(fullInfo?.id, {
+      const schedulesRes = await fetchMyOrderSchedules({
         page: 1,
         limit: 50
       });
@@ -211,14 +208,21 @@ export default function ConsigneeOrdersFeature() {
 
         const products = Array.from(productNames).join(', ') || 'No products';
 
-        const deliveryDate = schedule.deliveryDate
-          ? new Date(
-              schedule.deliveryDate as unknown as string
-            ).toLocaleString()
-          : '-';
+        const formatDateTime = (date: string | Date | null | undefined) => {
+          if (!date) return '-';
+          const d = new Date(date as unknown as string);
+          const day = String(d.getDate()).padStart(2, '0');
+          const month = String(d.getMonth() + 1).padStart(2, '0');
+          const year = d.getFullYear();
+          const hours = String(d.getHours()).padStart(2, '0');
+          const minutes = String(d.getMinutes()).padStart(2, '0');
+          return `${day}/${month}/${year} ${hours}:${minutes}`;
+        };
 
+        const deliveryDate = formatDateTime(schedule.deliveryDate);
         const orderNumber = schedule.order?.orderNumber || schedule.id;
         const address = schedule.address || '-';
+        const createdAt = formatDateTime(schedule.createdAt);
 
         return {
           id: schedule.id,
@@ -228,7 +232,8 @@ export default function ConsigneeOrdersFeature() {
           address,
           status: (schedule.status ?? 'pending') as OrderScheduleStatus,
           description: schedule.description ?? undefined,
-          reason: schedule.reason ?? undefined
+          reason: schedule.reason ?? undefined,
+          createdAt
         };
       });
 
@@ -458,6 +463,7 @@ export default function ConsigneeOrdersFeature() {
                     <TableHead>Order Number</TableHead>
                     <TableHead>Product(s)</TableHead>
                     <TableHead>Delivery Date</TableHead>
+                    <TableHead>Created At</TableHead>
                     <TableHead>Address</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className='text-right'>Actions</TableHead>
@@ -466,7 +472,7 @@ export default function ConsigneeOrdersFeature() {
                 <TableBody>
                   {state.loading ? (
                     <TableRow>
-                      <TableCell colSpan={6} className='text-center'>
+                      <TableCell colSpan={7} className='text-center'>
                         <div className='flex flex-col items-center justify-center py-12'>
                           <div className='border-primary mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
                           <p className='text-muted-foreground'>
@@ -477,19 +483,28 @@ export default function ConsigneeOrdersFeature() {
                     </TableRow>
                   ) : filteredSchedules.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={6} className='text-center'>
+                      <TableCell colSpan={7} className='text-center'>
                         No order schedules found
                       </TableCell>
                     </TableRow>
                   ) : (
                     filteredSchedules.map((schedule) => (
                       <TableRow key={schedule.id}>
-                        <TableCell className='font-medium'>
+                        <TableCell className='max-w-[150px] truncate font-medium'>
                           {schedule.orderNumber}
                         </TableCell>
-                        <TableCell>{schedule.products}</TableCell>
-                        <TableCell>{schedule.deliveryDate}</TableCell>
-                        <TableCell>{schedule.address}</TableCell>
+                        <TableCell className='max-w-[200px] truncate'>
+                          {schedule.products}
+                        </TableCell>
+                        <TableCell className='max-w-[180px] truncate'>
+                          {schedule.deliveryDate}
+                        </TableCell>
+                        <TableCell className='max-w-[180px] truncate'>
+                          {schedule.createdAt}
+                        </TableCell>
+                        <TableCell className='max-w-[200px] truncate'>
+                          {schedule.address}
+                        </TableCell>
                         <TableCell>
                           <Badge
                             variant={getStatusVariant(schedule.status)}
@@ -503,16 +518,14 @@ export default function ConsigneeOrdersFeature() {
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant='ghost' size='sm'>
-                                Actions
+                                <IconDotsVertical className='h-4 w-4' />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align='end'>
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
                               <DropdownMenuItem asChild>
                                 <Link
                                   href={`/consignee/orders/${schedule.id}`}
-                                  className='flex items-center'
+                                  className='hover:border-primary flex cursor-pointer items-center hover:bg-transparent'
                                 >
                                   <IconEye className='mr-2 h-4 w-4' />
                                   View Details
@@ -524,7 +537,7 @@ export default function ConsigneeOrdersFeature() {
                                   <DropdownMenuItem asChild>
                                     <Link
                                       href={`/consignee/orders/${schedule.id}/edit`}
-                                      className='flex items-center'
+                                      className='hover:border-primary flex cursor-pointer items-center hover:bg-transparent'
                                     >
                                       <IconEdit className='mr-2 h-4 w-4' />
                                       Edit
@@ -534,9 +547,9 @@ export default function ConsigneeOrdersFeature() {
                                     onClick={() =>
                                       handleCancelOrder(schedule.id)
                                     }
-                                    className='text-destructive'
+                                    className='text-destructive cursor-pointer hover:bg-transparent'
                                   >
-                                    <IconX className='mr-2 h-4 w-4' />
+                                    <IconX className='text-destructive mr-2 h-4 w-4' />
                                     Cancel Order
                                   </DropdownMenuItem>
                                 </>

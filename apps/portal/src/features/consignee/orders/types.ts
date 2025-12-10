@@ -11,6 +11,7 @@ export type OrderScheduleRow = {
   status: OrderScheduleStatus;
   description?: string;
   reason?: string;
+  createdAt: string;
 };
 
 export type StatusFilter =

@@ -1,5 +1,6 @@
 import { Consignee } from './consignee';
 import { Product } from './product';
+import { Payment } from './payment';
 
 // ============================================================================
 // ORDER SCHEDULE
@@ -149,6 +150,7 @@ export type FindAllOrderPhasesDto = {
 
 export type OrderInvoice = {
   id: string;
+  payment?: Payment | null;
   totalPayment?: number | null;
   totalAmount?: number | null;
   quantity?: number | null;

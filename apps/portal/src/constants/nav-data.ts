@@ -69,14 +69,6 @@ export const consigneeNavItems: NavItem[] = [
     items: []
   },
   {
-    title: 'Traceability',
-    url: '/consignee/traceability',
-    icon: 'blockChain',
-    shortcut: ['t', 'r'],
-    isActive: false,
-    items: []
-  },
-  {
     title: 'Payments',
     url: '/consignee/payments',
     icon: 'creditCard',
