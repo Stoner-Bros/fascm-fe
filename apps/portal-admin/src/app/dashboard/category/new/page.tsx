@@ -42,8 +42,7 @@ export default function NewCategoryPage() {
     try {
       setLoading(true);
       await createCategory({
-        englishName: formData.englishName || null,
-        vietnameseName: formData.vietnameseName || null
+        name: formData.englishName
       });
 
       toast({

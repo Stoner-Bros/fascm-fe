@@ -19,12 +19,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import {
-  IconArrowLeft,
-  IconDeviceFloppy,
-  IconPlus,
-  IconMinus
-} from '@tabler/icons-react';
+import { IconArrowLeft, IconDeviceFloppy } from '@tabler/icons-react';
 import { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
@@ -68,7 +63,7 @@ export default function NewHarvestBatchPage() {
   const [harvestDetails, setHarvestDetails] = useState<HarvestDetailForm[]>([
     {
       productId: '',
-      quantity: 20, // Bắt đầu từ 20 (bội số của 20)
+      quantity: 0,
       unitPrice: 0,
       unit: 'kg'
     }
@@ -123,37 +118,16 @@ export default function NewHarvestBatchPage() {
     }));
   };
 
-  const getDefaultQuantity = () => 20;
-  const getQuantityStep = () => 20;
-  const getMinQuantity = () => 20;
-
   const addHarvestDetail = () => {
     setHarvestDetails((prev) => [
       ...prev,
       {
         productId: '',
-        quantity: getDefaultQuantity(),
+        quantity: 0,
         unitPrice: 0,
         unit: 'kg'
       }
     ]);
-  };
-
-  const adjustQuantity = (index: number, delta: number) => {
-    setHarvestDetails((prev) =>
-      prev.map((detail, i) => {
-        if (i === index) {
-          const step = getQuantityStep();
-          const minQuantity = getMinQuantity();
-          const newQuantity = detail.quantity + delta;
-          // Đảm bảo quantity >= 20 và là bội số của 20
-          const adjustedQuantity = Math.max(minQuantity, newQuantity);
-          const roundedQuantity = Math.round(adjustedQuantity / step) * step;
-          return { ...detail, quantity: roundedQuantity };
-        }
-        return detail;
-      })
-    );
   };
 
   const removeHarvestDetail = (index: number) => {
@@ -198,14 +172,10 @@ export default function NewHarvestBatchPage() {
         return;
       }
 
-      const minQuantity = getMinQuantity();
-      const step = getQuantityStep();
-
-      if (detail.quantity < minQuantity || detail.quantity % step !== 0) {
+      if (detail.quantity <= 0) {
         toast({
           title: 'Validation Error',
-          description:
-            'Quantity must be at least 20 and a multiple of 20. Please use +/- buttons to adjust.',
+          description: 'Quantity must be greater than 0',
           variant: 'destructive'
         });
         return;
@@ -431,42 +401,34 @@ export default function NewHarvestBatchPage() {
                               Quantity{' '}
                               <span className='text-destructive'>*</span>
                             </Label>
-                            <div className='flex items-center gap-2'>
-                              <Button
-                                type='button'
-                                variant='outline'
-                                size='icon'
-                                onClick={() =>
-                                  adjustQuantity(index, -getQuantityStep())
+                            <Input
+                              type='number'
+                              inputMode='numeric'
+                              value={detail.quantity || ''}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                // Chỉ cho phép số dương
+                                if (
+                                  value === '' ||
+                                  /^\d+(\.\d*)?$/.test(value)
+                                ) {
+                                  updateHarvestDetail(
+                                    index,
+                                    'quantity',
+                                    value === '' ? 0 : parseFloat(value) || 0
+                                  );
                                 }
-                                disabled={detail.quantity <= getMinQuantity()}
-                                className='h-10 w-10'
-                              >
-                                <IconMinus className='h-4 w-4' />
-                              </Button>
-                              <Input
-                                type='text'
-                                value={detail.quantity || getDefaultQuantity()}
-                                readOnly
-                                className='text-center'
-                                required
-                              />
-                              <Button
-                                type='button'
-                                variant='outline'
-                                size='icon'
-                                onClick={() =>
-                                  adjustQuantity(index, getQuantityStep())
-                                }
-                                className='h-10 w-10'
-                              >
-                                <IconPlus className='h-4 w-4' />
-                              </Button>
-                            </div>
-                            <p className='text-muted-foreground text-xs'>
-                              Minimum 20, must be a multiple of 20. Use +/-
-                              buttons to adjust.
-                            </p>
+                              }}
+                              onWheel={(e) => {
+                                // Prevent scroll wheel from changing value
+                                e.currentTarget.blur();
+                              }}
+                              placeholder='Enter quantity'
+                              min='1'
+                              step='1'
+                              required
+                              className='[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+                            />
                           </div>
 
                           <div className='space-y-2'>

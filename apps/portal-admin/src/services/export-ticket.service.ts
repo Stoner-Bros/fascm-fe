@@ -1,20 +1,19 @@
 import { fetchJSON } from '@/lib/client';
 import type { InfinityPaginationResponse } from '@/types/common';
-import { OrderDetailBE } from '@/types/order';
 
 export type ExportTicket = {
   id: string;
-  numberOfBatch?: number | null;
-  ExportDate?: string | null;
-  orderDetail?: OrderDetailBE | null;
   createdAt: string;
   updatedAt: string;
 };
 
+export type OrderInvoiceDetailWithBatch = {
+  orderInvoiceDetailId: string;
+  batchIds: string[];
+};
+
 export type CreateExportTicketDto = {
-  numberOfBatch?: number | null;
-  ExportDate?: Date | string | null;
-  orderDetail?: { id: string } | null;
+  invoiceDetails: OrderInvoiceDetailWithBatch[];
 };
 
 const BASE_PATH = '/export-tickets';
@@ -48,4 +47,10 @@ export async function fetchExportTickets({
 
 export async function fetchExportTicketById(id: string) {
   return fetchJSON<ExportTicket>(`${BASE_PATH}/${id}`);
+}
+
+export async function deleteExportTicket(id: string) {
+  return fetchJSON<void>(`${BASE_PATH}/${id}`, {
+    method: 'DELETE'
+  });
 }

@@ -22,6 +22,7 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import {
   fetchHarvestScheduleById,
@@ -49,6 +50,8 @@ const HarvestRouteSim = dynamic(
 );
 
 import { fetchDeliveriesByHarvestSchedule } from '@/services/delivery.service';
+import { fetchHarvestPhasesBySchedule } from '@/services/harvest-phase.service';
+import type { HarvestPhase } from '@/types/harvest-phase';
 import dynamic from 'next/dynamic';
 
 type DetailRow = {
@@ -113,9 +116,52 @@ const STATUS_MAP: Record<string, StatusConfig> = {
   }
 };
 
+const PHASE_STATUS_MAP: Record<string, StatusConfig> = {
+  preparing: {
+    label: 'Đang chuẩn bị',
+    icon: <IconClock className='h-4 w-4' />,
+    variant: 'outline',
+    bgColor: 'bg-yellow-50',
+    textColor: 'text-yellow-700'
+  },
+  delivering: {
+    label: 'Đang giao hàng',
+    icon: <IconPackage className='h-4 w-4' />,
+    variant: 'secondary',
+    bgColor: 'bg-blue-50',
+    textColor: 'text-blue-700'
+  },
+  delivered: {
+    label: 'Đã giao hàng',
+    icon: <IconCheck className='h-4 w-4' />,
+    variant: 'default',
+    bgColor: 'bg-indigo-50',
+    textColor: 'text-indigo-700'
+  },
+  completed: {
+    label: 'Hoàn thành',
+    icon: <IconCheck className='h-4 w-4' />,
+    variant: 'default',
+    bgColor: 'bg-green-50',
+    textColor: 'text-green-700'
+  },
+  canceled: {
+    label: 'Đã hủy',
+    icon: <IconX className='h-4 w-4' />,
+    variant: 'destructive',
+    bgColor: 'bg-red-50',
+    textColor: 'text-red-700'
+  }
+};
+
 const getStatusConfig = (status?: string | null): StatusConfig => {
   const normalizedStatus = status?.toLowerCase() || 'pending';
   return STATUS_MAP[normalizedStatus] || STATUS_MAP.pending;
+};
+
+const getPhaseStatusConfig = (status?: string | null): StatusConfig => {
+  const normalizedStatus = status?.toLowerCase() || 'preparing';
+  return PHASE_STATUS_MAP[normalizedStatus] || PHASE_STATUS_MAP.preparing;
 };
 
 const formatCurrency = (value: number) =>
@@ -129,8 +175,10 @@ export default function HarvestBatchDetailPage() {
 
   const [schedule, setSchedule] = useState<HarvestSchedule | null>(null);
   const [details, setDetails] = useState<DetailRow[]>([]);
+  const [phases, setPhases] = useState<HarvestPhase[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeDeliveryId, setActiveDeliveryId] = useState<string>('');
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     let cancelled = false;
@@ -218,6 +266,22 @@ export default function HarvestBatchDetailPage() {
         }
       })
       .catch(() => {});
+
+    // Load phases
+    fetchHarvestPhasesBySchedule({
+      harvestScheduleId: sid,
+      page: 1,
+      limit: 100
+    })
+      .then((res) => {
+        const phasesList = Array.isArray(res?.data) ? res.data : [];
+        // Sort by phaseNumber
+        phasesList.sort((a, b) => (a.phaseNumber ?? 0) - (b.phaseNumber ?? 0));
+        setPhases(phasesList);
+      })
+      .catch(() => {
+        setPhases([]);
+      });
   }, [schedule?.id]);
 
   // Realtime: keep delivery events but refresh harvest schedule status when any event arrives
@@ -416,146 +480,282 @@ export default function HarvestBatchDetailPage() {
         <div className='grid gap-6 lg:grid-cols-3'>
           {/* Main Content */}
           <div className='space-y-6 lg:col-span-2'>
-            {showMap && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2'>
-                    <IconMapPin className='h-5 w-5' />
-                    Theo dõi vận chuyển
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <HarvestRouteSim
-                    cargo={`Khối lượng ${totalQuantity} kg`}
-                    startAddress={'Kho Nhà Cung Cấp'}
-                    endAddress={String(schedule.address ?? '')}
-                    harvestScheduleId={String(schedule.id ?? '')}
-                    deliveryId={activeDeliveryId}
-                    productName={details.map((d) => d.productName).join(', ')}
-                  />
-                </CardContent>
-              </Card>
-            )}
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList className='grid w-full grid-cols-3'>
+                <TabsTrigger value='overview'>Tổng quan</TabsTrigger>
+                <TabsTrigger value='phases'>Đợt ({phases.length})</TabsTrigger>
+                <TabsTrigger value='products'>Sản phẩm</TabsTrigger>
+              </TabsList>
 
-            {/* Product Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <IconPackage className='h-5 w-5' />
-                  Product Information
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div>
-                    <p className='text-muted-foreground text-sm'>
-                      Total Quantity
-                    </p>
-                    <p className='font-medium'>
-                      {loading ? '...' : totalQuantity}
-                    </p>
-                  </div>
-                  <div>
-                    <p className='text-muted-foreground text-sm'>Total Price</p>
-                    <p className='text-lg font-bold'>
-                      {loading ? '...' : formatCurrency(totalPrice)}
-                    </p>
-                  </div>
-                </div>
-
-                {details.length > 0 && (
-                  <div className='border-t pt-4'>
-                    <p className='text-muted-foreground mb-3 text-sm'>
-                      Products
-                    </p>
-                    <div className='rounded-md border text-sm'>
-                      <div className='bg-muted text-muted-foreground grid grid-cols-5 gap-2 border-b px-3 py-2 text-xs font-medium tracking-wide uppercase'>
-                        <span className='col-span-2'>Product</span>
-                        <span>Quantity</span>
-                        <span>Unit</span>
-                        <span>Unit Price</span>
-                      </div>
-                      {details.map((product) => (
-                        <div
-                          key={product.id}
-                          className='grid grid-cols-5 gap-2 border-b px-3 py-2 last:border-b-0'
-                        >
-                          <div className='col-span-2'>
-                            <p className='font-medium'>{product.productName}</p>
-                          </div>
-                          <div>
-                            <p className='font-medium'>{product.quantity}</p>
-                          </div>
-                          <div>
-                            <p className='font-medium'>{product.unit}</p>
-                          </div>
-                          <div>
-                            <p className='font-medium'>
-                              {formatCurrency(product.unitPrice)}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+              <TabsContent value='overview' className='space-y-6'>
+                {showMap && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className='flex items-center gap-2'>
+                        <IconMapPin className='h-5 w-5' />
+                        Theo dõi vận chuyển
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <HarvestRouteSim
+                        cargo={`Khối lượng ${totalQuantity} kg`}
+                        startAddress={'Kho Nhà Cung Cấp'}
+                        endAddress={String(schedule.address ?? '')}
+                        harvestScheduleId={String(schedule.id ?? '')}
+                        deliveryId={activeDeliveryId}
+                        productName={details
+                          .map((d) => d.productName)
+                          .join(', ')}
+                      />
+                    </CardContent>
+                  </Card>
                 )}
+
+                {/* Harvest Schedule Info */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className='flex items-center gap-2'>
+                      <IconCalendar className='h-5 w-5' />
+                      Thông tin thu hoạch
+                    </CardTitle>
+                    <CardDescription>
+                      Chi tiết thời gian và địa điểm thu hoạch
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className='space-y-4'>
+                    <div className='grid gap-4'>
+                      <div className='flex items-start gap-3 rounded-lg border p-3'>
+                        <IconCalendar className='text-primary mt-0.5 h-5 w-5' />
+                        <div className='flex-1'>
+                          <p className='text-muted-foreground text-sm'>
+                            Ngày thu hoạch
+                          </p>
+                          <p className='font-medium'>{harvestDate}</p>
+                        </div>
+                      </div>
+                      <div className='flex items-start gap-3 rounded-lg border p-3'>
+                        <IconMapPin className='text-primary mt-0.5 h-5 w-5' />
+                        <div className='flex-1'>
+                          <p className='text-muted-foreground text-sm'>
+                            Địa điểm
+                          </p>
+                          <p className='font-medium'>
+                            {schedule?.supplier?.gardenName || '-'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className='flex items-start gap-3 rounded-lg border p-3'>
+                        <IconMapPin className='text-primary mt-0.5 h-5 w-5' />
+                        <div className='flex-1'>
+                          <p className='text-muted-foreground text-sm'>
+                            Địa chỉ thu hoạch
+                          </p>
+                          <p className='font-medium'>
+                            {schedule?.address || '—'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
                 {schedule.description && (
-                  <div className='border-t pt-4'>
-                    <p className='text-muted-foreground mb-2 text-sm font-medium'>
-                      Ghi chú
-                    </p>
-                    <p className='text-sm text-gray-700'>
-                      {schedule.description}
-                    </p>
-                  </div>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Ghi chú</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className='text-sm text-gray-700'>
+                        {schedule.description}
+                      </p>
+                    </CardContent>
+                  </Card>
                 )}
-              </CardContent>
-            </Card>
+              </TabsContent>
 
-            {/* Harvest Schedule Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <IconCalendar className='h-5 w-5' />
-                  Thông tin thu hoạch
-                </CardTitle>
-                <CardDescription>
-                  Chi tiết thời gian và địa điểm thu hoạch
-                </CardDescription>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='grid gap-4'>
-                  <div className='flex items-start gap-3 rounded-lg border p-3'>
-                    <IconCalendar className='text-primary mt-0.5 h-5 w-5' />
-                    <div className='flex-1'>
+              <TabsContent value='phases' className='space-y-6'>
+                {phases.length > 0 ? (
+                  <div className='space-y-3'>
+                    {phases.map((phase) => {
+                      const phaseConfig = getPhaseStatusConfig(phase.status);
+                      const totalPhaseQuantity =
+                        phase.harvestInvoiceDetails?.reduce(
+                          (sum, detail) => sum + (detail.quantity ?? 0),
+                          0
+                        ) ?? 0;
+                      const totalPhaseAmount =
+                        phase.harvestInvoice?.totalAmount ?? 0;
+
+                      return (
+                        <Card key={phase.id}>
+                          <CardContent className='pt-6'>
+                            <div className='flex items-start justify-between gap-3'>
+                              <div className='flex-1'>
+                                <div className='mb-2 flex items-center gap-2'>
+                                  <h4 className='text-lg font-semibold'>
+                                    Đợt {phase.phaseNumber ?? '?'}
+                                  </h4>
+                                  <Badge
+                                    variant={phaseConfig.variant}
+                                    className='text-xs'
+                                  >
+                                    <span className='mr-1'>
+                                      {phaseConfig.icon}
+                                    </span>
+                                    {phaseConfig.label}
+                                  </Badge>
+                                </div>
+
+                                {phase.description && (
+                                  <p className='text-muted-foreground mb-3 text-sm'>
+                                    {phase.description}
+                                  </p>
+                                )}
+
+                                <div className='mb-3 grid grid-cols-2 gap-3'>
+                                  <div className='rounded-lg border bg-gray-50 p-3'>
+                                    <p className='text-muted-foreground text-xs'>
+                                      Khối lượng
+                                    </p>
+                                    <p className='text-lg font-semibold'>
+                                      {totalPhaseQuantity} kg
+                                    </p>
+                                  </div>
+                                  <div className='rounded-lg border bg-gray-50 p-3'>
+                                    <p className='text-muted-foreground text-xs'>
+                                      Giá trị
+                                    </p>
+                                    <p className='text-lg font-semibold'>
+                                      {formatCurrency(totalPhaseAmount)}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                {phase.harvestInvoiceDetails &&
+                                  phase.harvestInvoiceDetails.length > 0 && (
+                                    <div className='rounded-md border bg-white p-3'>
+                                      <p className='text-muted-foreground mb-2 text-sm font-medium'>
+                                        Sản phẩm:
+                                      </p>
+                                      <div className='space-y-2'>
+                                        {phase.harvestInvoiceDetails.map(
+                                          (detail) => (
+                                            <div
+                                              key={detail.id}
+                                              className='flex items-center justify-between text-sm'
+                                            >
+                                              <span className='font-medium'>
+                                                {detail.product?.name ||
+                                                  'Unknown'}
+                                              </span>
+                                              <span className='text-muted-foreground'>
+                                                {detail.quantity} {detail.unit}{' '}
+                                                x{' '}
+                                                {formatCurrency(
+                                                  detail.unitPrice ?? 0
+                                                )}
+                                              </span>
+                                            </div>
+                                          )
+                                        )}
+                                      </div>
+                                    </div>
+                                  )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <Card>
+                    <CardContent className='py-12 text-center'>
+                      <IconClock className='text-muted-foreground mx-auto mb-3 h-12 w-12' />
+                      <h3 className='mb-2 text-lg font-semibold'>
+                        Chưa có đợt thu hoạch
+                      </h3>
                       <p className='text-muted-foreground text-sm'>
-                        Ngày thu hoạch
+                        Các đợt thu hoạch sẽ xuất hiện sau khi được tạo
                       </p>
-                      <p className='font-medium'>{harvestDate}</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </TabsContent>
+
+              <TabsContent value='products' className='space-y-6'>
+                {/* Product Information */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className='flex items-center gap-2'>
+                      <IconPackage className='h-5 w-5' />
+                      Thông tin sản phẩm
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-4'>
+                    <div className='grid grid-cols-2 gap-4'>
+                      <div>
+                        <p className='text-muted-foreground text-sm'>
+                          Total Quantity
+                        </p>
+                        <p className='font-medium'>
+                          {loading ? '...' : totalQuantity}
+                        </p>
+                      </div>
+                      <div>
+                        <p className='text-muted-foreground text-sm'>
+                          Total Price
+                        </p>
+                        <p className='text-lg font-bold'>
+                          {loading ? '...' : formatCurrency(totalPrice)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className='flex items-start gap-3 rounded-lg border p-3'>
-                    <IconMapPin className='text-primary mt-0.5 h-5 w-5' />
-                    <div className='flex-1'>
-                      <p className='text-muted-foreground text-sm'>Địa điểm</p>
-                      <p className='font-medium'>
-                        {schedule?.supplier?.gardenName || '-'}
-                      </p>
-                    </div>
-                  </div>
-                  <div className='flex items-start gap-3 rounded-lg border p-3'>
-                    <IconMapPin className='text-primary mt-0.5 h-5 w-5' />
-                    <div className='flex-1'>
-                      <p className='text-muted-foreground text-sm'>
-                        Địa chỉ thu hoạch
-                      </p>
-                      <p className='font-medium'>{schedule?.address || '—'}</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+
+                    {details.length > 0 && (
+                      <div className='border-t pt-4'>
+                        <p className='text-muted-foreground mb-3 text-sm'>
+                          Products
+                        </p>
+                        <div className='rounded-md border text-sm'>
+                          <div className='bg-muted text-muted-foreground grid grid-cols-5 gap-2 border-b px-3 py-2 text-xs font-medium tracking-wide uppercase'>
+                            <span className='col-span-2'>Product</span>
+                            <span>Quantity</span>
+                            <span>Unit</span>
+                            <span>Unit Price</span>
+                          </div>
+                          {details.map((product) => (
+                            <div
+                              key={product.id}
+                              className='grid grid-cols-5 gap-2 border-b px-3 py-2 last:border-b-0'
+                            >
+                              <div className='col-span-2'>
+                                <p className='font-medium'>
+                                  {product.productName}
+                                </p>
+                              </div>
+                              <div>
+                                <p className='font-medium'>
+                                  {product.quantity}
+                                </p>
+                              </div>
+                              <div>
+                                <p className='font-medium'>{product.unit}</p>
+                              </div>
+                              <div>
+                                <p className='font-medium'>
+                                  {formatCurrency(product.unitPrice)}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </div>
 
           {/* Sidebar */}
@@ -585,6 +785,12 @@ export default function HarvestBatchDetailPage() {
                     Số sản phẩm
                   </p>
                   <p className='text-2xl font-bold'>{details.length}</p>
+                </div>
+                <div className='rounded-lg border p-3'>
+                  <p className='text-muted-foreground mb-1 text-sm'>
+                    Số đợt thu hoạch
+                  </p>
+                  <p className='text-2xl font-bold'>{phases.length}</p>
                 </div>
               </CardContent>
             </Card>

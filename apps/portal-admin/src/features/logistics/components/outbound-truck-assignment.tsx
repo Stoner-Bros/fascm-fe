@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import {
   Dialog,
   DialogContent,
@@ -19,15 +20,6 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -35,34 +27,46 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import {
-  IconTruckDelivery,
-  IconRefresh,
-  IconEye,
-  IconPackage,
-  IconMapPin,
-  IconTruck
-} from '@tabler/icons-react';
-import { fetchOrders, fetchOrderWithDetails } from '@/services/order.service';
-import { fetchTrucks } from '@/services/truck.service';
-import { createDelivery, fetchDeliveries } from '@/services/delivery.service';
-import type { OrderBE, OrderDetailBE } from '@/types/order';
-import type { Truck } from '@/types/truck';
-import type { Delivery } from '@/types/delivery';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
-import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { fetchDeliveryStaffs } from '@/services/delivery-staff.service';
+import {
+  createDelivery,
+  fetchDeliveries,
+  updateDeliveryStatus
+} from '@/services/delivery.service';
+import { fetchOrderPhasesBySchedule } from '@/services/order-phase.service';
+import { fetchOrderSchedules } from '@/services/order-schedule.service';
+import { fetchTrucks } from '@/services/truck.service';
+import type { Delivery } from '@/types/delivery';
+import type { DeliveryStaff } from '@/types/delivery-staff';
+import type { OrderPhase, OrderSchedule } from '@/types/order';
+import type { Truck } from '@/types/truck';
+import {
+  IconCalendar,
+  IconEye,
+  IconMapPin,
+  IconRefresh,
+  IconTruck,
+  IconTruckDelivery
+} from '@tabler/icons-react';
+import { useEffect, useMemo, useState } from 'react';
 
-function OrderStatusBadge({ status }: { status?: string | null }) {
+function StatusBadge({ status }: { status?: string | null }) {
   if (!status) return <Badge variant='outline'>Unknown</Badge>;
 
   const variants: Record<string, { label: string; variant: any }> = {
-    PENDING: { label: 'Đang chờ duyệt', variant: 'secondary' },
-    APPROVED: { label: 'Đã duyệt', variant: 'default' },
-    PREPARING: { label: 'Chờ phân xe', variant: 'secondary' },
-    DELIVERING: { label: 'Chờ giao hàng', variant: 'default' },
-    DELIVERED: { label: 'Đã giao hàng', variant: 'default' },
-    COMPLETED: { label: 'Hoàn thành', variant: 'default' },
-    CANCELLED: { label: 'Đã hủy', variant: 'destructive' },
-    REJECTED: { label: 'Từ chối', variant: 'destructive' }
+    pending: { label: 'Chờ duyệt', variant: 'secondary' },
+    approved: { label: 'Sẵn sàng giao hàng', variant: 'default' },
+    rejected: { label: 'Từ chối', variant: 'destructive' },
+    canceled: { label: 'Đã hủy', variant: 'outline' },
+    completed: { label: 'Hoàn thành', variant: 'default' }
   };
 
   const config = variants[status] || { label: status, variant: 'outline' };
@@ -86,20 +90,25 @@ function TruckStatusBadge({ status }: { status?: string | null }) {
 export function OutboundTruckAssignment() {
   const { toast } = useToast();
 
-  const [orders, setOrders] = useState<OrderBE[]>([]);
+  const [schedules, setSchedules] = useState<OrderSchedule[]>([]);
+  const [phases, setPhases] = useState<OrderPhase[]>([]);
   const [trucks, setTrucks] = useState<Truck[]>([]);
+  const [deliveryStaffs, setDeliveryStaffs] = useState<DeliveryStaff[]>([]);
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingPhases, setIsLoadingPhases] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const [selectedOrder, setSelectedOrder] = useState<OrderBE | null>(null);
+  const [selectedSchedule, setSelectedSchedule] =
+    useState<OrderSchedule | null>(null);
+  const [selectedPhase, setSelectedPhase] = useState<OrderPhase | null>(null);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+  const [isPhasesDialogOpen, setIsPhasesDialogOpen] = useState(false);
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
-  const [details, setDetails] = useState<OrderDetailBE[]>([]);
-  const [isDetailLoading, setIsDetailLoading] = useState(false);
 
   const [assignmentForm, setAssignmentForm] = useState({
     truckId: '',
+    deliveryStaffId: '',
     startTime: null as Date | null,
     estimatedArrival: null as Date | null
   });
@@ -113,7 +122,7 @@ export function OutboundTruckAssignment() {
   // Load all deliveries to check assignments
   const loadDeliveries = async () => {
     try {
-      const res = await fetchDeliveries({ page: 1, limit: 20 });
+      const res = await fetchDeliveries({ page: 1, limit: 1000 });
       // Include all deliveries without filtering by status
       setDeliveries(res.data);
     } catch (error) {
@@ -121,21 +130,22 @@ export function OutboundTruckAssignment() {
     }
   };
 
-  // Load all orders
-  const loadOrders = async () => {
+  // Load all order schedules
+  const loadSchedules = async () => {
     setIsLoading(true);
     try {
-      const res = await fetchOrders({
+      const res = await fetchOrderSchedules({
         page: pagination.page,
-        limit: pagination.limit
+        limit: pagination.limit,
+        status: 'approved'
       });
-      // Display all orders without filtering by status or assignment
-      setOrders(res.data);
+      // Display all schedules without filtering by status or assignment
+      setSchedules(res.data);
       setPagination((prev) => ({ ...prev, hasNextPage: res.hasNextPage }));
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Không thể tải danh sách đơn hàng',
+        title: 'Không thể tải danh sách lịch giao hàng',
         description: error instanceof Error ? error.message : undefined
       });
     } finally {
@@ -146,7 +156,7 @@ export function OutboundTruckAssignment() {
   // Load available trucks
   const loadTrucks = async () => {
     try {
-      const res = await fetchTrucks({ page: 1, limit: 100 });
+      const res = await fetchTrucks({ page: 1, limit: 10 });
       // Filter only active trucks (not maintenance or inactive)
       const availableTrucks = res.data.filter(
         (t: Truck) => t.status === 'available'
@@ -161,50 +171,164 @@ export function OutboundTruckAssignment() {
     }
   };
 
+  // Load available delivery staffs
+  const loadDeliveryStaffs = async () => {
+    try {
+      const res = await fetchDeliveryStaffs({ page: 1, limit: 50 });
+      setDeliveryStaffs(res.data);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Không thể tải danh sách tài xế',
+        description: error instanceof Error ? error.message : undefined
+      });
+    }
+  };
+
   useEffect(() => {
     loadDeliveries();
     loadTrucks();
+    loadDeliveryStaffs();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     if (deliveries.length > 0 || pagination.page === 1) {
-      loadOrders();
+      loadSchedules();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagination.page, deliveries]);
 
-  useEffect(() => {
-    const loadOrderDetails = async () => {
-      if (!isDetailDialogOpen || !selectedOrder?.id) return;
-      setIsDetailLoading(true);
-      try {
-        const res = await fetchOrderWithDetails(selectedOrder.id);
-        setDetails(res.orderDetails ?? []);
-      } catch {
-        setDetails([]);
-      } finally {
-        setIsDetailLoading(false);
-      }
-    };
-    loadOrderDetails();
-  }, [isDetailDialogOpen, selectedOrder?.id]);
+  // Handle start delivery
+  const handleStartDelivery = async (deliveryId: string) => {
+    setIsSubmitting(true);
+    try {
+      await updateDeliveryStatus(deliveryId, 'delivering');
+      toast({
+        title: 'Thành công',
+        description: 'Đã bắt đầu chuyến giao hàng'
+      });
+      // Reload deliveries to reflect status change
+      await loadDeliveries();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description:
+          error instanceof Error ? error.message : 'Không thể bắt đầu chuyến đi'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle complete delivery
+  const handleCompleteDelivery = async (deliveryId: string) => {
+    setIsSubmitting(true);
+    try {
+      await updateDeliveryStatus(deliveryId, 'delivered');
+      toast({
+        title: 'Thành công',
+        description: 'Đã xác nhận giao hàng thành công'
+      });
+      // Reload deliveries to reflect status change
+      await loadDeliveries();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Không thể xác nhận giao hàng'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle return to warehouse
+  const handleReturnToWarehouse = async (deliveryId: string) => {
+    setIsSubmitting(true);
+    try {
+      await updateDeliveryStatus(deliveryId, 'returning');
+      toast({
+        title: 'Thành công',
+        description: 'Đã xác nhận xe trở về kho'
+      });
+      // Reload deliveries to reflect status change
+      await loadDeliveries();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Không thể xác nhận trở về kho'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Handle complete return
+  const handleCompleteReturn = async (deliveryId: string) => {
+    setIsSubmitting(true);
+    try {
+      await updateDeliveryStatus(deliveryId, 'completed');
+      toast({
+        title: 'Thành công',
+        description: 'Đã hoàn tất chuyến outbound'
+      });
+      await loadDeliveries();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Lỗi',
+        description:
+          error instanceof Error
+            ? error.message
+            : 'Không thể hoàn tất chuyến đi'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Load phases for selected schedule
+  const loadPhases = async (scheduleId: string) => {
+    setIsLoadingPhases(true);
+    try {
+      const res = await fetchOrderPhasesBySchedule({
+        orderScheduleId: scheduleId,
+        limit: 50
+      });
+      setPhases(res.data);
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Không thể tải danh sách đợt giao hàng',
+        description: error instanceof Error ? error.message : undefined
+      });
+    } finally {
+      setIsLoadingPhases(false);
+    }
+  };
 
   // Handle assign truck for outbound delivery
   const handleAssignTruck = async () => {
-    if (
-      !selectedOrder ||
-      !assignmentForm.truckId ||
-      !selectedOrder.orderSchedule
-    )
-      return;
+    if (!selectedPhase || !assignmentForm.truckId) return;
 
     setIsSubmitting(true);
     try {
       // Create an outbound delivery record
       await createDelivery({
         truck: { id: assignmentForm.truckId },
-        orderSchedule: { id: selectedOrder.orderSchedule.id },
+        deliveryStaff: assignmentForm.deliveryStaffId
+          ? { id: assignmentForm.deliveryStaffId }
+          : null,
+        orderPhase: { id: selectedPhase.id },
         startTime: assignmentForm.startTime?.toISOString() || null,
         endTime: assignmentForm.estimatedArrival?.toISOString() || null,
         status: 'scheduled',
@@ -213,9 +337,8 @@ export function OutboundTruckAssignment() {
         endLat: null,
         endLng: null,
         startAddress: 'Kho trung tâm',
-        endAddress:
-          selectedOrder.orderSchedule?.address || 'Địa chỉ khách hàng',
-        harvestSchedule: null
+        endAddress: selectedSchedule?.address || 'Địa chỉ khách hàng',
+        harvestPhase: null
       });
 
       toast({
@@ -223,15 +346,17 @@ export function OutboundTruckAssignment() {
         description: 'Đã phân công xe giao hàng'
       });
       setIsAssignDialogOpen(false);
-      setSelectedOrder(null);
+      setSelectedSchedule(null);
+      setSelectedPhase(null);
       setAssignmentForm({
         truckId: '',
+        deliveryStaffId: '',
         startTime: null,
         estimatedArrival: null
       });
-      // Reload deliveries and orders
+      // Reload deliveries and schedules
       await loadDeliveries();
-      loadOrders();
+      loadSchedules();
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -243,6 +368,15 @@ export function OutboundTruckAssignment() {
       setIsSubmitting(false);
     }
   };
+
+  // Get assigned phase IDs from deliveries
+  const assignedPhaseIds = useMemo(() => {
+    return new Set(
+      deliveries
+        .filter((d) => d.orderPhase?.id)
+        .map((d) => String(d.orderPhase!.id))
+    );
+  }, [deliveries]);
 
   // Format date
   const formatDate = (date?: string | Date | null) => {
@@ -256,15 +390,6 @@ export function OutboundTruckAssignment() {
     });
   };
 
-  // Format currency
-  const formatCurrency = (amount?: number | null) => {
-    if (!amount) return 'N/A';
-    return new Intl.NumberFormat('vi-VN', {
-      style: 'currency',
-      currency: 'VND'
-    }).format(amount);
-  };
-
   return (
     <div className='w-full space-y-4'>
       <Card className='w-full'>
@@ -276,10 +401,10 @@ export function OutboundTruckAssignment() {
                 Phân Công Xe Giao Hàng (Outbound)
               </CardTitle>
               <CardDescription>
-                Phân công xe giao hàng từ kho đến khách hàng
+                Phân công xe giao hàng từ kho đến khách hàng theo từng đợt
                 {deliveries.length > 0 && (
                   <span className='text-muted-foreground ml-2 text-xs'>
-                    ({deliveries.filter((d) => d.orderSchedule).length} đã phân
+                    ({deliveries.filter((d) => d.orderPhase).length} đã phân
                     công)
                   </span>
                 )}
@@ -288,7 +413,7 @@ export function OutboundTruckAssignment() {
             <Button
               onClick={async () => {
                 await loadDeliveries();
-                loadOrders();
+                loadSchedules();
               }}
               variant='outline'
               size='sm'
@@ -303,10 +428,9 @@ export function OutboundTruckAssignment() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Mã đơn</TableHead>
+                  <TableHead>Mã lịch</TableHead>
                   <TableHead>Khách hàng</TableHead>
-                  <TableHead>Ngày đặt</TableHead>
-                  <TableHead>Tổng tiền</TableHead>
+                  <TableHead>Ngày giao hàng</TableHead>
                   <TableHead>Trạng thái</TableHead>
                   <TableHead className='text-right'>Thao tác</TableHead>
                 </TableRow>
@@ -318,56 +442,52 @@ export function OutboundTruckAssignment() {
                       Đang tải...
                     </TableCell>
                   </TableRow>
-                ) : orders.length === 0 ? (
+                ) : schedules.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className='text-center'>
-                      Không có đơn hàng cần giao
+                      Không có lịch giao hàng
                     </TableCell>
                   </TableRow>
                 ) : (
-                  orders.map((order) => (
-                    <TableRow key={order.id}>
+                  schedules.map((schedule) => (
+                    <TableRow key={schedule.id}>
                       <TableCell className='font-mono text-sm'>
-                        {order.id.slice(0, 8)}...
+                        {schedule.id.slice(0, 8)}
                       </TableCell>
                       <TableCell>
-                        {order.orderSchedule?.consignee?.organizationName ||
-                          order.orderSchedule?.consignee?.representativeName ||
-                          'N/A'}
+                        {schedule.consignee?.organizationName ||
+                          schedule.consignee?.representativeName ||
+                          '-'}
                       </TableCell>
-                      <TableCell>{formatDate(order.orderDate)}</TableCell>
-                      <TableCell>{formatCurrency(order.totalAmount)}</TableCell>
+                      <TableCell>{formatDate(schedule.deliveryDate)}</TableCell>
                       <TableCell>
-                        <OrderStatusBadge
-                          status={order.orderSchedule?.status}
-                        />
+                        <StatusBadge status={schedule.status} />
                       </TableCell>
                       <TableCell className='text-right'>
-                        {order.orderSchedule?.status === 'preparing' && (
-                          <div className='flex justify-end gap-2'>
-                            <Button
-                              variant='ghost'
-                              size='sm'
-                              onClick={() => {
-                                setSelectedOrder(order);
-                                setIsDetailDialogOpen(true);
-                              }}
-                            >
-                              <IconEye className='h-4 w-4' />
-                            </Button>
-                            <Button
-                              variant='default'
-                              size='sm'
-                              onClick={() => {
-                                setSelectedOrder(order);
-                                setIsAssignDialogOpen(true);
-                              }}
-                            >
-                              <IconTruck className='mr-1 h-4 w-4' />
-                              Phân công xe
-                            </Button>
-                          </div>
-                        )}
+                        <div className='flex justify-end gap-2'>
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            onClick={() => {
+                              setSelectedSchedule(schedule);
+                              setIsDetailDialogOpen(true);
+                            }}
+                          >
+                            <IconEye className='h-4 w-4' />
+                          </Button>
+                          <Button
+                            variant='default'
+                            size='sm'
+                            onClick={() => {
+                              setSelectedSchedule(schedule);
+                              loadPhases(schedule.id);
+                              setIsPhasesDialogOpen(true);
+                            }}
+                          >
+                            <IconTruck className='mr-1 h-4 w-4' />
+                            Chọn đợt
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))
@@ -408,7 +528,7 @@ export function OutboundTruckAssignment() {
       </Card>
 
       {/* Available Trucks Card */}
-      <Card>
+      <Card className='w-full'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <IconTruck className='h-5 w-5' />
@@ -457,129 +577,169 @@ export function OutboundTruckAssignment() {
         </CardContent>
       </Card>
 
+      {/* Deliveries List */}
+      <Card className='w-full'>
+        <CardHeader>
+          <CardTitle className='flex items-center gap-2'>
+            <IconTruckDelivery className='h-5 w-5' />
+            Danh Sách Chuyến Outbound ({deliveries.length})
+          </CardTitle>
+          <CardDescription>
+            Hiển thị tất cả chuyến, bao gồm đã hoàn thành và đã hủy
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className='rounded-md border'>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Đợt giao hàng</TableHead>
+                  <TableHead>Xe</TableHead>
+                  <TableHead>Trạng thái</TableHead>
+                  <TableHead>Khởi hành</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {deliveries.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className='text-center'>
+                      Không có chuyến outbound
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  deliveries.map((d) => (
+                    <TableRow key={d.id}>
+                      <TableCell className='font-mono text-sm'>
+                        {d.id.slice(0, 8)}...
+                      </TableCell>
+                      <TableCell className='font-mono text-sm'>
+                        {d.orderPhase?.phaseNumber
+                          ? `Đợt ${d.orderPhase.phaseNumber}`
+                          : '-'}
+                      </TableCell>
+                      <TableCell>
+                        {d.truck?.licensePlate || d.truck?.id || '-'}
+                      </TableCell>
+                      <TableCell>{d.status || '-'}</TableCell>
+                      <TableCell>{formatDate(d.startTime)}</TableCell>
+                      <TableCell>
+                        {d.status === 'scheduled' ? (
+                          <Button
+                            size='sm'
+                            variant='default'
+                            onClick={() => handleStartDelivery(d.id)}
+                            disabled={isSubmitting}
+                          >
+                            Bắt đầu chuyến đi
+                          </Button>
+                        ) : d.status === 'delivering' ? (
+                          <Button
+                            size='sm'
+                            variant='default'
+                            onClick={() => handleCompleteDelivery(d.id)}
+                            disabled={isSubmitting}
+                          >
+                            Xác nhận giao hàng
+                          </Button>
+                        ) : d.status === 'delivered' ? (
+                          <Button
+                            size='sm'
+                            variant='default'
+                            onClick={() => handleReturnToWarehouse(d.id)}
+                            disabled={isSubmitting}
+                          >
+                            Trở về kho
+                          </Button>
+                        ) : d.status === 'returning' ? (
+                          <Button
+                            size='sm'
+                            variant='default'
+                            onClick={() => handleCompleteReturn(d.id)}
+                            disabled={isSubmitting}
+                          >
+                            Hoàn tất
+                          </Button>
+                        ) : (
+                          '-'
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Detail Dialog */}
       <Dialog open={isDetailDialogOpen} onOpenChange={setIsDetailDialogOpen}>
-        <DialogContent className='max-h-[90vh] w-full max-w-7xl overflow-y-auto'>
+        <DialogContent className='max-w-3xl'>
           <DialogHeader>
-            <DialogTitle>Chi tiết đơn hàng</DialogTitle>
+            <DialogTitle>Chi tiết lịch giao hàng</DialogTitle>
           </DialogHeader>
-          {selectedOrder && (
+          {selectedSchedule && (
             <div className='space-y-4'>
               <div className='grid grid-cols-2 gap-4'>
                 <div>
-                  <Label className='text-muted-foreground'>Mã đơn</Label>
-                  <p className='font-mono text-sm'>{selectedOrder.id}</p>
+                  <Label className='text-muted-foreground'>Mã lịch</Label>
+                  <p className='font-mono text-sm'>{selectedSchedule.id}</p>
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>Trạng thái</Label>
                   <div className='mt-1'>
-                    <OrderStatusBadge
-                      status={selectedOrder.orderSchedule?.status}
-                    />
+                    <StatusBadge status={selectedSchedule.status} />
                   </div>
                 </div>
                 <div>
                   <Label className='text-muted-foreground'>Khách hàng</Label>
                   <p>
-                    {selectedOrder.orderSchedule?.consignee?.organizationName ||
-                      selectedOrder.orderSchedule?.consignee
-                        ?.representativeName ||
-                      'N/A'}
+                    {selectedSchedule.consignee?.organizationName ||
+                      selectedSchedule.consignee?.representativeName ||
+                      '-'}
                   </p>
                 </div>
                 <div>
-                  <Label className='text-muted-foreground'>Ngày đặt hàng</Label>
-                  <p>{formatDate(selectedOrder.orderDate)}</p>
+                  <Label className='text-muted-foreground'>
+                    Ngày giao hàng
+                  </Label>
+                  <p>{formatDate(selectedSchedule.deliveryDate)}</p>
                 </div>
                 <div className='col-span-2'>
-                  <Label className='text-muted-foreground'>
-                    Địa chỉ giao hàng
-                  </Label>
-                  <p>{selectedOrder.orderSchedule?.address || 'N/A'}</p>
-                </div>
-                <div>
-                  <Label className='text-muted-foreground'>
-                    Tổng khối lượng
-                  </Label>
-                  <p>
-                    {selectedOrder.totalMass
-                      ? `${selectedOrder.totalMass} kg`
-                      : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <Label className='text-muted-foreground'>Tổng thể tích</Label>
-                  <p>
-                    {selectedOrder.totalVolume
-                      ? `${selectedOrder.totalVolume} m³`
-                      : 'N/A'}
-                  </p>
-                </div>
-                <div>
-                  <Label className='text-muted-foreground'>
-                    Tổng tiền hàng
-                  </Label>
-                  <p>{formatCurrency(selectedOrder.totalPayment)}</p>
-                </div>
-                <div>
-                  <Label className='text-muted-foreground'>
-                    Tổng cộng (bao gồm VAT)
-                  </Label>
-                  <p className='font-semibold'>
-                    {formatCurrency(selectedOrder.totalAmount)}
-                  </p>
+                  <Label className='text-muted-foreground'>Mô tả</Label>
+                  <p>{selectedSchedule.description || 'Không có mô tả'}</p>
                 </div>
               </div>
-              <div className='border-t pt-4'>
-                <Label className='text-muted-foreground'>Sản phẩm</Label>
-                <div className='mt-2 rounded-md border'>
-                  <Table>
-                    <TableHeader>
+              <div className='rounded-md border'>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Sản phẩm</TableHead>
+                      <TableHead>Số lượng</TableHead>
+                      <TableHead>Đơn vị</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {!selectedSchedule.orderDetails ||
+                    selectedSchedule.orderDetails.length === 0 ? (
                       <TableRow>
-                        <TableHead>Hình ảnh</TableHead>
-                        <TableHead>Sản phẩm</TableHead>
-                        <TableHead>Số lượng</TableHead>
-                        <TableHead>Đơn vị</TableHead>
-                        <TableHead>Đơn giá</TableHead>
-                        <TableHead>VAT</TableHead>
-                        <TableHead>Thành tiền</TableHead>
+                        <TableCell colSpan={3} className='text-center'>
+                          Không có sản phẩm
+                        </TableCell>
                       </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {isDetailLoading ? (
-                        <TableRow>
-                          <TableCell colSpan={7} className='text-center'>
-                            Đang tải...
-                          </TableCell>
+                    ) : (
+                      selectedSchedule.orderDetails.map((detail) => (
+                        <TableRow key={detail.id}>
+                          <TableCell>{detail.product?.name || '-'}</TableCell>
+                          <TableCell>{detail.quantity}</TableCell>
+                          <TableCell>{detail.unit || '-'}</TableCell>
                         </TableRow>
-                      ) : details.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={7} className='text-center'>
-                            Không có sản phẩm
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        details.map((d) => (
-                          <TableRow key={d.id}>
-                            <TableCell>
-                              <img
-                                src={d.product?.image ?? '/placeholder.svg'}
-                                alt={d.product?.name ?? '-'}
-                                className='h-10 w-10 rounded-md'
-                              />
-                            </TableCell>
-                            <TableCell>{d.product?.name ?? '-'}</TableCell>
-                            <TableCell>{d.quantity ?? '-'}</TableCell>
-                            <TableCell>{d.unit ?? '-'}</TableCell>
-                            <TableCell>{d.unitPrice ?? '-'}</TableCell>
-                            <TableCell>{d.taxRate ?? '-'}</TableCell>
-                            <TableCell>{d.amount ?? '-'}</TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
               </div>
             </div>
           )}
@@ -594,43 +754,162 @@ export function OutboundTruckAssignment() {
         </DialogContent>
       </Dialog>
 
+      {/* Phases Selection Dialog */}
+      <Dialog open={isPhasesDialogOpen} onOpenChange={setIsPhasesDialogOpen}>
+        <DialogContent className='max-w-3xl'>
+          <DialogHeader>
+            <DialogTitle>Chọn đợt giao hàng</DialogTitle>
+            <DialogDescription>
+              Chọn đợt giao hàng để phân công xe
+            </DialogDescription>
+          </DialogHeader>
+          {selectedSchedule && (
+            <div className='space-y-4'>
+              <div className='bg-muted rounded-lg p-4'>
+                <h4 className='mb-2 font-semibold'>Thông tin lịch giao hàng</h4>
+                <div className='grid grid-cols-2 gap-2 text-sm'>
+                  <div>
+                    <span className='text-muted-foreground'>Khách hàng:</span>{' '}
+                    <span className='font-medium'>
+                      {selectedSchedule.consignee?.organizationName ||
+                        selectedSchedule.consignee?.representativeName ||
+                        'N/A'}
+                    </span>
+                  </div>
+                  <div>
+                    <span className='text-muted-foreground'>
+                      Ngày giao hàng:
+                    </span>{' '}
+                    <span className='font-medium'>
+                      {formatDate(selectedSchedule.deliveryDate)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className='rounded-md border'>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Đợt</TableHead>
+                      <TableHead>Mô tả</TableHead>
+                      <TableHead>Trạng thái</TableHead>
+                      <TableHead className='text-right'>Thao tác</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoadingPhases ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className='text-center'>
+                          Đang tải...
+                        </TableCell>
+                      </TableRow>
+                    ) : phases.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className='text-center'>
+                          Không có đợt giao hàng
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      phases.map((phase) => {
+                        const isAssigned = assignedPhaseIds.has(phase.id);
+                        return (
+                          <TableRow key={phase.id}>
+                            <TableCell className='font-mono text-sm'>
+                              Đợt {phase.phaseNumber}
+                            </TableCell>
+                            <TableCell>
+                              {phase.description || 'Không có mô tả'}
+                            </TableCell>
+                            <TableCell>
+                              <StatusBadge status={phase.status} />
+                            </TableCell>
+                            <TableCell className='text-right'>
+                              <Button
+                                size='sm'
+                                variant='default'
+                                disabled={isAssigned}
+                                onClick={() => {
+                                  setSelectedPhase(phase);
+                                  setIsPhasesDialogOpen(false);
+                                  setIsAssignDialogOpen(true);
+                                }}
+                              >
+                                {isAssigned ? 'Đã phân công' : 'Phân công xe'}
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant='outline'
+              onClick={() => {
+                setIsPhasesDialogOpen(false);
+                setSelectedSchedule(null);
+              }}
+            >
+              Đóng
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Assign Truck Dialog */}
       <Dialog open={isAssignDialogOpen} onOpenChange={setIsAssignDialogOpen}>
-        <DialogContent className='max-w-2xl'>
+        <DialogContent className='max-w-3xl'>
           <DialogHeader>
             <DialogTitle>Phân công xe giao hàng</DialogTitle>
             <DialogDescription>
               Chọn xe và lên lịch giao hàng từ kho đến khách hàng
             </DialogDescription>
           </DialogHeader>
-          {selectedOrder && (
+          {selectedSchedule && selectedPhase && (
             <div className='space-y-4'>
               <div className='bg-muted rounded-lg p-4'>
                 <h4 className='mb-2 flex items-center gap-2 font-semibold'>
-                  <IconPackage className='h-4 w-4' />
-                  Thông tin đơn hàng
+                  <IconCalendar className='h-4 w-4' />
+                  Thông tin đợt giao hàng
                 </h4>
                 <div className='grid grid-cols-2 gap-2 text-sm'>
                   <div>
                     <span className='text-muted-foreground'>Khách hàng:</span>{' '}
                     <span className='font-medium'>
-                      {selectedOrder.orderSchedule?.consignee
-                        ?.organizationName ||
-                        selectedOrder.orderSchedule?.consignee
-                          ?.representativeName ||
+                      {selectedSchedule.consignee?.organizationName ||
+                        selectedSchedule.consignee?.representativeName ||
                         'N/A'}
                     </span>
                   </div>
                   <div>
-                    <span className='text-muted-foreground'>Tổng tiền:</span>{' '}
+                    <span className='text-muted-foreground'>Đợt:</span>{' '}
                     <span className='font-medium'>
-                      {formatCurrency(selectedOrder.totalAmount)}
+                      Đợt {selectedPhase.phaseNumber}
+                    </span>
+                  </div>
+                  <div>
+                    <span className='text-muted-foreground'>
+                      Ngày giao hàng:
+                    </span>{' '}
+                    <span className='font-medium'>
+                      {formatDate(selectedSchedule.deliveryDate)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className='text-muted-foreground'>Mô tả đợt:</span>{' '}
+                    <span className='font-medium'>
+                      {selectedPhase.description || 'Không có'}
                     </span>
                   </div>
                   <div className='col-span-2'>
                     <span className='text-muted-foreground'>Địa chỉ:</span>{' '}
                     <span className='font-medium'>
-                      {selectedOrder.orderSchedule?.address || 'N/A'}
+                      {selectedSchedule.address || 'N/A'}
                     </span>
                   </div>
                 </div>
@@ -653,6 +932,31 @@ export function OutboundTruckAssignment() {
                         <SelectItem key={truck.id} value={truck.id}>
                           {truck.licensePlate} - {truck.model} (
                           {truck.capacity ? `${truck.capacity} kg` : 'N/A'})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor='staff-select'>Chọn tài xế</Label>
+                  <Select
+                    value={assignmentForm.deliveryStaffId}
+                    onValueChange={(value) =>
+                      setAssignmentForm((prev) => ({
+                        ...prev,
+                        deliveryStaffId: value
+                      }))
+                    }
+                  >
+                    <SelectTrigger id='staff-select'>
+                      <SelectValue placeholder='Chọn tài xế...' />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {deliveryStaffs.map((staff) => (
+                        <SelectItem key={staff.id} value={staff.id}>
+                          {staff.user.firstName + ' ' + staff.user.lastName ||
+                            staff.id}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -691,13 +995,16 @@ export function OutboundTruckAssignment() {
               </div>
             </div>
           )}
+
           <DialogFooter>
             <Button
               variant='outline'
               onClick={() => {
                 setIsAssignDialogOpen(false);
+                setSelectedPhase(null);
                 setAssignmentForm({
                   truckId: '',
+                  deliveryStaffId: '',
                   startTime: null,
                   estimatedArrival: null
                 });

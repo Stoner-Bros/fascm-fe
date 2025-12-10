@@ -12,30 +12,50 @@ export type Consignee = {
   createdAt?: Date;
   updatedAt?: Date;
 };
+
 export type OrderWithDetailsResponseDto = {
   order: OrderBE;
   orderDetails: OrderDetailBE[];
-};
-export type OrderSchedule = {
-  id: string;
-  status?: OrderScheduleStatus | null;
-  description?: string | null;
-  orderDate?: string | null;
-  consignee?: Consignee | null;
-  createdAt: string;
-  updatedAt: string;
-  address?: string | null;
 };
 
 export type OrderScheduleStatus =
   | 'pending'
   | 'rejected'
-  | 'preparing'
-  | 'delivering'
-  | 'delivered'
+  | 'approved'
+  | 'processing'
   | 'completed'
-  | 'canceled'
-  | 'approved';
+  | 'canceled';
+
+export type OrderSchedule = {
+  id: string;
+  status?: OrderScheduleStatus | null;
+  description?: string | null;
+  deliveryDate?: string | Date | null;
+  consignee?: Consignee | null;
+  createdAt: string;
+  updatedAt: string;
+  address?: string | null;
+  reason?: string | null;
+  orders?: Array<{
+    id: string;
+    totalAmount?: number;
+    orderDate?: string;
+    orderUrl?: string;
+    [key: string]: unknown;
+  }>;
+  orderDetails?: Array<{
+    id: string;
+    quantity?: number;
+    unitPrice?: number;
+    unit?: string;
+    product?: {
+      id: string;
+      name?: string;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  }>;
+};
 
 export type OrderBE = {
   id: string;
@@ -56,8 +76,16 @@ export type FindAllOrdersDto = {
   limit?: number;
 };
 
-export type UpdateOrderScheduleDto = {
+export type UpdateOrderScheduleStatusDto = {
+  status: OrderScheduleStatus;
+  reason?: string;
+};
+
+export type FindAllOrderSchedulesDto = {
+  page?: number;
+  limit?: number;
   status?: OrderScheduleStatus;
+  sort?: 'asc' | 'desc';
 };
 
 export type OrderDetailBE = {
@@ -75,12 +103,86 @@ export type OrderDetailBE = {
   updatedAt: string;
 };
 
-export type OrderPhase = {
+// Order Phase Types
+export type OrderPhaseStatus =
+  | 'preparing'
+  | 'delivering'
+  | 'delivered'
+  | 'completed'
+  | 'canceled';
+
+export interface OrderPhase {
   id: string;
-  phaseNumber?: number | null;
-  status?: string | null;
   description?: string | null;
-  orderSchedule?: OrderSchedule | null;
-  createdAt: string;
-  updatedAt: string;
-};
+  status?: OrderPhaseStatus | null;
+  phaseNumber?: number | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  orderSchedule?: {
+    id: string;
+    [key: string]: unknown;
+  };
+  orderInvoice?: {
+    id: string;
+    invoiceNumber?: string;
+    totalAmount?: number;
+    [key: string]: unknown;
+  };
+  orderInvoiceDetails?: Array<{
+    id: string;
+    unitPrice?: number | null;
+    quantity?: number | null;
+    unit?: string | null;
+    product?: {
+      id: string;
+      name?: string;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  }>;
+  imageProof?: Array<{
+    id: string;
+    imageUrl?: string;
+    [key: string]: unknown;
+  }> | null;
+}
+
+export interface CreateOrderInvoiceDetailDto {
+  unitPrice?: number | null;
+  quantity?: number | null;
+  unit?: string | null;
+  product: {
+    id: string;
+  };
+}
+
+export interface CreateOrderInvoiceDto {
+  invoiceNumber?: string | null;
+  totalAmount?: number | null;
+}
+
+export interface CreateOrderPhaseDto {
+  description?: string | null;
+  phaseNumber?: number | null;
+  orderSchedule: {
+    id: string;
+  };
+  orderInvoice?: CreateOrderInvoiceDto | null;
+  orderInvoiceDetails: CreateOrderInvoiceDetailDto[];
+}
+
+export interface CreateMultipleOrderPhaseDto {
+  orderPhases: CreateOrderPhaseDto[];
+}
+
+export type UpdateOrderPhaseDto = Partial<CreateOrderPhaseDto>;
+
+export interface UpdateOrderPhaseStatusDto {
+  status: OrderPhaseStatus;
+}
+
+export interface FindAllOrderPhasesDto {
+  page?: number;
+  limit?: number;
+  orderScheduleId?: string;
+}
