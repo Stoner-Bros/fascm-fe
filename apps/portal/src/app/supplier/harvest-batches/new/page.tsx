@@ -30,13 +30,8 @@ import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Product, fetchProducts } from '@/services/product.service';
-import {
-  createHarvestSchedule,
-  createHarvestTicket,
-  updateHarvestTicket,
-  createHarvestDetail,
-  fetchSupplier
-} from '@/features/supplier';
+import { createHarvestSchedule } from '@/services/harvest-schedule.service';
+import { fetchSupplier } from '@/services/supplier.service';
 import type { Supplier } from '@/types/supplier';
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 
@@ -57,7 +52,6 @@ export default function NewHarvestBatchPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [products, setProducts] = useState<Product[]>([]);
-  const [supplierId, setSupplierId] = useState<string | null>(null);
   const [showMap, setShowMap] = useState(false);
   const [harvestPosition, setHarvestPosition] = useState<
     { lat: number; lng: number } | undefined
@@ -89,9 +83,8 @@ export default function NewHarvestBatchPage() {
         if (!mounted) return;
         setProducts(res.data ?? []);
       })
-      .catch((err) => {
+      .catch(() => {
         if (!mounted) return;
-        console.error('Failed to load products', err);
         toast({
           title: 'Error',
           description: 'Failed to load products',
@@ -99,34 +92,26 @@ export default function NewHarvestBatchPage() {
         });
       });
 
-    // Get supplier info (id + address)
+    // Prefill address from supplier
     fetchSupplier()
       .then((supplier: Supplier) => {
         if (!mounted) return;
-        if (supplier && supplier.id) {
-          setSupplierId(supplier.id);
-
-          // 🔥 Prefill Harvest Address = supplier.address (nếu có)
+        if (supplier?.address) {
           setScheduleData((prev) => ({
             ...prev,
-            address: supplier.address || prev.address || ''
+            address: supplier.address
           }));
         }
       })
-      .catch((err: unknown) => {
+      .catch(() => {
         if (!mounted) return;
-        console.error('Failed to get supplier info', err);
-        toast({
-          title: 'Error',
-          description: 'Failed to load supplier information. Please try again.',
-          variant: 'destructive'
-        });
       });
 
     return () => {
       mounted = false;
     };
-  }, []); // chỉ chạy 1 lần khi mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleScheduleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -193,15 +178,6 @@ export default function NewHarvestBatchPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!supplierId) {
-      toast({
-        title: 'Error',
-        description: 'Supplier ID not found. Please login again.',
-        variant: 'destructive'
-      });
-      return;
-    }
-
     if (harvestDetails.length === 0) {
       toast({
         title: 'Validation Error',
@@ -222,7 +198,6 @@ export default function NewHarvestBatchPage() {
         return;
       }
 
-      // Validate quantity: >= 20 và là bội số của 20
       const minQuantity = getMinQuantity();
       const step = getQuantityStep();
 
@@ -240,111 +215,22 @@ export default function NewHarvestBatchPage() {
     setLoading(true);
 
     try {
-      // Step 1: Create Harvest Schedule
-      const schedule = await createHarvestSchedule({
+      await createHarvestSchedule({
         description: scheduleData.description || null,
         harvestDate: new Date(scheduleData.harvestDate).toISOString(),
-        // ✅ Address là giá trị đã prefill từ supplier và có thể chỉnh sửa trên UI
         address: scheduleData.address || null,
-        supplierId: {
-          id: supplierId
-        }
-      });
-
-      // Step 2: ALWAYS create a new Harvest Ticket for this schedule
-      const ticket = await createHarvestTicket({
-        date: new Date(scheduleData.harvestDate).toISOString(),
-        harvestScheduleId: {
-          id: schedule.id
-        }
-      });
-
-      if (!ticket?.id) {
-        throw new Error('Failed to create harvest ticket');
-      }
-
-      // Step 3: Create ALL Harvest Details using this ONE ticket
-      console.log(
-        'Creating harvest details:',
-        harvestDetails.length,
-        'details'
-      );
-
-      const createdDetails = [];
-      for (let index = 0; index < harvestDetails.length; index++) {
-        const detail = harvestDetails[index];
-
-        if (!detail.productId) {
-          throw new Error(`Missing productId in harvest detail #${index + 1}`);
-        }
-
-        const quantity = Number(detail.quantity) || 0;
-        const unitPrice = Number(detail.unitPrice) || 0;
-        const amount = quantity * unitPrice;
-
-        const payload = {
+        harvestTicket: {
+          ticketNumber: null,
+          ticketUrl: null
+        },
+        harvestDetails: harvestDetails.map((detail) => ({
           product: {
-            id: String(detail.productId)
+            id: detail.productId
           },
-          harvestTicket: {
-            id: String(ticket.id)
-          },
-          quantity: quantity,
-          unitPrice: unitPrice,
-          unit: String(detail.unit || 'kg'),
-          amount: amount
-        };
-
-        console.log(`Creating harvest detail #${index + 1}:`, payload);
-
-        try {
-          const createdDetail = await createHarvestDetail(payload);
-          console.log(
-            `Successfully created harvest detail #${index + 1}:`,
-            createdDetail
-          );
-          createdDetails.push(createdDetail);
-        } catch (error) {
-          console.error(
-            `Failed to create harvest detail #${index + 1}:`,
-            error
-          );
-          throw new Error(
-            `Failed to create harvest detail #${index + 1}: ${
-              error instanceof Error ? error.message : 'Unknown error'
-            }`
-          );
-        }
-      }
-
-      if (createdDetails.length !== harvestDetails.length) {
-        throw new Error(
-          `Failed to create all harvest details. Expected ${harvestDetails.length}, created ${createdDetails.length}`
-        );
-      }
-
-      console.log(
-        'Successfully created all harvest details:',
-        createdDetails.length
-      );
-
-      // Step 4: Tính toán và cập nhật Harvest Ticket
-      const totalQuantity = harvestDetails.reduce(
-        (sum, detail) => sum + (Number(detail.quantity) || 0),
-        0
-      );
-
-      const totalAmount = harvestDetails.reduce((sum, detail) => {
-        const qty = Number(detail.quantity) || 0;
-        const price = Number(detail.unitPrice) || 0;
-        return sum + qty * price;
-      }, 0);
-
-      await updateHarvestTicket(ticket.id, {
-        quantity: totalQuantity,
-        unit: 'kg',
-        totalPayment: totalAmount,
-        totalAmount: totalAmount
+          quantity: detail.quantity,
+          unitPrice: detail.unitPrice,
+          unit: detail.unit
+        }))
       });
 
       toast({
@@ -353,7 +239,6 @@ export default function NewHarvestBatchPage() {
       });
       router.push('/supplier/harvest-batches');
     } catch (error: any) {
-      console.error('Failed to create harvest batch', error);
       toast({
         title: 'Error',
         description:

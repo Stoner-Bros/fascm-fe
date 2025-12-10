@@ -1,54 +1,6 @@
 'use client';
 
 import PageContainer from '@/components/layout/page-container';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import {
-  IconPlus,
-  IconSearch,
-  IconEye,
-  IconEdit,
-  IconX,
-  IconPackage,
-  IconClock,
-  IconTruck,
-  IconCheck,
-  IconInfoCircle
-} from '@tabler/icons-react';
-import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
-import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,23 +11,66 @@ import {
   AlertDialogHeader,
   AlertDialogTitle
 } from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
-  fetchHarvestSchedules,
-  fetchHarvestTickets,
-  fetchHarvestDetailsByHarvestTicketId
-} from '@/features/supplier';
-import { fetchSupplier } from '@/services/supplier.service';
-import type { HarvestSchedule } from '@/types/harvest-schedule';
-import type { HarvestDetail } from '@/types/harvest-detail';
-import type { Supplier } from '@/types/supplier';
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import { useToast } from '@/hooks/use-toast';
+import {
+  fetchMyHarvestSchedules,
+  updateHarvestScheduleStatus
+} from '@/services/harvest-schedule.service';
+import {
+  IconCheck,
+  IconClock,
+  IconEdit,
+  IconEye,
+  IconInfoCircle,
+  IconPackage,
+  IconPlus,
+  IconSearch,
+  IconTruck,
+  IconX
+} from '@tabler/icons-react';
+import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
 
 type HarvestBatchRow = {
-  id: string; // HarvestScheduleId
-  products: string; // product names from all details of tickets in this schedule
+  id: string;
+  products: string;
   harvestDate: string;
   location: string;
   status: string;
-  reason?: string; // Lý do từ chối (nếu có)
+  reason?: string | null;
 };
 
 const normalizeStatus = (status?: string | null): string => {
@@ -90,12 +85,8 @@ const getStatusIcon = (status: string) => {
       return <IconClock className='h-4 w-4' />;
     case 'approved':
       return <IconCheck className='h-4 w-4' />;
-    case 'preparing':
+    case 'processing':
       return <IconTruck className='h-4 w-4' />;
-    case 'delivering':
-      return <IconTruck className='h-4 w-4' />;
-    case 'delivered':
-      return <IconPackage className='h-4 w-4' />;
     case 'completed':
       return <IconCheck className='h-4 w-4' />;
     case 'rejected':
@@ -114,11 +105,7 @@ const getStatusVariant = (status: string) => {
       return 'outline';
     case 'approved':
       return 'default';
-    case 'preparing':
-      return 'default';
-    case 'delivering':
-      return 'default';
-    case 'delivered':
+    case 'processing':
       return 'default';
     case 'completed':
       return 'default';
@@ -139,12 +126,8 @@ const getStatusLabel = (status: string) => {
       return 'Đã từ chối đơn';
     case 'approved':
       return 'Đã duyệt đơn';
-    case 'preparing':
-      return 'Chuẩn đi lấy';
-    case 'delivering':
-      return 'Đang đi lấy';
-    case 'delivered':
-      return 'Đã lấy';
+    case 'processing':
+      return 'Đang xử lý';
     case 'completed':
       return 'Đã hoàn thành';
     case 'canceled':
@@ -163,9 +146,7 @@ export default function SupplierHarvestBatchesFeature() {
     | 'pending'
     | 'rejected'
     | 'approved'
-    | 'preparing'
-    | 'delivering'
-    | 'delivered'
+    | 'processing'
     | 'completed'
     | 'canceled'
   >('ALL');
@@ -174,129 +155,59 @@ export default function SupplierHarvestBatchesFeature() {
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
 
-  /* 
-    CHỈ fetch 1 lần duy nhất khi mount - GIỮ LẠI API CALLS ĐỂ LẤY PRODUCTS
-  */
   useEffect(() => {
     let cancelled = false;
 
     const loadData = async () => {
       setLoading(true);
       try {
-        // 1. Fetch supplier info (mine) - chỉ fetch 1 lần
-        let supplierInfo: Supplier | null = null;
-        let location = '-';
-        try {
-          supplierInfo = await fetchSupplier();
-          location = supplierInfo?.gardenName || supplierInfo?.address || '-';
-        } catch (err) {
-          console.error('Failed to fetch supplier info', err);
-        }
-
-        if (cancelled) return;
-
-        // 2. Fetch schedules
-        const schedulesRes = await fetchHarvestSchedules({
+        const schedulesRes = await fetchMyHarvestSchedules({
           page: 1,
-          limit: 50
+          limit: 50,
+          sort: 'desc'
         });
-        const schedules: HarvestSchedule[] = schedulesRes.data ?? [];
+
+        const schedules = schedulesRes.data ?? [];
 
         if (cancelled) return;
 
-        // 3. Fetch tất cả harvest tickets một lần (không filter theo scheduleId)
-        const allTicketsRes = await fetchHarvestTickets({
-          page: 1,
-          limit: 200 // Fetch nhiều tickets để cover tất cả schedules
-        });
-        const allTickets = allTicketsRes.data ?? [];
-
-        if (cancelled) return;
-
-        // 4. Group tickets theo scheduleId
-        const ticketsByScheduleId = new Map<string, typeof allTickets>();
-        for (const ticket of allTickets) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const ticketScheduleId =
-            (ticket as any)?.harvestScheduleId?.id ??
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (ticket as any)?.harvestScheduleId ??
-            '';
-          if (ticketScheduleId) {
-            const scheduleIdStr = String(ticketScheduleId);
-            if (!ticketsByScheduleId.has(scheduleIdStr)) {
-              ticketsByScheduleId.set(scheduleIdStr, []);
-            }
-            ticketsByScheduleId.get(scheduleIdStr)!.push(ticket);
-          }
-        }
-
-        if (cancelled) return;
-
-        // 5. Process từng schedule để lấy đầy đủ thông tin
-        const rows: HarvestBatchRow[] = await Promise.all(
-          schedules.map(async (schedule) => {
-            const scheduleId = schedule.id;
-
-            // ===== Tickets của schedule này (từ cache) =====
-            const tickets = ticketsByScheduleId.get(String(scheduleId)) ?? [];
-
-            const detailResponses = await Promise.all(
-              tickets.map(async (ticket) => {
-                try {
-                  const details =
-                    (await fetchHarvestDetailsByHarvestTicketId(ticket.id)) ??
-                    [];
-                  return details;
-                } catch (error) {
-                  console.error(
-                    `Failed to fetch details for ticket ${ticket.id}`,
-                    error
-                  );
-                  return [] as HarvestDetail[];
-                }
-              })
-            );
-
-            const details = detailResponses.flat();
-
-            // Extract product names từ details
-            const productNames = new Set<string>();
-            for (const detail of details) {
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              const productName =
-                (detail as any)?.product?.name ||
-                (detail as any)?.productName ||
-                (detail as any)?.product?.id;
+        const rows: HarvestBatchRow[] = schedules.map((schedule) => {
+          // Extract product names from harvestDetails (already included in response)
+          const productNames = new Set<string>();
+          if (
+            schedule.harvestDetails &&
+            Array.isArray(schedule.harvestDetails)
+          ) {
+            for (const detail of schedule.harvestDetails) {
+              const productName = detail?.product?.name || detail?.product?.id;
               if (productName) productNames.add(String(productName));
             }
+          }
 
-            const products =
-              Array.from(productNames).join(', ') || 'No products';
+          const products = Array.from(productNames).join(', ') || 'No products';
 
-            const harvestDate = schedule.harvestDate
-              ? new Date(
-                  schedule.harvestDate as unknown as string
-                ).toLocaleString()
-              : '-';
+          const harvestDate = schedule.harvestDate
+            ? new Date(
+                schedule.harvestDate as unknown as string
+              ).toLocaleString()
+            : '-';
 
-            return {
-              id: scheduleId,
-              products,
-              harvestDate,
-              location,
-              status: schedule.status ?? 'PENDING',
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              reason: (schedule as any)?.reason
-            };
-          })
-        );
+          const location = schedule.address || '-';
+
+          return {
+            id: schedule.id,
+            products,
+            harvestDate,
+            location,
+            status: schedule.status ?? 'PENDING',
+            reason: schedule.reason
+          };
+        });
 
         if (cancelled) return;
         setBatches(rows);
       } catch (err) {
         if (cancelled) return;
-        console.error('Failed to load harvest batches', err);
         toast({
           title: 'Error',
           description: 'Failed to load harvest batches',
@@ -307,14 +218,13 @@ export default function SupplierHarvestBatchesFeature() {
       }
     };
 
-    // CHỈ LOAD 1 LẦN DUY NHẤT - KHÔNG CÓ POLLING/INTERVAL
     loadData();
 
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Không có dependencies - chỉ chạy 1 lần khi mount
+  }, []);
 
   const handleCancelBatch = (batchId: string) => {
     setSelectedBatchId(batchId);
@@ -323,17 +233,28 @@ export default function SupplierHarvestBatchesFeature() {
 
   const confirmCancelBatch = () => {
     if (selectedBatchId) {
-      setBatches((prev) =>
-        prev.map((batch) =>
-          batch.id === selectedBatchId
-            ? { ...batch, status: 'canceled' }
-            : batch
-        )
-      );
-      toast({
-        title: 'Batch Cancelled',
-        description: `Harvest batch ${selectedBatchId} has been cancelled.`
-      });
+      // call API để hủy batch
+      updateHarvestScheduleStatus(selectedBatchId, 'canceled')
+        .then(() => {
+          setBatches((prev) =>
+            prev.map((batch) =>
+              batch.id === selectedBatchId
+                ? { ...batch, status: 'canceled' }
+                : batch
+            )
+          );
+          toast({
+            title: 'Batch Cancelled',
+            description: `Harvest batch ${selectedBatchId} has been cancelled.`
+          });
+        })
+        .catch(() => {
+          toast({
+            title: 'Error',
+            description: `Failed to cancel harvest batch ${selectedBatchId}.`,
+            variant: 'destructive'
+          });
+        });
     }
     setCancelDialogOpen(false);
     setSelectedBatchId(null);
@@ -363,14 +284,8 @@ export default function SupplierHarvestBatchesFeature() {
         .length,
       approved: batches.filter((b) => normalizeStatus(b.status) === 'approved')
         .length,
-      preparing: batches.filter(
-        (b) => normalizeStatus(b.status) === 'preparing'
-      ).length,
-      delivering: batches.filter(
-        (b) => normalizeStatus(b.status) === 'delivering'
-      ).length,
-      delivered: batches.filter(
-        (b) => normalizeStatus(b.status) === 'delivered'
+      processing: batches.filter(
+        (b) => normalizeStatus(b.status) === 'processing'
       ).length,
       completed: batches.filter(
         (b) => normalizeStatus(b.status) === 'completed'
@@ -497,9 +412,7 @@ export default function SupplierHarvestBatchesFeature() {
                         | 'pending'
                         | 'rejected'
                         | 'approved'
-                        | 'preparing'
-                        | 'delivering'
-                        | 'delivered'
+                        | 'processing'
                         | 'completed'
                         | 'canceled') || 'ALL'
                     )
@@ -513,9 +426,7 @@ export default function SupplierHarvestBatchesFeature() {
                     <SelectItem value='pending'>Chờ duyệt đơn</SelectItem>
                     <SelectItem value='rejected'>Đã từ chối đơn</SelectItem>
                     <SelectItem value='approved'>Đã duyệt đơn</SelectItem>
-                    <SelectItem value='preparing'>Chuẩn đi lấy</SelectItem>
-                    <SelectItem value='delivering'>Đang đi lấy</SelectItem>
-                    <SelectItem value='delivered'>Đã lấy</SelectItem>
+                    <SelectItem value='processing'>Đang xử lý</SelectItem>
                     <SelectItem value='completed'>Đã hoàn thành</SelectItem>
                     <SelectItem value='canceled'>Đã hủy đơn</SelectItem>
                   </SelectContent>
@@ -606,7 +517,7 @@ export default function SupplierHarvestBatchesFeature() {
                                     onClick={() => handleCancelBatch(batch.id)}
                                     className='text-destructive'
                                   >
-                                    <IconX className='mr-2 h-4 w-4' />
+                                    <IconX className='mr-2 h-4 w-4 text-red-500' />
                                     Cancel Batch
                                   </DropdownMenuItem>
                                 </>

@@ -14,13 +14,28 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import {
+  fetchHarvestScheduleById,
+  updateHarvestScheduleStatus
+} from '@/services/harvest-schedule.service';
+import type { HarvestSchedule } from '@/types/harvest-schedule';
+import {
+  IconAlertCircle,
   IconArrowLeft,
   IconCalendar,
+  IconCheck,
+  IconClock,
   IconEdit,
+  IconInfoCircle,
   IconMapPin,
   IconPackage,
   IconX
@@ -28,15 +43,6 @@ import {
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  fetchHarvestScheduleById,
-  fetchHarvestTickets,
-  fetchHarvestDetailsByHarvestTicketId,
-  fetchSupplierById
-} from '@/features/supplier';
-import type { HarvestSchedule } from '@/types/harvest-schedule';
-import type { HarvestDetail } from '@/types/harvest-detail';
-import type { Supplier } from '@/types/supplier';
 const HarvestRouteSim = dynamic(
   () => import('@/components/map/harvest-route-sim'),
   { ssr: false }
@@ -44,7 +50,6 @@ const HarvestRouteSim = dynamic(
 
 import { fetchDeliveriesByHarvestSchedule } from '@/services/delivery.service';
 import dynamic from 'next/dynamic';
-import { confirmHarvestSchedule } from '@/services/harvest-schedule.service';
 
 type DetailRow = {
   id: string;
@@ -55,24 +60,62 @@ type DetailRow = {
   totalPrice: number;
 };
 
-/* ----- helper để ngoài component cho ổn định ----- */
+type StatusConfig = {
+  label: string;
+  icon: React.ReactNode;
+  variant: 'default' | 'secondary' | 'destructive' | 'outline';
+  bgColor: string;
+  textColor: string;
+};
 
-const statusColor = (status: string) => {
-  const s = status?.toUpperCase();
-  switch (s) {
-    case 'PENDING':
-      return 'bg-yellow-100 text-yellow-800';
-    case 'DELIVERING':
-      return 'bg-blue-100 text-blue-800';
-    case 'DELIVERED':
-      return 'bg-blue-100 text-blue-800';
-    case 'COMPLETED':
-      return 'bg-green-100 text-green-800';
-    case 'CANCELLED':
-      return 'bg-red-100 text-red-800';
-    default:
-      return 'bg-gray-100 text-gray-800';
+const STATUS_MAP: Record<string, StatusConfig> = {
+  pending: {
+    label: 'Chờ duyệt đơn',
+    icon: <IconClock className='h-4 w-4' />,
+    variant: 'outline',
+    bgColor: 'bg-yellow-50',
+    textColor: 'text-yellow-700'
+  },
+  rejected: {
+    label: 'Đã từ chối',
+    icon: <IconX className='h-4 w-4' />,
+    variant: 'destructive',
+    bgColor: 'bg-red-50',
+    textColor: 'text-red-700'
+  },
+  approved: {
+    label: 'Đã duyệt đơn',
+    icon: <IconCheck className='h-4 w-4' />,
+    variant: 'default',
+    bgColor: 'bg-blue-50',
+    textColor: 'text-blue-700'
+  },
+  processing: {
+    label: 'Đang xử lý',
+    icon: <IconPackage className='h-4 w-4' />,
+    variant: 'secondary',
+    bgColor: 'bg-indigo-50',
+    textColor: 'text-indigo-700'
+  },
+  completed: {
+    label: 'Hoàn thành',
+    icon: <IconCheck className='h-4 w-4' />,
+    variant: 'default',
+    bgColor: 'bg-green-50',
+    textColor: 'text-green-700'
+  },
+  canceled: {
+    label: 'Đã hủy',
+    icon: <IconX className='h-4 w-4' />,
+    variant: 'destructive',
+    bgColor: 'bg-red-50',
+    textColor: 'text-red-700'
   }
+};
+
+const getStatusConfig = (status?: string | null): StatusConfig => {
+  const normalizedStatus = status?.toLowerCase() || 'pending';
+  return STATUS_MAP[normalizedStatus] || STATUS_MAP.pending;
 };
 
 const formatCurrency = (value: number) =>
@@ -86,7 +129,6 @@ export default function HarvestBatchDetailPage() {
 
   const [schedule, setSchedule] = useState<HarvestSchedule | null>(null);
   const [details, setDetails] = useState<DetailRow[]>([]);
-  const [supplier, setSupplier] = useState<Supplier | null>(null);
   const [loading, setLoading] = useState(false);
   const [activeDeliveryId, setActiveDeliveryId] = useState<string>('');
 
@@ -98,61 +140,12 @@ export default function HarvestBatchDetailPage() {
       try {
         const s = await fetchHarvestScheduleById(scheduleId);
 
-        // Supplier
-        let sup: Supplier | null = null;
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const supplierId = (s as any)?.supplierId?.id ?? (s as any)?.supplierId;
-        if (supplierId) {
-          try {
-            sup = await fetchSupplierById(String(supplierId));
-          } catch {
-            // ignore supplier error
-          }
-        }
-
-        // Tickets of this schedule
-        const ticketsRes = await fetchHarvestTickets({
-          page: 1,
-          limit: 20,
-          harvestScheduleId: s.id
-        });
-        const tickets =
-          ticketsRes.data?.filter((ticket) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const ticketScheduleId =
-              (ticket as any)?.harvestScheduleId?.id ??
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (ticket as any)?.harvestScheduleId ??
-              '';
-            return String(ticketScheduleId) === String(s.id);
-          }) ?? [];
-
-        // Details of tickets
-        const detailResponses = await Promise.all(
-          tickets.map(async (ticket) => {
-            try {
-              const ds =
-                (await fetchHarvestDetailsByHarvestTicketId(ticket.id)) ?? [];
-              return ds;
-            } catch (error) {
-              console.error(
-                `Failed to fetch harvest details for ticket ${ticket.id}`,
-                error
-              );
-              return [] as HarvestDetail[];
-            }
-          })
-        );
-
-        const rows: DetailRow[] = detailResponses.flat().map((detail) => {
+        // Extract details from schedule response (already included)
+        const rows: DetailRow[] = (s.harvestDetails ?? []).map((detail) => {
           const quantity = Number(detail.quantity ?? 0);
           const unitPrice = Number(detail.unitPrice ?? 0);
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const productName =
-            (detail as any)?.product?.name ||
-            (detail as any)?.productName ||
-            (detail as any)?.product?.id ||
-            'Unknown product';
+            detail.product?.name || detail.product?.id || 'Unknown product';
 
           return {
             id: detail.id,
@@ -166,11 +159,9 @@ export default function HarvestBatchDetailPage() {
 
         if (cancelled) return;
         setSchedule(s);
-        setSupplier(sup);
         setDetails(rows);
       } catch (err) {
         if (cancelled) return;
-        console.error('Failed to load harvest batch detail', err);
         toast({
           title: 'Error',
           description: 'Failed to load harvest batch details',
@@ -231,38 +222,30 @@ export default function HarvestBatchDetailPage() {
 
   // Realtime: keep delivery events but refresh harvest schedule status when any event arrives
   const handleCancelBatch = () => {
-    // TODO: call cancelHarvestSchedule(scheduleId)
-    toast({
-      title: 'Batch Cancelled',
-      description: `Harvest batch ${scheduleId} has been cancelled.`
-    });
-    router.push('/supplier/harvest-batches');
-  };
-
-  const [confirming, setConfirming] = useState(false);
-  const handleConfirmComplete = async () => {
-    if (!scheduleId) return;
-    try {
-      setConfirming(true);
-      const updated = await confirmHarvestSchedule(scheduleId);
-      setSchedule(updated);
-      toast({
-        title: 'Thành công',
-        description: 'Đã xác nhận hoàn thành đơn hàng'
-      });
-    } catch (err) {
-      toast({
-        title: 'Lỗi',
-        description: 'Xác nhận hoàn thành thất bại',
-        variant: 'destructive'
-      });
-    } finally {
-      setConfirming(false);
+    if (scheduleId) {
+      // call API để hủy batch
+      updateHarvestScheduleStatus(scheduleId, 'canceled')
+        .then(() => {
+          if (schedule) {
+            setSchedule({ ...schedule, status: 'CANCELED' });
+          }
+          toast({
+            title: 'Batch Cancelled',
+            description: `Harvest batch ${scheduleId} has been cancelled.`
+          });
+        })
+        .catch(() => {
+          toast({
+            title: 'Error',
+            description: `Failed to cancel harvest batch ${scheduleId}.`,
+            variant: 'destructive'
+          });
+        });
     }
   };
 
-  const status = loading ? 'LOADING' : (schedule?.status ?? 'PENDING');
-  const statusNormalized = String(status).toLowerCase();
+  const statusConfig = getStatusConfig(schedule?.status);
+  const statusNormalized = String(schedule?.status ?? 'pending').toLowerCase();
   const showMap = [
     'preparing',
     'delivering',
@@ -270,7 +253,6 @@ export default function HarvestBatchDetailPage() {
     'returning'
   ].includes(statusNormalized);
 
-  // Dùng useMemo để tránh tính lại khi details không đổi
   const totalQuantity = useMemo(
     () => details.reduce((sum, d) => sum + d.quantity, 0),
     [details]
@@ -281,13 +263,64 @@ export default function HarvestBatchDetailPage() {
   );
 
   const harvestDate = schedule?.harvestDate
-    ? new Date(schedule.harvestDate as unknown as string).toLocaleString()
+    ? new Date(schedule.harvestDate as unknown as string).toLocaleString(
+        'vi-VN',
+        {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }
+      )
     : '-';
-  const notes = schedule?.description ?? '';
+
+  const createdDate = schedule?.createdAt
+    ? new Date(schedule.createdAt as unknown as string).toLocaleString('vi-VN')
+    : '-';
+
+  const updatedDate = schedule?.updatedAt
+    ? new Date(schedule.updatedAt as unknown as string).toLocaleString('vi-VN')
+    : '-';
+
+  if (loading) {
+    return (
+      <PageContainer>
+        <div className='flex h-[50vh] w-full items-center justify-center'>
+          <div className='flex flex-col items-center gap-2'>
+            <div className='border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
+            <p className='text-muted-foreground'>Loading harvest details...</p>
+          </div>
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (!schedule) {
+    return (
+      <PageContainer>
+        <div className='flex h-[50vh] w-full items-center justify-center'>
+          <div className='text-center'>
+            <IconAlertCircle className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
+            <h3 className='mb-2 text-lg font-semibold'>
+              Harvest Batch Not Found
+            </h3>
+            <p className='text-muted-foreground mb-4'>
+              The requested harvest batch could not be found.
+            </p>
+            <Button onClick={() => router.push('/supplier/harvest-batches')}>
+              Back to Batches
+            </Button>
+          </div>
+        </div>
+      </PageContainer>
+    );
+  }
 
   return (
     <PageContainer>
       <div className='w-full space-y-6'>
+        {/* Header */}
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-4'>
             <Button variant='ghost' size='icon' onClick={() => router.back()}>
@@ -295,39 +328,40 @@ export default function HarvestBatchDetailPage() {
             </Button>
             <div>
               <h2 className='text-3xl font-bold tracking-tight'>
-                Harvest Batch Details
+                Chi tiết lô thu hoạch
               </h2>
-              <p className='text-muted-foreground'>Batch ID: {scheduleId}</p>
+              <p className='text-muted-foreground'>ID: {scheduleId}</p>
             </div>
           </div>
           <div className='flex gap-2'>
-            {status.toUpperCase() === 'PENDING' && (
+            {schedule.status?.toLowerCase() === 'pending' && (
               <>
                 <Link href={`/supplier/harvest-batches/${scheduleId}/edit`}>
                   <Button variant='outline'>
                     <IconEdit className='mr-2 h-4 w-4' />
-                    Edit
+                    Chỉnh sửa
                   </Button>
                 </Link>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant='destructive'>
                       <IconX className='mr-2 h-4 w-4' />
-                      Cancel Batch
+                      Hủy đơn
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Cancel Harvest Batch?</AlertDialogTitle>
+                      <AlertDialogTitle>Hủy lô thu hoạch?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This action will cancel the harvest batch{' '}
-                        <strong>{scheduleId}</strong>. This cannot be undone.
+                        Hành động này sẽ hủy lô thu hoạch{' '}
+                        <strong>{scheduleId}</strong>. Không thể hoàn tác sau
+                        khi thực hiện.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>No, Keep It</AlertDialogCancel>
+                      <AlertDialogCancel>Không</AlertDialogCancel>
                       <AlertDialogAction onClick={handleCancelBatch}>
-                        Yes, Cancel Batch
+                        Xác nhận hủy
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -339,35 +373,70 @@ export default function HarvestBatchDetailPage() {
 
         <Separator />
 
-        <div className='grid gap-6 md:grid-cols-3'>
-          <div className='space-y-6 md:col-span-2'>
-            {showMap && (
-              <HarvestRouteSim
-                cargo={`Khối lượng ${String(
-                  details.reduce((sum, d) => sum + d.quantity, 0)
-                )} kg`}
-                startAddress={'Kho Nhà Cung Cấp'}
-                endAddress={String(schedule?.address ?? '')}
-                harvestScheduleId={String(schedule?.id ?? '')}
-                deliveryId={activeDeliveryId}
-                productName={String(
-                  details.map((d) => d.productName).join(', ')
-                )}
-              />
-            )}
-            {status.toUpperCase() === 'COMPLETED' && (
-              <div className='rounded-md border border-green-200 bg-green-50 p-4'>
-                <div className='font-medium text-green-700'>
-                  Đơn hàng đã hoàn thành
+        {/* Status Banner */}
+        <Card className={statusConfig.bgColor}>
+          <CardContent>
+            <div className='flex items-center justify-between'>
+              <div className='flex items-center gap-3'>
+                <div
+                  className={`rounded-full p-2 ${statusConfig.textColor} bg-white`}
+                >
+                  {statusConfig.icon}
                 </div>
-                <div className='text-sm text-green-600'>
-                  Thời gian:{' '}
-                  {schedule?.updatedAt
-                    ? new Date(String(schedule.updatedAt)).toLocaleString()
-                    : '-'}
+                <div>
+                  <h3
+                    className={`text-lg font-semibold ${statusConfig.textColor}`}
+                  >
+                    {statusConfig.label}
+                  </h3>
+                  <p className='text-sm text-gray-600'>
+                    Cập nhật lần cuối: {updatedDate}
+                  </p>
                 </div>
               </div>
+              <Badge variant={statusConfig.variant} className='px-4 py-2'>
+                {statusConfig.label}
+              </Badge>
+            </div>
+            {schedule.status?.toUpperCase() === 'REJECTED' &&
+              schedule.reason && (
+                <div className='mt-4 flex items-start gap-2 rounded-md border border-red-200 bg-white p-3'>
+                  <IconInfoCircle className='mt-0.5 h-5 w-5 flex-shrink-0 text-red-600' />
+                  <div>
+                    <p className='text-sm font-medium text-red-900'>
+                      Lý do từ chối:
+                    </p>
+                    <p className='text-sm text-red-700'>{schedule.reason}</p>
+                  </div>
+                </div>
+              )}
+          </CardContent>
+        </Card>
+
+        <div className='grid gap-6 lg:grid-cols-3'>
+          {/* Main Content */}
+          <div className='space-y-6 lg:col-span-2'>
+            {showMap && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className='flex items-center gap-2'>
+                    <IconMapPin className='h-5 w-5' />
+                    Theo dõi vận chuyển
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <HarvestRouteSim
+                    cargo={`Khối lượng ${totalQuantity} kg`}
+                    startAddress={'Kho Nhà Cung Cấp'}
+                    endAddress={String(schedule.address ?? '')}
+                    harvestScheduleId={String(schedule.id ?? '')}
+                    deliveryId={activeDeliveryId}
+                    productName={details.map((d) => d.productName).join(', ')}
+                  />
+                </CardContent>
+              </Card>
             )}
+
             {/* Product Information */}
             <Card>
               <CardHeader>
@@ -388,7 +457,7 @@ export default function HarvestBatchDetailPage() {
                   </div>
                   <div>
                     <p className='text-muted-foreground text-sm'>Total Price</p>
-                    <p className='text-primary text-lg font-bold'>
+                    <p className='text-lg font-bold'>
                       {loading ? '...' : formatCurrency(totalPrice)}
                     </p>
                   </div>
@@ -431,45 +500,58 @@ export default function HarvestBatchDetailPage() {
                   </div>
                 )}
 
-                {notes && (
+                {schedule.description && (
                   <div className='border-t pt-4'>
-                    <p className='text-muted-foreground mb-2 text-sm'>Notes</p>
-                    <p className='text-sm'>{notes}</p>
+                    <p className='text-muted-foreground mb-2 text-sm font-medium'>
+                      Ghi chú
+                    </p>
+                    <p className='text-sm text-gray-700'>
+                      {schedule.description}
+                    </p>
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            {/* Harvest Details */}
+            {/* Harvest Schedule Info */}
             <Card>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
                   <IconCalendar className='h-5 w-5' />
-                  Harvest Details
+                  Thông tin thu hoạch
                 </CardTitle>
+                <CardDescription>
+                  Chi tiết thời gian và địa điểm thu hoạch
+                </CardDescription>
               </CardHeader>
               <CardContent className='space-y-4'>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div>
-                    <p className='text-muted-foreground text-sm'>Date</p>
-                    <p className='font-medium'>
-                      {loading ? '...' : harvestDate}
-                    </p>
+                <div className='grid gap-4'>
+                  <div className='flex items-start gap-3 rounded-lg border p-3'>
+                    <IconCalendar className='text-primary mt-0.5 h-5 w-5' />
+                    <div className='flex-1'>
+                      <p className='text-muted-foreground text-sm'>
+                        Ngày thu hoạch
+                      </p>
+                      <p className='font-medium'>{harvestDate}</p>
+                    </div>
                   </div>
-                  <div>
-                    <p className='text-muted-foreground text-sm'>
-                      Storage Location
-                    </p>
-                    <div className='flex items-center gap-1'>
-                      <IconMapPin className='h-4 w-4' />
+                  <div className='flex items-start gap-3 rounded-lg border p-3'>
+                    <IconMapPin className='text-primary mt-0.5 h-5 w-5' />
+                    <div className='flex-1'>
+                      <p className='text-muted-foreground text-sm'>Địa điểm</p>
                       <p className='font-medium'>
-                        {supplier?.gardenName || '-'}
+                        {schedule?.supplier?.gardenName || '-'}
                       </p>
                     </div>
                   </div>
-                  <div className='col-span-2'>
-                    <p className='text-muted-foreground text-sm'>Address</p>
-                    <p className='font-medium'>{schedule?.address || '—'}</p>
+                  <div className='flex items-start gap-3 rounded-lg border p-3'>
+                    <IconMapPin className='text-primary mt-0.5 h-5 w-5' />
+                    <div className='flex-1'>
+                      <p className='text-muted-foreground text-sm'>
+                        Địa chỉ thu hoạch
+                      </p>
+                      <p className='font-medium'>{schedule?.address || '—'}</p>
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -480,26 +562,70 @@ export default function HarvestBatchDetailPage() {
           <div className='space-y-6'>
             <Card>
               <CardHeader>
-                <CardTitle>Status</CardTitle>
+                <CardTitle>Tổng quan</CardTitle>
+                <CardDescription>Thống kê lô thu hoạch</CardDescription>
               </CardHeader>
-              <CardContent>
-                <Badge
-                  className={`w-full justify-center py-2 ${statusColor(status)}`}
-                >
-                  {status}
-                </Badge>
+              <CardContent className='space-y-4'>
+                <div className='rounded-lg border p-3'>
+                  <p className='text-muted-foreground mb-1 text-sm'>
+                    Tổng khối lượng
+                  </p>
+                  <p className='text-2xl font-bold'>{totalQuantity} kg</p>
+                </div>
+                <div className='rounded-lg border p-3'>
+                  <p className='text-muted-foreground mb-1 text-sm'>
+                    Tổng giá trị
+                  </p>
+                  <p className='text-2xl font-bold'>
+                    {formatCurrency(totalPrice)}
+                  </p>
+                </div>
+                <div className='rounded-lg border p-3'>
+                  <p className='text-muted-foreground mb-1 text-sm'>
+                    Số sản phẩm
+                  </p>
+                  <p className='text-2xl font-bold'>{details.length}</p>
+                </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
+                <CardTitle>Thông tin bổ sung</CardTitle>
+              </CardHeader>
+              <CardContent className='space-y-3 text-sm'>
+                <div>
+                  <p className='text-muted-foreground'>Ngày tạo</p>
+                  <p className='font-medium'>{createdDate}</p>
+                </div>
+                <Separator />
+                <div>
+                  <p className='text-muted-foreground'>Cập nhật lần cuối</p>
+                  <p className='font-medium'>{updatedDate}</p>
+                </div>
+                {schedule.supplier && (
+                  <>
+                    <Separator />
+                    <div>
+                      <p className='text-muted-foreground'>Nhà cung cấp</p>
+                      <p className='font-medium'>
+                        {schedule.supplier.gardenName || 'N/A'}
+                      </p>
+                    </div>
+                  </>
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Thao tác nhanh</CardTitle>
               </CardHeader>
               <CardContent className='space-y-2'>
                 <Link href='/supplier/harvest-batches' className='block w-full'>
                   <Button variant='outline' className='w-full justify-start'>
                     <IconPackage className='mr-2 h-4 w-4' />
-                    View All Batches
+                    Xem tất cả lô hàng
                   </Button>
                 </Link>
                 <Link
@@ -508,18 +634,9 @@ export default function HarvestBatchDetailPage() {
                 >
                   <Button variant='outline' className='w-full justify-start'>
                     <IconPackage className='mr-2 h-4 w-4' />
-                    Create New Batch
+                    Tạo lô hàng mới
                   </Button>
                 </Link>
-                {/* {status.toUpperCase() === 'DELIVERED' && (
-                  <Button
-                    className='w-full'
-                    onClick={handleConfirmComplete}
-                    disabled={confirming}
-                  >
-                    Xác nhận hoàn thành
-                  </Button>
-                )} */}
               </CardContent>
             </Card>
           </div>

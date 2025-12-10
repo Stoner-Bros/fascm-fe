@@ -17,7 +17,7 @@ import {
   fetchDeliveryById,
   fetchDeliveriesByHarvestSchedule
 } from '@/services/delivery.service';
-import { completeHarvestSchedule } from '@/services/harvest-schedule.service';
+import { updateHarvestScheduleStatus } from '@/services/harvest-schedule.service';
 
 type LatLng = { lat: number; lng: number };
 
@@ -306,7 +306,10 @@ export default function HarvestRouteSim({
           const d = await fetchDeliveryById(id);
           const st = String(d.status ?? '').toLowerCase();
           if (st === 'completed') {
-            await completeHarvestSchedule(harvestScheduleId);
+            await updateHarvestScheduleStatus(
+              harvestScheduleId as string,
+              'COMPLETED'
+            );
           }
         } catch {}
       }

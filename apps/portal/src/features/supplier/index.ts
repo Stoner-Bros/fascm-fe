@@ -7,8 +7,6 @@ export * from '../../types/harvest-ticket';
 // Export services
 export * from '../../services/supplier.service';
 export * from '../../services/harvest-schedule.service';
-export * from '../../services/harvest-detail.service';
-export * from '../../services/harvest-ticket.service';
 
 // Export components
 export { default as SupplierDashboardFeature } from './dashboard/dashboard';
