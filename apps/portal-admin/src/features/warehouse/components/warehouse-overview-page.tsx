@@ -20,7 +20,6 @@ import {
 import { Heading } from '@/components/ui/heading';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
 import {
   Select,
   SelectContent,
@@ -28,27 +27,21 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/components/ui/use-toast';
 import { cn } from '@/lib/utils';
-import { fetchManagers, updateManager } from '@/services/manager.service';
-import { createWarehouse, fetchWarehouses } from '@/services/warehouse.service';
 import { fetchAreas } from '@/services/area.service';
 import { fetchBatches } from '@/services/batch.service';
 import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
-import type { Manager } from '@/types/manager';
+import { fetchManagers, updateManager } from '@/services/manager.service';
+import { createWarehouse, fetchWarehouses } from '@/services/warehouse.service';
 import type { Area } from '@/types/area';
 import type { Batch } from '@/types/batch';
+import type { Manager } from '@/types/manager';
 import {
-  IconAlertTriangle,
-  IconBarcode,
-  IconClockHour4,
   IconDroplet,
   IconEye,
   IconPackage,
-  IconPlus,
-  IconTemperature,
-  IconTrendingUp
+  IconTemperature
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
@@ -474,97 +467,10 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
             description='Giám sát và quản lý toàn bộ hoạt động kho nông sản'
           />
         </div>
-        <Separator />
-
-        {/* Tổng quan hệ thống */}
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-5'>
-          <Card>
-            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-sm font-medium'>Tổng số kho</CardTitle>
-              <IconPackage className='text-muted-foreground h-4 w-4' />
-            </CardHeader>
-            <CardContent>
-              <div className='text-2xl font-bold'>
-                {totalStats.totalWarehouses}
-              </div>
-              <p className='text-muted-foreground text-xs'>
-                Kho đang hoạt động
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-sm font-medium'>
-                Tổng sản phẩm
-              </CardTitle>
-              <IconPackage className='text-muted-foreground h-4 w-4' />
-            </CardHeader>
-            <CardContent>
-              <div className='text-2xl font-bold'>
-                {totalStats.totalItems.toLocaleString()}
-              </div>
-              <p className='text-muted-foreground text-xs'>
-                <IconTrendingUp className='mr-1 inline h-3 w-3' />
-                Trên tất cả các kho
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-sm font-medium'>
-                Sắp hết hàng
-              </CardTitle>
-              <IconAlertTriangle className='h-4 w-4 text-yellow-500' />
-            </CardHeader>
-            <CardContent>
-              <div className='text-2xl font-bold text-yellow-600'>
-                {totalStats.totalLowStock}
-              </div>
-              <p className='text-muted-foreground text-xs'>Cần bổ sung ngay</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-              <CardTitle className='text-sm font-medium'>Sắp hết hạn</CardTitle>
-              <IconClockHour4 className='h-4 w-4 text-red-500' />
-            </CardHeader>
-            <CardContent>
-              <div className='text-2xl font-bold text-red-600'>
-                {totalStats.totalExpiring}
-              </div>
-              <p className='text-muted-foreground text-xs'>Trong 2 ngày tới</p>
-            </CardContent>
-          </Card>
-        </div>
 
         {/* Danh sách kho */}
         <div className='space-y-4'>
-          <div className='flex items-center justify-between'>
-            <h3 className='text-lg font-semibold'>
-              Danh sách kho{' '}
-              {isLoadingWarehouses && (
-                <span className='text-muted-foreground text-xs'>
-                  (đang tải...)
-                </span>
-              )}
-            </h3>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => {
-                setIsCreateDialogOpen(true);
-                void loadManagersWithoutWarehouse();
-              }}
-            >
-              <IconPlus className='mr-2 h-4 w-4' />
-              Thêm kho mới
-            </Button>
-          </div>
-
-          <div className='grid grid-cols-1 gap-6 lg:grid-cols-2 xl:grid-cols-3'>
+          <div className='grid grid-cols-1 gap-6 lg:grid-cols-2'>
             {mergedWarehouses.map((warehouse) => (
               <Card
                 key={warehouse.id}
@@ -593,28 +499,6 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
                 <CardContent className='flex flex-1 flex-col space-y-4'>
                   {/* Thống kê kho */}
                   <div className='grid grid-cols-2 gap-4 text-sm'>
-                    <div className='space-y-1'>
-                      <p className='text-muted-foreground'>Tổng sản phẩm</p>
-                      <p className='font-semibold'>
-                        {warehouse.totalItems.toLocaleString()}
-                      </p>
-                    </div>
-                    <div className='space-y-1'>
-                      <p className='text-muted-foreground'>Công suất</p>
-                      <div className='flex items-center space-x-2'>
-                        <Progress
-                          value={warehouse.capacity}
-                          className='flex-1'
-                        />
-                        <span className='font-semibold'>
-                          {warehouse.capacity.toFixed(1)}%
-                        </span>
-                      </div>
-                      <p className='text-muted-foreground text-xs'>
-                        {warehouse.usedCapacity.toLocaleString()} /{' '}
-                        {warehouse.totalCapacity.toLocaleString()} kg
-                      </p>
-                    </div>
                     <div className='space-y-1'>
                       <p className='text-muted-foreground'>Nhập hôm nay</p>
                       <p className='font-semibold text-green-600'>
@@ -694,20 +578,6 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
                                   ? `${area.humidity}%`
                                   : '—'}
                               </span>
-                              <span className='dark:text-black'>
-                                {area.products} sản phẩm
-                              </span>
-                            </div>
-                          </div>
-                          <div className='text-right'>
-                            <div className='flex items-center space-x-1'>
-                              <Progress
-                                value={area.capacity}
-                                className='h-2 w-12'
-                              />
-                              <span className='text-xs font-medium dark:text-black'>
-                                {area.capacity.toFixed(1)}%
-                              </span>
                             </div>
                           </div>
                         </div>
@@ -726,16 +596,6 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
                     >
                       <IconEye className='mr-2 h-4 w-4' />
                       Xem chi tiết
-                    </Link>
-                    <Link
-                      href={`/dashboard/warehouse/${warehouse.id}/inventory`}
-                      className={cn(
-                        buttonVariants({ variant: 'outline', size: 'sm' }),
-                        'flex-1'
-                      )}
-                    >
-                      <IconBarcode className='mr-2 h-4 w-4' />
-                      Quản lý
                     </Link>
                   </div>
                 </CardContent>

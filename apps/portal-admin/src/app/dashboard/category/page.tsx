@@ -41,14 +41,13 @@ export default function CategoriesPage() {
         setLoading(true);
         const response = await fetchCategories({
           page,
-          limit: 12
+          limit: 10
         });
         setCategories(response.data);
         setHasNextPage(response.hasNextPage);
         setError(null);
       } catch (err: any) {
         setError(err?.message ?? 'Failed to load categories');
-        console.error('Error loading categories:', err);
       } finally {
         setLoading(false);
       }

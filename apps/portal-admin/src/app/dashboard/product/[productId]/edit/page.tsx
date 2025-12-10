@@ -46,12 +46,7 @@ export default function EditProductPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    pricePerKg: '',
-    categoryId: '',
-    minStorageHumidity: '',
-    maxStorageHumidity: '',
-    minStorageTemperature: '',
-    maxStorageTemperature: ''
+    categoryId: ''
   });
 
   useEffect(() => {
@@ -69,12 +64,7 @@ export default function EditProductPage() {
           setFormData({
             name: productData.name || '',
             description: productData.description || '',
-            pricePerKg: productData.pricePerKg?.toString() || '',
-            categoryId: productData.categoryId?.id || '',
-            minStorageHumidity: productData.minStorageHumidity || '',
-            maxStorageHumidity: productData.maxStorageHumidity || '',
-            minStorageTemperature: productData.minStorageTemperature || '',
-            maxStorageTemperature: productData.maxStorageTemperature || ''
+            categoryId: productData.category?.id || ''
           });
           setUploadedImageUrl(productData.image || '');
         }
@@ -132,15 +122,8 @@ export default function EditProductPage() {
       await updateProduct(productId, {
         name: formData.name,
         description: formData.description || null,
-        pricePerKg: formData.pricePerKg
-          ? parseFloat(formData.pricePerKg)
-          : null,
         image: uploadedImageUrl || null,
-        categoryId: formData.categoryId ? { id: formData.categoryId } : null,
-        minStorageHumidity: formData.minStorageHumidity || null,
-        maxStorageHumidity: formData.maxStorageHumidity || null,
-        minStorageTemperature: formData.minStorageTemperature || null,
-        maxStorageTemperature: formData.maxStorageTemperature || null
+        category: formData.categoryId ? { id: formData.categoryId } : null
       });
 
       toast({
@@ -245,21 +228,6 @@ export default function EditProductPage() {
                       </SelectContent>
                     </Select>
                   </div>
-
-                  <div className='space-y-2'>
-                    <Label htmlFor='pricePerKg'>Price per Kg ($)</Label>
-                    <Input
-                      id='pricePerKg'
-                      type='number'
-                      step='0.01'
-                      min='0'
-                      placeholder='e.g., 2.50'
-                      value={formData.pricePerKg}
-                      onChange={(e) =>
-                        setFormData({ ...formData, pricePerKg: e.target.value })
-                      }
-                    />
-                  </div>
                 </div>
 
                 <div className='space-y-2'>
@@ -273,114 +241,6 @@ export default function EditProductPage() {
                       setFormData({ ...formData, description: e.target.value })
                     }
                   />
-                </div>
-              </div>
-
-              {/* Storage Conditions */}
-              <div className='space-y-4'>
-                <h3 className='text-lg font-semibold'>Storage Conditions</h3>
-                <div className='space-y-4'>
-                  {/* Temperature Range */}
-                  <div className='space-y-2'>
-                    <Label>Temperature Range (°C)</Label>
-                    <div className='grid grid-cols-2 gap-4'>
-                      <div className='space-y-2'>
-                        <Label
-                          htmlFor='minStorageTemperature'
-                          className='text-muted-foreground text-xs font-normal'
-                        >
-                          Minimum
-                        </Label>
-                        <Input
-                          id='minStorageTemperature'
-                          type='number'
-                          step='0.1'
-                          placeholder='e.g., 12'
-                          value={formData.minStorageTemperature}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              minStorageTemperature: e.target.value
-                            })
-                          }
-                        />
-                      </div>
-                      <div className='space-y-2'>
-                        <Label
-                          htmlFor='maxStorageTemperature'
-                          className='text-muted-foreground text-xs font-normal'
-                        >
-                          Maximum
-                        </Label>
-                        <Input
-                          id='maxStorageTemperature'
-                          type='number'
-                          step='0.1'
-                          placeholder='e.g., 15'
-                          value={formData.maxStorageTemperature}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              maxStorageTemperature: e.target.value
-                            })
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Humidity Range */}
-                  <div className='space-y-2'>
-                    <Label>Humidity Range (%)</Label>
-                    <div className='grid grid-cols-2 gap-4'>
-                      <div className='space-y-2'>
-                        <Label
-                          htmlFor='minStorageHumidity'
-                          className='text-muted-foreground text-xs font-normal'
-                        >
-                          Minimum
-                        </Label>
-                        <Input
-                          id='minStorageHumidity'
-                          type='number'
-                          step='0.1'
-                          min='0'
-                          max='100'
-                          placeholder='e.g., 60'
-                          value={formData.minStorageHumidity}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              minStorageHumidity: e.target.value
-                            })
-                          }
-                        />
-                      </div>
-                      <div className='space-y-2'>
-                        <Label
-                          htmlFor='maxStorageHumidity'
-                          className='text-muted-foreground text-xs font-normal'
-                        >
-                          Maximum
-                        </Label>
-                        <Input
-                          id='maxStorageHumidity'
-                          type='number'
-                          step='0.1'
-                          min='0'
-                          max='100'
-                          placeholder='e.g., 70'
-                          value={formData.maxStorageHumidity}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              maxStorageHumidity: e.target.value
-                            })
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
                 </div>
               </div>
 

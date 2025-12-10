@@ -59,12 +59,6 @@ export const navItems: NavItem[] = [
     isActive: true,
     items: [
       {
-        title: 'Stock Management',
-        url: '/dashboard/warehouse/stock',
-        icon: 'warehouse',
-        shortcut: ['w', 's']
-      },
-      {
         title: 'Import',
         url: '/dashboard/warehouse/import',
         icon: 'inventory',

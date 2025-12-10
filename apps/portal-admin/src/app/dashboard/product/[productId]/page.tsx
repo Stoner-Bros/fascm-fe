@@ -14,18 +14,19 @@ import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { deleteProduct, fetchProductById } from '@/services/product.service';
+import { deletePrice, type Price } from '@/services/price.service';
 import type { Product } from '@/types/product';
 import {
   IconArrowLeft,
-  IconDroplet,
   IconEdit,
   IconLeaf,
-  IconTemperature,
+  IconPlus,
   IconTrash
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { PriceDialog } from './_components/price-dialog';
 
 export default function ProductDetailPage() {
   const router = useRouter();
@@ -36,6 +37,10 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [priceDialogOpen, setPriceDialogOpen] = useState(false);
+  const [editingPrice, setEditingPrice] = useState<Price | undefined>(
+    undefined
+  );
 
   useEffect(() => {
     async function loadProduct() {
@@ -82,6 +87,45 @@ export default function ProductDetailPage() {
         variant: 'destructive'
       });
     }
+  };
+
+  const handleDeletePrice = async (priceId: string) => {
+    if (!confirm('Are you sure you want to delete this price tier?')) {
+      return;
+    }
+
+    try {
+      await deletePrice(priceId);
+      toast({
+        title: 'Success',
+        description: 'Price tier deleted successfully'
+      });
+      // Reload product to get updated prices
+      const data = await fetchProductById(productId);
+      setProduct(data);
+    } catch (err: any) {
+      toast({
+        title: 'Error',
+        description: err?.message ?? 'Failed to delete price tier',
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleAddPrice = () => {
+    setEditingPrice(undefined);
+    setPriceDialogOpen(true);
+  };
+
+  const handleEditPrice = (price: Price) => {
+    setEditingPrice(price);
+    setPriceDialogOpen(true);
+  };
+
+  const handlePriceSuccess = async () => {
+    // Reload product to get updated prices
+    const data = await fetchProductById(productId);
+    setProduct(data);
   };
 
   if (loading) {
@@ -172,7 +216,7 @@ export default function ProductDetailPage() {
                       {product.name || 'Unnamed Product'}
                     </CardTitle>
                     <CardDescription>
-                      {product.categoryId?.name || 'No category'}
+                      {product.category?.name || 'No category'}
                     </CardDescription>
                   </div>
                   {product.status && (
@@ -199,48 +243,59 @@ export default function ProductDetailPage() {
                   </>
                 )}
 
+                {/* Price Tiers */}
                 <div>
-                  <h3 className='mb-3 font-semibold'>Storage Conditions</h3>
-                  <div className='space-y-3'>
-                    {(product.minStorageTemperature ||
-                      product.maxStorageTemperature) && (
-                      <div className='flex items-start gap-3 rounded-lg border p-3'>
-                        <IconTemperature className='text-primary mt-0.5 h-5 w-5' />
-                        <div>
-                          <p className='text-muted-foreground text-xs'>
-                            Temperature Range
-                          </p>
-                          <p className='text-sm font-medium'>
-                            {product.minStorageTemperature || '?'} -{' '}
-                            {product.maxStorageTemperature || '?'}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {(product.minStorageHumidity ||
-                      product.maxStorageHumidity) && (
-                      <div className='flex items-start gap-3 rounded-lg border p-3'>
-                        <IconDroplet className='text-primary mt-0.5 h-5 w-5' />
-                        <div>
-                          <p className='text-muted-foreground text-xs'>
-                            Humidity Range
-                          </p>
-                          <p className='text-sm font-medium'>
-                            {product.minStorageHumidity || '?'} -{' '}
-                            {product.maxStorageHumidity || '?'}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {!product.minStorageTemperature &&
-                      !product.maxStorageTemperature &&
-                      !product.minStorageHumidity &&
-                      !product.maxStorageHumidity && (
-                        <p className='text-muted-foreground text-sm'>
-                          No storage conditions specified
-                        </p>
-                      )}
+                  <div className='mb-3 flex items-center justify-between'>
+                    <h3 className='font-semibold'>Price Tiers</h3>
+                    <Button size='sm' onClick={handleAddPrice}>
+                      <IconPlus className='mr-2 h-3 w-3' />
+                      Add Price
+                    </Button>
                   </div>
+                  {product.price && product.price.length > 0 ? (
+                    <div className='space-y-2'>
+                      {product.price.map((priceItem) => (
+                        <div
+                          key={priceItem.id}
+                          className='flex items-center justify-between rounded-lg border p-3'
+                        >
+                          <div className='flex-1'>
+                            <div className='flex items-baseline gap-2'>
+                              <span className='text-primary text-lg font-bold'>
+                                {priceItem.price?.toLocaleString('vi-VN')} ₫/kg
+                              </span>
+                              <span className='text-muted-foreground text-sm'>
+                                for {priceItem.quantity}{' '}
+                                {priceItem.unit || 'units'} purchased
+                              </span>
+                            </div>
+                          </div>
+                          <div className='flex gap-2'>
+                            <Button
+                              size='sm'
+                              variant='ghost'
+                              onClick={() =>
+                                handleEditPrice(priceItem as Price)
+                              }
+                            >
+                              <IconEdit className='h-4 w-4' />
+                            </Button>
+                            <Button
+                              size='sm'
+                              variant='ghost'
+                              onClick={() => handleDeletePrice(priceItem.id)}
+                            >
+                              <IconTrash className='h-4 w-4' />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className='text-muted-foreground text-sm'>
+                      No price tiers defined
+                    </p>
+                  )}
                 </div>
 
                 <Separator />
@@ -270,33 +325,8 @@ export default function ProductDetailPage() {
 
           {/* Sidebar */}
           <div className='space-y-6'>
-            {/* Pricing */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Pricing</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='space-y-4'>
-                  {product.pricePerKg ? (
-                    <>
-                      <div>
-                        <p className='text-primary text-4xl font-bold'>
-                          ${product.pricePerKg.toFixed(2)}
-                        </p>
-                        <p className='text-muted-foreground text-sm'>per kg</p>
-                      </div>
-                    </>
-                  ) : (
-                    <p className='text-muted-foreground text-sm'>
-                      No price set
-                    </p>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Category Info */}
-            {product.categoryId && (
+            {product.category && (
               <Card>
                 <CardHeader>
                   <CardTitle>Category Information</CardTitle>
@@ -304,11 +334,11 @@ export default function ProductDetailPage() {
                 <CardContent className='space-y-3'>
                   <div>
                     <p className='text-sm font-medium'>
-                      {product.categoryId.name || 'Unnamed Category'}
+                      {product.category.name || 'Unnamed Category'}
                     </p>
-                    {product.categoryId.description && (
+                    {product.category.description && (
                       <p className='text-muted-foreground mt-1 text-xs'>
-                        {product.categoryId.description}
+                        {product.category.description}
                       </p>
                     )}
                   </div>
@@ -349,6 +379,14 @@ export default function ProductDetailPage() {
             </Card>
           </div>
         </div>
+
+        <PriceDialog
+          open={priceDialogOpen}
+          onOpenChange={setPriceDialogOpen}
+          productId={productId}
+          price={editingPrice}
+          onSuccess={handlePriceSuccess}
+        />
       </div>
     </PageContainer>
   );

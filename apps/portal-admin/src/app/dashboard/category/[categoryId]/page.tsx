@@ -42,8 +42,7 @@ export default function CategoryDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
-    englishName: '',
-    vietnameseName: ''
+    name: ''
   });
 
   useEffect(() => {
@@ -59,13 +58,11 @@ export default function CategoryDetailPage() {
         const data = await fetchCategoryById(categoryId);
         setCategory(data);
         setFormData({
-          englishName: data.name || '',
-          vietnameseName: data.description || ''
+          name: data.name || ''
         });
         setError(null);
       } catch (err: any) {
         setError(err?.message ?? 'Failed to load category');
-        console.error('Error loading category:', err);
       } finally {
         setLoading(false);
       }
@@ -79,10 +76,10 @@ export default function CategoryDetailPage() {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.englishName && !formData.vietnameseName) {
+    if (!formData.name) {
       toast({
         title: 'Validation Error',
-        description: 'At least one name (English or Vietnamese) is required',
+        description: 'Category name is required',
         variant: 'destructive'
       });
       return;
@@ -91,8 +88,7 @@ export default function CategoryDetailPage() {
     try {
       setSaving(true);
       const updated = await updateCategory(categoryId, {
-        englishName: formData.englishName || null,
-        vietnameseName: formData.vietnameseName || null
+        name: formData.name || null
       });
       setCategory(updated);
       setIsEditing(false);
@@ -210,36 +206,20 @@ export default function CategoryDetailPage() {
                 <CardDescription>Update category information</CardDescription>
               </CardHeader>
               <CardContent className='space-y-6'>
-                <div className='grid gap-6 md:grid-cols-2'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='englishName'>English Name</Label>
-                    <Input
-                      id='englishName'
-                      placeholder='e.g., Vegetables'
-                      value={formData.englishName}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          englishName: e.target.value
-                        })
-                      }
-                    />
-                  </div>
-
-                  <div className='space-y-2'>
-                    <Label htmlFor='vietnameseName'>Vietnamese Name</Label>
-                    <Input
-                      id='vietnameseName'
-                      placeholder='e.g., Rau củ'
-                      value={formData.vietnameseName}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          vietnameseName: e.target.value
-                        })
-                      }
-                    />
-                  </div>
+                <div className='space-y-2'>
+                  <Label htmlFor='name'>Category Name</Label>
+                  <Input
+                    id='name'
+                    placeholder='e.g., Vegetables'
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        name: e.target.value
+                      })
+                    }
+                    required
+                  />
                 </div>
 
                 <div className='flex justify-end gap-4'>
@@ -282,24 +262,14 @@ export default function CategoryDetailPage() {
                 </CardHeader>
                 <CardContent className='space-y-4'>
                   <div>
-                    <h3 className='mb-3 font-semibold'>Names</h3>
-                    <div className='grid grid-cols-2 gap-4'>
-                      <div className='space-y-1'>
-                        <p className='text-muted-foreground text-xs'>
-                          English Name
-                        </p>
-                        <p className='text-sm font-medium'>
-                          {category.name || 'Not set'}
-                        </p>
-                      </div>
-                      <div className='space-y-1'>
-                        <p className='text-muted-foreground text-xs'>
-                          Vietnamese Name
-                        </p>
-                        <p className='text-sm font-medium'>
-                          {category.description || 'Not set'}
-                        </p>
-                      </div>
+                    <h3 className='mb-3 font-semibold'>Details</h3>
+                    <div className='space-y-1'>
+                      <p className='text-muted-foreground text-xs'>
+                        Category Name
+                      </p>
+                      <p className='text-sm font-medium'>
+                        {category.name || 'Not set'}
+                      </p>
                     </div>
                   </div>
 

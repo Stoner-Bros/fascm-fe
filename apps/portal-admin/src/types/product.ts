@@ -6,18 +6,23 @@ export type Category = {
   updatedAt?: Date;
 };
 
+export type Price = {
+  id: string;
+  price?: number | null;
+  quantity?: number | null;
+  unit?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+};
+
 export type Product = {
   id: string;
   name?: string | null;
   description?: string | null;
-  pricePerKg?: number | null;
   image?: string | null;
-  categoryId?: Category | null;
+  category?: Category | null;
   status?: string | null;
-  minStorageHumidity?: string | null;
-  maxStorageHumidity?: string | null;
-  minStorageTemperature?: string | null;
-  maxStorageTemperature?: string | null;
+  price?: Price[] | null;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -25,13 +30,8 @@ export type Product = {
 export type CreateProductDto = {
   name?: string | null;
   description?: string | null;
-  pricePerKg?: number | null;
   image?: string | null;
-  categoryId?: { id: string } | null;
-  minStorageHumidity?: string | null;
-  maxStorageHumidity?: string | null;
-  minStorageTemperature?: string | null;
-  maxStorageTemperature?: string | null;
+  category?: { id: string } | null;
 };
 
 export type UpdateProductDto = Partial<CreateProductDto>;

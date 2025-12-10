@@ -32,17 +32,16 @@ export function CategoryForm({ category, mode }: CategoryFormProps) {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    englishName: category?.name || '',
-    vietnameseName: category?.description || ''
+    name: category?.name || ''
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.englishName && !formData.vietnameseName) {
+    if (!formData.name) {
       toast({
         title: 'Validation Error',
-        description: 'At least one name (English or Vietnamese) is required',
+        description: 'Category name is required',
         variant: 'destructive'
       });
       return;
@@ -52,8 +51,7 @@ export function CategoryForm({ category, mode }: CategoryFormProps) {
       setLoading(true);
 
       const data: CreateCategoryDto | UpdateCategoryDto = {
-        englishName: formData.englishName || null,
-        vietnameseName: formData.vietnameseName || null
+        name: formData.name || null
       };
 
       if (mode === 'create') {
@@ -96,30 +94,17 @@ export function CategoryForm({ category, mode }: CategoryFormProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className='space-y-6'>
-          <div className='grid gap-6 md:grid-cols-2'>
-            <div className='space-y-2'>
-              <Label htmlFor='englishName'>English Name</Label>
-              <Input
-                id='englishName'
-                placeholder='e.g., Vegetables'
-                value={formData.englishName}
-                onChange={(e) =>
-                  setFormData({ ...formData, englishName: e.target.value })
-                }
-              />
-            </div>
-
-            <div className='space-y-2'>
-              <Label htmlFor='vietnameseName'>Vietnamese Name</Label>
-              <Input
-                id='vietnameseName'
-                placeholder='e.g., Rau củ'
-                value={formData.vietnameseName}
-                onChange={(e) =>
-                  setFormData({ ...formData, vietnameseName: e.target.value })
-                }
-              />
-            </div>
+          <div className='space-y-2'>
+            <Label htmlFor='name'>Category Name</Label>
+            <Input
+              id='name'
+              placeholder='e.g., Vegetables'
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              required
+            />
           </div>
 
           <div className='flex justify-end gap-4'>

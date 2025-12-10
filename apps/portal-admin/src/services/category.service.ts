@@ -3,20 +3,17 @@ import type { Category } from '@/types/product';
 import type { InfinityPaginationResponse } from '@/types/common';
 
 export interface CreateCategoryDto {
-  englishName?: string | null;
-  vietnameseName?: string | null;
+  name?: string | null;
 }
 
 export interface UpdateCategoryDto {
-  englishName?: string | null;
-  vietnameseName?: string | null;
+  name?: string | null;
 }
 
 // Backend category response type
 interface CategoryBackend {
   id: string;
-  englishName?: string | null;
-  vietnameseName?: string | null;
+  name?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -25,8 +22,8 @@ interface CategoryBackend {
 function transformCategory(backendCategory: CategoryBackend): Category {
   return {
     id: backendCategory.id,
-    name: backendCategory.englishName,
-    description: backendCategory.vietnameseName,
+    name: backendCategory.name,
+    description: null, // Backend không có description field
     createdAt: new Date(backendCategory.createdAt),
     updatedAt: new Date(backendCategory.updatedAt)
   };

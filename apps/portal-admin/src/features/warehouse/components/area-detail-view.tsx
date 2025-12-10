@@ -1,6 +1,6 @@
 'use client';
 
-import AreaCharts from '@/components/charts/area-charts';
+import IotDeviceCard from '@/components/iot/iot-device-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -10,8 +10,6 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import {
   Select,
@@ -28,33 +26,33 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { getApiBase } from '@/lib/client';
 import {
   createAreaSetting,
   fetchAreaSettings,
   updateAreaSetting
 } from '@/services/area-setting.service';
-import { fetchAreaById } from '@/services/area.service';
-import { fetchActiveAreaAlertByAreaId } from '@/services/area.service';
-import { io } from 'socket.io-client';
-import { getApiBase } from '@/lib/client';
-import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
-import IotDeviceCard from '@/components/iot/iot-device-card';
-import { fetchWarehouseById } from '@/services/warehouse.service';
-import { fetchImportTickets } from '@/services/import-ticket.service';
+import {
+  fetchActiveAreaAlertByAreaId,
+  fetchAreaById
+} from '@/services/area.service';
 import { fetchBatches } from '@/services/batch.service';
 import { fetchExportTickets } from '@/services/export-ticket.service';
+import { fetchImportTickets } from '@/services/import-ticket.service';
+import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
+import { fetchWarehouseById } from '@/services/warehouse.service';
 import type { Area as AreaEntity } from '@/types/area';
 import type { AreaSetting } from '@/types/area-setting';
-import type { Warehouse } from '@/types/warehouse';
 import type { Batch } from '@/types/batch';
 import type { ImportTicket } from '@/types/import-ticket';
+import type { Warehouse } from '@/types/warehouse';
 import {
   IconAlertTriangle,
   IconArrowDown,
   IconArrowLeft,
   IconArrowUp,
   IconBell,
-  IconBox,
   IconCalendar,
   IconClock,
   IconDroplet,
@@ -68,11 +66,11 @@ import {
   IconShield,
   IconThermometer
 } from '@tabler/icons-react';
-import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { io } from 'socket.io-client';
 
 interface AreaDetailViewProps {
   warehouseId: string;
@@ -1019,13 +1017,13 @@ export default function AreaDetailView({
   const capacityPercentage =
     capacity > 0 ? (usedCapacity / Math.max(capacity, 1)) * 100 : 0;
   const activeAlertCount = activeAlert ? 1 : 0;
-  const areaName = area?.name || `Khu vực ${areaId}`;
+  const areaName = area?.name;
   const areaCode = area?.id || areaId;
   const areaDescription = area?.description || '';
   const warehouseName = warehouse?.name || `Kho ${warehouseId}`;
 
-  return (
-    <div className='container mx-auto space-y-6 p-6'>
+  return areaName ? (
+    <div className='mx-auto w-full space-y-6'>
       {/* Header */}
       <div className='flex items-center justify-between'>
         <div className='flex items-center gap-4'>
@@ -1036,7 +1034,6 @@ export default function AreaDetailView({
             className='flex items-center gap-2'
           >
             <IconArrowLeft className='h-4 w-4' />
-            Quay lại
           </Button>
           <div>
             <h1 className='text-3xl font-bold'>
@@ -1072,7 +1069,7 @@ export default function AreaDetailView({
       </div>
 
       {/* Status Cards */}
-      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-4'>
+      <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
             <CardTitle className='text-sm font-medium'>Nhiệt độ</CardTitle>
@@ -1116,22 +1113,6 @@ export default function AreaDetailView({
                 : '—'}
             </p>
             <div className='mt-2'>{getStatusBadge('normal')}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Dung tích</CardTitle>
-            <IconBox className='text-muted-foreground h-4 w-4' />
-          </CardHeader>
-          <CardContent>
-            <div className='text-2xl font-bold'>
-              {usedCapacity.toFixed(0)}/{capacity.toFixed(0)}
-            </div>
-            <p className='text-muted-foreground text-xs'>
-              {capacityPercentage.toFixed(1)}% đã sử dụng
-            </p>
-            <Progress value={capacityPercentage} className='mt-2' />
           </CardContent>
         </Card>
 
@@ -1196,13 +1177,13 @@ export default function AreaDetailView({
                 <div className='grid grid-cols-2 gap-4'>
                   <div>
                     <p className='text-muted-foreground text-sm font-medium'>
-                      Mã khu vực
+                      Tên khu vực
                     </p>
-                    <p className='font-semibold'>{areaCode}</p>
+                    <p className='font-semibold'>{areaName}</p>
                   </div>
                   <div>
                     <p className='text-muted-foreground text-sm font-medium'>
-                      Loại khu vực
+                      Mô tả
                     </p>
                     <p className='font-semibold'>{areaDescription}</p>
                   </div>
@@ -1212,75 +1193,13 @@ export default function AreaDetailView({
                     </p>
                     {getStatusBadge('normal')}
                   </div>
-                  <div>
-                    <p className='text-muted-foreground text-sm font-medium'>
-                      Số sản phẩm
-                    </p>
-                    <p className='font-semibold'>
-                      {productDistributionData.length > 0 &&
-                      productDistributionData[0].name !== 'Chưa có dữ liệu'
-                        ? productDistributionData.length
-                        : '—'}
-                    </p>
-                  </div>
                 </div>
-                <div>
-                  <p className='text-muted-foreground mb-2 text-sm font-medium'>
-                    Tỷ lệ sử dụng
-                  </p>
-                  <Progress value={capacityPercentage} className='h-2' />
-                  <p className='text-muted-foreground mt-1 text-xs'>
-                    {usedCapacity.toFixed(0)} / {capacity.toFixed(0)} đơn vị (
-                    {capacityPercentage.toFixed(1)}%)
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Product Distribution */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Phân bố sản phẩm</CardTitle>
-                <CardDescription>
-                  Tỷ lệ các loại sản phẩm trong khu vực
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoadingOverviewBatches ? (
-                  <div className='flex h-[250px] items-center justify-center'>
-                    <p className='text-muted-foreground text-sm'>
-                      Đang tải dữ liệu...
-                    </p>
-                  </div>
-                ) : (
-                  <ResponsiveContainer width='100%' height={250}>
-                    <PieChart>
-                      <Pie
-                        data={productDistributionData}
-                        cx='50%'
-                        cy='50%'
-                        labelLine={false}
-                        label={({ name, percent }) =>
-                          `${name} ${(percent * 100).toFixed(0)}%`
-                        }
-                        outerRadius={80}
-                        fill='#8884d8'
-                        dataKey='value'
-                      >
-                        {productDistributionData.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                )}
               </CardContent>
             </Card>
           </div>
 
           {/* Charts Section */}
-          <AreaCharts areaId={areaId} />
+          {/* <AreaCharts areaId={areaId} /> */}
         </TabsContent>
 
         {/* Products Tab */}
@@ -1799,5 +1718,7 @@ export default function AreaDetailView({
         </TabsContent>
       </Tabs>
     </div>
+  ) : (
+    <div className='w-full py-10 text-center'>Loading...</div>
   );
 }

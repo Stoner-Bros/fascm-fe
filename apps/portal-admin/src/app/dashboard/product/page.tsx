@@ -111,9 +111,7 @@ export default function ProductsPage() {
     const matchesSearch =
       product.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.categoryId?.name
-        ?.toLowerCase()
-        .includes(searchQuery.toLowerCase());
+      product.category?.name?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
 
@@ -267,60 +265,32 @@ export default function ProductsPage() {
                                   {product.name || 'Unnamed Product'}
                                 </CardTitle>
                                 <CardDescription>
-                                  {product.categoryId?.name || 'No category'}
+                                  {product.category?.name || 'No category'}
                                 </CardDescription>
                               </div>
                               {product.status && (
                                 <Badge
                                   variant={
-                                    product.status === 'active'
+                                    product.status === 'active' ||
+                                    product.status === 'Active'
                                       ? 'default'
                                       : 'secondary'
                                   }
                                 >
-                                  {product.status}
+                                  {product.status === 'active' ||
+                                  product.status === 'Active'
+                                    ? 'Đang kinh doanh'
+                                    : 'Ngừng kinh doanh'}
                                 </Badge>
                               )}
                             </div>
                           </CardHeader>
                           <CardContent className='space-y-4'>
                             <div className='space-y-2'>
-                              {product.pricePerKg && (
-                                <div className='flex items-baseline gap-2'>
-                                  <p className='text-primary text-2xl font-bold'>
-                                    ${product.pricePerKg.toFixed(2)}
-                                  </p>
-                                  <p className='text-muted-foreground text-xs'>
-                                    per kg
-                                  </p>
-                                </div>
-                              )}
                               {product.description && (
                                 <p className='text-muted-foreground line-clamp-2 text-sm'>
                                   {product.description}
                                 </p>
-                              )}
-                              {(product.minStorageTemperature ||
-                                product.maxStorageTemperature ||
-                                product.minStorageHumidity ||
-                                product.maxStorageHumidity) && (
-                                <div className='text-muted-foreground space-y-1 text-xs'>
-                                  {(product.minStorageTemperature ||
-                                    product.maxStorageTemperature) && (
-                                    <p>
-                                      🌡️ {product.minStorageTemperature || '?'}
-                                      °C -{' '}
-                                      {product.maxStorageTemperature || '?'}°C
-                                    </p>
-                                  )}
-                                  {(product.minStorageHumidity ||
-                                    product.maxStorageHumidity) && (
-                                    <p>
-                                      💧 {product.minStorageHumidity || '?'}% -{' '}
-                                      {product.maxStorageHumidity || '?'}%
-                                    </p>
-                                  )}
-                                </div>
                               )}
                             </div>
 
