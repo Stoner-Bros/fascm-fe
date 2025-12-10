@@ -423,7 +423,7 @@ export function logout() {
 if (typeof window !== 'undefined') {
   window.addEventListener('auth:logout', () => {
     // Handle logout in other components
-    window.location.href = '/auth/sign-in';
+    window.location.href = '/';
   });
 }
 

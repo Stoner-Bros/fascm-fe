@@ -59,6 +59,7 @@ import {
   IconX
 } from '@tabler/icons-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useReducer } from 'react';
 import type { Action, OrderScheduleRow, State, StatusFilter } from './types';
 
@@ -157,30 +158,33 @@ const getStatusVariant = (status: OrderScheduleStatus) => {
   }
 };
 
-const getStatusLabel = (status: OrderScheduleStatus) => {
-  const s = normalizeStatus(status);
-  switch (s) {
-    case 'pending':
-      return 'Chờ duyệt đơn';
-    case 'rejected':
-      return 'Đã từ chối đơn';
-    case 'approved':
-      return 'Đã duyệt đơn';
-    case 'processing':
-      return 'Đang xử lý';
-    case 'completed':
-      return 'Đã hoàn thành';
-    case 'canceled':
-      return 'Đã hủy đơn';
-    default:
-      return status || 'Unknown';
-  }
-};
+// This function will be moved inside the component to use translations
 
 export default function ConsigneeOrdersFeature() {
   const { toast } = useToast();
+  const t = useTranslations('Orders');
 
   const [state, dispatch] = useReducer(orderSchedulesReducer, initialState);
+
+  const getStatusLabel = (status: OrderScheduleStatus) => {
+    const s = normalizeStatus(status);
+    switch (s) {
+      case 'pending':
+        return t('statuses.pending');
+      case 'rejected':
+        return t('statuses.rejected');
+      case 'approved':
+        return t('statuses.approved');
+      case 'processing':
+        return t('statuses.processing');
+      case 'completed':
+        return t('statuses.completed');
+      case 'canceled':
+        return t('statuses.canceled');
+      default:
+        return status || t('statuses.unknown');
+    }
+  };
 
   const loadData = async () => {
     dispatch({ type: 'SET_LOADING', payload: true });
@@ -241,8 +245,8 @@ export default function ConsigneeOrdersFeature() {
     } catch (err) {
       dispatch({ type: 'LOAD_ERROR' });
       toast({
-        title: 'Error',
-        description: 'Failed to load order schedules',
+        title: t('toast.errorTitle'),
+        description: t('toast.errorDescription'),
         variant: 'destructive'
       });
     }
@@ -261,8 +265,10 @@ export default function ConsigneeOrdersFeature() {
     if (state.selectedScheduleId) {
       dispatch({ type: 'CANCEL_ORDER', payload: state.selectedScheduleId });
       toast({
-        title: 'Order Cancelled',
-        description: `Order schedule ${state.selectedScheduleId} has been cancelled.`
+        title: t('toast.cancelTitle'),
+        description: t('toast.cancelDescription', {
+          id: state.selectedScheduleId
+        })
       });
     }
   };
@@ -315,17 +321,13 @@ export default function ConsigneeOrdersFeature() {
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
           <div>
-            <h2 className='text-3xl font-bold tracking-tight'>
-              Order Schedules
-            </h2>
-            <p className='text-muted-foreground'>
-              Manage and track your order schedules
-            </p>
+            <h2 className='text-3xl font-bold tracking-tight'>{t('title')}</h2>
+            <p className='text-muted-foreground'>{t('subtitle')}</p>
           </div>
           <Link href='/consignee/orders/new'>
             <Button>
               <IconPlus className='mr-2 h-4 w-4' />
-              New Order
+              {t('newOrderButton')}
             </Button>
           </Link>
         </div>
@@ -339,7 +341,7 @@ export default function ConsigneeOrdersFeature() {
             }
           >
             <CardHeader className='pb-3'>
-              <CardDescription>Total Orders</CardDescription>
+              <CardDescription>{t('cards.totalOrders')}</CardDescription>
               <CardTitle className='text-3xl'>
                 {state.loading ? (
                   <div className='bg-muted h-8 w-16 animate-pulse rounded' />
@@ -358,7 +360,7 @@ export default function ConsigneeOrdersFeature() {
             <CardHeader className='pb-3'>
               <CardDescription className='flex items-center gap-2'>
                 <IconClock className='h-4 w-4' />
-                Chờ duyệt đơn
+                {t('cards.pending')}
               </CardDescription>
               <CardTitle className='text-3xl'>
                 {state.loading ? (
@@ -378,7 +380,7 @@ export default function ConsigneeOrdersFeature() {
             <CardHeader className='pb-3'>
               <CardDescription className='flex items-center gap-2'>
                 <IconCheck className='h-4 w-4' />
-                Đã duyệt đơn
+                {t('cards.approved')}
               </CardDescription>
               <CardTitle className='text-3xl'>
                 {state.loading ? (
@@ -398,7 +400,7 @@ export default function ConsigneeOrdersFeature() {
             <CardHeader className='pb-3'>
               <CardDescription className='flex items-center gap-2'>
                 <IconCheck className='h-4 w-4' />
-                Đã hoàn thành
+                {t('cards.completed')}
               </CardDescription>
               <CardTitle className='text-3xl'>
                 {state.loading ? (
@@ -419,7 +421,7 @@ export default function ConsigneeOrdersFeature() {
                 <div className='relative flex-1'>
                   <IconSearch className='text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4' />
                   <Input
-                    placeholder='Search by Order ID, Order Number or product...'
+                    placeholder={t('filters.searchPlaceholder')}
                     className='pl-8'
                     value={state.searchQuery}
                     onChange={(e) =>
@@ -440,16 +442,30 @@ export default function ConsigneeOrdersFeature() {
                   }
                 >
                   <SelectTrigger className='w-[180px]'>
-                    <SelectValue placeholder='Filter by status' />
+                    <SelectValue placeholder={t('filters.statusPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='ALL'>Tất cả trạng thái</SelectItem>
-                    <SelectItem value='pending'>Chờ duyệt đơn</SelectItem>
-                    <SelectItem value='rejected'>Đã từ chối đơn</SelectItem>
-                    <SelectItem value='approved'>Đã duyệt đơn</SelectItem>
-                    <SelectItem value='processing'>Đang xử lý</SelectItem>
-                    <SelectItem value='completed'>Đã hoàn thành</SelectItem>
-                    <SelectItem value='canceled'>Đã hủy đơn</SelectItem>
+                    <SelectItem value='ALL'>
+                      {t('filters.allStatus')}
+                    </SelectItem>
+                    <SelectItem value='pending'>
+                      {t('statuses.pending')}
+                    </SelectItem>
+                    <SelectItem value='rejected'>
+                      {t('statuses.rejected')}
+                    </SelectItem>
+                    <SelectItem value='approved'>
+                      {t('statuses.approved')}
+                    </SelectItem>
+                    <SelectItem value='processing'>
+                      {t('statuses.processing')}
+                    </SelectItem>
+                    <SelectItem value='completed'>
+                      {t('statuses.completed')}
+                    </SelectItem>
+                    <SelectItem value='canceled'>
+                      {t('statuses.canceled')}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -460,13 +476,15 @@ export default function ConsigneeOrdersFeature() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Order Number</TableHead>
-                    <TableHead>Product(s)</TableHead>
-                    <TableHead>Delivery Date</TableHead>
-                    <TableHead>Created At</TableHead>
-                    <TableHead>Address</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className='text-right'>Actions</TableHead>
+                    <TableHead>{t('table.orderNumber')}</TableHead>
+                    <TableHead>{t('table.products')}</TableHead>
+                    <TableHead>{t('table.deliveryDate')}</TableHead>
+                    <TableHead>{t('table.createdAt')}</TableHead>
+                    <TableHead>{t('table.address')}</TableHead>
+                    <TableHead>{t('table.status')}</TableHead>
+                    <TableHead className='text-right'>
+                      {t('table.actions')}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -476,7 +494,7 @@ export default function ConsigneeOrdersFeature() {
                         <div className='flex flex-col items-center justify-center py-12'>
                           <div className='border-primary mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
                           <p className='text-muted-foreground'>
-                            Loading order schedules...
+                            {t('table.loading')}
                           </p>
                         </div>
                       </TableCell>
@@ -484,7 +502,7 @@ export default function ConsigneeOrdersFeature() {
                   ) : filteredSchedules.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7} className='text-center'>
-                        No order schedules found
+                        {t('table.empty')}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -528,7 +546,7 @@ export default function ConsigneeOrdersFeature() {
                                   className='hover:border-primary flex cursor-pointer items-center hover:bg-transparent'
                                 >
                                   <IconEye className='mr-2 h-4 w-4' />
-                                  View Details
+                                  {t('actions.viewDetails')}
                                 </Link>
                               </DropdownMenuItem>
                               {normalizeStatus(schedule.status) ===
@@ -540,7 +558,7 @@ export default function ConsigneeOrdersFeature() {
                                       className='hover:border-primary flex cursor-pointer items-center hover:bg-transparent'
                                     >
                                       <IconEdit className='mr-2 h-4 w-4' />
-                                      Edit
+                                      {t('actions.edit')}
                                     </Link>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
@@ -550,7 +568,7 @@ export default function ConsigneeOrdersFeature() {
                                     className='text-destructive cursor-pointer hover:bg-transparent'
                                   >
                                     <IconX className='text-destructive mr-2 h-4 w-4' />
-                                    Cancel Order
+                                    {t('actions.cancelOrder')}
                                   </DropdownMenuItem>
                                 </>
                               )}
@@ -560,17 +578,17 @@ export default function ConsigneeOrdersFeature() {
                                   onClick={() => {
                                     const reason =
                                       schedule.reason ||
-                                      'Không có lý do được cung cấp.';
+                                      t('dialog.rejectionReasonDefault');
 
                                     toast({
-                                      title: 'Lý do từ chối',
+                                      title: t('dialog.rejectionReasonTitle'),
                                       description: reason,
                                       variant: 'default'
                                     });
                                   }}
                                 >
                                   <IconInfoCircle className='mr-2 h-4 w-4' />
-                                  Xem lý do từ chối
+                                  {t('actions.viewRejectionReason')}
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
@@ -593,17 +611,17 @@ export default function ConsigneeOrdersFeature() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Order Schedule?</AlertDialogTitle>
+            <AlertDialogTitle>{t('dialog.cancelTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will cancel the order schedule{' '}
-              <strong>{state.selectedScheduleId}</strong>. This cannot be
-              undone.
+              {t('dialog.cancelDescription', {
+                id: state.selectedScheduleId || ''
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>No, Keep It</AlertDialogCancel>
+            <AlertDialogCancel>{t('dialog.cancelKeep')}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmCancelOrder}>
-              Yes, Cancel Order
+              {t('dialog.cancelConfirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

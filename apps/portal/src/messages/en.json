@@ -338,5 +338,247 @@
       "keep": "No, keep it",
       "confirm": "Yes, cancel batch"
     }
+  },
+  "Sidebar": {
+    "overview": "Overview",
+    "navigation": {
+      "dashboard": "Dashboard",
+      "products": "Products",
+      "orders": "Orders",
+      "profile": "Profile",
+      "harvestBatches": "Harvest Batches"
+    },
+    "menu": {
+      "profile": "Profile",
+      "businessInformation": "Business Information",
+      "payments": "Payments",
+      "notifications": "Notifications",
+      "signOut": "Sign Out"
+    }
+  },
+  "Orders": {
+    "title": "Order Schedules",
+    "subtitle": "Manage and track your order schedules",
+    "newOrderButton": "New Order",
+    "statuses": {
+      "pending": "Pending Approval",
+      "rejected": "Rejected",
+      "approved": "Approved",
+      "processing": "Processing",
+      "completed": "Completed",
+      "canceled": "Canceled",
+      "unknown": "Unknown"
+    },
+    "phaseStatuses": {
+      "notStarted": "Not Started",
+      "preparing": "Preparing",
+      "delivering": "Delivering",
+      "delivered": "Delivered",
+      "completed": "Completed",
+      "canceled": "Canceled"
+    },
+    "cards": {
+      "totalOrders": "Total Orders",
+      "pending": "Pending",
+      "approved": "Approved",
+      "completed": "Completed"
+    },
+    "filters": {
+      "searchPlaceholder": "Search by Order ID, Order Number or product...",
+      "statusPlaceholder": "Filter by status",
+      "allStatus": "All Status"
+    },
+    "table": {
+      "orderNumber": "Order Number",
+      "products": "Product(s)",
+      "deliveryDate": "Delivery Date",
+      "createdAt": "Created At",
+      "address": "Address",
+      "status": "Status",
+      "actions": "Actions",
+      "loading": "Loading order schedules...",
+      "empty": "No order schedules found",
+      "noProducts": "No products"
+    },
+    "actions": {
+      "viewDetails": "View Details",
+      "edit": "Edit",
+      "cancelOrder": "Cancel Order",
+      "viewRejectionReason": "View rejection reason"
+    },
+    "dialog": {
+      "cancelTitle": "Cancel Order Schedule?",
+      "cancelDescription": "This action will cancel the order schedule {id}. This cannot be undone.",
+      "cancelKeep": "No, Keep It",
+      "cancelConfirm": "Yes, Cancel Order",
+      "rejectionReasonTitle": "Rejection reason",
+      "rejectionReasonDefault": "No rejection reason provided."
+    },
+    "toast": {
+      "errorTitle": "Error",
+      "errorDescription": "Failed to load order schedules",
+      "cancelTitle": "Order Cancelled",
+      "cancelDescription": "Order schedule {id} has been cancelled."
+    },
+    "detail": {
+      "title": "Order Details",
+      "orderId": "Order ID",
+      "editOrder": "Edit Order",
+      "backToOrders": "Back to Orders",
+      "loading": "Loading order details...",
+      "notFound": "Order not found",
+      "tabs": {
+        "overview": "Overview",
+        "deliveryPhases": "Delivery Phases"
+      },
+      "statusSteps": {
+        "pending": "Pending Approval",
+        "approved": "Approved",
+        "processing": "Processing",
+        "completed": "Completed"
+      },
+      "overview": {
+        "orderInformation": "Order Information",
+        "orderDetails": "Order Details",
+        "consigneeInformation": "Consignee Information",
+        "deliveryInformation": "Delivery Information",
+        "orderDescription": "Order Description",
+        "deliveryDate": "Delivery Date",
+        "deliveryAddress": "Delivery Address",
+        "notSpecified": "Not specified",
+        "orderNumber": "Order Number",
+        "createdAt": "Created At",
+        "totalAmount": "Total Amount",
+        "totalQuantity": "Total Quantity",
+        "organization": "Organization",
+        "representative": "Representative",
+        "contact": "Contact",
+        "description": "Description / Notes",
+        "rejectionReason": "Rejection Reason",
+        "orderItems": "Order Items",
+        "itemsInOrder": "item(s) in this order",
+        "productId": "Product ID",
+        "unknownProduct": "Unknown Product",
+        "productDetails": "Product Details",
+        "product": "Product",
+        "quantity": "Quantity",
+        "unitPrice": "Unit Price",
+        "amount": "Amount",
+        "subtotal": "Subtotal",
+        "total": "Total",
+        "invoices": "Invoices",
+        "invoiceNumber": "Invoice Number",
+        "invoiceDate": "Invoice Date",
+        "status": "Status",
+        "actions": "Actions",
+        "pay": "Pay",
+        "viewInvoice": "View Invoice",
+        "noInvoices": "No invoices found"
+      },
+      "phases": {
+        "title": "Delivery Phases",
+        "loading": "Loading phases...",
+        "empty": "No delivery phases yet",
+        "emptyDescription": "Delivery phases will appear here once created",
+        "phase": "Phase",
+        "status": "Status",
+        "startDate": "Start Date",
+        "endDate": "End Date",
+        "description": "Description",
+        "itemsInPhase": "Items in this phase",
+        "invoiceInformation": "Invoice Information",
+        "paid": "Paid",
+        "unpaid": "Unpaid",
+        "payOnline": "Pay Online",
+        "totalAmount": "Total Amount",
+        "vat": "VAT",
+        "totalPayment": "Total Payment",
+        "quantity": "Quantity",
+        "imageProofs": "Image Proofs",
+        "created": "Created",
+        "updated": "Updated"
+      },
+      "payment": {
+        "successTitle": "Payment successful!",
+        "successDescription": "Your payment has been completed successfully",
+        "cancelTitle": "Payment canceled",
+        "cancelDescription": "The payment has been canceled",
+        "errorTitle": "Error",
+        "errorDescription": "Failed to create payment. Please try again.",
+        "errorLoadTitle": "Error",
+        "errorLoadDescription": "Failed to load order details",
+        "errorPhasesTitle": "Error",
+        "errorPhasesDescription": "Failed to load order phases",
+        "dialogTitle": "Online Payment",
+        "dialogDescription": "Complete your payment using bank transfer via PayOS",
+        "creating": "Creating payment...",
+        "failed": "Failed to create payment. Please try again.",
+        "close": "Close",
+        "scanQrCode": "Scan QR Code",
+        "useYourBankingApp": "Use your banking app",
+        "paymentDetails": "Payment Details",
+        "paymentCode": "Payment Code",
+        "amount": "Amount",
+        "howToPay": "How to Pay",
+        "step1QR": "Scan the QR code with your banking app",
+        "step1Link": "Click the button below to open payment page",
+        "step2": "Or use the payment page link to pay online",
+        "step3": "Complete the payment in your banking app",
+        "step4": "Wait for confirmation - status updates automatically",
+        "openPaymentPage": "Open Payment Page"
+      }
+    },
+    "newOrder": {
+      "title": "Create New Order",
+      "subtitle": "Select products and fill in delivery information",
+      "steps": {
+        "products": "Select Products",
+        "delivery": "Delivery Information",
+        "review": "Confirm"
+      },
+      "products": {
+        "title": "Select Products",
+        "description": "Select the products you want to order",
+        "selected": "Selected",
+        "empty": "No products available",
+        "name": "Product Name",
+        "price": "Price",
+        "unit": "Unit",
+        "quantity": "Quantity",
+        "total": "Total",
+        "remove": "Remove"
+      },
+      "delivery": {
+        "title": "Delivery Information",
+        "description": "Enter delivery date and address",
+        "deliveryDate": "Delivery Date",
+        "deliveryAddress": "Delivery Address",
+        "selectOnMap": "Select on Map",
+        "orderDescription": "Order Description (Optional)",
+        "descriptionPlaceholder": "Enter any additional notes or requirements..."
+      },
+      "review": {
+        "title": "Review Order",
+        "description": "Review your order before submitting",
+        "orderSummary": "Order Summary",
+        "deliverySummary": "Delivery Summary",
+        "totalAmount": "Total Amount",
+        "submit": "Submit Order",
+        "submitting": "Submitting..."
+      },
+      "buttons": {
+        "next": "Next",
+        "previous": "Back",
+        "cancel": "Cancel"
+      },
+      "toast": {
+        "errorTitle": "Error",
+        "errorDescription": "Failed to load data. Please try again.",
+        "successTitle": "Success!",
+        "successDescription": "Your order has been created successfully.",
+        "errorCreateTitle": "Error",
+        "errorCreateDescription": "Failed to create order. Please try again."
+      }
+    }
   }
 }

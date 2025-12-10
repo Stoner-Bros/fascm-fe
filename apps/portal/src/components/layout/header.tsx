@@ -25,15 +25,19 @@ export default function Header() {
       setLocale(cookieLocale);
     } else {
       const browserLocale = navigator.language.slice(0, 2);
-      setLocale(browserLocale);
-      document.cookie = `NEXT_LOCALE=${browserLocale}`;
-      router.refresh();
+      const defaultLocale = ['en', 'vi'].includes(browserLocale)
+        ? browserLocale
+        : 'en';
+      setLocale(defaultLocale);
+      document.cookie = `NEXT_LOCALE=${defaultLocale}; path=/; max-age=31536000; SameSite=Lax`;
     }
   }, [router]);
 
-  const handleLocaleChange = (locale: string) => {
-    setLocale(locale);
-    document.cookie = `NEXT_LOCALE=${locale}`;
+  const handleLocaleChange = (newLocale: string) => {
+    setLocale(newLocale);
+    // Set cookie with proper path and expiration
+    document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
+    // Force a full page reload to ensure server picks up the new locale
     router.refresh();
   };
   return (

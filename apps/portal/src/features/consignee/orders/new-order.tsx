@@ -58,6 +58,7 @@ import type {
 } from '@/types/order';
 import type { NewOrderState, NewOrderAction, OrderLine } from './types';
 import { useAuth } from '@/hooks/use-auth';
+import { useTranslations } from 'next-intl';
 
 // Initial state
 const getInitialState = (): NewOrderState => {
@@ -203,6 +204,7 @@ export default function NewOrderPage() {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { fullInfo } = useAuth();
+  const t = useTranslations('Orders');
 
   const [state, dispatch] = useReducer(newOrderReducer, getInitialState());
   const didFetchRef = useRef(false);
@@ -266,12 +268,13 @@ export default function NewOrderPage() {
       .catch(() => {
         dispatch({ type: 'SET_LOADING', payload: false });
         toast({
-          title: 'Lỗi',
-          description: 'Không thể tải dữ liệu. Vui lòng thử lại.',
+          title: t('newOrder.toast.errorTitle'),
+          description: t('newOrder.toast.errorDescription'),
           variant: 'destructive'
         });
       });
-  }, [searchParams, toast]);
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Product selection handlers
   const toggleProduct = (product: Product) => {
@@ -346,17 +349,16 @@ export default function NewOrderPage() {
       await createOrderSchedule(payload);
 
       toast({
-        title: 'Thành công!',
-        description: 'Đơn hàng của bạn đã được tạo thành công.',
+        title: t('newOrder.toast.successTitle'),
+        description: t('newOrder.toast.successDescription'),
         variant: 'default'
       });
 
       router.push('/consignee/orders');
     } catch (err: any) {
       toast({
-        title: 'Lỗi',
-        description:
-          err?.message || 'Không thể tạo đơn hàng. Vui lòng thử lại.',
+        title: t('newOrder.toast.errorCreateTitle'),
+        description: err?.message || t('newOrder.toast.errorCreateDescription'),
         variant: 'destructive'
       });
     } finally {
@@ -366,9 +368,9 @@ export default function NewOrderPage() {
 
   // Steps navigation
   const steps = [
-    { id: 'products', label: 'Chọn sản phẩm', icon: IconPackage },
-    { id: 'delivery', label: 'Thông tin giao hàng', icon: IconMapPin },
-    { id: 'review', label: 'Xác nhận', icon: IconCheck }
+    { id: 'products', label: t('newOrder.steps.products'), icon: IconPackage },
+    { id: 'delivery', label: t('newOrder.steps.delivery'), icon: IconMapPin },
+    { id: 'review', label: t('newOrder.steps.review'), icon: IconCheck }
   ];
 
   const currentStepIndex = steps.findIndex((s) => s.id === state.currentStep);
@@ -389,11 +391,9 @@ export default function NewOrderPage() {
         {/* Header */}
         <div>
           <h1 className='text-3xl font-bold tracking-tight'>
-            Tạo đơn hàng mới
+            {t('newOrder.title')}
           </h1>
-          <p className='text-muted-foreground mt-2'>
-            Chọn sản phẩm và điền thông tin giao hàng
-          </p>
+          <p className='text-muted-foreground mt-2'>{t('newOrder.subtitle')}</p>
         </div>
 
         {/* Progress Steps */}
@@ -458,13 +458,14 @@ export default function NewOrderPage() {
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
                   <IconPackage className='h-5 w-5' />
-                  Chọn sản phẩm
+                  {t('newOrder.products.title')}
                 </CardTitle>
                 <CardDescription>
-                  Chọn các sản phẩm bạn muốn đặt hàng
+                  {t('newOrder.products.description')}
                   {state.selectedProducts.size > 0 && (
                     <Badge variant='secondary' className='ml-2'>
-                      Đã chọn: {state.selectedProducts.size}
+                      {t('newOrder.products.selected')}:{' '}
+                      {state.selectedProducts.size}
                     </Badge>
                   )}
                 </CardDescription>
@@ -474,7 +475,7 @@ export default function NewOrderPage() {
                   <div className='flex flex-col items-center justify-center py-12 text-center'>
                     <IconPackage className='text-muted-foreground mb-4 h-12 w-12' />
                     <p className='text-muted-foreground'>
-                      Không có sản phẩm nào
+                      {t('newOrder.products.empty')}
                     </p>
                   </div>
                 ) : (
@@ -585,7 +586,9 @@ export default function NewOrderPage() {
 
                           <div className='flex items-center gap-3'>
                             <div className='flex items-center gap-2'>
-                              <Label className='text-sm'>Số lượng:</Label>
+                              <Label className='text-sm'>
+                                {t('newOrder.products.quantity')}:
+                              </Label>
                               <Input
                                 type='number'
                                 min='1'
@@ -649,7 +652,7 @@ export default function NewOrderPage() {
 
                   <div className='flex items-center justify-between'>
                     <span className='text-lg font-semibold'>
-                      Tổng tạm tính:
+                      {t('newOrder.products.total')}:
                     </span>
                     <span className='text-primary text-2xl font-bold'>
                       {new Intl.NumberFormat('vi-VN', {
@@ -669,10 +672,10 @@ export default function NewOrderPage() {
             <CardHeader>
               <CardTitle className='flex items-center gap-2'>
                 <IconMapPin className='h-5 w-5' />
-                Thông tin giao hàng
+                {t('newOrder.delivery.title')}
               </CardTitle>
               <CardDescription>
-                Nhập địa chỉ và thời gian giao hàng mong muốn
+                {t('newOrder.delivery.description')}
               </CardDescription>
             </CardHeader>
             <CardContent className='space-y-6'>
@@ -702,7 +705,7 @@ export default function NewOrderPage() {
 
               <div className='space-y-2'>
                 <Label htmlFor='delivery-date'>
-                  Ngày & giờ giao hàng{' '}
+                  {t('newOrder.delivery.deliveryDate')}{' '}
                   <span className='text-destructive'>*</span>
                 </Label>
                 <DateTimePicker
@@ -710,16 +713,14 @@ export default function NewOrderPage() {
                   onChange={(value) =>
                     dispatch({ type: 'SET_DELIVERY_DATE', payload: value })
                   }
-                  placeholder='Chọn ngày và giờ giao hàng'
+                  placeholder={t('newOrder.delivery.deliveryDate')}
                 />
-                <p className='text-muted-foreground text-xs'>
-                  Chọn thời gian bạn muốn nhận hàng
-                </p>
               </div>
 
               <div className='space-y-2'>
                 <Label htmlFor='delivery-address'>
-                  Địa chỉ giao hàng <span className='text-destructive'>*</span>
+                  {t('newOrder.delivery.deliveryAddress')}{' '}
+                  <span className='text-destructive'>*</span>
                 </Label>
                 <Textarea
                   id='delivery-address'
@@ -730,7 +731,7 @@ export default function NewOrderPage() {
                       payload: e.target.value
                     })
                   }
-                  placeholder='Nhập địa chỉ giao hàng chi tiết...'
+                  placeholder={t('newOrder.delivery.deliveryAddress')}
                   rows={3}
                   className='resize-none'
                 />
@@ -743,7 +744,9 @@ export default function NewOrderPage() {
                   size='sm'
                   onClick={() => dispatch({ type: 'TOGGLE_MAP' })}
                 >
-                  {state.showMap ? 'Đóng bản đồ' : 'Chọn vị trí trên bản đồ'}
+                  {state.showMap
+                    ? t('newOrder.buttons.cancel')
+                    : t('newOrder.delivery.selectOnMap')}
                 </Button>
                 {state.showMap && (
                   <div className='rounded-lg border p-2'>
@@ -768,7 +771,9 @@ export default function NewOrderPage() {
               </div>
 
               <div className='space-y-2'>
-                <Label htmlFor='order-description'>Ghi chú đơn hàng</Label>
+                <Label htmlFor='order-description'>
+                  {t('newOrder.delivery.orderDescription')}
+                </Label>
                 <Textarea
                   id='order-description'
                   value={state.orderDescription}
@@ -778,7 +783,7 @@ export default function NewOrderPage() {
                       payload: e.target.value
                     })
                   }
-                  placeholder='Thêm ghi chú hoặc yêu cầu đặc biệt...'
+                  placeholder={t('newOrder.delivery.descriptionPlaceholder')}
                   rows={3}
                   className='resize-none'
                 />
@@ -793,7 +798,7 @@ export default function NewOrderPage() {
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
                   <IconCheck className='h-5 w-5' />
-                  Xác nhận đơn hàng
+                  {t('newOrder.review.title')}
                 </CardTitle>
                 <CardDescription>
                   Kiểm tra lại thông tin trước khi gửi đơn hàng
@@ -879,7 +884,9 @@ export default function NewOrderPage() {
                     <div className='flex items-start gap-2'>
                       <IconMapPin className='text-muted-foreground mt-0.5 h-4 w-4' />
                       <div>
-                        <p className='text-muted-foreground text-xs'>Địa chỉ</p>
+                        <p className='text-muted-foreground text-xs'>
+                          {t('newOrder.delivery.deliveryAddress')}
+                        </p>
                         <p className='font-medium'>{state.deliveryAddress}</p>
                       </div>
                     </div>
@@ -905,7 +912,7 @@ export default function NewOrderPage() {
                 <div className='bg-primary/5 rounded-lg p-4'>
                   <div className='flex items-center justify-between'>
                     <span className='text-xl font-semibold'>
-                      Tổng thanh toán:
+                      {t('newOrder.review.totalAmount')}:
                     </span>
                     <span className='text-primary text-3xl font-bold'>
                       {new Intl.NumberFormat('vi-VN', {
@@ -936,7 +943,9 @@ export default function NewOrderPage() {
             disabled={state.submitting}
           >
             <IconArrowLeft className='mr-2 h-4 w-4' />
-            {state.currentStep === 'products' ? 'Hủy bỏ' : 'Quay lại'}
+            {state.currentStep === 'products'
+              ? t('newOrder.buttons.cancel')
+              : t('newOrder.buttons.previous')}
           </Button>
 
           <div className='flex gap-3'>
@@ -947,7 +956,7 @@ export default function NewOrderPage() {
                 }
                 disabled={!canProceedToDelivery()}
               >
-                Tiếp theo
+                {t('newOrder.buttons.next')}
                 <IconArrowRight className='ml-2 h-4 w-4' />
               </Button>
             )}
@@ -959,7 +968,7 @@ export default function NewOrderPage() {
                 }
                 disabled={!canProceedToReview()}
               >
-                Tiếp theo
+                {t('newOrder.buttons.next')}
                 <IconArrowRight className='ml-2 h-4 w-4' />
               </Button>
             )}
@@ -973,12 +982,12 @@ export default function NewOrderPage() {
                 {state.submitting ? (
                   <>
                     <IconLoader2 className='mr-2 h-4 w-4 animate-spin' />
-                    Đang xử lý...
+                    {t('newOrder.review.submitting')}
                   </>
                 ) : (
                   <>
                     <IconCheck className='mr-2 h-4 w-4' />
-                    Xác nhận đặt hàng
+                    {t('newOrder.review.submit')}
                   </>
                 )}
               </Button>

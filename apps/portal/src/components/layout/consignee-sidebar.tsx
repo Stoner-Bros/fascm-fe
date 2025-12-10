@@ -29,14 +29,12 @@ import { consigneeNavItems } from '@/constants/nav-data';
 import useAuth from '@/hooks/use-auth';
 import { useMediaQuery } from '@/hooks/use-media-query';
 import {
-  IconBell,
-  IconBuilding,
   IconChevronsDown,
-  IconCreditCard,
   IconLogout,
   IconPhotoUp,
   IconUserCircle
 } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
@@ -60,11 +58,23 @@ export default function ConsigneeSidebar() {
   const { isOpen } = useMediaQuery();
   const { user, logout } = useAuth();
   const router = useRouter();
+  const t = useTranslations('Sidebar');
   const handleSwitchTenant = (_tenantId: string) => {
     // Tenant switching functionality would be implemented here
   };
 
   const activeTenant = tenants[0];
+
+  // Translation map for nav items
+  const getTranslatedTitle = (title: string): string => {
+    const translationMap: { [key: string]: string } = {
+      dashboard: t('navigation.dashboard'),
+      products: t('navigation.products'),
+      orders: t('navigation.orders'),
+      profile: t('navigation.profile')
+    };
+    return translationMap[title] || title;
+  };
 
   React.useEffect(() => {
     // Side effects based on sidebar state changes
@@ -81,10 +91,11 @@ export default function ConsigneeSidebar() {
       </SidebarHeader>
       <SidebarContent className='overflow-x-hidden'>
         <SidebarGroup>
-          <SidebarGroupLabel>Overview</SidebarGroupLabel>
+          <SidebarGroupLabel>{t('overview')}</SidebarGroupLabel>
           <SidebarMenu>
             {consigneeNavItems.map((item) => {
               const Icon = item.icon ? Icons[item.icon] : Icons.logo;
+              const translatedTitle = getTranslatedTitle(item.title);
               return item?.items && item?.items?.length > 0 ? (
                 <Collapsible
                   key={item.title}
@@ -94,7 +105,7 @@ export default function ConsigneeSidebar() {
                 >
                   <SidebarMenuItem>
                     <SidebarMenuButton
-                      tooltip={item.title}
+                      tooltip={translatedTitle}
                       onClick={(e) => {
                         if (item.url && item.url !== '#') {
                           e.preventDefault();
@@ -106,22 +117,27 @@ export default function ConsigneeSidebar() {
                       }
                     >
                       {item.icon && <Icon />}
-                      <span>{item.title}</span>
+                      <span>{translatedTitle}</span>
                     </SidebarMenuButton>
                     <CollapsibleContent>
                       <SidebarMenuSub>
-                        {item.items?.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              isActive={pathname === subItem.url}
-                            >
-                              <Link href={subItem.url}>
-                                <span>{subItem.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
+                        {item.items?.map((subItem) => {
+                          const translatedSubTitle = getTranslatedTitle(
+                            subItem.title
+                          );
+                          return (
+                            <SidebarMenuSubItem key={subItem.title}>
+                              <SidebarMenuSubButton
+                                asChild
+                                isActive={pathname === subItem.url}
+                              >
+                                <Link href={subItem.url}>
+                                  <span>{translatedSubTitle}</span>
+                                </Link>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          );
+                        })}
                       </SidebarMenuSub>
                     </CollapsibleContent>
                   </SidebarMenuItem>
@@ -130,12 +146,12 @@ export default function ConsigneeSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    tooltip={item.title}
+                    tooltip={translatedTitle}
                     isActive={pathname === item.url}
                   >
                     <Link href={item.url}>
                       <Icon />
-                      <span>{item.title}</span>
+                      <span>{translatedTitle}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -151,7 +167,7 @@ export default function ConsigneeSidebar() {
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton
                   size='lg'
-                  className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
+                  className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-pointer'
                 >
                   {user && (
                     <UserAvatarProfile
@@ -185,31 +201,16 @@ export default function ConsigneeSidebar() {
                 <DropdownMenuGroup>
                   <DropdownMenuItem
                     onClick={() => router.push('/consignee/profile')}
+                    className='cursor-pointer'
                   >
                     <IconUserCircle className='mr-2 h-4 w-4' />
-                    Profile
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push('/consignee/profile/business')}
-                  >
-                    <IconBuilding className='mr-2 h-4 w-4' />
-                    Business Information
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onClick={() => router.push('/consignee/payments')}
-                  >
-                    <IconCreditCard className='mr-2 h-4 w-4' />
-                    Payments
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <IconBell className='mr-2 h-4 w-4' />
-                    Notifications
+                    {t('menu.profile')}
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={logout}>
+                <DropdownMenuItem onClick={logout} className='cursor-pointer'>
                   <IconLogout className='mr-2 h-4 w-4' />
-                  Sign Out
+                  {t('menu.signOut')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
