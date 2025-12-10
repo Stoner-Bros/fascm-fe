@@ -20,6 +20,8 @@ export interface HarvestPhase {
     id: string;
     invoiceNumber?: string;
     totalAmount?: number;
+    taxRate?: number;
+    totalPayment?: number;
     [key: string]: unknown;
   };
   harvestInvoiceDetails?: Array<{

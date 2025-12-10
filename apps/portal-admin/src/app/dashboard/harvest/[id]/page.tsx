@@ -48,7 +48,14 @@ import type {
   HarvestSchedule,
   HarvestScheduleStatus
 } from '@/types/harvest-schedule';
-import { ArrowLeft, CheckCircle, Package, Plus, XCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  Check,
+  CheckCircle,
+  Package,
+  Plus,
+  XCircle
+} from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -89,6 +96,7 @@ export default function HarvestScheduleDetailPage() {
   const [phaseData, setPhaseData] = useState({
     description: '',
     phaseNumber: 1,
+    taxRate: 5,
     invoiceDetails: [] as CreateHarvestInvoiceDetailDto[]
   });
 
@@ -185,10 +193,11 @@ export default function HarvestScheduleDetailPage() {
       return;
     }
 
-    // Calculate total amount
-    const totalAmount = validDetails.reduce((sum, detail) => {
+    // Calculate total amount with tax
+    const subtotal = validDetails.reduce((sum, detail) => {
       return sum + detail.quantity! * (detail.unitPrice || 0);
     }, 0);
+    const totalAmount = subtotal * (1 + phaseData.taxRate / 100);
 
     setUpdating(true);
     try {
@@ -197,7 +206,8 @@ export default function HarvestScheduleDetailPage() {
         phaseNumber: phaseData.phaseNumber,
         harvestSchedule: { id: schedule.id },
         harvestInvoice: {
-          totalAmount
+          totalAmount,
+          taxRate: phaseData.taxRate
         },
         harvestInvoiceDetails: validDetails
       });
@@ -207,6 +217,7 @@ export default function HarvestScheduleDetailPage() {
       setPhaseData({
         description: '',
         phaseNumber: phases.length + 2,
+        taxRate: 5,
         invoiceDetails: schedule.harvestDetails!.map((detail) => ({
           product: { id: detail.product!.id },
           quantity: 0,
@@ -343,6 +354,16 @@ export default function HarvestScheduleDetailPage() {
               <Button onClick={() => setShowPhaseDialog(true)}>
                 <Plus className='mr-2 h-4 w-4' />
                 Tạo đợt thu hoạch
+              </Button>
+            )}
+            {schedule.status === 'processing' && !hasRemainingQuantity && (
+              <Button
+                onClick={() =>
+                  updateHarvestScheduleStatus(schedule.id, 'completed')
+                }
+              >
+                <Check className='mr-2 h-4 w-4' />
+                Đánh dấu hoàn thành
               </Button>
             )}
           </div>
@@ -510,11 +531,28 @@ export default function HarvestScheduleDetailPage() {
                       </div>
                     ))}
                     <Separator className='my-2' />
+                    {phase.harvestInvoice?.taxRate && (
+                      <div className='flex justify-between text-sm'>
+                        <span>Thuế ({phase.harvestInvoice.taxRate}%)</span>
+                        <span>
+                          {(
+                            (phase.harvestInvoiceDetails?.reduce(
+                              (sum, d) =>
+                                sum + (d.quantity || 0) * (d.unitPrice || 0),
+                              0
+                            ) || 0) *
+                            (phase.harvestInvoice.taxRate / 100)
+                          ).toLocaleString('vi-VN')}{' '}
+                          đ
+                        </span>
+                      </div>
+                    )}
+                    <Separator className='my-2' />
                     <div className='flex justify-between font-semibold'>
                       <span>Tổng cộng</span>
                       <span>
                         {(
-                          phase.harvestInvoice?.totalAmount || 0
+                          phase.harvestInvoice?.totalPayment || 0
                         ).toLocaleString('vi-VN')}{' '}
                         đ
                       </span>
@@ -587,6 +625,20 @@ export default function HarvestScheduleDetailPage() {
                       setPhaseData({
                         ...phaseData,
                         phaseNumber: parseInt(e.target.value) || 1
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor='taxRate'>Mức thuế</Label>
+                  <Input
+                    id='taxRate'
+                    type='number'
+                    value={phaseData.taxRate}
+                    onChange={(e) =>
+                      setPhaseData({
+                        ...phaseData,
+                        taxRate: parseInt(e.target.value) || 1
                       })
                     }
                   />
@@ -675,18 +727,49 @@ export default function HarvestScheduleDetailPage() {
                 </div>
 
                 <div className='bg-muted mt-4 rounded-lg p-3'>
-                  <div className='flex items-center justify-between'>
-                    <span className='font-semibold'>Tổng tiền đợt này:</span>
-                    <span className='text-lg font-bold'>
-                      {phaseData.invoiceDetails
-                        .reduce(
-                          (sum, d) =>
-                            sum + (d.quantity || 0) * (d.unitPrice || 0),
-                          0
-                        )
-                        .toLocaleString('vi-VN')}{' '}
-                      đ
-                    </span>
+                  <div className='space-y-2'>
+                    <div className='flex items-center justify-between'>
+                      <span>Tạm tính:</span>
+                      <span>
+                        {phaseData.invoiceDetails
+                          .reduce(
+                            (sum, d) =>
+                              sum + (d.quantity || 0) * (d.unitPrice || 0),
+                            0
+                          )
+                          .toLocaleString('vi-VN')}{' '}
+                        đ
+                      </span>
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <span>Thuế ({phaseData.taxRate}%):</span>
+                      <span>
+                        {(
+                          phaseData.invoiceDetails.reduce(
+                            (sum, d) =>
+                              sum + (d.quantity || 0) * (d.unitPrice || 0),
+                            0
+                          ) *
+                          (phaseData.taxRate / 100)
+                        ).toLocaleString('vi-VN')}{' '}
+                        đ
+                      </span>
+                    </div>
+                    <Separator />
+                    <div className='flex items-center justify-between'>
+                      <span className='font-semibold'>Tổng tiền đợt này:</span>
+                      <span className='text-lg font-bold'>
+                        {(
+                          phaseData.invoiceDetails.reduce(
+                            (sum, d) =>
+                              sum + (d.quantity || 0) * (d.unitPrice || 0),
+                            0
+                          ) *
+                          (1 + phaseData.taxRate / 100)
+                        ).toLocaleString('vi-VN')}{' '}
+                        đ
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

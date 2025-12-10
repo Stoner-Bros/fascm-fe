@@ -584,7 +584,7 @@ export default function HarvestBatchDetailPage() {
                           0
                         ) ?? 0;
                       const totalPhaseAmount =
-                        phase.harvestInvoice?.totalAmount ?? 0;
+                        phase.harvestInvoice?.totalPayment ?? 0;
 
                       return (
                         <Card key={phase.id}>
@@ -657,6 +657,34 @@ export default function HarvestBatchDetailPage() {
                                               </span>
                                             </div>
                                           )
+                                        )}
+                                        {phase.harvestInvoice?.taxRate !=
+                                          null && (
+                                          <>
+                                            <div className='border-t pt-2'>
+                                              <div className='flex items-center justify-between text-sm'>
+                                                <span className='text-muted-foreground'>
+                                                  Thuế (
+                                                  {phase.harvestInvoice.taxRate}
+                                                  %):
+                                                </span>
+                                                <span className='text-muted-foreground'>
+                                                  {formatCurrency(
+                                                    (phase.harvestInvoiceDetails?.reduce(
+                                                      (sum, d) =>
+                                                        sum +
+                                                        (d.quantity ?? 0) *
+                                                          (d.unitPrice ?? 0),
+                                                      0
+                                                    ) ?? 0) *
+                                                      (phase.harvestInvoice
+                                                        .taxRate /
+                                                        100)
+                                                  )}
+                                                </span>
+                                              </div>
+                                            </div>
+                                          </>
                                         )}
                                       </div>
                                     </div>
@@ -774,7 +802,7 @@ export default function HarvestBatchDetailPage() {
                 </div>
                 <div className='rounded-lg border p-3'>
                   <p className='text-muted-foreground mb-1 text-sm'>
-                    Tổng giá trị
+                    Tổng giá trị (Chưa thuế)
                   </p>
                   <p className='text-2xl font-bold'>
                     {formatCurrency(totalPrice)}

@@ -20,6 +20,8 @@ export interface HarvestPhase {
     id: string;
     invoiceNumber?: string;
     totalAmount?: number;
+    totalPayment?: number;
+    taxRate?: number;
     [key: string]: unknown;
   };
   harvestInvoiceDetails?: Array<{
@@ -53,6 +55,7 @@ export interface CreateHarvestInvoiceDetailDto {
 export interface CreateHarvestInvoiceDto {
   invoiceNumber?: string | null;
   totalAmount?: number | null;
+  taxRate?: number | null;
 }
 
 export interface CreateHarvestPhaseDto {
