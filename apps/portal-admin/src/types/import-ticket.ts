@@ -1,9 +1,14 @@
 export type ImportTicket = {
   id: string;
-  numberOfBatch: number;
-  percent: number;
+  numberOfBatch?: number;
+  percent?: number;
   realityQuantity: number;
   importDate: string;
+  expiredAt?: string | null;
+  numberOfBigBatch?: number | null;
+  numberOfSmallBatch?: number | null;
+  unit?: string | null;
+  quantity?: number | null;
   inboundBatch?: {
     id?: string;
     batchCode?: string;
@@ -54,13 +59,15 @@ export type ImportTicket = {
 
 export type CreateImportTicketDto = {
   realityQuantity: number;
-  importDate: string;
+  expiredAt?: string | null;
   inboundBatch: {
     id: string;
   };
-  area?: {
+  area: {
     id: string;
   };
+  numberOfBigBatch?: number | null;
+  numberOfSmallBatch?: number | null;
 };
 
 export type UpdateImportTicketDto = Partial<CreateImportTicketDto>;

@@ -73,8 +73,8 @@ const defaultForm: CreateDeliveryDto = {
   startTime: null,
   endTime: null,
   truck: null,
-  harvestSchedule: null,
-  orderSchedule: null
+  harvestPhase: null,
+  orderPhase: null
 };
 
 const ENUM_TO_UI: Record<DeliveryStatusEnum, string> = {
@@ -287,10 +287,10 @@ export function InboundDeliveryManagement() {
       startTime: delivery.startTime,
       endTime: delivery.endTime,
       truck: delivery.truck ? { id: delivery.truck.id } : null,
-      harvestSchedule: delivery.harvestSchedule
-        ? { id: delivery.harvestSchedule.id }
+      harvestPhase: delivery.harvestPhase
+        ? { id: delivery.harvestPhase.id }
         : null,
-      orderSchedule: null
+      orderPhase: null
     });
     setIsEditDialogOpen(true);
   };
@@ -424,8 +424,8 @@ export function InboundDeliveryManagement() {
                         {delivery.id.slice(0, 8)}...
                       </TableCell>
                       <TableCell>
-                        {delivery.harvestSchedule?.id
-                          ? delivery.harvestSchedule.id.slice(0, 8) + '...'
+                        {delivery.harvestPhase?.id
+                          ? delivery.harvestPhase.id.slice(0, 8) + '...'
                           : '-'}
                       </TableCell>
                       <TableCell>
@@ -519,11 +519,11 @@ export function InboundDeliveryManagement() {
             <div className='grid gap-2'>
               <Label>Lịch thu hoạch</Label>
               <Select
-                value={form.harvestSchedule?.id || ''}
+                value={form.harvestPhase?.id || ''}
                 onValueChange={(value) =>
                   setForm((prev) => ({
                     ...prev,
-                    harvestSchedule: value ? { id: value } : null
+                    harvestPhase: value ? { id: value } : null
                   }))
                 }
               >
@@ -739,11 +739,11 @@ export function InboundDeliveryManagement() {
             <div className='grid gap-2'>
               <Label>Lịch thu hoạch</Label>
               <Select
-                value={form.harvestSchedule?.id || ''}
+                value={form.harvestPhase?.id || ''}
                 onValueChange={(value) =>
                   setForm((prev) => ({
                     ...prev,
-                    harvestSchedule: value ? { id: value } : null
+                    harvestPhase: value ? { id: value } : null
                   }))
                 }
               >

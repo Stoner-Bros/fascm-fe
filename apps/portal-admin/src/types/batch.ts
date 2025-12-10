@@ -46,7 +46,6 @@ export type UpdateBatchDto = Partial<CreateBatchDto>;
 export type FindAllBatchesDto = {
   page?: number;
   limit?: number;
-  search?: string;
   importTicketId?: string;
   productId?: string;
   areaId?: string;

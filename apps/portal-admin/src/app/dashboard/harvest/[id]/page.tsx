@@ -10,9 +10,6 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -21,872 +18,696 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { fetchHarvestDetailsByHarvestTicketId } from '@/services/harvest-detail.service';
+import { Separator } from '@/components/ui/separator';
 import {
-  approveHarvestSchedule,
-  completeHarvestSchedule,
-  rejectHarvestSchedule,
-  fetchHarvestScheduleById
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/use-toast';
+import {
+  createHarvestPhase,
+  fetchHarvestPhasesBySchedule,
+  updateHarvestPhaseStatus
+} from '@/services/harvest-phase.service';
+import {
+  fetchHarvestScheduleById,
+  updateHarvestScheduleStatus
 } from '@/services/harvest-schedule.service';
-import {
-  fetchHarvestTicketInvoice,
-  fetchHarvestTickets
-} from '@/services/harvest-ticket.service';
-import type { HarvestDetail } from '@/types/harvest-detail';
-import type { HarvestSchedule } from '@/types/harvest-schedule';
-import {
-  IconArrowLeft,
-  IconCalendar,
-  IconCheck,
-  IconDownload,
-  IconFileText,
-  IconUser,
-  IconX,
-  IconInfoCircle,
-  IconMapPin
-} from '@tabler/icons-react';
-import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import type {
+  CreateHarvestInvoiceDetailDto,
+  HarvestPhase
+} from '@/types/harvest-phase';
+import type {
+  HarvestSchedule,
+  HarvestScheduleStatus
+} from '@/types/harvest-schedule';
+import { ArrowLeft, CheckCircle, Package, Plus, XCircle } from 'lucide-react';
+import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-import { toast } from 'sonner';
+import { useEffect, useState } from 'react';
 
-type DetailRow = {
-  id: string;
-  productName: string;
-  quantity: number;
-  unit: string;
-  unitPrice: number;
-  totalPrice: number;
-};
+function getStatusBadge(status?: HarvestScheduleStatus | null) {
+  switch (status) {
+    case 'pending':
+      return <Badge className='bg-yellow-500'>Chờ duyệt</Badge>;
+    case 'approved':
+      return <Badge className='bg-green-500'>Đã duyệt</Badge>;
+    case 'rejected':
+      return <Badge className='bg-red-500'>Từ chối</Badge>;
+    case 'processing':
+      return <Badge className='bg-blue-500'>Đang xử lý</Badge>;
+    case 'completed':
+      return <Badge className='bg-gray-500'>Hoàn thành</Badge>;
+    case 'canceled':
+      return <Badge className='bg-gray-400'>Đã hủy</Badge>;
+    default:
+      return <Badge variant='outline'>-</Badge>;
+  }
+}
 
 export default function HarvestScheduleDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const id = params.id as string;
+  const { toast } = useToast();
+  const scheduleId = params.id as string;
 
-  const [harvestSchedule, setHarvestSchedule] =
-    useState<HarvestSchedule | null>(null);
-  const [detailRows, setDetailRows] = useState<DetailRow[]>([]);
-  const [harvestTickets, setHarvestTickets] = useState<any[]>([]);
+  const [schedule, setSchedule] = useState<HarvestSchedule | null>(null);
+  const [phases, setPhases] = useState<HarvestPhase[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [invoiceLoading, setInvoiceLoading] = useState(false);
-  const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
+  const [updating, setUpdating] = useState(false);
+  const [updatingPhaseId, setUpdatingPhaseId] = useState<string | null>(null);
+  const [showRejectDialog, setShowRejectDialog] = useState(false);
+  const [showPhaseDialog, setShowPhaseDialog] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [phaseData, setPhaseData] = useState({
+    description: '',
+    phaseNumber: 1,
+    invoiceDetails: [] as CreateHarvestInvoiceDetailDto[]
+  });
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const [scheduleData, phasesData] = await Promise.all([
+        fetchHarvestScheduleById(scheduleId),
+        fetchHarvestPhasesBySchedule({
+          harvestScheduleId: scheduleId,
+          limit: 50
+        })
+      ]);
+      setSchedule(scheduleData);
+      setPhases(phasesData.data);
+
+      // Initialize phase invoice details from schedule
+      if (
+        scheduleData.harvestDetails &&
+        scheduleData.harvestDetails.length > 0
+      ) {
+        setPhaseData((prev) => ({
+          ...prev,
+          invoiceDetails: scheduleData.harvestDetails!.map((detail) => ({
+            product: { id: detail.product!.id },
+            quantity: 0,
+            unitPrice: detail.unitPrice || 0,
+            unit: detail.unit || ''
+          }))
+        }));
+      }
+    } catch (error) {
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let cancelled = false;
-
-    async function loadData() {
-      try {
-        setLoading(true);
-
-        const scheduleData = await fetchHarvestScheduleById(id);
-
-        // Tickets of this schedule
-        const ticketsRes = await fetchHarvestTickets({
-          page: 1,
-          limit: 20,
-          harvestScheduleId: scheduleData.id
-        });
-
-        const ticketsData = ticketsRes.data ?? [];
-
-        // Lọc kỹ lại ticket đúng schedule hiện tại (phòng khi backend trả dư)
-        const tickets = ticketsData.filter((ticket) => {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const ticketScheduleId =
-            (ticket as any)?.harvestScheduleId?.id ??
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (ticket as any)?.harvestSchedule?.id ??
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (ticket as any)?.harvestScheduleId ??
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (ticket as any)?.scheduleId ??
-            '';
-
-          return String(ticketScheduleId) === String(scheduleData.id);
-        });
-
-        // Details of tickets
-        const detailResponses = await Promise.all(
-          tickets.map(async (ticket) => {
-            try {
-              const ds =
-                (await fetchHarvestDetailsByHarvestTicketId(ticket.id)) ?? [];
-              return ds;
-            } catch (error) {
-              console.error(
-                `Failed to fetch harvest details for ticket ${ticket.id}`,
-                error
-              );
-              return [] as HarvestDetail[];
-            }
-          })
-        );
-
-        // *** CHỈ LẤY DETAIL CỦA SCHEDULE NÀY ***
-        const scheduleIdStr = String(scheduleData.id);
-
-        const detailsOfThisSchedule = detailResponses
-          .flat()
-          .filter((detail) => {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const scheduleFromDetail =
-              (detail as any)?.harvestTicket?.harvestScheduleId?.id ??
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (detail as any)?.harvestTicket?.harvestScheduleId ??
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (detail as any)?.harvestTicket?.harvestSchedule?.id ??
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (detail as any)?.harvestScheduleId?.id ??
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (detail as any)?.harvestScheduleId ??
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (detail as any)?.harvestSchedule?.id ??
-              null;
-
-            // Nếu backend đã filter rồi và không gửi kèm scheduleId,
-            // thì giữ lại (không filter tiếp) để không làm mất dữ liệu hợp lệ
-            if (!scheduleFromDetail) return true;
-
-            return String(scheduleFromDetail) === scheduleIdStr;
-          });
-
-        // Tính toán amount cho mỗi detail: quantity * unitPrice
-        const rows: DetailRow[] = detailsOfThisSchedule.map((detail) => {
-          const quantity = Number(detail.quantity ?? 0);
-          const unitPrice = Number(detail.unitPrice ?? 0);
-          const amount = quantity * unitPrice; // Tính amount
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const productName =
-            (detail as any)?.product?.name ||
-            (detail as any)?.productName ||
-            (detail as any)?.product?.id ||
-            'Unknown product';
-
-          return {
-            id: detail.id,
-            productName: String(productName),
-            quantity,
-            unit: String(detail.unit ?? 'kg'),
-            unitPrice,
-            totalPrice: amount // amount = quantity * unitPrice
-          };
-        });
-
-        if (cancelled) return;
-
-        // Tính toán cho tickets - CHỈ LẤY TICKETS THUỘC SCHEDULE NÀY
-        const updatedTickets = tickets.map((ticket) => {
-          // Lấy details của ticket này
-          const ticketDetails = detailsOfThisSchedule.filter(
-            (detail) => detail.harvestTicket?.id === ticket.id
-          );
-
-          // Tính tổng quantity từ details (unit = kg)
-          const totalQuantity = ticketDetails.reduce(
-            (sum, detail) => sum + Number(detail.quantity ?? 0),
-            0
-          );
-
-          // Tính tổng amount từ details
-          const totalAmount = ticketDetails.reduce((sum, detail) => {
-            const qty = Number(detail.quantity ?? 0);
-            const price = Number(detail.unitPrice ?? 0);
-            return sum + qty * price;
-          }, 0);
-
-          return {
-            ...ticket,
-            quantity: totalQuantity,
-            unit: 'kg',
-            totalPayment: totalAmount,
-            totalAmount: totalAmount
-          };
-        });
-
-        setHarvestSchedule(scheduleData);
-        setDetailRows(rows);
-        // CHỈ LƯU TICKETS THUỘC SCHEDULE NÀY
-        setHarvestTickets(updatedTickets);
-        setError(null);
-      } catch (err: any) {
-        if (cancelled) return;
-        setError(err?.message ?? 'Không thể tải thông tin lịch thu hoạch');
-        console.error('Error loading harvest schedule:', err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    if (id) {
-      void loadData();
-    }
-
-    return () => {
-      cancelled = true;
-    };
-  }, [id]);
-
-  // Chuẩn hóa status về lowercase và default pending
-  const normalizeStatus = (status?: string | null): string => {
-    if (!status || status.trim() === '') return 'pending';
-    return status.toLowerCase().trim();
-  };
-
-  const getStatusLabel = (status?: string | null) => {
-    const normalized = normalizeStatus(status);
-    switch (normalized) {
-      case 'pending':
-        return 'Chờ duyệt đơn';
-      case 'rejected':
-        return 'Đã từ chối đơn';
-      case 'approved':
-        return 'Đã duyệt đơn';
-      case 'preparing':
-        return 'Chuẩn đi lấy';
-      case 'delivering':
-        return 'Đang đi lấy';
-      case 'delivered':
-        return 'Đã lấy';
-      case 'completed':
-        return 'Đã hoàn thành';
-      case 'canceled':
-        return 'Đã hủy đơn';
-      default:
-        return normalized || 'Chờ duyệt đơn';
-    }
-  };
-
-  const getStatusColor = (status?: string | null) => {
-    const normalized = normalizeStatus(status);
-    switch (normalized) {
-      case 'pending':
-        return 'text-yellow-600 dark:text-yellow-400';
-      case 'approved':
-        return 'text-green-600 dark:text-green-400';
-      case 'preparing':
-        return 'text-blue-600 dark:text-blue-400';
-      case 'delivering':
-        return 'text-purple-600 dark:text-purple-400';
-      case 'delivered':
-        return 'text-indigo-600 dark:text-indigo-400';
-      case 'completed':
-        return 'text-emerald-600 dark:text-emerald-400';
-      case 'rejected':
-        return 'text-red-600 dark:text-red-400';
-      case 'canceled':
-        return 'text-gray-600 dark:text-gray-400';
-      default:
-        return 'text-yellow-600 dark:text-yellow-400';
-    }
-  };
-
-  const getStatusBadgeVariant = (status?: string | null) => {
-    const normalized = normalizeStatus(status);
-    switch (normalized) {
-      case 'pending':
-        return 'secondary';
-      case 'approved':
-        return 'default';
-      case 'preparing':
-        return 'default';
-      case 'delivering':
-        return 'default';
-      case 'delivered':
-        return 'default';
-      case 'completed':
-        return 'default';
-      case 'rejected':
-      case 'canceled':
-        return 'destructive';
-      default:
-        return 'secondary';
-    }
-  };
-
-  const formatDate = (date?: string | Date | null) => {
-    if (!date) return 'Chưa có ngày';
-    try {
-      return format(new Date(date), 'dd/MM/yyyy HH:mm', { locale: vi });
-    } catch {
-      return 'Ngày không hợp lệ';
-    }
-  };
+    loadData();
+  }, [scheduleId]);
 
   const handleApprove = async () => {
-    if (!harvestSchedule) return;
+    if (!schedule) return;
+    setUpdating(true);
     try {
-      setActionLoading(true);
-      const updated = await approveHarvestSchedule(harvestSchedule.id);
-      setHarvestSchedule(updated);
-      setError(null);
-      toast.success('Đã duyệt lịch thu hoạch thành công!', {
-        description: `Lịch thu hoạch ${harvestSchedule.id} đã được duyệt.`
+      await updateHarvestScheduleStatus(schedule.id, 'approved');
+      await loadData();
+    } catch (error) {
+      toast({
+        title: 'Có lỗi xảy ra khi duyệt lịch thu hoạch',
+        variant: 'destructive'
       });
-    } catch (err: any) {
-      const errorMsg = err?.message ?? 'Không thể duyệt lịch thu hoạch';
-      setError(errorMsg);
-      toast.error('Không thể duyệt lịch thu hoạch', {
-        description: errorMsg
-      });
-      console.error('Error approving harvest schedule:', err);
     } finally {
-      setActionLoading(false);
+      setUpdating(false);
     }
-  };
-
-  const handleRejectClick = () => {
-    setRejectDialogOpen(true);
-    setRejectReason('');
   };
 
   const handleReject = async () => {
-    if (!harvestSchedule) return;
-    if (!rejectReason.trim()) {
-      toast.error('Vui lòng nhập lý do từ chối', {
-        description: 'Lý do từ chối là bắt buộc.'
+    if (!schedule || !rejectReason.trim()) {
+      toast({
+        title: 'Vui lòng nhập lý do từ chối',
+        variant: 'destructive'
       });
       return;
     }
+    setUpdating(true);
     try {
-      setActionLoading(true);
-      const updated = await rejectHarvestSchedule(
-        harvestSchedule.id,
-        rejectReason.trim()
-      );
-      setHarvestSchedule(updated);
-      setError(null);
-      setRejectDialogOpen(false);
+      await updateHarvestScheduleStatus(schedule.id, 'rejected', rejectReason);
+      setShowRejectDialog(false);
       setRejectReason('');
-      toast.error('Đã từ chối lịch thu hoạch', {
-        description: `Lịch thu hoạch ${harvestSchedule.id} đã bị từ chối.`
+      await loadData();
+    } catch (error) {
+      toast({
+        title: 'Có lỗi xảy ra khi từ chối lịch thu hoạch',
+        variant: 'destructive'
       });
-    } catch (err: any) {
-      const errorMsg = err?.message ?? 'Không thể từ chối lịch thu hoạch';
-      setError(errorMsg);
-      toast.error('Không thể từ chối lịch thu hoạch', {
-        description: errorMsg
-      });
-      console.error('Error rejecting harvest schedule:', err);
     } finally {
-      setActionLoading(false);
+      setUpdating(false);
     }
   };
 
-  const handleComplete = async () => {
-    if (!harvestSchedule) return;
+  const handleCreatePhase = async () => {
+    if (!schedule) return;
+
+    // Validate invoice details
+    const validDetails = phaseData.invoiceDetails.filter(
+      (d) => d.quantity && d.quantity > 0
+    );
+    if (validDetails.length === 0) {
+      toast({
+        title: 'Vui lòng nhập số lượng cho ít nhất một sản phẩm',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Calculate total amount
+    const totalAmount = validDetails.reduce((sum, detail) => {
+      return sum + detail.quantity! * (detail.unitPrice || 0);
+    }, 0);
+
+    setUpdating(true);
     try {
-      setActionLoading(true);
-      const updated = await completeHarvestSchedule(harvestSchedule.id);
-      setHarvestSchedule(updated);
-      setError(null);
-      toast.success('Đã hoàn thành lịch thu hoạch!', {
-        description: `Lịch thu hoạch ${harvestSchedule.id} đã được hoàn thành.`
+      await createHarvestPhase({
+        description: phaseData.description || `Đợt ${phaseData.phaseNumber}`,
+        phaseNumber: phaseData.phaseNumber,
+        harvestSchedule: { id: schedule.id },
+        harvestInvoice: {
+          totalAmount
+        },
+        harvestInvoiceDetails: validDetails
       });
-    } catch (err: any) {
-      const errorMsg = err?.message ?? 'Không thể hoàn thành lịch thu hoạch';
-      setError(errorMsg);
-      toast.error('Không thể hoàn thành lịch thu hoạch', {
-        description: errorMsg
+
+      setShowPhaseDialog(false);
+      // Reset phase data
+      setPhaseData({
+        description: '',
+        phaseNumber: phases.length + 2,
+        invoiceDetails: schedule.harvestDetails!.map((detail) => ({
+          product: { id: detail.product!.id },
+          quantity: 0,
+          unitPrice: detail.unitPrice || 0,
+          unit: detail.unit || ''
+        }))
       });
-      console.error('Error completing harvest schedule:', err);
+      await loadData();
+    } catch (error: any) {
+      toast({
+        title: error.details.message,
+        variant: 'destructive'
+      });
     } finally {
-      setActionLoading(false);
+      setUpdating(false);
     }
   };
 
-  // Tổng số lượng & tổng tiền (memo để tránh tính lại không cần thiết)
-  const totalQuantity = useMemo(
-    () => detailRows.reduce((sum, d) => sum + d.quantity, 0),
-    [detailRows]
-  );
+  const updatePhaseDetailQuantity = (productId: string, quantity: number) => {
+    setPhaseData((prev) => ({
+      ...prev,
+      invoiceDetails: prev.invoiceDetails.map((detail) =>
+        detail.product.id === productId ? { ...detail, quantity } : detail
+      )
+    }));
+  };
 
-  const totalPrice = useMemo(
-    () => detailRows.reduce((sum, d) => sum + d.totalPrice, 0),
-    [detailRows]
-  );
-
-  // Hàm tải hóa đơn điện tử
-  const handleDownloadInvoice = async (ticketId: string) => {
+  const handleConfirmDelivery = async (phaseId: string) => {
+    setUpdatingPhaseId(phaseId);
     try {
-      setInvoiceLoading(true);
-      const blob = await fetchHarvestTicketInvoice(ticketId);
-
-      // Tạo URL từ blob và tải xuống
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `invoice-${ticketId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      window.URL.revokeObjectURL(url);
-
-      toast.success('Đã tải hóa đơn điện tử thành công!');
-    } catch (err: any) {
-      toast.error('Không thể tải hóa đơn điện tử', {
-        description: err?.message ?? 'Có lỗi xảy ra khi tải hóa đơn'
+      await updateHarvestPhaseStatus(phaseId, { status: 'completed' });
+      toast({
+        title: 'Thành công',
+        description: 'Đã xác nhận nhận hàng'
       });
-      console.error('Error downloading invoice:', err);
+      await loadData();
+    } catch (error) {
+      toast({
+        title: 'Lỗi',
+        description: 'Không thể cập nhật trạng thái đợt thu hoạch',
+        variant: 'destructive'
+      });
     } finally {
-      setInvoiceLoading(false);
+      setUpdatingPhaseId(null);
     }
   };
 
   if (loading) {
     return (
       <PageContainer>
-        <div className='space-y-6'>
-          <Skeleton className='h-12 w-full' />
-          <Skeleton className='h-64 w-full' />
-          <Skeleton className='h-64 w-full' />
+        <div className='mx-auto flex w-full justify-center py-40'>
+          <p>Đang tải...</p>
         </div>
       </PageContainer>
     );
   }
 
-  if (error || !harvestSchedule) {
+  if (!schedule) {
     return (
       <PageContainer>
-        <div className='flex flex-col items-center justify-center py-12'>
-          <div className='rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200'>
-            <p className='font-medium'>
-              {error || 'Không tìm thấy lịch thu hoạch'}
-            </p>
-          </div>
-          <Button
-            variant='outline'
-            className='mt-4'
-            onClick={() => router.push('/dashboard/harvest')}
-          >
-            <IconArrowLeft className='mr-2 h-4 w-4' />
-            Quay lại danh sách
-          </Button>
+        <div className='mx-auto flex w-full justify-center py-40'>
+          <p>Không tìm thấy lịch thu hoạch</p>
         </div>
       </PageContainer>
     );
   }
+
+  // Calculate totals for schedule
+  const scheduleTotals = schedule.harvestDetails?.reduce(
+    (acc, detail) => {
+      const productId = detail.product?.id || '';
+      if (!acc[productId]) {
+        acc[productId] = {
+          name: detail.product?.name || '',
+          total: 0,
+          used: 0
+        };
+      }
+      acc[productId].total += detail.quantity || 0;
+      return acc;
+    },
+    {} as Record<string, { name: string; total: number; used: number }>
+  );
+
+  // Calculate used quantities from phases
+  phases.forEach((phase) => {
+    phase.harvestInvoiceDetails?.forEach((detail) => {
+      const productId = detail.product?.id || '';
+      if (scheduleTotals && scheduleTotals[productId]) {
+        scheduleTotals[productId].used += detail.quantity || 0;
+      }
+    });
+  });
+
+  // Check if there's any remaining quantity to create new phase
+  const hasRemainingQuantity = scheduleTotals
+    ? Object.values(scheduleTotals).some((totals) => totals.total > totals.used)
+    : false;
 
   return (
     <PageContainer>
-      <div className='w-full space-y-6'>
+      <div className='mx-auto w-full space-y-6'>
         {/* Header */}
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-4'>
-            <Button variant='ghost' size='icon' onClick={() => router.back()}>
-              <IconArrowLeft className='h-5 w-5' />
+            <Button variant='ghost' size='icon' asChild>
+              <Link href='/dashboard/harvest'>
+                <ArrowLeft className='h-5 w-5' />
+              </Link>
             </Button>
             <div>
-              <h2 className='text-3xl font-bold tracking-tight'>
-                Chi tiết Lịch Thu Hoạch
-              </h2>
-              <p className='text-muted-foreground'>ID: {harvestSchedule.id}</p>
+              <h1 className='text-3xl font-bold'>Chi tiết lịch thu hoạch</h1>
+              <p className='text-muted-foreground'>Mã: {schedule.id}</p>
             </div>
           </div>
-          <div>
-            <Badge
-              variant={getStatusBadgeVariant(harvestSchedule.status)}
-              className={`text-sm font-semibold ${getStatusColor(harvestSchedule.status)}`}
-            >
-              {getStatusLabel(harvestSchedule.status)}
-            </Badge>
-          </div>
-        </div>
-
-        <Separator />
-
-        <div className='grid gap-6 md:grid-cols-3'>
-          {/* Main Content */}
-          <div className='space-y-6 md:col-span-2'>
-            {/* Basic Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Thông tin cơ bản</CardTitle>
-                <CardDescription>
-                  Chi tiết về lịch thu hoạch này
-                </CardDescription>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div>
-                    <p className='text-muted-foreground mb-1 text-sm'>
-                      Trạng thái
-                    </p>
-                    <Badge
-                      variant={getStatusBadgeVariant(harvestSchedule.status)}
-                    >
-                      {getStatusLabel(harvestSchedule.status)}
-                    </Badge>
-                  </div>
-                  <div>
-                    <p className='text-muted-foreground mb-1 text-sm'>
-                      Ngày thu hoạch
-                    </p>
-                    <div className='flex items-center gap-2'>
-                      <IconCalendar className='h-4 w-4' />
-                      <p className='text-sm font-medium'>
-                        {formatDate(harvestSchedule.harvestDate)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <Separator />
-
-                <div>
-                  <p className='text-muted-foreground mb-2 text-sm'>Mô tả</p>
-                  <p className='text-sm'>
-                    {harvestSchedule.description || 'Không có mô tả'}
-                  </p>
-                </div>
-
-                {normalizeStatus(harvestSchedule.status) === 'rejected' &&
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  (harvestSchedule as any)?.reason && (
-                    <>
-                      <Separator />
-                      <div>
-                        <p className='text-muted-foreground mb-2 flex items-center gap-2 text-sm'>
-                          <IconInfoCircle className='h-4 w-4' />
-                          Lý do từ chối
-                        </p>
-                        <div className='rounded-md border border-red-200 bg-red-50 p-3 dark:border-red-800 dark:bg-red-950'>
-                          <p className='text-sm text-red-800 dark:text-red-200'>
-                            {
-                              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                              (harvestSchedule as any)?.reason
-                            }
-                          </p>
-                        </div>
-                      </div>
-                    </>
-                  )}
-
-                {harvestSchedule.supplierId && (
-                  <>
-                    <Separator />
-                    <div>
-                      <p className='text-muted-foreground mb-1 text-sm'>
-                        Supplier Name
-                      </p>
-                      <div className='flex items-center gap-2'>
-                        <IconUser className='h-4 w-4' />
-                        <p className='text-sm font-medium'>
-                          {
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            (harvestSchedule as any)?.supplierId?.user
-                              ?.firstName
-                          }{' '}
-                          {
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            (harvestSchedule as any)?.supplierId?.user?.lastName
-                          }
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                )}
-                {harvestSchedule.supplierId && (
-                  <>
-                    <Separator />
-                    <div>
-                      <p className='text-muted-foreground mb-1 text-sm'>
-                        Supplier Address
-                      </p>
-                      <div className='flex items-center gap-2'>
-                        <IconMapPin className='h-4 w-4' />
-                        <p className='text-sm font-medium'>
-                          {
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            (harvestSchedule as any)?.supplierId?.address
-                          }
-                        </p>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                <Separator />
-
-                <div className='grid grid-cols-2 gap-4'>
-                  <div>
-                    <p className='text-muted-foreground mb-1 text-sm'>
-                      Ngày tạo
-                    </p>
-                    <p className='text-sm'>
-                      {formatDate(harvestSchedule.createdAt)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className='text-muted-foreground mb-1 text-sm'>
-                      Cập nhật lần cuối
-                    </p>
-                    <p className='text-sm'>
-                      {formatDate(harvestSchedule.updatedAt)}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Harvest Details (như bên Supplier) */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Harvest Details</CardTitle>
-                <CardDescription>
-                  Danh sách chi tiết thu hoạch của lịch này
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {detailRows.length === 0 ? (
-                  <div className='flex flex-col items-center justify-center py-8 text-center'>
-                    <IconFileText className='text-muted-foreground mb-2 h-12 w-12' />
-                    <p className='text-muted-foreground text-sm'>
-                      Chưa có chi tiết nào
-                    </p>
-                  </div>
-                ) : (
-                  <div className='space-y-4'>
-                    <div className='rounded-md border text-sm'>
-                      <div className='bg-muted text-muted-foreground grid grid-cols-5 gap-2 border-b px-3 py-2 text-xs font-medium tracking-wide uppercase'>
-                        <span className='col-span-2'>Sản phẩm</span>
-                        <span>Số lượng</span>
-                        <span>Đơn vị</span>
-                        <span>Đơn giá</span>
-                      </div>
-                      {detailRows.map((row) => (
-                        <div
-                          key={row.id}
-                          className='grid grid-cols-5 gap-2 border-b px-3 py-2 last:border-b-0'
-                        >
-                          <div className='col-span-2'>
-                            <p className='font-medium'>{row.productName}</p>
-                          </div>
-                          <div>
-                            <p className='font-medium'>{row.quantity}</p>
-                          </div>
-                          <div>
-                            <p className='font-medium'>{row.unit}</p>
-                          </div>
-                          <div>
-                            <p className='font-medium'>
-                              {new Intl.NumberFormat('vi-VN', {
-                                style: 'currency',
-                                currency: 'VND'
-                              }).format(row.unitPrice)}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-
-                    <div className='grid grid-cols-2 gap-4 border-t pt-4'>
-                      <div>
-                        <p className='text-muted-foreground text-sm'>
-                          Tổng số lượng
-                        </p>
-                        <p className='font-medium'>{totalQuantity}</p>
-                      </div>
-                      <div>
-                        <p className='text-muted-foreground text-sm'>
-                          Tổng tiền
-                        </p>
-                        <p className='text-primary text-lg font-bold'>
-                          {new Intl.NumberFormat('vi-VN', {
-                            style: 'currency',
-                            currency: 'VND'
-                          }).format(totalPrice)}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className='space-y-6'>
-            {/* Status Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Thao tác</CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-2'>
-                {normalizeStatus(harvestSchedule.status) === 'pending' && (
-                  <>
-                    <Button
-                      className='w-full justify-start'
-                      variant='default'
-                      onClick={handleApprove}
-                      disabled={actionLoading}
-                    >
-                      <IconCheck className='mr-2 h-4 w-4' />
-                      {actionLoading ? 'Đang xử lý...' : 'Approve'}
-                    </Button>
-                    <Button
-                      className='w-full justify-start'
-                      variant='destructive'
-                      onClick={handleRejectClick}
-                      disabled={actionLoading}
-                    >
-                      <IconX className='mr-2 h-4 w-4' />
-                      {actionLoading ? 'Đang xử lý...' : 'Reject'}
-                    </Button>
-                  </>
-                )}
-                {normalizeStatus(harvestSchedule.status) === 'delivered' && (
-                  <Button
-                    className='w-full justify-start'
-                    variant='default'
-                    onClick={handleComplete}
-                    disabled={actionLoading}
-                  >
-                    <IconCheck className='mr-2 h-4 w-4' />
-                    {actionLoading ? 'Đang xử lý...' : 'Đánh dấu hoàn thành'}
-                  </Button>
-                )}
-                {normalizeStatus(harvestSchedule.status) === 'completed' && (
-                  <Button
-                    className='w-full justify-start'
-                    variant='outline'
-                    disabled
-                  >
-                    <IconCheck className='mr-2 h-4 w-4' />
-                    Đã hoàn thành
-                  </Button>
-                )}
-                {(normalizeStatus(harvestSchedule.status) === 'rejected' ||
-                  normalizeStatus(harvestSchedule.status) === 'canceled') && (
-                  <Button
-                    className='w-full justify-start'
-                    variant='outline'
-                    disabled
-                  >
-                    <IconX className='mr-2 h-4 w-4' />
-                    {normalizeStatus(harvestSchedule.status) === 'rejected'
-                      ? 'Đã từ chối'
-                      : 'Đã hủy'}
-                  </Button>
-                )}
-                {/* <Link href='/dashboard/harvest' className='block w-full'>
-                  <Button variant='outline' className='w-full justify-start'>
-                    <IconArrowLeft className='mr-2 h-4 w-4' />
-                    Quay lại danh sách
-                  </Button>
-                </Link> */}
-              </CardContent>
-            </Card>
-
-            {/* Quick Info */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Thông tin nhanh</CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div>
-                  <p className='text-muted-foreground mb-1 text-sm'>
-                    Tổng số details
-                  </p>
-                  <p className='text-2xl font-bold'>{detailRows.length}</p>
-                </div>
-                <Separator />
-                <div>
-                  <p className='text-muted-foreground mb-1 text-sm'>
-                    Tổng số lượng
-                  </p>
-                  <p className='text-lg font-bold'>{totalQuantity} kg</p>
-                </div>
-                <Separator />
-                <div>
-                  <p className='text-muted-foreground mb-1 text-sm'>
-                    ID Schedule
-                  </p>
-                  <p className='font-mono text-sm'>{harvestSchedule.id}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Download Invoice */}
-            {harvestTickets.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Hóa đơn điện tử</CardTitle>
-                  <CardDescription>Tải hóa đơn cho các ticket</CardDescription>
-                </CardHeader>
-                <CardContent className='space-y-2'>
-                  {harvestTickets.map((ticket) => (
-                    <Button
-                      key={ticket.id}
-                      variant='outline'
-                      className='w-full justify-start'
-                      onClick={() => handleDownloadInvoice(ticket.id)}
-                      disabled={invoiceLoading}
-                    >
-                      <IconDownload className='mr-2 h-4 w-4' />
-                      {invoiceLoading
-                        ? 'Đang tải...'
-                        : `Tải hóa đơn ${ticket.ticketNumber || ticket.id.slice(0, 8)}`}
-                    </Button>
-                  ))}
-                </CardContent>
-              </Card>
+          <div className='flex items-center gap-2'>
+            {schedule.status === 'pending' && (
+              <>
+                <Button
+                  variant='destructive'
+                  onClick={() => setShowRejectDialog(true)}
+                  disabled={updating}
+                >
+                  <XCircle className='mr-2 h-4 w-4' />
+                  Từ chối
+                </Button>
+                <Button onClick={handleApprove} disabled={updating}>
+                  <CheckCircle className='mr-2 h-4 w-4' />
+                  Duyệt
+                </Button>
+              </>
+            )}
+            {schedule.status === 'approved' && hasRemainingQuantity && (
+              <Button onClick={() => setShowPhaseDialog(true)}>
+                <Plus className='mr-2 h-4 w-4' />
+                Tạo đợt thu hoạch
+              </Button>
             )}
           </div>
         </div>
-      </div>
 
-      {/* Reject Reason Dialog */}
-      <Dialog open={rejectDialogOpen} onOpenChange={setRejectDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Từ chối lịch thu hoạch</DialogTitle>
-            <DialogDescription>
-              Vui lòng nhập lý do từ chối lịch thu hoạch này. Lý do này sẽ được
-              gửi đến supplier.
-            </DialogDescription>
-          </DialogHeader>
-          <div className='space-y-4 py-4'>
-            <div className='space-y-2'>
-              <Label htmlFor='rejectReason'>
-                Lý do từ chối <span className='text-destructive'>*</span>
-              </Label>
-              <Textarea
-                id='rejectReason'
-                placeholder='Nhập lý do từ chối...'
-                value={rejectReason}
-                onChange={(e) => setRejectReason(e.target.value)}
-                rows={4}
-                required
-              />
+        {/* General Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Thông tin chung</CardTitle>
+          </CardHeader>
+          <CardContent className='space-y-4'>
+            <div className='grid grid-cols-2 gap-4'>
+              <div>
+                <Label className='text-muted-foreground'>Trạng thái</Label>
+                <div className='mt-1'>{getStatusBadge(schedule.status)}</div>
+              </div>
+              <div>
+                <Label className='text-muted-foreground'>Ngày thu hoạch</Label>
+                <p className='mt-1'>
+                  {schedule.harvestDate
+                    ? new Date(schedule.harvestDate).toLocaleString('vi-VN')
+                    : '-'}
+                </p>
+              </div>
+              <div>
+                <Label className='text-muted-foreground'>Nhà cung cấp</Label>
+                <p className='mt-1 font-medium'>
+                  {schedule.supplier?.gardenName || '-'}
+                </p>
+              </div>
+              <div>
+                <Label className='text-muted-foreground'>Địa chỉ</Label>
+                <p className='mt-1'>{schedule.address || '-'}</p>
+              </div>
+              {schedule.description && (
+                <div className='col-span-2'>
+                  <Label className='text-muted-foreground'>Mô tả</Label>
+                  <p className='mt-1'>{schedule.description}</p>
+                </div>
+              )}
+              {schedule.reason && (
+                <div className='col-span-2'>
+                  <Label className='text-muted-foreground'>Lý do từ chối</Label>
+                  <p className='mt-1 text-red-600'>{schedule.reason}</p>
+                </div>
+              )}
             </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => {
-                setRejectDialogOpen(false);
-                setRejectReason('');
-              }}
-              disabled={actionLoading}
-            >
-              Hủy
-            </Button>
-            <Button
-              variant='destructive'
-              onClick={handleReject}
-              disabled={actionLoading || !rejectReason.trim()}
-            >
-              {actionLoading ? 'Đang xử lý...' : 'Xác nhận từ chối'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </CardContent>
+        </Card>
+
+        {/* Harvest Details */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Sản phẩm thu hoạch</CardTitle>
+            <CardDescription>
+              Danh sách sản phẩm và số lượng dự kiến
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Sản phẩm</TableHead>
+                  <TableHead className='text-right'>Số lượng</TableHead>
+                  <TableHead className='text-right'>Đơn vị</TableHead>
+                  <TableHead className='text-right'>Đơn giá</TableHead>
+                  <TableHead className='text-right'>Thành tiền</TableHead>
+                  {schedule.status === 'approved' && (
+                    <TableHead className='text-right'>Đã phân đợt</TableHead>
+                  )}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {schedule.harvestDetails?.map((detail) => {
+                  const productTotals =
+                    scheduleTotals?.[detail.product?.id || ''];
+                  return (
+                    <TableRow key={detail.id}>
+                      <TableCell className='font-medium'>
+                        {detail.product?.name || '-'}
+                      </TableCell>
+                      <TableCell className='text-right'>
+                        {detail.quantity || 0}
+                      </TableCell>
+                      <TableCell className='text-right'>
+                        {detail.unit || '-'}
+                      </TableCell>
+                      <TableCell className='text-right'>
+                        {(detail.unitPrice || 0).toLocaleString('vi-VN')} đ
+                      </TableCell>
+                      <TableCell className='text-right'>
+                        {(
+                          (detail.quantity || 0) * (detail.unitPrice || 0)
+                        ).toLocaleString('vi-VN')}{' '}
+                        đ
+                      </TableCell>
+                      {schedule.status === 'approved' && productTotals && (
+                        <TableCell className='text-right'>
+                          <span
+                            className={
+                              productTotals.used > productTotals.total
+                                ? 'text-red-600'
+                                : ''
+                            }
+                          >
+                            {productTotals.used} / {productTotals.total}
+                          </span>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Phases List */}
+        {phases.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Các đợt thu hoạch</CardTitle>
+              <CardDescription>
+                Đã tạo {phases.length} đợt thu hoạch
+              </CardDescription>
+            </CardHeader>
+            <CardContent className='space-y-4'>
+              {phases.map((phase) => (
+                <div key={phase.id} className='rounded-lg border p-4'>
+                  <div className='mb-3 flex items-center justify-between'>
+                    <div className='flex items-center gap-3'>
+                      <Package className='text-muted-foreground h-5 w-5' />
+                      <div>
+                        <p className='font-semibold'>Đợt {phase.phaseNumber}</p>
+                      </div>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      <Badge>{phase.status || 'pending'}</Badge>
+                      {phase.status === 'delivered' && (
+                        <Button
+                          size='sm'
+                          onClick={() => handleConfirmDelivery(phase.id)}
+                          disabled={updatingPhaseId === phase.id}
+                        >
+                          <CheckCircle className='mr-1 h-3 w-3' />
+                          Đã nhận
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <Separator className='my-3' />
+
+                  <div className='space-y-2'>
+                    {phase.harvestInvoiceDetails?.map((detail) => (
+                      <div
+                        key={detail.id}
+                        className='flex justify-between text-sm'
+                      >
+                        <span>{detail.product?.name}</span>
+                        <span className='font-medium'>
+                          {detail.quantity} {detail.unit} ×{' '}
+                          {(detail.unitPrice || 0).toLocaleString('vi-VN')} đ
+                        </span>
+                      </div>
+                    ))}
+                    <Separator className='my-2' />
+                    <div className='flex justify-between font-semibold'>
+                      <span>Tổng cộng</span>
+                      <span>
+                        {(
+                          phase.harvestInvoice?.totalAmount || 0
+                        ).toLocaleString('vi-VN')}{' '}
+                        đ
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Reject Dialog */}
+        <Dialog open={showRejectDialog} onOpenChange={setShowRejectDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Từ chối lịch thu hoạch</DialogTitle>
+              <DialogDescription>
+                Vui lòng nhập lý do từ chối lịch thu hoạch này
+              </DialogDescription>
+            </DialogHeader>
+            <div className='space-y-4'>
+              <div>
+                <Label htmlFor='reason'>Lý do từ chối *</Label>
+                <Textarea
+                  id='reason'
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder='Nhập lý do từ chối...'
+                  rows={4}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant='outline'
+                onClick={() => setShowRejectDialog(false)}
+                disabled={updating}
+              >
+                Hủy
+              </Button>
+              <Button
+                variant='destructive'
+                onClick={handleReject}
+                disabled={updating || !rejectReason.trim()}
+              >
+                Xác nhận từ chối
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Create Phase Dialog */}
+        <Dialog open={showPhaseDialog} onOpenChange={setShowPhaseDialog}>
+          <DialogContent className='max-h-[80vh] max-w-3xl overflow-y-auto'>
+            <DialogHeader>
+              <DialogTitle>Tạo đợt thu hoạch</DialogTitle>
+              <DialogDescription>
+                Nhập thông tin cho đợt thu hoạch mới
+              </DialogDescription>
+            </DialogHeader>
+            <div className='space-y-4'>
+              <div className='grid grid-cols-2 gap-4'>
+                <div>
+                  <Label htmlFor='phaseNumber'>Số đợt</Label>
+                  <Input
+                    id='phaseNumber'
+                    type='number'
+                    value={phaseData.phaseNumber}
+                    onChange={(e) =>
+                      setPhaseData({
+                        ...phaseData,
+                        phaseNumber: parseInt(e.target.value) || 1
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor='description'>Mô tả đợt</Label>
+                <Textarea
+                  id='description'
+                  value={phaseData.description}
+                  onChange={(e) =>
+                    setPhaseData({ ...phaseData, description: e.target.value })
+                  }
+                  placeholder='Nhập mô tả cho đợt thu hoạch...'
+                  rows={3}
+                />
+              </div>
+
+              <Separator />
+
+              <div>
+                <Label className='text-base'>Chi tiết sản phẩm</Label>
+                <p className='text-muted-foreground mb-3 text-sm'>
+                  Nhập số lượng cho từng sản phẩm trong đợt này
+                </p>
+                <div className='space-y-3'>
+                  {phaseData.invoiceDetails.map((detail) => {
+                    const product = schedule.harvestDetails?.find(
+                      (d) => d.product?.id === detail.product.id
+                    );
+                    const productTotals = scheduleTotals?.[detail.product.id];
+                    const remaining = productTotals
+                      ? productTotals.total - productTotals.used
+                      : 0;
+
+                    return (
+                      <div
+                        key={detail.product.id}
+                        className='rounded-lg border p-3'
+                      >
+                        <div className='mb-2 flex items-center justify-between'>
+                          <span className='font-medium'>
+                            {product?.product?.name}
+                          </span>
+                          <span className='text-muted-foreground text-sm'>
+                            Còn lại: {remaining} {detail.unit}
+                          </span>
+                        </div>
+                        <div className='grid grid-cols-3 gap-2'>
+                          <div>
+                            <Label className='text-xs'>Số lượng</Label>
+                            <Input
+                              type='number'
+                              min={0}
+                              max={remaining}
+                              value={detail.quantity || 0}
+                              onChange={(e) =>
+                                updatePhaseDetailQuantity(
+                                  detail.product.id,
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                            />
+                          </div>
+                          <div>
+                            <Label className='text-xs'>Đơn giá</Label>
+                            <Input
+                              type='number'
+                              value={detail.unitPrice || 0}
+                              disabled
+                            />
+                          </div>
+                          <div>
+                            <Label className='text-xs'>Thành tiền</Label>
+                            <Input
+                              value={(
+                                (detail.quantity || 0) * (detail.unitPrice || 0)
+                              ).toLocaleString('vi-VN')}
+                              disabled
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className='bg-muted mt-4 rounded-lg p-3'>
+                  <div className='flex items-center justify-between'>
+                    <span className='font-semibold'>Tổng tiền đợt này:</span>
+                    <span className='text-lg font-bold'>
+                      {phaseData.invoiceDetails
+                        .reduce(
+                          (sum, d) =>
+                            sum + (d.quantity || 0) * (d.unitPrice || 0),
+                          0
+                        )
+                        .toLocaleString('vi-VN')}{' '}
+                      đ
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant='outline'
+                onClick={() => setShowPhaseDialog(false)}
+                disabled={updating}
+              >
+                Hủy
+              </Button>
+
+              {/* Kiểm tra còn có thể tạo đợt mới hiện nút */}
+              <Button onClick={handleCreatePhase} disabled={updating}>
+                Tạo đợt thu hoạch
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </PageContainer>
   );
 }

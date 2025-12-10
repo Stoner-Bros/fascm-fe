@@ -1,97 +1,233 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import PageContainer from '@/components/layout/page-container';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
 import { fetchHarvestSchedules } from '@/services/harvest-schedule.service';
-import type { HarvestSchedule } from '@/types/harvest-schedule';
-import { HarvestScheduleList } from '@/features/harvest/components/harvest-schedule-list';
-import { Skeleton } from '@/components/ui/skeleton';
+import type {
+  HarvestSchedule,
+  HarvestScheduleStatus
+} from '@/types/harvest-schedule';
+import Link from 'next/link';
+import { useEffect, useState } from 'react';
 
-export default function HarvestPage() {
-  const [harvestSchedules, setHarvestSchedules] = useState<HarvestSchedule[]>(
-    []
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+function getStatusBadge(status?: HarvestScheduleStatus | null) {
+  switch (status) {
+    case 'pending':
+      return (
+        <Badge
+          variant='outline'
+          className='border-yellow-200 bg-yellow-50 text-yellow-700'
+        >
+          Chờ duyệt
+        </Badge>
+      );
+    case 'approved':
+      return (
+        <Badge
+          variant='outline'
+          className='border-green-200 bg-green-50 text-green-700'
+        >
+          Đã duyệt
+        </Badge>
+      );
+    case 'rejected':
+      return (
+        <Badge
+          variant='outline'
+          className='border-red-200 bg-red-50 text-red-700'
+        >
+          Từ chối
+        </Badge>
+      );
+    case 'processing':
+      return (
+        <Badge
+          variant='outline'
+          className='border-blue-200 bg-blue-50 text-blue-700'
+        >
+          Đang xử lý
+        </Badge>
+      );
+    case 'completed':
+      return (
+        <Badge
+          variant='outline'
+          className='border-gray-200 bg-gray-50 text-gray-700'
+        >
+          Hoàn thành
+        </Badge>
+      );
+    case 'canceled':
+      return (
+        <Badge
+          variant='outline'
+          className='border-gray-200 bg-gray-50 text-gray-700'
+        >
+          Đã hủy
+        </Badge>
+      );
+    default:
+      return <Badge variant='outline'>-</Badge>;
+  }
+}
+
+export default function HarvestSchedulesPage() {
+  const [schedules, setSchedules] = useState<HarvestSchedule[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const limit = 10;
+
+  const loadSchedules = async (pageNum: number) => {
+    setLoading(true);
+    try {
+      const response = await fetchHarvestSchedules({
+        page: pageNum,
+        limit,
+        sort: 'desc'
+      });
+      setSchedules(response.data);
+      setHasMore(response.hasNextPage ?? false);
+    } catch (error) {
+      console.error('Failed to load harvest schedules:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let cancelled = false;
-    let intervalId: NodeJS.Timeout | null = null;
+    loadSchedules(page);
+  }, [page]);
 
-    async function loadHarvestSchedules(isInitialLoad = false) {
-      if (cancelled) return;
+  const handlePreviousPage = () => {
+    if (page > 1) setPage(page - 1);
+  };
 
-      try {
-        if (isInitialLoad) {
-          setLoading(true);
-        }
-        const response = await fetchHarvestSchedules({
-          page: 1,
-          limit: 100,
-          status: ''
-        });
-
-        if (cancelled) return;
-
-        // Luôn update state với array mới để đảm bảo component re-render
-        const newData = response.data || [];
-        // Tạo array mới để React detect được sự thay đổi
-        setHarvestSchedules([...newData]);
-        setError(null);
-      } catch (err: any) {
-        if (cancelled) return;
-        // Chỉ hiển thị error khi load lần đầu
-        if (isInitialLoad) {
-          setError(err?.message ?? 'Không thể tải danh sách lịch thu hoạch');
-        }
-        console.error('Error loading harvest schedules:', err);
-      } finally {
-        if (!cancelled && isInitialLoad) {
-          setLoading(false);
-        }
-      }
-    }
-
-    // Load lần đầu ngay lập tức
-    loadHarvestSchedules(true);
-
-    // // Polling để tự động cập nhật danh sách mỗi 3 giây (giảm thời gian để responsive hơn)
-    // intervalId = setInterval(() => {
-    //   if (!cancelled) {
-    //     loadHarvestSchedules(false);
-    //   }
-    // }, 3000); // 3 giây
-
-    return () => {
-      cancelled = true;
-      if (intervalId) {
-        clearInterval(intervalId);
-      }
-    };
-  }, []);
+  const handleNextPage = () => {
+    if (hasMore) setPage(page + 1);
+  };
 
   return (
     <PageContainer>
-      <div className='flex flex-1 flex-col space-y-2'>
-        <div className='flex items-center justify-between space-y-2'>
-          <h2 className='text-2xl font-bold tracking-tight'>
-            Danh sách Lịch Thu Hoạch
-          </h2>
+      <div className='mx-auto w-full space-y-6'>
+        <div className='flex items-center justify-between'>
+          <div>
+            <h1 className='text-3xl font-bold'>Lịch thu hoạch</h1>
+            <p className='text-muted-foreground mt-1'>
+              Quản lý các lịch thu hoạch từ nhà cung cấp
+            </p>
+          </div>
         </div>
 
-        {loading ? (
-          <div className='space-y-4'>
-            <Skeleton className='h-12 w-full' />
-            <Skeleton className='h-12 w-full' />
-            <Skeleton className='h-12 w-full' />
+        <div className='bg-card rounded-lg border'>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Mã lịch</TableHead>
+                <TableHead>Nhà cung cấp</TableHead>
+                <TableHead>Ngày thu hoạch</TableHead>
+                <TableHead>Địa chỉ</TableHead>
+                <TableHead>Trạng thái</TableHead>
+                <TableHead className='text-right'>Thao tác</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={6} className='py-8 text-center'>
+                    Đang tải...
+                  </TableCell>
+                </TableRow>
+              ) : schedules.length === 0 ? (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className='text-muted-foreground py-8 text-center'
+                  >
+                    Không có dữ liệu
+                  </TableCell>
+                </TableRow>
+              ) : (
+                schedules.map((schedule) => (
+                  <TableRow key={schedule.id}>
+                    <TableCell className='font-medium'>
+                      {schedule.id.slice(0, 8)}
+                    </TableCell>
+                    <TableCell>
+                      <div className='flex flex-col'>
+                        <span className='font-medium'>
+                          {schedule.supplier?.gardenName || '-'}
+                        </span>
+                        {schedule.supplier?.address && (
+                          <span className='text-muted-foreground text-sm'>
+                            {schedule.supplier.address}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {schedule.harvestDate
+                        ? new Date(schedule.harvestDate).toLocaleDateString(
+                            'vi-VN',
+                            {
+                              year: 'numeric',
+                              month: '2-digit',
+                              day: '2-digit',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            }
+                          )
+                        : '-'}
+                    </TableCell>
+                    <TableCell>{schedule.address || '-'}</TableCell>
+                    <TableCell>{getStatusBadge(schedule.status)}</TableCell>
+                    <TableCell className='text-right'>
+                      <Button asChild size='sm' variant='outline'>
+                        <Link href={`/dashboard/harvest/${schedule.id}`}>
+                          Chi tiết
+                        </Link>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+
+        {/* Pagination */}
+        <div className='flex items-center justify-between'>
+          <p className='text-muted-foreground text-sm'>
+            Trang {page} {hasMore ? '- có thêm dữ liệu' : '- hết dữ liệu'}
+          </p>
+          <div className='flex gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={handlePreviousPage}
+              disabled={page === 1 || loading}
+            >
+              Trang trước
+            </Button>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={handleNextPage}
+              disabled={!hasMore || loading}
+            >
+              Trang sau
+            </Button>
           </div>
-        ) : error ? (
-          <div className='rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200'>
-            <p className='font-medium'>Lỗi: {error}</p>
-          </div>
-        ) : (
-          <HarvestScheduleList harvestSchedules={harvestSchedules} />
-        )}
+        </div>
       </div>
     </PageContainer>
   );

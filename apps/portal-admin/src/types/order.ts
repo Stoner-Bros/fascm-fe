@@ -74,3 +74,13 @@ export type OrderDetailBE = {
   createdAt: string;
   updatedAt: string;
 };
+
+export type OrderPhase = {
+  id: string;
+  phaseNumber?: number | null;
+  status?: string | null;
+  description?: string | null;
+  orderSchedule?: OrderSchedule | null;
+  createdAt: string;
+  updatedAt: string;
+};

@@ -61,10 +61,8 @@ export default function DeliveryRealtimeAdminPage() {
               {list.map((d) => (
                 <tr key={d.id}>
                   <td className='border-b p-2'>{d.id}</td>
-                  <td className='border-b p-2'>{d.orderSchedule?.id ?? '-'}</td>
-                  <td className='border-b p-2'>
-                    {d.harvestSchedule?.id ?? '-'}
-                  </td>
+                  <td className='border-b p-2'>{d.orderPhase?.id ?? '-'}</td>
+                  <td className='border-b p-2'>{d.harvestPhase?.id ?? '-'}</td>
                   <td className='border-b p-2'>{d.status ?? '-'}</td>
                   <td className='border-b p-2'>{d.startTime ?? '-'}</td>
                   <td className='border-b p-2'>{d.endTime ?? '-'}</td>

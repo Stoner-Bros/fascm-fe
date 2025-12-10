@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import {
   Dialog,
   DialogContent,
@@ -20,15 +21,6 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -36,29 +28,37 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import {
-  IconTruckDelivery,
-  IconPlus,
-  IconRefresh,
-  IconEdit,
-  IconTrash,
-  IconSearch
-} from '@tabler/icons-react';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import { useToast } from '@/components/ui/use-toast';
+import { useDebounce } from '@/hooks/use-debounce';
 import {
   createDelivery,
+  deleteDelivery,
   fetchDeliveries,
-  updateDelivery,
-  deleteDelivery
+  updateDelivery
 } from '@/services/delivery.service';
 import { fetchTrucks } from '@/services/truck.service';
 import type {
-  Delivery,
   CreateDeliveryDto,
+  Delivery,
   DeliveryStatusEnum
 } from '@/types/delivery';
 import type { Truck } from '@/types/truck';
-import { useToast } from '@/components/ui/use-toast';
-import { useDebounce } from '@/hooks/use-debounce';
-import { DateTimePicker } from '@/components/ui/date-time-picker';
+import {
+  IconEdit,
+  IconPlus,
+  IconRefresh,
+  IconSearch,
+  IconTrash,
+  IconTruckDelivery
+} from '@tabler/icons-react';
+import { useEffect, useState } from 'react';
 
 const defaultForm: CreateDeliveryDto = {
   startLat: null,
@@ -71,8 +71,8 @@ const defaultForm: CreateDeliveryDto = {
   startTime: null,
   endTime: null,
   truck: null,
-  harvestSchedule: null,
-  orderSchedule: null
+  orderPhase: null,
+  harvestPhase: null
 };
 
 const ENUM_TO_UI: Record<DeliveryStatusEnum, string> = {
@@ -134,7 +134,7 @@ export function OutboundDeliveryManagement() {
   const [filters, setFilters] = useState({
     search: '',
     status: '',
-    orderScheduleId: ''
+    orderPhaseId: ''
   });
 
   const [pagination, setPagination] = useState({
@@ -152,7 +152,7 @@ export function OutboundDeliveryManagement() {
       const res = await fetchDeliveries({
         page: pagination.page,
         limit: pagination.limit,
-        orderScheduleId: filters.orderScheduleId || undefined
+        orderPhaseId: filters.orderPhaseId || undefined
       });
       setDeliveries(res.data);
       setPagination((prev) => ({ ...prev, hasNextPage: res.hasNextPage }));
@@ -180,7 +180,7 @@ export function OutboundDeliveryManagement() {
   useEffect(() => {
     loadDeliveries();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pagination.page, debouncedSearch, filters.orderScheduleId]);
+  }, [pagination.page, debouncedSearch, filters.orderPhaseId, filters.status]);
 
   useEffect(() => {
     loadTrucks();
@@ -276,10 +276,8 @@ export function OutboundDeliveryManagement() {
       startTime: delivery.startTime,
       endTime: delivery.endTime,
       truck: delivery.truck ? { id: delivery.truck.id } : null,
-      harvestSchedule: null,
-      orderSchedule: delivery.orderSchedule
-        ? { id: delivery.orderSchedule.id }
-        : null
+      harvestPhase: null,
+      orderPhase: delivery.orderPhase ? { id: delivery.orderPhase.id } : null
     });
     setIsEditDialogOpen(true);
   };
@@ -355,12 +353,12 @@ export function OutboundDeliveryManagement() {
               />
             </div>
             <Input
-              placeholder='Order Schedule ID'
-              value={filters.orderScheduleId}
+              placeholder='Order Phase ID'
+              value={filters.orderPhaseId}
               onChange={(e) =>
                 setFilters((prev) => ({
                   ...prev,
-                  orderScheduleId: e.target.value
+                  orderPhaseId: e.target.value
                 }))
               }
               className='w-[250px]'
@@ -426,8 +424,8 @@ export function OutboundDeliveryManagement() {
                         {delivery.id.slice(0, 8)}...
                       </TableCell>
                       <TableCell>
-                        {delivery.orderSchedule?.id
-                          ? delivery.orderSchedule.id.slice(0, 8) + '...'
+                        {delivery.orderPhase?.id
+                          ? delivery.orderPhase.id.slice(0, 8) + '...'
                           : '-'}
                       </TableCell>
                       <TableCell>
@@ -521,14 +519,12 @@ export function OutboundDeliveryManagement() {
             <div className='grid gap-2'>
               <Label>Order Schedule ID</Label>
               <Input
-                placeholder='Nhập Order Schedule ID'
-                value={form.orderSchedule?.id || ''}
+                placeholder='Nhập Order Phase ID'
+                value={form.orderPhase?.id || ''}
                 onChange={(e) =>
                   setForm((prev) => ({
                     ...prev,
-                    orderSchedule: e.target.value
-                      ? { id: e.target.value }
-                      : null
+                    orderPhase: e.target.value ? { id: e.target.value } : null
                   }))
                 }
               />
@@ -733,14 +729,12 @@ export function OutboundDeliveryManagement() {
             <div className='grid gap-2'>
               <Label>Order Schedule ID</Label>
               <Input
-                placeholder='Nhập Order Schedule ID'
-                value={form.orderSchedule?.id || ''}
+                placeholder='Nhập Order Phase ID'
+                value={form.orderPhase?.id || ''}
                 onChange={(e) =>
                   setForm((prev) => ({
                     ...prev,
-                    orderSchedule: e.target.value
-                      ? { id: e.target.value }
-                      : null
+                    orderPhase: e.target.value ? { id: e.target.value } : null
                   }))
                 }
               />

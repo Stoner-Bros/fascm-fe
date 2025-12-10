@@ -5,28 +5,23 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
+import { fetchHarvestSchedules } from '@/features/supplier';
+import type { HarvestSchedule } from '@/types/harvest-schedule';
 import {
   IconCheck,
   IconClock,
   IconPackage,
-  IconTrendingUp,
   IconTruck,
   IconX
 } from '@tabler/icons-react';
 import Link from 'next/link';
-import { useEffect, useState, useMemo } from 'react';
-import {
-  fetchHarvestSchedules,
-  fetchHarvestTickets
-} from '@/features/supplier';
-import type { HarvestSchedule } from '@/types/harvest-schedule';
+import { useEffect, useMemo, useState } from 'react';
 
 const normalizeStatus = (status?: string | null): string => {
   if (!status || status.trim() === '') return 'pending';
@@ -44,9 +39,8 @@ export default function SupplierDashboardFeature() {
       setLoading(true);
       try {
         // Fetch schedules và tickets
-        const [schedulesRes, ticketsRes] = await Promise.all([
-          fetchHarvestSchedules({ page: 1, limit: 50 }),
-          fetchHarvestTickets({ page: 1, limit: 200 })
+        const [schedulesRes] = await Promise.all([
+          fetchHarvestSchedules({ page: 1, limit: 50 })
         ]);
 
         if (cancelled) return;

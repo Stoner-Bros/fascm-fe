@@ -11,7 +11,8 @@ import {
 export async function fetchDeliveries({
   page = 1,
   limit = 10,
-  orderScheduleId,
+  orderPhaseId,
+  harvestPhaseId,
   status,
   sort = 'desc'
 }: FindAllDeliveriesDto = {}) {
@@ -19,8 +20,11 @@ export async function fetchDeliveries({
     page: String(page),
     limit: String(limit)
   });
-  if (orderScheduleId) {
-    params.append('orderScheduleId', orderScheduleId);
+  if (orderPhaseId) {
+    params.append('orderPhaseId', orderPhaseId);
+  }
+  if (harvestPhaseId) {
+    params.append('harvestPhaseId', harvestPhaseId);
   }
   if (status) {
     params.append('status', status);
