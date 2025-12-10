@@ -1,17 +1,15 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
+import PageContainer from '@/components/layout/page-container';
 import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
@@ -20,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -28,31 +27,33 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { Plus, Trash2, Package, Weight, CheckCircle2 } from 'lucide-react';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import { useToast } from '@/components/ui/use-toast';
+import { fetchAreas } from '@/services/area.service';
 import {
-  fetchExportTickets,
+  fetchBatches,
+  fetchBatchesGroupedByWeight
+} from '@/services/batch.service';
+import {
   createExportTicket,
   deleteExportTicket,
+  fetchExportTickets,
   type ExportTicket,
   type OrderInvoiceDetailWithBatch
 } from '@/services/export-ticket.service';
-import {
-  fetchBatchesGroupedByWeight,
-  fetchBatches
-} from '@/services/batch.service';
-import { fetchAreas } from '@/services/area.service';
 import { fetchOrderPhasesBySchedule } from '@/services/order-phase.service';
 import { fetchOrderSchedules } from '@/services/order-schedule.service';
 import type { Area } from '@/types/area';
-import type { OrderSchedule, OrderPhase } from '@/types/order';
 import type { Batch } from '@/types/batch';
-import { useToast } from '@/components/ui/use-toast';
+import type { OrderPhase, OrderSchedule } from '@/types/order';
+import { CheckCircle2, Package, Plus, Trash2, Weight } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 type BatchGroupedByWeight = {
   importTicketId: string;
@@ -362,399 +363,411 @@ export default function ExportTicketsPage() {
   };
 
   return (
-    <div className='container mx-auto space-y-6 py-6'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <h1 className='text-3xl font-bold'>Phiếu xuất kho</h1>
-          <p className='text-muted-foreground mt-1'>
-            Quản lý các phiếu xuất hàng từ đơn giao hàng
-          </p>
+    <PageContainer>
+      <div className='mx-auto w-full space-y-6'>
+        <div className='flex items-center justify-between'>
+          <div>
+            <h1 className='text-3xl font-bold'>Phiếu xuất kho</h1>
+            <p className='text-muted-foreground mt-1'>
+              Quản lý các phiếu xuất hàng từ đơn giao hàng
+            </p>
+          </div>
+          <Button onClick={() => setIsCreateDialogOpen(true)}>
+            <Plus className='mr-2 h-4 w-4' />
+            Tạo phiếu xuất
+          </Button>
         </div>
-        <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <Plus className='mr-2 h-4 w-4' />
-          Tạo phiếu xuất
-        </Button>
-      </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Danh sách phiếu xuất kho</CardTitle>
-          <CardDescription>Các phiếu xuất hàng đã tạo</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className='rounded-lg border'>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Mã phiếu</TableHead>
-                  <TableHead>Ngày tạo</TableHead>
-                  <TableHead>Ngày cập nhật</TableHead>
-                  <TableHead className='text-right'>Thao tác</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {loading ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Danh sách phiếu xuất kho</CardTitle>
+            <CardDescription>Các phiếu xuất hàng đã tạo</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className='rounded-lg border'>
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={4} className='py-8 text-center'>
-                      Đang tải...
-                    </TableCell>
+                    <TableHead>Mã phiếu</TableHead>
+                    <TableHead>Ngày tạo</TableHead>
+                    <TableHead>Ngày cập nhật</TableHead>
+                    <TableHead className='text-right'>Thao tác</TableHead>
                   </TableRow>
-                ) : tickets.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={4}
-                      className='text-muted-foreground py-8 text-center'
-                    >
-                      Không có dữ liệu
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  tickets.map((ticket) => (
-                    <TableRow key={ticket.id}>
-                      <TableCell className='font-mono text-sm'>
-                        {ticket.id.slice(0, 8)}...
-                      </TableCell>
-                      <TableCell>
-                        <span className='text-sm'>
-                          {new Date(ticket.createdAt).toLocaleDateString(
-                            'vi-VN',
-                            {
-                              year: 'numeric',
-                              month: '2-digit',
-                              day: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            }
-                          )}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className='text-sm'>
-                          {new Date(ticket.updatedAt).toLocaleDateString(
-                            'vi-VN',
-                            {
-                              year: 'numeric',
-                              month: '2-digit',
-                              day: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            }
-                          )}
-                        </span>
-                      </TableCell>
-                      <TableCell className='text-right'>
-                        <Button
-                          variant='ghost'
-                          size='sm'
-                          onClick={() => handleDelete(ticket.id)}
-                        >
-                          <Trash2 className='text-destructive h-4 w-4' />
-                        </Button>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className='py-8 text-center'>
+                        Đang tải...
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-
-          <div className='mt-4 flex items-center justify-between'>
-            <p className='text-muted-foreground text-sm'>
-              Trang {page} {hasMore ? '- có thêm dữ liệu' : '- hết dữ liệu'}
-            </p>
-            <div className='flex gap-2'>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => setPage((p) => p - 1)}
-                disabled={page === 1 || loading}
-              >
-                Trang trước
-              </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => setPage((p) => p + 1)}
-                disabled={!hasMore || loading}
-              >
-                Trang sau
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className='max-h-[90vh] max-w-5xl overflow-y-auto'>
-          <DialogHeader>
-            <DialogTitle>Tạo phiếu xuất kho</DialogTitle>
-            <DialogDescription>
-              Chọn lịch, đợt giao hàng và lô hàng tương ứng
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className='space-y-4'>
-            <div>
-              <Label htmlFor='orderSchedule'>
-                Bước 1: Chọn lịch giao hàng *
-              </Label>
-              <Select
-                value={selectedSchedule?.id || ''}
-                onValueChange={handleScheduleSelect}
-              >
-                <SelectTrigger id='orderSchedule'>
-                  <SelectValue placeholder='Chọn lịch...' />
-                </SelectTrigger>
-                <SelectContent>
-                  {orderSchedules.map((schedule) => (
-                    <SelectItem key={schedule.id} value={schedule.id}>
-                      <div className='flex flex-col'>
-                        <span className='font-medium'>
-                          {schedule.consignee?.organizationName || 'N/A'}
-                        </span>
-                        <span className='text-muted-foreground text-xs'>
-                          {schedule.deliveryDate
-                            ? new Date(
-                                schedule.deliveryDate
-                              ).toLocaleDateString('vi-VN')
-                            : '-'}
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  ) : tickets.length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={4}
+                        className='text-muted-foreground py-8 text-center'
+                      >
+                        Không có dữ liệu
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    tickets.map((ticket) => (
+                      <TableRow key={ticket.id}>
+                        <TableCell className='text-sm'>
+                          {ticket.id.slice(0, 8)}
+                        </TableCell>
+                        <TableCell>
+                          <span className='text-sm'>
+                            {new Date(ticket.createdAt).toLocaleDateString(
+                              'vi-VN',
+                              {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }
+                            )}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className='text-sm'>
+                            {new Date(ticket.updatedAt).toLocaleDateString(
+                              'vi-VN',
+                              {
+                                year: 'numeric',
+                                month: '2-digit',
+                                day: '2-digit',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              }
+                            )}
+                          </span>
+                        </TableCell>
+                        <TableCell className='text-right'>
+                          <Button
+                            variant='ghost'
+                            size='sm'
+                            onClick={() => handleDelete(ticket.id)}
+                          >
+                            <Trash2 className='text-destructive h-4 w-4' />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
             </div>
 
-            {selectedSchedule && phases.length > 0 && (
-              <div>
-                <Label htmlFor='phase'>Bước 2: Chọn đợt giao hàng *</Label>
-                <Select
-                  value={selectedPhase?.id || ''}
-                  onValueChange={handlePhaseSelect}
+            <div className='mt-4 flex items-center justify-between'>
+              <p className='text-muted-foreground text-sm'>
+                Trang {page} {hasMore ? '- có thêm dữ liệu' : '- hết dữ liệu'}
+              </p>
+              <div className='flex gap-2'>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setPage((p) => p - 1)}
+                  disabled={page === 1 || loading}
                 >
-                  <SelectTrigger id='phase'>
-                    <SelectValue placeholder='Chọn đợt...' />
+                  Trang trước
+                </Button>
+                <Button
+                  variant='outline'
+                  size='sm'
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={!hasMore || loading}
+                >
+                  Trang sau
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className='max-h-[90vh] max-w-5xl overflow-y-auto'>
+            <DialogHeader>
+              <DialogTitle>Tạo phiếu xuất kho</DialogTitle>
+              <DialogDescription>
+                Chọn lịch, đợt giao hàng và lô hàng tương ứng
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className='space-y-4'>
+              <div>
+                <Label htmlFor='orderSchedule'>
+                  Bước 1: Chọn lịch giao hàng *
+                </Label>
+                <Select
+                  value={selectedSchedule?.id || ''}
+                  onValueChange={handleScheduleSelect}
+                >
+                  <SelectTrigger id='orderSchedule'>
+                    <SelectValue placeholder='Chọn lịch...' />
                   </SelectTrigger>
                   <SelectContent>
-                    {phases.map((phase) => (
-                      <SelectItem key={phase.id} value={phase.id}>
-                        Đợt {phase.phaseNumber}: {phase.description || 'N/A'}
+                    {orderSchedules.map((schedule) => (
+                      <SelectItem key={schedule.id} value={schedule.id}>
+                        <div className='flex flex-col'>
+                          <span className='font-medium'>
+                            {schedule.consignee?.organizationName || 'N/A'}
+                          </span>
+                          <span className='text-muted-foreground text-xs'>
+                            {schedule.deliveryDate
+                              ? new Date(
+                                  schedule.deliveryDate
+                                ).toLocaleDateString('vi-VN')
+                              : '-'}
+                          </span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-            )}
 
-            {selectedPhase && invoiceDetailSelections.length > 0 && (
-              <div className='space-y-4'>
-                <div className='flex items-center justify-between'>
-                  <Label>Bước 3: Chọn lô hàng *</Label>
-                  <Badge variant='outline'>
-                    Đã chọn: {getTotalSelectedBatches()} lô
-                  </Badge>
-                </div>
-
+              {selectedSchedule && phases.length > 0 && (
                 <div>
-                  <Label htmlFor='filterArea'>Lọc theo khu vực</Label>
+                  <Label htmlFor='phase'>Bước 2: Chọn đợt giao hàng *</Label>
                   <Select
-                    value={selectedAreaId}
-                    onValueChange={setSelectedAreaId}
+                    value={selectedPhase?.id}
+                    onValueChange={handlePhaseSelect}
                   >
-                    <SelectTrigger id='filterArea'>
-                      <SelectValue placeholder='Tất cả' />
+                    <SelectTrigger id='phase'>
+                      <SelectValue placeholder='Chọn đợt...' />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value=''>Tất cả</SelectItem>
-                      {areas.map((area) => (
-                        <SelectItem key={area.id} value={area.id}>
-                          {area.name}
+                      {phases.map((phase) => (
+                        <SelectItem
+                          key={phase.id}
+                          value={phase.id || `phase-${phase.phaseNumber}`}
+                        >
+                          Đợt {phase.phaseNumber}: {phase.description || 'N/A'}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
+              )}
 
-                {invoiceDetailSelections.map((selection, index) => (
-                  <Card key={selection.orderInvoiceDetailId}>
-                    <CardHeader>
-                      <div className='flex items-center justify-between'>
-                        <div>
-                          <CardTitle className='text-lg'>
-                            {selection.productName}
-                          </CardTitle>
-                          <p className='text-muted-foreground text-sm'>
-                            Số lượng: {selection.quantity} {selection.unit}
-                          </p>
-                        </div>
-                        {selection.selectedBatches.length > 0 && (
-                          <CheckCircle2 className='h-5 w-5 text-green-500' />
-                        )}
-                      </div>
-                    </CardHeader>
-                    <CardContent className='space-y-3'>
-                      {selection.selectedBatches.length > 0 && (
-                        <div>
-                          <Label className='text-sm'>Lô đã chọn:</Label>
-                          <div className='mt-2 flex flex-wrap gap-2'>
-                            {selection.selectedBatches.map((batch) => (
-                              <Badge
-                                key={batch.batchId}
-                                variant='secondary'
-                                className='cursor-pointer'
-                                onClick={() =>
-                                  handleRemoveBatchFromDetail(
-                                    selection.orderInvoiceDetailId,
-                                    batch.batchId
-                                  )
-                                }
-                              >
-                                {batch.batchCode} ({batch.weight})
-                                <Trash2 className='ml-1 h-3 w-3' />
-                              </Badge>
-                            ))}
+              {selectedPhase && invoiceDetailSelections.length > 0 && (
+                <div className='space-y-4'>
+                  <div className='flex items-center justify-between'>
+                    <Label>Bước 3: Chọn lô hàng *</Label>
+                    <Badge variant='outline'>
+                      Đã chọn: {getTotalSelectedBatches()} lô
+                    </Badge>
+                  </div>
+
+                  <div>
+                    <Label htmlFor='filterArea'>Lọc theo khu vực</Label>
+                    <Select
+                      value={selectedAreaId || 'all'}
+                      onValueChange={(value) =>
+                        setSelectedAreaId(value === 'all' ? '' : value)
+                      }
+                    >
+                      <SelectTrigger id='filterArea'>
+                        <SelectValue placeholder='Tất cả' />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value='all'>Tất cả</SelectItem>
+                        {areas.map((area) => (
+                          <SelectItem key={area.id} value={area.id}>
+                            {area.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {invoiceDetailSelections.map((selection, index) => (
+                    <Card key={selection.orderInvoiceDetailId}>
+                      <CardHeader>
+                        <div className='flex items-center justify-between'>
+                          <div>
+                            <CardTitle className='text-lg'>
+                              {selection.productName}
+                            </CardTitle>
+                            <p className='text-muted-foreground text-sm'>
+                              Số lượng: {selection.quantity} {selection.unit}
+                            </p>
                           </div>
-                        </div>
-                      )}
-
-                      <div>
-                        <Button
-                          size='sm'
-                          variant='outline'
-                          onClick={() => {
-                            const productId =
-                              selectedPhase?.orderInvoiceDetails?.[index]
-                                ?.product?.id;
-                            if (productId) {
-                              loadBatchesGrouped(productId);
-                              loadAvailableBatches(productId);
-                            }
-                          }}
-                        >
-                          <Package className='mr-2 h-4 w-4' />
-                          Xem lô có sẵn
-                        </Button>
-
-                        {batchesGrouped.length > 0 &&
-                          batchesGrouped.some(
-                            (bg) =>
-                              bg.product.id ===
-                              selectedPhase?.orderInvoiceDetails?.[index]
-                                ?.product?.id
-                          ) && (
-                            <div className='mt-3 space-y-2'>
-                              <Label className='text-sm'>Lô hàng có sẵn:</Label>
-                              {batchesGrouped
-                                .filter(
-                                  (bg) =>
-                                    bg.product.id ===
-                                    selectedPhase?.orderInvoiceDetails?.[index]
-                                      ?.product?.id
-                                )
-                                .map((bg) => (
-                                  <div
-                                    key={bg.importTicketId}
-                                    className='bg-muted rounded-lg p-3'
-                                  >
-                                    <div className='mb-2 flex items-center justify-between'>
-                                      <span className='text-sm font-medium'>
-                                        {bg.batchCode}
-                                      </span>
-                                      <span className='text-muted-foreground text-xs'>
-                                        Nhập:{' '}
-                                        {bg.importDate
-                                          ? new Date(
-                                              bg.importDate
-                                            ).toLocaleDateString('vi-VN')
-                                          : '-'}
-                                      </span>
-                                    </div>
-                                    <div className='flex flex-wrap gap-2'>
-                                      {Object.entries(bg.batch).map(
-                                        ([weight, count]) => {
-                                          const batchesForWeight =
-                                            availableBatches.filter(
-                                              (b) =>
-                                                b.importTicket?.id ===
-                                                  bg.importTicketId &&
-                                                `${b.quantity}kg` === weight
-                                            );
-
-                                          return (
-                                            <div
-                                              key={weight}
-                                              className='flex flex-col gap-1'
-                                            >
-                                              <Badge variant='outline'>
-                                                <Weight className='mr-1 h-3 w-3' />
-                                                {weight}: {count} lô
-                                              </Badge>
-                                              {batchesForWeight.map((batch) => (
-                                                <Button
-                                                  key={batch.id}
-                                                  size='sm'
-                                                  variant='ghost'
-                                                  className='h-7 text-xs'
-                                                  onClick={() =>
-                                                    handleAddBatchToDetail(
-                                                      selection.orderInvoiceDetailId,
-                                                      batch.id,
-                                                      weight,
-                                                      bg.batchCode
-                                                    )
-                                                  }
-                                                  disabled={selection.selectedBatches.some(
-                                                    (b) =>
-                                                      b.batchId === batch.id
-                                                  )}
-                                                >
-                                                  <Plus className='mr-1 h-3 w-3' />
-                                                  {batch.id.slice(0, 6)}
-                                                </Button>
-                                              ))}
-                                            </div>
-                                          );
-                                        }
-                                      )}
-                                    </div>
-                                  </div>
-                                ))}
-                            </div>
+                          {selection.selectedBatches.length > 0 && (
+                            <CheckCircle2 className='h-5 w-5 text-green-500' />
                           )}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className='space-y-3'>
+                        {selection.selectedBatches.length > 0 && (
+                          <div>
+                            <Label className='text-sm'>Lô đã chọn:</Label>
+                            <div className='mt-2 flex flex-wrap gap-2'>
+                              {selection.selectedBatches.map((batch) => (
+                                <Badge
+                                  key={batch.batchId}
+                                  variant='secondary'
+                                  className='cursor-pointer'
+                                  onClick={() =>
+                                    handleRemoveBatchFromDetail(
+                                      selection.orderInvoiceDetailId,
+                                      batch.batchId
+                                    )
+                                  }
+                                >
+                                  {batch.batchCode} ({batch.weight})
+                                  <Trash2 className='ml-1 h-3 w-3' />
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-          <DialogFooter>
-            <Button
-              variant='outline'
-              onClick={() => {
-                setIsCreateDialogOpen(false);
-                resetFormData();
-              }}
-            >
-              Hủy
-            </Button>
-            <Button
-              onClick={handleCreate}
-              disabled={
-                !selectedPhase ||
-                invoiceDetailSelections.length === 0 ||
-                invoiceDetailSelections.some(
-                  (sel) => sel.selectedBatches.length === 0
-                )
-              }
-            >
-              Tạo phiếu xuất ({getTotalSelectedBatches()} lô)
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+                        <div>
+                          <Button
+                            size='sm'
+                            variant='outline'
+                            onClick={() => {
+                              const productId =
+                                selectedPhase?.orderInvoiceDetails?.[index]
+                                  ?.product?.id;
+                              if (productId) {
+                                loadBatchesGrouped(productId);
+                                loadAvailableBatches(productId);
+                              }
+                            }}
+                          >
+                            <Package className='mr-2 h-4 w-4' />
+                            Xem lô có sẵn
+                          </Button>
+
+                          {batchesGrouped.length > 0 &&
+                            batchesGrouped.some(
+                              (bg) =>
+                                bg.product.id ===
+                                selectedPhase?.orderInvoiceDetails?.[index]
+                                  ?.product?.id
+                            ) && (
+                              <div className='mt-3 space-y-2'>
+                                <Label className='text-sm'>
+                                  Lô hàng có sẵn:
+                                </Label>
+                                {batchesGrouped
+                                  .filter(
+                                    (bg) =>
+                                      bg.product.id ===
+                                      selectedPhase?.orderInvoiceDetails?.[
+                                        index
+                                      ]?.product?.id
+                                  )
+                                  .map((bg) => (
+                                    <div
+                                      key={bg.importTicketId}
+                                      className='bg-muted rounded-lg p-3'
+                                    >
+                                      <div className='mb-2 flex items-center justify-between'>
+                                        <span className='text-sm font-medium'>
+                                          {bg.batchCode}
+                                        </span>
+                                        <span className='text-muted-foreground text-xs'>
+                                          Nhập:{' '}
+                                          {bg.importDate
+                                            ? new Date(
+                                                bg.importDate
+                                              ).toLocaleDateString('vi-VN')
+                                            : '-'}
+                                        </span>
+                                      </div>
+                                      <div className='flex flex-wrap gap-2'>
+                                        {Object.entries(bg.batch).map(
+                                          ([weight, count]) => {
+                                            const batchesForWeight =
+                                              availableBatches.filter(
+                                                (b) =>
+                                                  b.importTicket?.id ===
+                                                    bg.importTicketId &&
+                                                  `${b.quantity}kg` === weight
+                                              );
+
+                                            return (
+                                              <div
+                                                key={weight}
+                                                className='flex flex-col gap-1'
+                                              >
+                                                <Badge variant='outline'>
+                                                  <Weight className='mr-1 h-3 w-3' />
+                                                  {weight}: {count} lô
+                                                </Badge>
+                                                {batchesForWeight.map(
+                                                  (batch) => (
+                                                    <Button
+                                                      key={batch.id}
+                                                      size='sm'
+                                                      variant='ghost'
+                                                      className='h-7 text-xs'
+                                                      onClick={() =>
+                                                        handleAddBatchToDetail(
+                                                          selection.orderInvoiceDetailId,
+                                                          batch.id,
+                                                          weight,
+                                                          bg.batchCode
+                                                        )
+                                                      }
+                                                      disabled={selection.selectedBatches.some(
+                                                        (b) =>
+                                                          b.batchId === batch.id
+                                                      )}
+                                                    >
+                                                      <Plus className='mr-1 h-3 w-3' />
+                                                      {batch.id.slice(0, 6)}
+                                                    </Button>
+                                                  )
+                                                )}
+                                              </div>
+                                            );
+                                          }
+                                        )}
+                                      </div>
+                                    </div>
+                                  ))}
+                              </div>
+                            )}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button
+                variant='outline'
+                onClick={() => {
+                  setIsCreateDialogOpen(false);
+                  resetFormData();
+                }}
+              >
+                Hủy
+              </Button>
+              <Button
+                onClick={handleCreate}
+                disabled={
+                  !selectedPhase ||
+                  invoiceDetailSelections.length === 0 ||
+                  invoiceDetailSelections.some(
+                    (sel) => sel.selectedBatches.length === 0
+                  )
+                }
+              >
+                Tạo phiếu xuất ({getTotalSelectedBatches()} lô)
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
+    </PageContainer>
   );
 }

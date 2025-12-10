@@ -157,18 +157,13 @@ export default function OrderSchedulesPage() {
                 schedules.map((schedule) => (
                   <TableRow key={schedule.id}>
                     <TableCell className='font-medium'>
-                      {schedule.id.slice(0, 8)}
+                      {schedule.id.slice(0, 11)}
                     </TableCell>
                     <TableCell>
                       <div className='flex flex-col'>
                         <span className='font-medium'>
                           {schedule.consignee?.organizationName || '-'}
                         </span>
-                        {schedule.consignee?.address && (
-                          <span className='text-muted-foreground text-sm'>
-                            {schedule.consignee.address}
-                          </span>
-                        )}
                       </div>
                     </TableCell>
                     <TableCell>
@@ -189,7 +184,7 @@ export default function OrderSchedulesPage() {
                     <TableCell>{getStatusBadge(schedule.status)}</TableCell>
                     <TableCell className='text-right'>
                       <Button asChild size='sm' variant='outline'>
-                        <Link href={`/dashboard/order-schedule/${schedule.id}`}>
+                        <Link href={`/dashboard/order/${schedule.id}`}>
                           Chi tiết
                         </Link>
                       </Button>

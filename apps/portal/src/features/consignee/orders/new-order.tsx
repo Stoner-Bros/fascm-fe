@@ -50,7 +50,7 @@ import { createOrderSchedule } from '@/services/order-schedule.service';
 import { fetchProducts } from '@/services/product.service';
 
 // Types
-import type { Product } from '@/types/product';
+import type { Product, ProductPrice } from '@/types/product';
 import type {
   CreateOrderScheduleDto,
   CreateOrderDto,
@@ -175,14 +175,31 @@ const newOrderReducer = (
         ...state,
         selectedProducts: new Set(preSelectedIds),
         orderLines: validProducts.map((p) => {
-          const unit =
-            p.price && Array.isArray(p.price) && p.price.length > 0
-              ? p.price[0].unit || 'kg'
-              : 'kg';
-          const unitPrice =
-            p.price && Array.isArray(p.price) && p.price.length > 0
-              ? p.price[0].price || 0
-              : 0;
+          // Use price tier logic for quantity = 1
+          let unit = 'kg';
+          let unitPrice = 0;
+
+          if (p.price && Array.isArray(p.price) && p.price.length > 0) {
+            // Sort price tiers by quantity in descending order
+            const sortedPrices = [...p.price].sort(
+              (a, b) => (b.quantity || 0) - (a.quantity || 0)
+            );
+
+            // Find the appropriate price tier for quantity = 1
+            const applicableTier = sortedPrices.find(
+              (tier) => 1 >= (tier.quantity || 0)
+            );
+
+            if (applicableTier) {
+              unitPrice = applicableTier.price || 0;
+              unit = applicableTier.unit || 'kg';
+            } else {
+              // Use the lowest tier
+              const lowestTier = sortedPrices[sortedPrices.length - 1];
+              unitPrice = lowestTier.price || 0;
+              unit = lowestTier.unit || 'kg';
+            }
+          }
 
           return {
             productId: p.id,
@@ -218,20 +235,45 @@ export default function NewOrderPage() {
     }
   }, [fullInfo?.address]);
 
-  // Helper function to get product price
-  const getProductPrice = (product: Product): number => {
+  // Helper function to calculate price based on quantity and price tiers
+  const calculatePriceForQuantity = (
+    product: Product,
+    quantity: number
+  ): { unitPrice: number; unit: string } => {
     if (
-      product.price &&
-      Array.isArray(product.price) &&
-      product.price.length > 0
+      !product.price ||
+      !Array.isArray(product.price) ||
+      product.price.length === 0
     ) {
-      // Get the first price entry (or you can add logic to select the right one)
-      return product.price[0].price || 0;
+      return { unitPrice: 0, unit: 'kg' };
     }
-    return 0;
+
+    // Sort price tiers by quantity in descending order
+    const sortedPrices = [...product.price].sort(
+      (a, b) => (b.quantity || 0) - (a.quantity || 0)
+    );
+
+    // Find the appropriate price tier based on quantity
+    const applicableTier = sortedPrices.find(
+      (tier) => quantity >= (tier.quantity || 0)
+    );
+
+    if (applicableTier) {
+      return {
+        unitPrice: applicableTier.price || 0,
+        unit: applicableTier.unit || 'kg'
+      };
+    }
+
+    // If no tier matches, use the lowest tier (last in sorted array)
+    const lowestTier = sortedPrices[sortedPrices.length - 1];
+    return {
+      unitPrice: lowestTier.price || 0,
+      unit: lowestTier.unit || 'kg'
+    };
   };
 
-  // Helper function to get product unit
+  // Helper function to get default unit from product
   const getProductUnit = (product: Product): string => {
     if (
       product.price &&
@@ -241,6 +283,21 @@ export default function NewOrderPage() {
       return product.price[0].unit || 'kg';
     }
     return 'kg';
+  };
+
+  // Helper function to get price tiers for display
+  const getPriceTiers = (product: Product): ProductPrice[] => {
+    if (
+      !product.price ||
+      !Array.isArray(product.price) ||
+      product.price.length === 0
+    ) {
+      return [];
+    }
+    // Sort by quantity ascending for display
+    return [...product.price].sort(
+      (a, b) => (a.quantity || 0) - (b.quantity || 0)
+    );
   };
 
   // Fetch initial data
@@ -278,11 +335,12 @@ export default function NewOrderPage() {
 
   // Product selection handlers
   const toggleProduct = (product: Product) => {
+    const { unitPrice, unit } = calculatePriceForQuantity(product, 1);
     const orderLine: OrderLine = {
       productId: product.id,
       quantity: 1,
-      unit: getProductUnit(product),
-      unitPrice: getProductPrice(product)
+      unit,
+      unitPrice
     };
 
     dispatch({ type: 'TOGGLE_PRODUCT', payload: { product, orderLine } });
@@ -294,6 +352,24 @@ export default function NewOrderPage() {
     field: keyof OrderLine,
     value: any
   ) => {
+    // If quantity is being updated, recalculate the price
+    if (field === 'quantity') {
+      const product = state.products.find((p) => p.id === productId);
+      if (product) {
+        const { unitPrice } = calculatePriceForQuantity(product, value);
+        // Update both quantity and unitPrice
+        dispatch({
+          type: 'UPDATE_ORDER_LINE',
+          payload: { productId, field: 'quantity', value }
+        });
+        dispatch({
+          type: 'UPDATE_ORDER_LINE',
+          payload: { productId, field: 'unitPrice', value: unitPrice }
+        });
+        return;
+      }
+    }
+
     dispatch({
       type: 'UPDATE_ORDER_LINE',
       payload: { productId, field, value }
@@ -511,13 +587,30 @@ export default function NewOrderPage() {
                                 <h4 className='line-clamp-2 font-semibold'>
                                   {product.name}
                                 </h4>
-                                <p className='text-primary mt-1 text-sm font-medium'>
-                                  {new Intl.NumberFormat('vi-VN', {
-                                    style: 'currency',
-                                    currency: 'VND'
-                                  }).format(getProductPrice(product))}
-                                  /{getProductUnit(product)}
-                                </p>
+                                <div className='mt-1 space-y-1'>
+                                  {getPriceTiers(product).length > 0 ? (
+                                    getPriceTiers(product).map((tier, idx) => (
+                                      <p
+                                        key={idx}
+                                        className='text-primary text-xs font-medium'
+                                      >
+                                        {new Intl.NumberFormat('vi-VN', {
+                                          style: 'currency',
+                                          currency: 'VND'
+                                        }).format(tier.price || 0)}
+                                        /{tier.unit || 'kg'}
+                                        <span className='text-muted-foreground ml-1'>
+                                          (≥{tier.quantity || 0}
+                                          {tier.unit || 'kg'})
+                                        </span>
+                                      </p>
+                                    ))
+                                  ) : (
+                                    <p className='text-muted-foreground text-xs'>
+                                      Liên hệ
+                                    </p>
+                                  )}
+                                </div>
                               </div>
                               {isSelected && (
                                 <IconCheck className='text-primary h-5 w-5 flex-shrink-0' />
@@ -574,13 +667,21 @@ export default function NewOrderPage() {
                               <h4 className='line-clamp-1 font-medium'>
                                 {product.name}
                               </h4>
-                              <p className='text-muted-foreground text-sm'>
-                                {new Intl.NumberFormat('vi-VN', {
-                                  style: 'currency',
-                                  currency: 'VND'
-                                }).format(line.unitPrice)}
-                                /{line.unit}
-                              </p>
+                              <div className='space-y-0.5'>
+                                <p className='text-muted-foreground text-sm'>
+                                  {new Intl.NumberFormat('vi-VN', {
+                                    style: 'currency',
+                                    currency: 'VND'
+                                  }).format(line.unitPrice)}
+                                  /{line.unit}
+                                </p>
+                                {getPriceTiers(product).length > 1 && (
+                                  <p className='text-muted-foreground/70 text-xs'>
+                                    {getPriceTiers(product).length} bậc giá có
+                                    sẵn
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           </div>
 
