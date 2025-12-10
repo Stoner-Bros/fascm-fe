@@ -73,7 +73,12 @@ export function BatchManagement() {
   const [isInboundDetailOpen, setIsInboundDetailOpen] = useState(false);
   const [isQualityCheckOpen, setIsQualityCheckOpen] = useState(false);
   const [isTicketBatchesOpen, setIsTicketBatchesOpen] = useState(false);
-  const [filters, setFilters] = useState({ search: '' });
+  const [filters, setFilters] = useState({
+    search: '',
+    importTicketId: '',
+    productId: '',
+    areaId: ''
+  });
   const [importTicketForm, setImportTicketForm] = useState(
     defaultImportTicketForm
   );
@@ -81,12 +86,17 @@ export function BatchManagement() {
   const [isLoadingAreas, setIsLoadingAreas] = useState(false);
   const [warehouseId, setWarehouseId] = useState<string | null>(null);
 
-  const loadBatches = async () => {
+  const loadBatches = async (filterParams?: {
+    importTicketId?: string;
+    productId?: string;
+    areaId?: string;
+  }) => {
     setIsLoading(true);
     try {
       const res = await fetchBatches({
         page: 1,
-        limit: 100
+        limit: 100,
+        ...filterParams
       });
       setBatches(res.data);
     } catch (error) {
@@ -281,13 +291,10 @@ export function BatchManagement() {
         return;
       }
 
-      const payload = {
+      const payload: any = {
         realityQuantity: Number(importTicketForm.realityQuantity),
-        importDate: importTicketForm.importDate,
         inboundBatch: { id: selectedInboundForDetail.id },
-        ...(importTicketForm.areaId
-          ? { area: { id: importTicketForm.areaId } }
-          : {})
+        area: { id: importTicketForm.areaId }
       };
 
       const newTicket = await createImportTicket(payload);
@@ -375,7 +382,7 @@ export function BatchManagement() {
     return inboundBatches.filter((batch) => !inboundWithTickets.has(batch.id));
   }, [inboundBatches, inboundWithTickets]);
 
-  // Lọc import tickets theo từ khóa tìm kiếm
+  // Lọc import tickets theo từ khóa tìm kiếm (client-side filter vì API không hỗ trợ search)
   const filteredImportTickets = useMemo(() => {
     if (!filters.search) return importTickets;
     const keyword = filters.search.toLowerCase();
@@ -392,6 +399,15 @@ export function BatchManagement() {
       );
     });
   }, [filters.search, importTickets]);
+
+  // Effect to reload batches when filters change
+  useEffect(() => {
+    const { importTicketId, productId, areaId } = filters;
+    if (importTicketId || productId || areaId) {
+      loadBatches({ importTicketId, productId, areaId });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.importTicketId, filters.productId, filters.areaId]);
 
   // Gom các batch theo import ticket để hiển thị khi xem chi tiết import ticket
   const batchesByImportTicket = useMemo(() => {

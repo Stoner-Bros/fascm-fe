@@ -163,8 +163,8 @@ export default function DeliveryDetailPage() {
         if (typeof eLat === 'number' && typeof eLng === 'number') {
           setEnd({ lat: eLat, lng: eLng });
         }
-        if (d.orderSchedule?.id) {
-          setOrderId(d.orderSchedule.id);
+        if (d.orderPhase?.id) {
+          setOrderId(d.orderPhase.id);
         }
         const status = String(d.status ?? '').toUpperCase();
         if (status === 'COMPLETED' || status === 'DELIVERED') {
@@ -513,7 +513,7 @@ export default function DeliveryDetailPage() {
                   Harvester ID
                 </div>
                 <div className='text-sm font-medium'>
-                  {selected?.harvestSchedule?.id ?? '-'}
+                  {selected?.harvestPhase?.id ?? '-'}
                 </div>
               </div>
               <div className='rounded border p-3'>
@@ -521,7 +521,7 @@ export default function DeliveryDetailPage() {
                   Order Schedule
                 </div>
                 <div className='text-sm font-medium'>
-                  {selected?.orderSchedule?.id ?? '-'}
+                  {selected?.orderPhase?.id ?? '-'}
                 </div>
               </div>
               <div className='rounded border p-3'>

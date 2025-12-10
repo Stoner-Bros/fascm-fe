@@ -3,7 +3,8 @@
 // ============================================================================
 
 import { Consignee } from './consignee';
-import { HarvestSchedule } from './harvest-schedule';
+import { HarvestPhase } from './harvest-phase';
+import { OrderPhase } from './order';
 
 /**
  * IoT Device type for truck monitoring
@@ -61,8 +62,8 @@ export interface Delivery {
   startTime?: string | null;
   endTime?: string | null;
   truck?: Truck | null;
-  harvestSchedule?: HarvestSchedule | null;
-  orderSchedule?: OrderSchedule | null;
+  harvestPhase?: HarvestPhase | null;
+  orderPhase?: OrderPhase | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -81,8 +82,9 @@ export interface CreateDeliveryDto {
   startTime?: string | null;
   endTime?: string | null;
   truck?: { id: string } | null;
-  harvestSchedule?: { id: string } | null;
-  orderSchedule?: { id: string } | null;
+  deliveryStaff?: { id: string } | null;
+  harvestPhase?: { id: string } | null;
+  orderPhase?: { id: string } | null;
 }
 
 /**
@@ -96,7 +98,8 @@ export type UpdateDeliveryDto = Partial<CreateDeliveryDto>;
 export interface FindAllDeliveriesDto {
   page?: number;
   limit?: number;
-  orderScheduleId?: string;
+  orderPhaseId?: string;
+  harvestPhaseId?: string;
   status?: DeliveryStatusEnum;
   sort?: 'asc' | 'desc';
 }

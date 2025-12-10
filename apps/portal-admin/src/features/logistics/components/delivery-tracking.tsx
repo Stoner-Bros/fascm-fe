@@ -57,10 +57,10 @@ function DeliveryStatusBadge({ status }: { status?: string | null }) {
 }
 
 function DeliveryTypeBadge({ delivery }: { delivery: Delivery }) {
-  if (delivery.harvestSchedule) {
+  if (delivery.harvestPhase) {
     return <Badge variant='default'>Inbound - Thu mua</Badge>;
   }
-  if (delivery.orderSchedule) {
+  if (delivery.orderPhase) {
     return <Badge variant='default'>Outbound - Giao hàng</Badge>;
   }
   return <Badge variant='outline'>Unknown</Badge>;
@@ -154,15 +154,15 @@ export function DeliveryTracking() {
     return (
       d.status === 'completed' ||
       d.status === 'canceled' ||
-      d.harvestSchedule?.status === 'completed'
+      d.harvestPhase?.status === 'completed'
     );
   };
 
   // Filter deliveries by type and status
   const filteredDeliveries = deliveries.filter((d) => {
     // Filter by type (inbound/outbound)
-    if (activeTab === 'inbound' && !d.harvestSchedule) return false;
-    if (activeTab === 'outbound' && !d.orderSchedule) return false;
+    if (activeTab === 'inbound' && !d.harvestPhase) return false;
+    if (activeTab === 'outbound' && !d.orderPhase) return false;
 
     // Filter by status
     if (statusFilter === 'active' && isDeliveryCompleted(d)) return false;
@@ -171,8 +171,8 @@ export function DeliveryTracking() {
     return true;
   });
 
-  const inboundCount = deliveries.filter((d) => d.harvestSchedule).length;
-  const outboundCount = deliveries.filter((d) => d.orderSchedule).length;
+  const inboundCount = deliveries.filter((d) => d.harvestPhase).length;
+  const outboundCount = deliveries.filter((d) => d.orderPhase).length;
   const activeCount = deliveries.filter((d) => !isDeliveryCompleted(d)).length;
   const completedCount = deliveries.filter((d) =>
     isDeliveryCompleted(d)
@@ -471,46 +471,46 @@ export function DeliveryTracking() {
               </div>
 
               {/* Related Info */}
-              {selectedDelivery.harvestSchedule && (
+              {selectedDelivery.harvestPhase && (
                 <div className='border-t pt-4'>
                   <h4 className='mb-3 font-semibold'>Lịch thu hoạch</h4>
                   <div className='grid grid-cols-2 gap-4'>
                     <div>
                       <Label className='text-muted-foreground'>Mã lịch</Label>
                       <p className='font-mono text-sm'>
-                        {selectedDelivery.harvestSchedule.id}
+                        {selectedDelivery.harvestPhase.id}
                       </p>
                     </div>
-                    <div>
+                    {/* <div>
                       <Label className='text-muted-foreground'>
                         Ngày thu hoạch
                       </Label>
                       <p>
                         {formatDate(
-                          selectedDelivery.harvestSchedule.harvestDate
+                          selectedDelivery.harvestPhase
                         )}
                       </p>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               )}
 
-              {selectedDelivery.orderSchedule && (
+              {selectedDelivery.orderPhase && (
                 <div className='border-t pt-4'>
                   <h4 className='mb-3 font-semibold'>Đơn hàng</h4>
                   <div className='grid grid-cols-2 gap-4'>
                     <div>
                       <Label className='text-muted-foreground'>Mã đơn</Label>
                       <p className='font-mono text-sm'>
-                        {selectedDelivery.orderSchedule.id}
+                        {selectedDelivery.orderPhase.id}
                       </p>
                     </div>
-                    <div>
+                    {/* <div>
                       <Label className='text-muted-foreground'>Ngày đặt</Label>
                       <p>
                         {formatDate(selectedDelivery.orderSchedule.orderDate)}
                       </p>
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               )}
