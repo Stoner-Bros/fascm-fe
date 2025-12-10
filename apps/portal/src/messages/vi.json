@@ -338,5 +338,247 @@
       "keep": "Không, giữ lại",
       "confirm": "Có, hủy lô"
     }
+  },
+  "Sidebar": {
+    "overview": "Tổng quan",
+    "navigation": {
+      "dashboard": "Bảng điều khiển",
+      "products": "Sản phẩm",
+      "orders": "Đơn hàng",
+      "profile": "Hồ sơ",
+      "harvestBatches": "Lô thu hoạch"
+    },
+    "menu": {
+      "profile": "Hồ sơ",
+      "businessInformation": "Thông tin doanh nghiệp",
+      "payments": "Thanh toán",
+      "notifications": "Thông báo",
+      "signOut": "Đăng xuất"
+    }
+  },
+  "Orders": {
+    "title": "Lịch đặt hàng",
+    "subtitle": "Quản lý và theo dõi lịch đặt hàng của bạn",
+    "newOrderButton": "Đơn hàng mới",
+    "statuses": {
+      "pending": "Chờ duyệt đơn",
+      "rejected": "Đã từ chối đơn",
+      "approved": "Đã duyệt đơn",
+      "processing": "Đang xử lý",
+      "completed": "Đã hoàn thành",
+      "canceled": "Đã hủy đơn",
+      "unknown": "Không xác định"
+    },
+    "phaseStatuses": {
+      "notStarted": "Chưa bắt đầu",
+      "preparing": "Đang chuẩn bị",
+      "delivering": "Đang giao hàng",
+      "delivered": "Đã giao hàng",
+      "completed": "Hoàn thành",
+      "canceled": "Đã hủy"
+    },
+    "cards": {
+      "totalOrders": "Tổng đơn hàng",
+      "pending": "Chờ duyệt",
+      "approved": "Đã duyệt",
+      "completed": "Hoàn thành"
+    },
+    "filters": {
+      "searchPlaceholder": "Tìm theo Mã đơn hàng, Số đơn hàng hoặc sản phẩm...",
+      "statusPlaceholder": "Lọc theo trạng thái",
+      "allStatus": "Tất cả trạng thái"
+    },
+    "table": {
+      "orderNumber": "Số đơn hàng",
+      "products": "Sản phẩm",
+      "deliveryDate": "Ngày giao hàng",
+      "createdAt": "Ngày tạo",
+      "address": "Địa chỉ",
+      "status": "Trạng thái",
+      "actions": "Thao tác",
+      "loading": "Đang tải lịch đặt hàng...",
+      "empty": "Không tìm thấy lịch đặt hàng",
+      "noProducts": "Không có sản phẩm"
+    },
+    "actions": {
+      "viewDetails": "Xem chi tiết",
+      "edit": "Chỉnh sửa",
+      "cancelOrder": "Hủy đơn hàng",
+      "viewRejectionReason": "Xem lý do từ chối"
+    },
+    "dialog": {
+      "cancelTitle": "Hủy lịch đặt hàng?",
+      "cancelDescription": "Thao tác này sẽ hủy lịch đặt hàng {id}. Hành động này không thể hoàn tác.",
+      "cancelKeep": "Không, giữ lại",
+      "cancelConfirm": "Có, hủy đơn hàng",
+      "rejectionReasonTitle": "Lý do từ chối",
+      "rejectionReasonDefault": "Không có lý do được cung cấp."
+    },
+    "toast": {
+      "errorTitle": "Lỗi",
+      "errorDescription": "Không thể tải lịch đặt hàng",
+      "cancelTitle": "Đã hủy đơn hàng",
+      "cancelDescription": "Lịch đặt hàng {id} đã được hủy."
+    },
+    "detail": {
+      "title": "Chi tiết đơn hàng",
+      "orderId": "Mã đơn hàng",
+      "editOrder": "Chỉnh sửa đơn hàng",
+      "backToOrders": "Quay lại đơn hàng",
+      "loading": "Đang tải chi tiết đơn hàng...",
+      "notFound": "Không tìm thấy đơn hàng",
+      "tabs": {
+        "overview": "Tổng quan",
+        "deliveryPhases": "Giai đoạn giao hàng"
+      },
+      "statusSteps": {
+        "pending": "Chờ duyệt",
+        "approved": "Đã duyệt",
+        "processing": "Đang xử lý",
+        "completed": "Hoàn thành"
+      },
+      "overview": {
+        "orderInformation": "Thông tin đơn hàng",
+        "orderDetails": "Chi tiết đơn hàng",
+        "consigneeInformation": "Thông tin người nhận",
+        "deliveryInformation": "Thông tin giao hàng",
+        "orderDescription": "Mô tả đơn hàng",
+        "deliveryDate": "Ngày giao hàng",
+        "deliveryAddress": "Địa chỉ giao hàng",
+        "notSpecified": "Chưa xác định",
+        "orderNumber": "Số đơn hàng",
+        "createdAt": "Ngày tạo",
+        "totalAmount": "Tổng tiền",
+        "totalQuantity": "Tổng số lượng",
+        "organization": "Tổ chức",
+        "representative": "Người đại diện",
+        "contact": "Liên hệ",
+        "description": "Mô tả / Ghi chú",
+        "rejectionReason": "Lý do từ chối",
+        "orderItems": "Sản phẩm đặt hàng",
+        "itemsInOrder": "sản phẩm trong đơn hàng này",
+        "productId": "Mã sản phẩm",
+        "unknownProduct": "Sản phẩm không xác định",
+        "productDetails": "Chi tiết sản phẩm",
+        "product": "Sản phẩm",
+        "quantity": "Số lượng",
+        "unitPrice": "Đơn giá",
+        "amount": "Thành tiền",
+        "subtotal": "Tạm tính",
+        "total": "Tổng cộng",
+        "invoices": "Hóa đơn",
+        "invoiceNumber": "Số hóa đơn",
+        "invoiceDate": "Ngày hóa đơn",
+        "status": "Trạng thái",
+        "actions": "Thao tác",
+        "pay": "Thanh toán",
+        "viewInvoice": "Xem hóa đơn",
+        "noInvoices": "Không có hóa đơn"
+      },
+      "phases": {
+        "title": "Giai đoạn giao hàng",
+        "loading": "Đang tải giai đoạn...",
+        "empty": "Chưa có giai đoạn giao hàng",
+        "emptyDescription": "Giai đoạn giao hàng sẽ xuất hiện ở đây sau khi được tạo",
+        "phase": "Giai đoạn",
+        "status": "Trạng thái",
+        "startDate": "Ngày bắt đầu",
+        "endDate": "Ngày kết thúc",
+        "description": "Mô tả",
+        "itemsInPhase": "Sản phẩm trong giai đoạn này",
+        "invoiceInformation": "Thông tin hóa đơn",
+        "paid": "Đã thanh toán",
+        "unpaid": "Chưa thanh toán",
+        "payOnline": "Thanh toán online",
+        "totalAmount": "Tổng tiền hàng",
+        "vat": "VAT",
+        "totalPayment": "Tổng thanh toán",
+        "quantity": "Số lượng",
+        "imageProofs": "Hình ảnh minh chứng",
+        "created": "Tạo lúc",
+        "updated": "Cập nhật"
+      },
+      "payment": {
+        "successTitle": "Thanh toán thành công!",
+        "successDescription": "Thanh toán của bạn đã được hoàn tất thành công",
+        "cancelTitle": "Đã hủy thanh toán",
+        "cancelDescription": "Thanh toán đã bị hủy",
+        "errorTitle": "Lỗi",
+        "errorDescription": "Không thể tạo thanh toán. Vui lòng thử lại.",
+        "errorLoadTitle": "Lỗi",
+        "errorLoadDescription": "Không thể tải chi tiết đơn hàng",
+        "errorPhasesTitle": "Lỗi",
+        "errorPhasesDescription": "Không thể tải giai đoạn đơn hàng",
+        "dialogTitle": "Thanh toán online",
+        "dialogDescription": "Hoàn tất thanh toán bằng chuyển khoản ngân hàng qua PayOS",
+        "creating": "Đang tạo thanh toán...",
+        "failed": "Không thể tạo thanh toán. Vui lòng thử lại.",
+        "close": "Đóng",
+        "scanQrCode": "Quét mã QR",
+        "useYourBankingApp": "Sử dụng ứng dụng ngân hàng",
+        "paymentDetails": "Thông tin thanh toán",
+        "paymentCode": "Mã thanh toán",
+        "amount": "Số tiền",
+        "howToPay": "Cách thanh toán",
+        "step1QR": "Quét mã QR bằng ứng dụng ngân hàng của bạn",
+        "step1Link": "Nhấn nút bên dưới để mở trang thanh toán",
+        "step2": "Hoặc sử dụng liên kết trang thanh toán để thanh toán trực tuyến",
+        "step3": "Hoàn tất thanh toán trong ứng dụng ngân hàng của bạn",
+        "step4": "Chờ xác nhận - trạng thái sẽ tự động cập nhật",
+        "openPaymentPage": "Mở trang thanh toán"
+      }
+    },
+    "newOrder": {
+      "title": "Tạo đơn hàng mới",
+      "subtitle": "Chọn sản phẩm và điền thông tin giao hàng",
+      "steps": {
+        "products": "Chọn sản phẩm",
+        "delivery": "Thông tin giao hàng",
+        "review": "Xác nhận"
+      },
+      "products": {
+        "title": "Chọn sản phẩm",
+        "description": "Chọn các sản phẩm bạn muốn đặt hàng",
+        "selected": "Đã chọn",
+        "empty": "Không có sản phẩm nào",
+        "name": "Tên sản phẩm",
+        "price": "Giá",
+        "unit": "Đơn vị",
+        "quantity": "Số lượng",
+        "total": "Tổng",
+        "remove": "Xóa"
+      },
+      "delivery": {
+        "title": "Thông tin giao hàng",
+        "description": "Nhập ngày giao hàng và địa chỉ",
+        "deliveryDate": "Ngày giao hàng",
+        "deliveryAddress": "Địa chỉ giao hàng",
+        "selectOnMap": "Chọn trên bản đồ",
+        "orderDescription": "Mô tả đơn hàng (Tùy chọn)",
+        "descriptionPlaceholder": "Nhập bất kỳ ghi chú hoặc yêu cầu bổ sung..."
+      },
+      "review": {
+        "title": "Xác nhận đơn hàng",
+        "description": "Xem lại đơn hàng trước khi gửi",
+        "orderSummary": "Tóm tắt đơn hàng",
+        "deliverySummary": "Tóm tắt giao hàng",
+        "totalAmount": "Tổng tiền",
+        "submit": "Gửi đơn hàng",
+        "submitting": "Đang gửi..."
+      },
+      "buttons": {
+        "next": "Tiếp theo",
+        "previous": "Quay lại",
+        "cancel": "Hủy bỏ"
+      },
+      "toast": {
+        "errorTitle": "Lỗi",
+        "errorDescription": "Không thể tải dữ liệu. Vui lòng thử lại.",
+        "successTitle": "Thành công!",
+        "successDescription": "Đơn hàng của bạn đã được tạo thành công.",
+        "errorCreateTitle": "Lỗi",
+        "errorCreateDescription": "Không thể tạo đơn hàng. Vui lòng thử lại."
+      }
+    }
   }
 }

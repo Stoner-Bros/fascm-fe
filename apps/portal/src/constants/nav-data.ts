@@ -2,7 +2,7 @@ import { NavItem } from '@/types';
 
 export const supplierNavItems: NavItem[] = [
   {
-    title: 'Dashboard',
+    title: 'dashboard',
     url: '/supplier/dashboard',
     icon: 'dashboard',
     isActive: false,
@@ -10,31 +10,15 @@ export const supplierNavItems: NavItem[] = [
     items: []
   },
   {
-    title: 'Products',
-    url: '/supplier/products',
-    icon: 'product',
-    shortcut: ['h', 'b'],
-    isActive: false,
-    items: []
-  },
-  {
-    title: 'Harvest Batches',
+    title: 'harvestBatches',
     url: '/supplier/harvest-batches',
     icon: 'product',
     shortcut: ['p', 'c'],
     isActive: false,
     items: []
   },
-  // {
-  //   title: 'Pickup Confirmation',
-  //   url: '/supplier/pickup-confirmation',
-  //   icon: 'truck',
-  //   shortcut: ['p', 'c'],
-  //   isActive: false,
-  //   items: []
-  // },
   {
-    title: 'Profile',
+    title: 'profile',
     url: '/supplier/profile',
     icon: 'userPen',
     shortcut: ['p', 'r'],
@@ -45,7 +29,7 @@ export const supplierNavItems: NavItem[] = [
 
 export const consigneeNavItems: NavItem[] = [
   {
-    title: 'Dashboard',
+    title: 'dashboard',
     url: '/consignee/dashboard',
     icon: 'dashboard',
     isActive: false,
@@ -53,15 +37,7 @@ export const consigneeNavItems: NavItem[] = [
     items: []
   },
   {
-    title: 'Products',
-    url: '/consignee/products',
-    icon: 'product',
-    shortcut: ['p', 'r'],
-    isActive: false,
-    items: []
-  },
-  {
-    title: 'Orders',
+    title: 'orders',
     url: '/consignee/orders',
     icon: 'shoppingCart',
     shortcut: ['o', 'r'],
@@ -69,15 +45,7 @@ export const consigneeNavItems: NavItem[] = [
     items: []
   },
   {
-    title: 'Payments',
-    url: '/consignee/payments',
-    icon: 'creditCard',
-    shortcut: ['p', 'y'],
-    isActive: false,
-    items: []
-  },
-  {
-    title: 'Profile',
+    title: 'profile',
     url: '/consignee/profile',
     icon: 'userPen',
     shortcut: ['p', 'r'],

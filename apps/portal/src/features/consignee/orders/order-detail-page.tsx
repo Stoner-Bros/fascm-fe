@@ -50,6 +50,7 @@ import {
 } from '@tabler/icons-react';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl';
 import QRCode from 'qrcode';
 import { useEffect, useState } from 'react';
 
@@ -72,24 +73,7 @@ const getStatusIcon = (status: OrderScheduleStatus) => {
   }
 };
 
-const getStatusLabel = (status: OrderScheduleStatus) => {
-  switch (status) {
-    case 'pending':
-      return 'Chờ duyệt đơn';
-    case 'rejected':
-      return 'Đã từ chối đơn';
-    case 'approved':
-      return 'Đã duyệt đơn';
-    case 'processing':
-      return 'Đang xử lý';
-    case 'completed':
-      return 'Đã hoàn thành';
-    case 'canceled':
-      return 'Đã hủy đơn';
-    default:
-      return status || 'Unknown';
-  }
-};
+// Moved inside component to use translations
 
 const getPhaseStatusIcon = (status?: OrderPhaseStatus | null) => {
   if (!status) return <IconClock className='h-4 w-4' />;
@@ -129,23 +113,7 @@ const getPhaseStatusVariant = (
   }
 };
 
-const getPhaseStatusLabel = (status?: OrderPhaseStatus | null) => {
-  if (!status) return 'Chưa bắt đầu';
-  switch (status) {
-    case 'preparing':
-      return 'Đang chuẩn bị';
-    case 'delivering':
-      return 'Đang giao hàng';
-    case 'delivered':
-      return 'Đã giao hàng';
-    case 'completed':
-      return 'Hoàn thành';
-    case 'canceled':
-      return 'Đã hủy';
-    default:
-      return status || 'Unknown';
-  }
-};
+// Moved inside component to use translations
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('vi-VN', {
@@ -168,12 +136,50 @@ export default function OrderDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
+  const t = useTranslations('Orders');
   const [orderSchedule, setOrderSchedule] = useState<OrderSchedule | null>(
     null
   );
   const [orderPhases, setOrderPhases] = useState<OrderPhase[]>([]);
   const [loading, setLoading] = useState(true);
   const [phasesLoading, setPhasesLoading] = useState(true);
+
+  const getStatusLabel = (status: OrderScheduleStatus) => {
+    switch (status) {
+      case 'pending':
+        return t('statuses.pending');
+      case 'rejected':
+        return t('statuses.rejected');
+      case 'approved':
+        return t('statuses.approved');
+      case 'processing':
+        return t('statuses.processing');
+      case 'completed':
+        return t('statuses.completed');
+      case 'canceled':
+        return t('statuses.canceled');
+      default:
+        return status || t('statuses.unknown');
+    }
+  };
+
+  const getPhaseStatusLabel = (status?: OrderPhaseStatus | null) => {
+    if (!status) return t('phaseStatuses.notStarted');
+    switch (status) {
+      case 'preparing':
+        return t('phaseStatuses.preparing');
+      case 'delivering':
+        return t('phaseStatuses.delivering');
+      case 'delivered':
+        return t('phaseStatuses.delivered');
+      case 'completed':
+        return t('phaseStatuses.completed');
+      case 'canceled':
+        return t('phaseStatuses.canceled');
+      default:
+        return status || t('statuses.unknown');
+    }
+  };
 
   // Payment state
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
@@ -188,8 +194,8 @@ export default function OrderDetailPage() {
     paymentCode: currentPayment?.paymentCode || null,
     onPaymentSuccess: () => {
       toast({
-        title: 'Payment successful!',
-        description: 'Your payment has been completed successfully',
+        title: t('detail.payment.successTitle'),
+        description: t('detail.payment.successDescription'),
         variant: 'default'
       });
       handleClosePaymentDialog();
@@ -197,8 +203,8 @@ export default function OrderDetailPage() {
     },
     onPaymentCanceled: () => {
       toast({
-        title: 'Payment canceled',
-        description: 'The payment has been canceled',
+        title: t('detail.payment.cancelTitle'),
+        description: t('detail.payment.cancelDescription'),
         variant: 'destructive'
       });
       handleClosePaymentDialog();
@@ -214,8 +220,8 @@ export default function OrderDetailPage() {
       setOrderSchedule(data);
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to load order details',
+        title: t('detail.payment.errorLoadTitle'),
+        description: t('detail.payment.errorLoadDescription'),
         variant: 'destructive'
       });
     } finally {
@@ -235,8 +241,8 @@ export default function OrderDetailPage() {
       setOrderPhases(response.data || []);
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to load order phases',
+        title: t('detail.payment.errorPhasesTitle'),
+        description: t('detail.payment.errorPhasesDescription'),
         variant: 'destructive'
       });
     } finally {
@@ -275,8 +281,8 @@ export default function OrderDetailPage() {
       }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Failed to create payment. Please try again.',
+        title: t('detail.payment.errorTitle'),
+        description: t('detail.payment.errorDescription'),
         variant: 'destructive'
       });
     } finally {
@@ -306,7 +312,7 @@ export default function OrderDetailPage() {
       <PageContainer>
         <div className='flex flex-1 flex-col items-center justify-center py-12'>
           <div className='border-primary mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
-          <p className='text-muted-foreground'>Loading order details...</p>
+          <p className='text-muted-foreground'>{t('detail.loading')}</p>
         </div>
       </PageContainer>
     );
@@ -317,14 +323,14 @@ export default function OrderDetailPage() {
       <PageContainer>
         <div className='flex flex-1 flex-col items-center justify-center py-12'>
           <IconPackage className='text-muted-foreground mb-4 h-16 w-16' />
-          <p className='text-muted-foreground'>Order not found</p>
+          <p className='text-muted-foreground'>{t('detail.notFound')}</p>
           <Button
             variant='outline'
             onClick={() => router.push('/consignee/orders')}
             className='mt-4'
           >
             <IconArrowLeft className='mr-2 h-4 w-4' />
-            Back to Orders
+            {t('detail.backToOrders')}
           </Button>
         </div>
       </PageContainer>
@@ -346,10 +352,26 @@ export default function OrderDetailPage() {
   // Order status stepper steps
   const getOrderSteps = () => {
     const steps = [
-      { key: 'pending', label: 'Chờ duyệt', icon: IconClock },
-      { key: 'approved', label: 'Đã duyệt', icon: IconCheck },
-      { key: 'processing', label: 'Đang xử lý', icon: IconTruck },
-      { key: 'completed', label: 'Hoàn thành', icon: IconCheck }
+      {
+        key: 'pending',
+        label: t('detail.statusSteps.pending'),
+        icon: IconClock
+      },
+      {
+        key: 'approved',
+        label: t('detail.statusSteps.approved'),
+        icon: IconCheck
+      },
+      {
+        key: 'processing',
+        label: t('detail.statusSteps.processing'),
+        icon: IconTruck
+      },
+      {
+        key: 'completed',
+        label: t('detail.statusSteps.completed'),
+        icon: IconCheck
+      }
     ];
 
     const currentStatus = orderSchedule.status as OrderScheduleStatus;
@@ -383,10 +405,10 @@ export default function OrderDetailPage() {
               </Button>
               <div>
                 <h2 className='text-3xl font-bold tracking-tight'>
-                  Order Details
+                  {t('detail.title')}
                 </h2>
                 <p className='text-muted-foreground'>
-                  Order ID: {orderSchedule.id}
+                  {t('detail.orderId')}: {orderSchedule.id}
                 </p>
               </div>
             </div>
@@ -400,7 +422,7 @@ export default function OrderDetailPage() {
                 }
               >
                 <IconEdit className='mr-2 h-4 w-4' />
-                Edit Order
+                {t('detail.editOrder')}
               </Button>
             )}
           </div>
@@ -480,14 +502,14 @@ export default function OrderDetailPage() {
               className='hover:border-primary flex cursor-pointer items-center gap-2 hover:bg-transparent'
             >
               <IconPackage className='h-4 w-4' />
-              Overview
+              {t('detail.tabs.overview')}
             </TabsTrigger>
             <TabsTrigger
               value='phases'
               className='hover:border-primary flex cursor-pointer items-center gap-2 hover:bg-transparent'
             >
               <IconTruck className='h-4 w-4' />
-              Delivery Phases
+              {t('detail.tabs.deliveryPhases')}
               {orderPhases.length > 0 && (
                 <Badge variant='secondary' className='ml-1'>
                   {orderPhases.length}
@@ -512,12 +534,12 @@ export default function OrderDetailPage() {
                   <div>
                     <h3 className='mb-3 flex items-center gap-2 text-sm font-semibold'>
                       <IconPackage className='h-4 w-4' />
-                      Order Details
+                      {t('detail.overview.orderDetails')}
                     </h3>
                     <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
                       <div>
                         <p className='text-muted-foreground mb-1 text-xs'>
-                          Order Number
+                          {t('detail.overview.orderNumber')}
                         </p>
                         <p className='font-medium'>
                           {orderSchedule.order?.orderNumber || orderSchedule.id}
@@ -525,7 +547,7 @@ export default function OrderDetailPage() {
                       </div>
                       <div>
                         <p className='text-muted-foreground mb-1 text-xs'>
-                          Total Quantity
+                          {t('detail.overview.totalQuantity')}
                         </p>
                         <p className='font-medium'>
                           {totalQuantity} {orderSchedule.order?.unit || 'kg'}
@@ -533,7 +555,7 @@ export default function OrderDetailPage() {
                       </div>
                       <div>
                         <p className='text-muted-foreground mb-1 text-xs'>
-                          Created At
+                          {t('detail.overview.createdAt')}
                         </p>
                         <p className='text-sm font-medium'>
                           {formatDate(orderSchedule.createdAt)}
@@ -548,12 +570,12 @@ export default function OrderDetailPage() {
                   <div>
                     <h3 className='mb-3 flex items-center gap-2 text-sm font-semibold'>
                       <IconBuilding className='h-4 w-4' />
-                      Consignee Information
+                      {t('detail.overview.consigneeInformation')}
                     </h3>
                     <div className='grid grid-cols-2 gap-4 md:grid-cols-3'>
                       <div>
                         <p className='text-muted-foreground mb-1 text-xs'>
-                          Organization
+                          {t('detail.overview.organization')}
                         </p>
                         <p className='font-medium'>
                           {orderSchedule.consignee?.organizationName || '-'}
@@ -561,7 +583,7 @@ export default function OrderDetailPage() {
                       </div>
                       <div>
                         <p className='text-muted-foreground mb-1 text-xs'>
-                          Representative
+                          {t('detail.overview.representative')}
                         </p>
                         <p className='font-medium'>
                           {orderSchedule.consignee?.representativeName || '-'}
@@ -569,7 +591,7 @@ export default function OrderDetailPage() {
                       </div>
                       <div>
                         <p className='text-muted-foreground mb-1 text-xs'>
-                          Contact
+                          {t('detail.overview.contact')}
                         </p>
                         <p className='font-medium'>
                           {orderSchedule.consignee?.contact || '-'}
@@ -584,34 +606,35 @@ export default function OrderDetailPage() {
                   <div>
                     <h3 className='mb-3 flex items-center gap-2 text-sm font-semibold'>
                       <IconTruck className='h-4 w-4' />
-                      Delivery Information
+                      {t('detail.overview.deliveryInformation')}
                     </h3>
                     <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                       <div>
                         <p className='text-muted-foreground mb-1 flex items-center gap-1 text-xs'>
                           <IconCalendar className='h-3 w-3' />
-                          Delivery Date
+                          {t('detail.overview.deliveryDate')}
                         </p>
                         <p className='font-medium'>
                           {orderSchedule.deliveryDate
                             ? formatDate(orderSchedule.deliveryDate)
-                            : 'Not specified'}
+                            : t('detail.overview.notSpecified')}
                         </p>
                       </div>
                       <div>
                         <p className='text-muted-foreground mb-1 flex items-center gap-1 text-xs'>
                           <IconMapPin className='h-3 w-3' />
-                          Delivery Address
+                          {t('detail.overview.deliveryAddress')}
                         </p>
                         <p className='text-sm font-medium'>
-                          {orderSchedule.address || 'Not specified'}
+                          {orderSchedule.address ||
+                            t('detail.overview.notSpecified')}
                         </p>
                       </div>
                     </div>
                     {orderSchedule.description && (
                       <div className='mt-3'>
                         <p className='text-muted-foreground mb-1 text-xs'>
-                          Description / Notes
+                          {t('detail.overview.description')}
                         </p>
                         <p className='bg-muted/50 rounded-md border p-3 text-sm'>
                           {orderSchedule.description}
@@ -622,7 +645,7 @@ export default function OrderDetailPage() {
                       orderSchedule.status === 'rejected' && (
                         <div className='mt-3'>
                           <p className='text-destructive mb-1 text-xs font-semibold'>
-                            Rejection Reason
+                            {t('detail.overview.rejectionReason')}
                           </p>
                           <p className='border-destructive bg-destructive/10 rounded-md border p-3 text-sm'>
                             {orderSchedule.reason}
@@ -636,10 +659,10 @@ export default function OrderDetailPage() {
               {/* Product Details */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Order Items</CardTitle>
+                  <CardTitle>{t('detail.overview.orderItems')}</CardTitle>
                   <CardDescription>
-                    {orderSchedule.orderDetails?.length || 0} item(s) in this
-                    order
+                    {orderSchedule.orderDetails?.length || 0}{' '}
+                    {t('detail.overview.itemsInOrder')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -665,18 +688,20 @@ export default function OrderDetailPage() {
                         </div>
                         <div className='flex-1'>
                           <h4 className='font-semibold'>
-                            {detail.product?.name || 'Unknown Product'}
+                            {detail.product?.name ||
+                              t('detail.overview.unknownProduct')}
                           </h4>
                           <p className='text-muted-foreground text-sm'>
-                            Product ID: {detail.product?.id || '-'}
+                            {t('detail.overview.productId')}:{' '}
+                            {detail.product?.id || '-'}
                           </p>
                           <div className='mt-2 flex items-center gap-4 text-sm'>
                             <span>
-                              Quantity: <strong>{detail.quantity}</strong>{' '}
-                              {detail.unit}
+                              {t('detail.overview.quantity')}:{' '}
+                              <strong>{detail.quantity}</strong> {detail.unit}
                             </span>
                             <span>
-                              Unit Price:{' '}
+                              {t('detail.overview.unitPrice')}:{' '}
                               <strong>
                                 {formatCurrency(detail.unitPrice || 0)}
                               </strong>
@@ -685,7 +710,7 @@ export default function OrderDetailPage() {
                         </div>
                         <div className='text-right'>
                           <p className='text-muted-foreground text-sm'>
-                            Amount
+                            {t('detail.overview.amount')}
                           </p>
                           <p className='text-lg font-bold'>
                             {formatCurrency(detail.amount || 0)}
@@ -700,13 +725,17 @@ export default function OrderDetailPage() {
                   <div className='flex justify-end'>
                     <div className='space-y-2'>
                       <div className='flex justify-between gap-8'>
-                        <span className='text-muted-foreground'>Subtotal:</span>
+                        <span className='text-muted-foreground'>
+                          {t('detail.overview.subtotal')}:
+                        </span>
                         <span className='font-medium'>
                           {formatCurrency(totalAmount)}
                         </span>
                       </div>
                       <div className='flex justify-between gap-8'>
-                        <span className='text-lg font-bold'>Total:</span>
+                        <span className='text-lg font-bold'>
+                          {t('detail.overview.total')}:
+                        </span>
                         <span className='text-lg font-bold'>
                           {formatCurrency(totalAmount)}
                         </span>
@@ -726,7 +755,9 @@ export default function OrderDetailPage() {
                   <CardContent className='py-12'>
                     <div className='flex flex-col items-center justify-center'>
                       <div className='border-primary mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
-                      <p className='text-muted-foreground'>Loading phases...</p>
+                      <p className='text-muted-foreground'>
+                        {t('detail.phases.loading')}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
@@ -736,10 +767,10 @@ export default function OrderDetailPage() {
                     <div className='flex flex-col items-center justify-center'>
                       <IconPackage className='text-muted-foreground mb-4 h-16 w-16' />
                       <p className='text-muted-foreground text-lg font-medium'>
-                        No delivery phases yet
+                        {t('detail.phases.empty')}
                       </p>
                       <p className='text-muted-foreground text-sm'>
-                        Delivery phases will appear here once created
+                        {t('detail.phases.emptyDescription')}
                       </p>
                     </div>
                   </CardContent>
@@ -751,7 +782,7 @@ export default function OrderDetailPage() {
                       <div className='flex items-center justify-between'>
                         <CardTitle className='flex items-center gap-2'>
                           {getPhaseStatusIcon(phase.status)}
-                          Phase {phase.phaseNumber}
+                          {t('detail.phases.phase')} {phase.phaseNumber}
                         </CardTitle>
                         <Badge
                           variant={getPhaseStatusVariant(phase.status)}
@@ -772,7 +803,7 @@ export default function OrderDetailPage() {
                           <div className='space-y-3'>
                             <h5 className='flex items-center gap-2 font-semibold'>
                               <IconPackage className='h-4 w-4' />
-                              Items in this phase
+                              {t('detail.phases.itemsInPhase')}
                             </h5>
                             <div className='grid gap-3'>
                               {phase.orderInvoiceDetails.map((detail) => (
@@ -797,14 +828,15 @@ export default function OrderDetailPage() {
                                   <div className='min-w-0 flex-1'>
                                     <h6 className='text-base font-semibold'>
                                       {detail.product?.name ||
-                                        'Unknown Product'}
+                                        t('detail.overview.unknownProduct')}
                                     </h6>
                                     <p className='text-muted-foreground text-sm'>
-                                      Product ID: {detail.product?.id || '-'}
+                                      {t('detail.overview.productId')}:{' '}
+                                      {detail.product?.id || '-'}
                                     </p>
                                     <div className='mt-2 flex items-center gap-4 text-sm'>
                                       <span className='text-muted-foreground'>
-                                        Quantity:{' '}
+                                        {t('detail.overview.quantity')}:{' '}
                                         <strong className='text-foreground'>
                                           {detail.quantity}
                                         </strong>{' '}
@@ -814,7 +846,7 @@ export default function OrderDetailPage() {
                                         ×
                                       </span>
                                       <span className='text-muted-foreground'>
-                                        Unit Price:{' '}
+                                        {t('detail.overview.unitPrice')}:{' '}
                                         <strong className='text-foreground'>
                                           {formatCurrency(
                                             detail.unitPrice || 0
@@ -825,7 +857,7 @@ export default function OrderDetailPage() {
                                   </div>
                                   <div className='text-right'>
                                     <p className='text-muted-foreground mb-1 text-xs'>
-                                      Amount
+                                      {t('detail.overview.amount')}
                                     </p>
                                     <p className='text-xl font-bold'>
                                       {formatCurrency(detail.amount || 0)}
@@ -844,13 +876,13 @@ export default function OrderDetailPage() {
                             <div className='flex items-center gap-2 text-lg font-bold'>
                               <IconFileInvoice className='text-primary h-6 w-6' />
                               <span className='text-primary'>
-                                Invoice Information
+                                {t('detail.phases.invoiceInformation')}
                               </span>
                               {/* Payment Status Badge */}
                               {phase.orderInvoice.payment?.status === 'paid' ? (
                                 <Badge className='flex items-center gap-1 bg-green-500 text-white'>
                                   <IconCheck className='h-4 w-4' />
-                                  Đã thanh toán
+                                  {t('detail.phases.paid')}
                                 </Badge>
                               ) : (
                                 <Badge
@@ -858,7 +890,7 @@ export default function OrderDetailPage() {
                                   className='flex items-center gap-1 border-orange-500 text-orange-500'
                                 >
                                   <IconClock className='h-4 w-4' />
-                                  Chưa thanh toán
+                                  {t('detail.phases.unpaid')}
                                 </Badge>
                               )}
                             </div>
@@ -879,7 +911,7 @@ export default function OrderDetailPage() {
                                   size='lg'
                                 >
                                   <IconCreditCard className='h-5 w-5' />
-                                  Thanh toán online
+                                  {t('detail.phases.payOnline')}
                                 </Button>
                               )}
                             </div>
@@ -888,7 +920,7 @@ export default function OrderDetailPage() {
                           <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
                             <div>
                               <p className='text-muted-foreground mb-1 text-xs'>
-                                Total Amount
+                                {t('detail.phases.totalAmount')}
                               </p>
                               <p className='text-base font-semibold'>
                                 {formatCurrency(
@@ -898,7 +930,8 @@ export default function OrderDetailPage() {
                             </div>
                             <div>
                               <p className='text-muted-foreground mb-1 text-xs'>
-                                VAT ({phase.orderInvoice.taxRate || 0}%)
+                                {t('detail.phases.vat')} (
+                                {phase.orderInvoice.taxRate || 0}%)
                               </p>
                               <p className='text-base font-semibold'>
                                 {formatCurrency(
@@ -908,7 +941,7 @@ export default function OrderDetailPage() {
                             </div>
                             <div className='col-span-2 md:col-span-1'>
                               <p className='text-muted-foreground mb-1 text-xs'>
-                                Total Payment
+                                {t('detail.phases.totalPayment')}
                               </p>
                               <p className='text-primary text-2xl font-bold'>
                                 {formatCurrency(
@@ -918,7 +951,7 @@ export default function OrderDetailPage() {
                             </div>
                             <div>
                               <p className='text-muted-foreground mb-1 text-xs'>
-                                Quantity
+                                {t('detail.phases.quantity')}
                               </p>
                               <p className='text-base font-semibold'>
                                 {phase.orderInvoice.quantity}{' '}
@@ -932,7 +965,9 @@ export default function OrderDetailPage() {
                       {/* Image Proofs */}
                       {phase.imageProof && phase.imageProof.length > 0 && (
                         <div className='space-y-3'>
-                          <h5 className='font-semibold'>Image Proofs</h5>
+                          <h5 className='font-semibold'>
+                            {t('detail.phases.imageProofs')}
+                          </h5>
                           <div className='grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4'>
                             {phase.imageProof.map((img) => (
                               <div
@@ -956,13 +991,13 @@ export default function OrderDetailPage() {
                       {/* Phase Dates */}
                       <div className='text-muted-foreground flex items-center justify-between border-t pt-4 text-sm'>
                         <div>
-                          <span>Created: </span>
+                          <span>{t('detail.phases.created')}: </span>
                           <span className='text-foreground font-medium'>
                             {formatDate(phase.createdAt)}
                           </span>
                         </div>
                         <div>
-                          <span>Updated: </span>
+                          <span>{t('detail.phases.updated')}: </span>
                           <span className='text-foreground font-medium'>
                             {formatDate(phase.updatedAt)}
                           </span>
@@ -983,10 +1018,10 @@ export default function OrderDetailPage() {
           <DialogHeader>
             <DialogTitle className='flex items-center gap-2'>
               <IconCreditCard className='h-6 w-6' />
-              Online Payment
+              {t('detail.payment.dialogTitle')}
             </DialogTitle>
             <DialogDescription>
-              Complete your payment using bank transfer via PayOS
+              {t('detail.payment.dialogDescription')}
             </DialogDescription>
           </DialogHeader>
 
@@ -995,7 +1030,7 @@ export default function OrderDetailPage() {
               <div className='flex flex-col items-center justify-center py-12'>
                 <IconLoader2 className='text-primary mb-4 h-12 w-12 animate-spin' />
                 <p className='text-muted-foreground text-lg'>
-                  Creating payment...
+                  {t('detail.payment.creating')}
                 </p>
               </div>
             ) : currentPayment ? (
@@ -1004,8 +1039,12 @@ export default function OrderDetailPage() {
                 {qrCodeDataUrl && (
                   <Card className='col-span-4'>
                     <CardHeader className='pb-3'>
-                      <CardTitle className='text-base'>Scan QR Code</CardTitle>
-                      <CardDescription>Use your banking app</CardDescription>
+                      <CardTitle className='text-base'>
+                        {t('detail.payment.scanQrCode')}
+                      </CardTitle>
+                      <CardDescription>
+                        {t('detail.payment.useYourBankingApp')}
+                      </CardDescription>
                     </CardHeader>
                     <CardContent className='flex flex-col items-center'>
                       <div className='border-primary/20 rounded-lg border-2 bg-white p-4 shadow-sm'>
@@ -1027,14 +1066,14 @@ export default function OrderDetailPage() {
                     <CardHeader className='pb-3'>
                       <CardTitle className='flex items-center gap-2 text-lg'>
                         <IconFileInvoice className='h-5 w-5' />
-                        Payment Details
+                        {t('detail.payment.paymentDetails')}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className='space-y-4'>
                       <div className='grid grid-cols-2 gap-4'>
                         <div>
                           <p className='text-muted-foreground mb-1 text-xs'>
-                            Payment Code
+                            {t('detail.payment.paymentCode')}
                           </p>
                           <p className='bg-muted rounded px-2 py-1 font-mono text-sm font-semibold'>
                             {currentPayment.paymentCode}
@@ -1042,7 +1081,7 @@ export default function OrderDetailPage() {
                         </div>
                         <div>
                           <p className='text-muted-foreground mb-1 text-xs'>
-                            Amount
+                            {t('detail.payment.amount')}
                           </p>
                           <p className='text-primary text-xl font-bold'>
                             {formatCurrency(currentPayment.amount || 0)}
@@ -1057,7 +1096,7 @@ export default function OrderDetailPage() {
                     <CardHeader className='pb-3'>
                       <CardTitle className='flex items-center gap-2 text-base'>
                         <IconAlertCircle className='h-5 w-5 text-blue-600' />
-                        How to Pay
+                        {t('detail.payment.howToPay')}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className='space-y-4'>
@@ -1068,8 +1107,8 @@ export default function OrderDetailPage() {
                           </span>
                           <span className='flex-1'>
                             {qrCodeDataUrl
-                              ? 'Scan the QR code with your banking app'
-                              : 'Click the button below to open payment page'}
+                              ? t('detail.payment.step1QR')
+                              : t('detail.payment.step1Link')}
                           </span>
                         </li>
                         {currentPayment.checkoutUrl && (
@@ -1078,7 +1117,7 @@ export default function OrderDetailPage() {
                               2
                             </span>
                             <span className='flex-1'>
-                              Or use the payment page link to pay online
+                              {t('detail.payment.step2')}
                             </span>
                           </li>
                         )}
@@ -1089,7 +1128,7 @@ export default function OrderDetailPage() {
                               : '2'}
                           </span>
                           <span className='flex-1'>
-                            Complete the payment in your banking app
+                            {t('detail.payment.step3')}
                           </span>
                         </li>
                         <li className='flex gap-3'>
@@ -1099,7 +1138,7 @@ export default function OrderDetailPage() {
                               : '3'}
                           </span>
                           <span className='flex-1'>
-                            Wait for confirmation - status updates automatically
+                            {t('detail.payment.step4')}
                           </span>
                         </li>
                       </ol>
@@ -1116,7 +1155,7 @@ export default function OrderDetailPage() {
                           size='lg'
                         >
                           <IconExternalLink className='h-5 w-5' />
-                          Open Payment Page
+                          {t('detail.payment.openPaymentPage')}
                         </Button>
                       )}
                     </CardContent>
@@ -1126,14 +1165,14 @@ export default function OrderDetailPage() {
             ) : (
               <div className='flex flex-col items-center justify-center py-12'>
                 <p className='text-muted-foreground'>
-                  Failed to create payment. Please try again.
+                  {t('detail.payment.failed')}
                 </p>
                 <Button
                   onClick={handleClosePaymentDialog}
                   variant='outline'
                   className='mt-4'
                 >
-                  Close
+                  {t('detail.payment.close')}
                 </Button>
               </div>
             )}
