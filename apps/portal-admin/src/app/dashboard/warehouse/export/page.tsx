@@ -299,6 +299,17 @@ export default function ExportTicketsPage() {
       return;
     }
 
+    // Validate quantities
+    const validation = validateQuantities();
+    if (!validation.isValid) {
+      toast({
+        title: 'Lỗi',
+        description: validation.errors.join('; '),
+        variant: 'destructive'
+      });
+      return;
+    }
+
     try {
       const payload: { invoiceDetails: OrderInvoiceDetailWithBatch[] } = {
         invoiceDetails: invoiceDetailSelections.map((sel) => ({
@@ -360,6 +371,45 @@ export default function ExportTicketsPage() {
       (sum, sel) => sum + sel.selectedBatches.length,
       0
     );
+  };
+
+  // Parse weight string (e.g., "10kg") to number
+  const parseWeight = (weight: string): number => {
+    const match = weight.match(/^(\d+(?:\.\d+)?)/);
+    return match ? parseFloat(match[1]) : 0;
+  };
+
+  // Calculate total quantity of selected batches for a given invoice detail
+  const getTotalQuantityForDetail = (
+    selection: InvoiceDetailSelection
+  ): number => {
+    return selection.selectedBatches.reduce((total, batch) => {
+      const batchData = availableBatches.find((b) => b.id === batch.batchId);
+      // Use batch quantity if available, otherwise parse from weight string
+      if (batchData?.quantity) {
+        return total + batchData.quantity;
+      }
+      return total + parseWeight(batch.weight);
+    }, 0);
+  };
+
+  // Validate if all invoice details have matching quantities
+  const validateQuantities = (): { isValid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+
+    invoiceDetailSelections.forEach((selection) => {
+      const totalQuantity = getTotalQuantityForDetail(selection);
+      if (totalQuantity !== selection.quantity) {
+        errors.push(
+          `${selection.productName}: Yêu cầu ${selection.quantity} ${selection.unit}, đã chọn ${totalQuantity} ${selection.unit}`
+        );
+      }
+    });
+
+    return {
+      isValid: errors.length === 0,
+      errors
+    };
   };
 
   return (
@@ -512,9 +562,8 @@ export default function ExportTicketsPage() {
                       <SelectItem key={schedule.id} value={schedule.id}>
                         <div className='flex flex-col'>
                           <span className='font-medium'>
-                            {schedule.consignee?.organizationName || 'N/A'}
-                          </span>
-                          <span className='text-muted-foreground text-xs'>
+                            {schedule.consignee?.organizationName || 'N/A'} -{' '}
+                            {schedule.id} -{' '}
                             {schedule.deliveryDate
                               ? new Date(
                                   schedule.deliveryDate
@@ -591,13 +640,50 @@ export default function ExportTicketsPage() {
                             <CardTitle className='text-lg'>
                               {selection.productName}
                             </CardTitle>
-                            <p className='text-muted-foreground text-sm'>
-                              Số lượng: {selection.quantity} {selection.unit}
-                            </p>
+                            <div className='space-y-1'>
+                              <p className='text-muted-foreground text-sm'>
+                                Số lượng yêu cầu: {selection.quantity}{' '}
+                                {selection.unit}
+                              </p>
+                              {selection.selectedBatches.length > 0 && (
+                                <p
+                                  className={`text-sm ${
+                                    getTotalQuantityForDetail(selection) ===
+                                    selection.quantity
+                                      ? 'font-medium text-green-600'
+                                      : 'font-medium text-red-600'
+                                  }`}
+                                >
+                                  Số lượng đã chọn:{' '}
+                                  {getTotalQuantityForDetail(selection)}{' '}
+                                  {selection.unit}
+                                  {getTotalQuantityForDetail(selection) !==
+                                    selection.quantity && (
+                                    <span className='ml-1'>
+                                      (thiếu{' '}
+                                      {selection.quantity -
+                                        getTotalQuantityForDetail(
+                                          selection
+                                        )}{' '}
+                                      {selection.unit})
+                                    </span>
+                                  )}
+                                </p>
+                              )}
+                            </div>
                           </div>
-                          {selection.selectedBatches.length > 0 && (
-                            <CheckCircle2 className='h-5 w-5 text-green-500' />
-                          )}
+                          {selection.selectedBatches.length > 0 &&
+                            getTotalQuantityForDetail(selection) ===
+                              selection.quantity && (
+                              <CheckCircle2 className='h-5 w-5 text-green-500' />
+                            )}
+                          {selection.selectedBatches.length > 0 &&
+                            getTotalQuantityForDetail(selection) !==
+                              selection.quantity && (
+                              <span className='text-sm font-medium text-red-500'>
+                                Chưa đủ
+                              </span>
+                            )}
                         </div>
                       </CardHeader>
                       <CardContent className='space-y-3'>
@@ -759,7 +845,8 @@ export default function ExportTicketsPage() {
                   invoiceDetailSelections.length === 0 ||
                   invoiceDetailSelections.some(
                     (sel) => sel.selectedBatches.length === 0
-                  )
+                  ) ||
+                  !validateQuantities().isValid
                 }
               >
                 Tạo phiếu xuất ({getTotalSelectedBatches()} lô)

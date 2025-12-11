@@ -58,7 +58,7 @@ import {
 import { useEffect, useMemo, useState } from 'react';
 
 function StatusBadge({ status }: { status?: string | null }) {
-  if (!status) return <Badge variant='outline'>Unknown</Badge>;
+  if (!status) return <Badge variant='outline'>Chờ phân công</Badge>;
 
   const variants: Record<string, { label: string; variant: any }> = {
     pending: { label: 'Chờ duyệt', variant: 'secondary' },
@@ -451,7 +451,7 @@ export function OutboundTruckAssignment() {
                   schedules.map((schedule) => (
                     <TableRow key={schedule.id}>
                       <TableCell className='font-mono text-sm'>
-                        {schedule.id.slice(0, 8)}
+                        {schedule.id.slice(0, 11)}
                       </TableCell>
                       <TableCell>
                         {schedule.consignee?.organizationName ||
