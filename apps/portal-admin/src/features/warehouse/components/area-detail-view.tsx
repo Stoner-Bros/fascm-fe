@@ -37,7 +37,10 @@ import {
   fetchActiveAreaAlertByAreaId,
   fetchAreaById
 } from '@/services/area.service';
-import { fetchBatches } from '@/services/batch.service';
+import {
+  fetchBatches,
+  fetchBatchesGroupedByWeight
+} from '@/services/batch.service';
 import { fetchExportTickets } from '@/services/export-ticket.service';
 import { fetchImportTickets } from '@/services/import-ticket.service';
 import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
@@ -110,6 +113,18 @@ export default function AreaDetailView({
   const [areaImportTickets, setAreaImportTickets] = useState<ImportTicket[]>(
     []
   );
+  const [isLoadingBatchGroups, setIsLoadingBatchGroups] = useState(false);
+  const [batchGroups, setBatchGroups] = useState<
+    {
+      importTicketId: string;
+      product?: { id?: string; name?: string };
+      batch?: Record<string, number>;
+      batchCode?: string;
+      expiredAt?: string | null;
+      importDate?: string | null;
+      prices?: Record<string, number>;
+    }[]
+  >([]);
   const [activeAlert, setActiveAlert] = useState<{
     id: string;
     status?: string | null;
@@ -537,23 +552,25 @@ export default function AreaDetailView({
       setIsLoadingData(true);
       setIsLoadingOverviewBatches(true);
       setIsLoadingProducts(true);
+      setIsLoadingBatchGroups(true);
       setIsLoadingHistory(true);
       try {
-        // Fetch tất cả data một lần
-        const [batchesRes, ticketsRes, exportsRes] = await Promise.all([
-          fetchBatches({
-            page: 1,
-            limit: 500 // Fetch nhiều batches để cover tất cả
-          }),
-          fetchImportTickets({
-            page: 1,
-            limit: 200
-          }),
-          fetchExportTickets({
-            page: 1,
-            limit: 200
-          })
-        ]);
+        const [batchesRes, ticketsRes, exportsRes, groupsRes] =
+          await Promise.all([
+            fetchBatches({
+              page: 1,
+              limit: 500 // Fetch nhiều batches để cover tất cả
+            }),
+            fetchImportTickets({
+              page: 1,
+              limit: 200
+            }),
+            fetchExportTickets({
+              page: 1,
+              limit: 200
+            }),
+            fetchBatchesGroupedByWeight({ areaId })
+          ]);
 
         // Filter batches theo areaId
         const batchesInArea: Batch[] = (batchesRes.data || []).filter(
@@ -584,15 +601,20 @@ export default function AreaDetailView({
           orderDetailIdsFromBatches.has(et.orderDetail?.id)
         );
         setAllExportTickets(exportTickets);
+
+        const groups = Array.isArray(groupsRes) ? groupsRes : [];
+        setBatchGroups(groups);
       } catch (error) {
         console.error('Unable to load area data', error);
         setAllBatches([]);
         setAllImportTickets([]);
         setAllExportTickets([]);
+        setBatchGroups([]);
       } finally {
         setIsLoadingData(false);
         setIsLoadingOverviewBatches(false);
         setIsLoadingProducts(false);
+        setIsLoadingBatchGroups(false);
         setIsLoadingHistory(false);
       }
     };
@@ -1163,6 +1185,87 @@ export default function AreaDetailView({
 
           {/* Charts Section */}
           {/* <AreaCharts areaId={areaId} /> */}
+        </TabsContent>
+        <TabsContent value='products' className='space-y-4'>
+          <Card className='overflow-hidden'>
+            <CardHeader>
+              <CardTitle>Nhóm lô nhập theo phiếu nhập</CardTitle>
+              <CardDescription>
+                Gộp theo Import Ticket trong khu vực
+              </CardDescription>
+            </CardHeader>
+            <CardContent className='p-0'>
+              {isLoadingBatchGroups ? (
+                <div className='text-muted-foreground px-4 py-6 text-sm'>
+                  Đang tải dữ liệu nhóm lô...
+                </div>
+              ) : batchGroups.length === 0 ? (
+                <div className='text-muted-foreground px-4 py-6 text-sm'>
+                  Chưa có dữ liệu nhóm lô theo phiếu nhập.
+                </div>
+              ) : (
+                <div className='w-full overflow-x-auto'>
+                  <table className='w-full text-sm'>
+                    <thead className='bg-muted'>
+                      <tr>
+                        <th className='px-4 py-2 text-left'>Import Ticket</th>
+                        <th className='px-4 py-2 text-left'>Sản phẩm</th>
+                        <th className='px-4 py-2 text-left'>Batch code</th>
+                        <th className='px-4 py-2 text-left'>Ngày nhập</th>
+                        <th className='px-4 py-2 text-left'>Hạn dùng</th>
+                        <th className='px-4 py-2 text-left'>Quy cách</th>
+                        <th className='px-4 py-2 text-left'>
+                          Giá theo quy cách
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {batchGroups.map((g) => {
+                        const weights = g.batch
+                          ? Object.entries(g.batch)
+                              .map(([k, v]) => `${k}×${v}`)
+                              .join(', ')
+                          : '-';
+                        const prices = g.prices
+                          ? Object.entries(g.prices)
+                              .map(
+                                ([k, v]) => `${k}: ${v.toLocaleString('vi-VN')}`
+                              )
+                              .join(', ')
+                          : '-';
+                        return (
+                          <tr
+                            key={`${g.importTicketId}-${g.batchCode ?? ''}`}
+                            className='border-t'
+                          >
+                            <td className='px-4 py-2'>{g.importTicketId}</td>
+                            <td className='px-4 py-2'>
+                              {g.product?.name ?? '-'}
+                            </td>
+                            <td className='px-4 py-2'>{g.batchCode ?? '-'}</td>
+                            <td className='px-4 py-2 text-xs'>
+                              {g.importDate
+                                ? new Date(g.importDate).toLocaleString('vi-VN')
+                                : '—'}
+                            </td>
+                            <td className='px-4 py-2 text-xs'>
+                              {g.expiredAt
+                                ? new Date(g.expiredAt).toLocaleDateString(
+                                    'vi-VN'
+                                  )
+                                : '—'}
+                            </td>
+                            <td className='px-4 py-2'>{weights}</td>
+                            <td className='px-4 py-2'>{prices}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Products Tab */}

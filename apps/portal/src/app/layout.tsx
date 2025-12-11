@@ -59,9 +59,10 @@ export default async function RootLayout({
           defer
         ></script>
       </head>
+      {/* scrollable body */}
       <body
         className={cn(
-          'bg-background font-inter min-h-screen overflow-hidden antialiased',
+          'bg-background font-inter min-h-screen overflow-x-hidden antialiased',
           activeThemeValue ? `theme-${activeThemeValue}` : '',
           isScaled ? 'theme-scaled' : '',
           fontVariables

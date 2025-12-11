@@ -379,9 +379,13 @@ export default function QualityDetection() {
                         <p className='mb-4 text-gray-300'>
                           Không thể tải video stream
                         </p>
-                        <Button variant='outline' onClick={refreshStream}>
-                          <RotateCcw className='mr-2 h-4 w-4' />
-                          Thử lại
+                        <Button
+                          className=''
+                          variant='outline'
+                          onClick={refreshStream}
+                        >
+                          <RotateCcw className='mr-2 h-4 w-4 text-gray-800' />
+                          <div className='text-gray-800'>Thử lại</div>
                         </Button>
                       </>
                     ) : (

@@ -415,7 +415,7 @@ export default function DeliveryRouteSim({
         <div className='mb-2 flex items-center justify-between'>
           <div className='text-sm'>Hàng: {cargo}</div>
           <div className='flex gap-2'>
-            <button
+            {/* <button
               className='rounded border px-2 py-1 text-sm'
               onClick={() => setRunning(true)}
               disabled={!!activeDeliveryId}
@@ -428,7 +428,7 @@ export default function DeliveryRouteSim({
               disabled={!!activeDeliveryId}
             >
               Tạm dừng
-            </button>
+            </button> */}
           </div>
         </div>
         <MapContainer

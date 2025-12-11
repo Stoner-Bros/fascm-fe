@@ -36,6 +36,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
+import QualityDetection from '@/features/warehouse/components/quality-detection';
 import { fetchAreas } from '@/services/area.service';
 import {
   createImportTicket,
@@ -46,7 +47,14 @@ import { fetchInboundBatches } from '@/services/inbound-batch.service';
 import type { Area } from '@/types/area';
 import type { ImportTicket } from '@/types/import-ticket';
 import type { InboundBatch } from '@/types/inbound-batch';
-import { Calendar, MapPin, Package, Plus, Trash2 } from 'lucide-react';
+import {
+  Calendar,
+  MapPin,
+  Package,
+  Plus,
+  Trash2,
+  CheckCircle2
+} from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function ImportTicketsPage() {
@@ -59,6 +67,7 @@ export default function ImportTicketsPage() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const limit = 10;
+  const [isQualityCheckOpen, setIsQualityCheckOpen] = useState(false);
 
   const [formData, setFormData] = useState({
     inboundBatchId: '',
@@ -219,11 +228,34 @@ export default function ImportTicketsPage() {
             <p className='text-muted-foreground mt-1'>
               Quản lý các phiếu nhập hàng vào kho
             </p>
+            {/* Popup UI Quét */}
+            <Dialog
+              open={isQualityCheckOpen}
+              onOpenChange={(open) => {
+                setIsQualityCheckOpen(open);
+              }}
+            >
+              <DialogContent className='max-h-[90vh] !max-w-6xl overflow-y-auto'>
+                <DialogHeader>
+                  <DialogTitle>Kiểm định chất lượng nhập kho</DialogTitle>
+                </DialogHeader>
+                <QualityDetection />
+              </DialogContent>
+            </Dialog>
           </div>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <Plus className='mr-2 h-4 w-4' />
-            Tạo phiếu nhập
-          </Button>
+          <div className='flex items-center gap-2'>
+            <Button
+              variant='outline'
+              onClick={() => setIsQualityCheckOpen(true)}
+            >
+              <CheckCircle2 className='mr-2 h-4 w-4' />
+              Kiểm định chất lượng
+            </Button>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              <Plus className='mr-2 h-4 w-4' />
+              Tạo phiếu nhập
+            </Button>
+          </div>
         </div>
 
         <Card>

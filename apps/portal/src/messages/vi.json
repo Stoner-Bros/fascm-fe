@@ -580,5 +580,11 @@
         "errorCreateDescription": "Không thể tạo đơn hàng. Vui lòng thử lại."
       }
     }
+  },
+  "Notifications": {
+    "defaultTitle": "Thông báo",
+    "defaultMessage": "",
+    "orderScheduleApproved": "Đã duyệt đơn",
+    "orderScheduleHasBeenApproved": "Lịch đặt hàng {orderScheduleId} đã được duyệt"
   }
 }

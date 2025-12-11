@@ -310,12 +310,9 @@ export default function HarvestBatchDetailPage() {
 
   const statusConfig = getStatusConfig(schedule?.status);
   const statusNormalized = String(schedule?.status ?? 'pending').toLowerCase();
-  const showMap = [
-    'preparing',
-    'delivering',
-    'delivered',
-    'returning'
-  ].includes(statusNormalized);
+  const showMap = phases.some((p) =>
+    ['delivering', 'delivered'].includes(String(p.status ?? '').toLowerCase())
+  );
 
   const totalQuantity = useMemo(
     () => details.reduce((sum, d) => sum + d.quantity, 0),
@@ -488,29 +485,6 @@ export default function HarvestBatchDetailPage() {
               </TabsList>
 
               <TabsContent value='overview' className='space-y-6'>
-                {showMap && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className='flex items-center gap-2'>
-                        <IconMapPin className='h-5 w-5' />
-                        Theo dõi vận chuyển
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <HarvestRouteSim
-                        cargo={`Khối lượng ${totalQuantity} kg`}
-                        startAddress={'Kho Nhà Cung Cấp'}
-                        endAddress={String(schedule.address ?? '')}
-                        harvestScheduleId={String(schedule.id ?? '')}
-                        deliveryId={activeDeliveryId}
-                        productName={details
-                          .map((d) => d.productName)
-                          .join(', ')}
-                      />
-                    </CardContent>
-                  </Card>
-                )}
-
                 {/* Harvest Schedule Info */}
                 <Card>
                   <CardHeader>
@@ -605,7 +579,37 @@ export default function HarvestBatchDetailPage() {
                                     {phaseConfig.label}
                                   </Badge>
                                 </div>
-
+                                {['delivering', 'delivered'].includes(
+                                  String(phase.status ?? '').toLowerCase()
+                                ) && (
+                                  <Card>
+                                    <CardHeader>
+                                      <CardTitle className='flex items-center gap-2'>
+                                        <IconMapPin className='h-5 w-5' />
+                                        Theo dõi vận chuyển
+                                      </CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                      <HarvestRouteSim
+                                        cargo={`Khối lượng ${totalPhaseQuantity} kg`}
+                                        startAddress={'Kho Nhà Cung Cấp'}
+                                        endAddress={String(
+                                          schedule.address ?? ''
+                                        )}
+                                        harvestScheduleId={String(
+                                          schedule.id ?? ''
+                                        )}
+                                        deliveryId={activeDeliveryId}
+                                        productName={(
+                                          phase.harvestInvoiceDetails || []
+                                        )
+                                          .map((d) => d.product?.name)
+                                          .filter(Boolean)
+                                          .join(', ')}
+                                      />
+                                    </CardContent>
+                                  </Card>
+                                )}
                                 {phase.description && (
                                   <p className='text-muted-foreground mb-3 text-sm'>
                                     {phase.description}
