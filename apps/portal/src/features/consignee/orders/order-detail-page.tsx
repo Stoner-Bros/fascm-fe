@@ -56,6 +56,12 @@ import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
 import QRCode from 'qrcode';
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
+
+const DeliveryRouteSim = dynamic(
+  () => import('@/components/map/delivery-route-sim'),
+  { ssr: false }
+);
 
 const getStatusIcon = (status: OrderScheduleStatus) => {
   switch (status) {
@@ -817,6 +823,30 @@ export default function OrderDetailPage() {
                       )}
                     </CardHeader>
                     <CardContent className='space-y-6'>
+                      {['delivering', 'delivered'].includes(
+                        String(phase.status ?? '').toLowerCase()
+                      ) && (
+                        <Card>
+                          <CardHeader>
+                            <CardTitle className='flex items-center gap-2'>
+                              <IconTruck className='h-5 w-5' />
+                              Theo dõi vận chuyển
+                            </CardTitle>
+                          </CardHeader>
+                          <CardContent>
+                            <DeliveryRouteSim
+                              cargo={`Khối lượng ${phase.orderInvoice?.quantity ?? (phase.orderInvoiceDetails?.reduce((s, d) => s + (d.quantity ?? 0), 0) || 0)} ${phase.orderInvoice?.unit ?? 'kg'}`}
+                              startAddress={'Kho trung tâm'}
+                              endAddress={String(orderSchedule.address ?? '')}
+                              orderScheduleId={String(orderSchedule.id ?? '')}
+                              productName={(phase.orderInvoiceDetails || [])
+                                .map((d) => d.product?.name)
+                                .filter(Boolean)
+                                .join(', ')}
+                            />
+                          </CardContent>
+                        </Card>
+                      )}
                       {/* Invoice Details (Products) */}
                       {phase.orderInvoiceDetails &&
                         phase.orderInvoiceDetails.length > 0 && (

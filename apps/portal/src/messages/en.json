@@ -580,5 +580,11 @@
         "errorCreateDescription": "Failed to create order. Please try again."
       }
     }
+  },
+  "Notifications": {
+    "defaultTitle": "Notification",
+    "defaultMessage": "",
+    "orderScheduleApproved": "Order Approved",
+    "orderScheduleHasBeenApproved": "Order schedule {orderScheduleId} has been approved"
   }
 }
