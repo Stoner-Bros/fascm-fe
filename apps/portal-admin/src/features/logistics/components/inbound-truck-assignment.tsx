@@ -127,7 +127,7 @@ export function InboundTruckAssignment() {
     try {
       const res = await fetchDeliveries({ page: 1, limit: 1000 });
       // Include all deliveries without filtering by status
-      setDeliveries(res.data);
+      setDeliveries(res.data.filter((d) => d.harvestPhase)); // only inbound deliveries
     } catch (error) {
       // Silent error - deliveries will be empty
     }
@@ -453,7 +453,7 @@ export function InboundTruckAssignment() {
                 ) : (
                   schedules.map((schedule) => (
                     <TableRow key={schedule.id}>
-                      <TableCell className='font-mono text-sm'>
+                      <TableCell className='text-sm'>
                         {schedule.id.slice(0, 8)}
                       </TableCell>
                       <TableCell>
@@ -611,12 +611,12 @@ export function InboundTruckAssignment() {
                 ) : (
                   deliveries.map((d) => (
                     <TableRow key={d.id}>
-                      <TableCell className='font-mono text-sm'>
-                        {d.id.slice(0, 8)}...
+                      <TableCell className='text-sm'>
+                        {d.id.slice(0, 8)}
                       </TableCell>
-                      <TableCell className='font-mono text-sm'>
+                      <TableCell className='text-sm'>
                         {d.harvestPhase?.phaseNumber
-                          ? `Đợt ${d.harvestPhase.phaseNumber}`
+                          ? `${d.harvestPhase.harvestSchedule?.id} - Đợt ${d.harvestPhase.phaseNumber}`
                           : '-'}
                       </TableCell>
                       <TableCell>

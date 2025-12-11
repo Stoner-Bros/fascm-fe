@@ -108,7 +108,7 @@ export function WarehouseActivitiesTable() {
           date: String(
             it.importDate ?? it.createdAt ?? new Date().toISOString()
           ),
-          code: String(it?.batchCode ?? it.id),
+          code: String(it.id),
           type: 'import',
           productName: String(it?.productName ?? '-'),
           quantity: Number(it.quantity ?? it.percent ?? 0),
@@ -135,10 +135,10 @@ export function WarehouseActivitiesTable() {
             (et as any).orderDetail?.order?.id ?? (et as any).id ?? ''
           ),
           type: 'export',
-          productName: String((et as any).orderDetail?.product?.name ?? '-'),
+          productName: String((et as any).productName ?? '-'),
           productCode: String((et as any).orderDetail?.product?.id ?? '-'),
-          quantity: Number((et as any).orderDetail?.quantity ?? 0),
-          unit: String((et as any).orderDetail?.unit ?? ''),
+          quantity: Number((et as any).quantity ?? 0),
+          unit: String((et as any).unit ?? ''),
           warehouse: '-',
           warehouseArea: undefined,
           user: String(

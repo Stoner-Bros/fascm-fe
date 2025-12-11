@@ -123,7 +123,7 @@ export function OutboundTruckAssignment() {
     try {
       const res = await fetchDeliveries({ page: 1, limit: 1000 });
       // Include all deliveries without filtering by status
-      setDeliveries(res.data);
+      setDeliveries(res.data.filter((d) => d.orderPhase)); // only outbound deliveries
     } catch (error) {
       // Silent error - deliveries will be empty
     }
@@ -450,7 +450,7 @@ export function OutboundTruckAssignment() {
                 ) : (
                   schedules.map((schedule) => (
                     <TableRow key={schedule.id}>
-                      <TableCell className='font-mono text-sm'>
+                      <TableCell className='text-sm'>
                         {schedule.id.slice(0, 11)}
                       </TableCell>
                       <TableCell>
@@ -610,12 +610,12 @@ export function OutboundTruckAssignment() {
                 ) : (
                   deliveries.map((d) => (
                     <TableRow key={d.id}>
-                      <TableCell className='font-mono text-sm'>
-                        {d.id.slice(0, 8)}...
+                      <TableCell className='text-sm'>
+                        {d.id.slice(0, 8)}
                       </TableCell>
-                      <TableCell className='font-mono text-sm'>
+                      <TableCell className='text-sm'>
                         {d.orderPhase?.phaseNumber
-                          ? `Đợt ${d.orderPhase.phaseNumber}`
+                          ? `${d.orderPhase.orderSchedule?.id} - Đợt ${d.orderPhase.phaseNumber}`
                           : '-'}
                       </TableCell>
                       <TableCell>
@@ -821,21 +821,27 @@ export function OutboundTruckAssignment() {
                               {phase.description || 'Không có mô tả'}
                             </TableCell>
                             <TableCell>
-                              <StatusBadge status={phase.status} />
+                              {phase.status ? (
+                                <Badge variant='secondary'>Đã phân công</Badge>
+                              ) : (
+                                <Badge>Chưa phân công</Badge>
+                              )}
                             </TableCell>
                             <TableCell className='text-right'>
-                              <Button
-                                size='sm'
-                                variant='default'
-                                disabled={isAssigned}
-                                onClick={() => {
-                                  setSelectedPhase(phase);
-                                  setIsPhasesDialogOpen(false);
-                                  setIsAssignDialogOpen(true);
-                                }}
-                              >
-                                {isAssigned ? 'Đã phân công' : 'Phân công xe'}
-                              </Button>
+                              {!phase.status && (
+                                <Button
+                                  size='sm'
+                                  variant='default'
+                                  disabled={isAssigned}
+                                  onClick={() => {
+                                    setSelectedPhase(phase);
+                                    setIsPhasesDialogOpen(false);
+                                    setIsAssignDialogOpen(true);
+                                  }}
+                                >
+                                  {isAssigned ? 'Đã phân công' : 'Phân công xe'}
+                                </Button>
+                              )}
                             </TableCell>
                           </TableRow>
                         );
