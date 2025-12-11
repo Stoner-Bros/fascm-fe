@@ -274,53 +274,30 @@ export default function ImportTicketsPage() {
                         <TableCell>
                           <div className='flex flex-col'>
                             <span className='font-medium'>
-                              {ticket.inboundBatch?.batchCode || '-'}
-                            </span>
-                            <span className='text-muted-foreground text-sm'>
-                              {ticket.inboundBatch?.quantity}{' '}
-                              {ticket.inboundBatch?.unit}
+                              {ticket?.batchCode || '-'}
                             </span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className='flex items-center gap-2'>
                             <Package className='text-muted-foreground h-4 w-4' />
-                            <span>
-                              {ticket.inboundBatch?.product?.name || '-'}
-                            </span>
+                            <span>{ticket?.productName || '-'}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <Badge variant='outline'>
-                            {ticket.realityQuantity} {ticket.inboundBatch?.unit}
+                            {ticket.quantity} {ticket.unit}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <div className='flex flex-col gap-1 text-sm'>
-                            {ticket.numberOfBigBatch !== null &&
-                              ticket.numberOfBigBatch !== undefined && (
-                                <span className='text-muted-foreground'>
-                                  Lớn: {ticket.numberOfBigBatch}
-                                </span>
-                              )}
-                            {ticket.numberOfSmallBatch !== null &&
-                              ticket.numberOfSmallBatch !== undefined && (
-                                <span className='text-muted-foreground'>
-                                  Nhỏ: {ticket.numberOfSmallBatch}
-                                </span>
-                              )}
-                            {(ticket.numberOfBigBatch === null ||
-                              ticket.numberOfBigBatch === undefined) &&
-                              (ticket.numberOfSmallBatch === null ||
-                                ticket.numberOfSmallBatch === undefined) && (
-                                <span className='text-muted-foreground'>-</span>
-                              )}
+                            <span>{ticket.numberOfBatch}</span>
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className='flex items-center gap-2'>
                             <MapPin className='text-muted-foreground h-4 w-4' />
-                            <span>{ticket.area?.name || '-'}</span>
+                            <span>{ticket.areaName || '-'}</span>
                           </div>
                         </TableCell>
                         <TableCell>
@@ -415,7 +392,8 @@ export default function ImportTicketsPage() {
                   <SelectContent>
                     {inboundBatches.map((batch) => (
                       <SelectItem key={batch.id} value={batch.id}>
-                        {batch.batchCode} - {batch.product?.name} (
+                        {batch.batchCode} -{' '}
+                        {batch.harvestInvoiceDetail.product?.name} (
                         {batch.quantity} {batch.unit})
                       </SelectItem>
                     ))}
@@ -430,7 +408,7 @@ export default function ImportTicketsPage() {
                     <div>
                       <span className='text-muted-foreground'>Sản phẩm:</span>{' '}
                       <span className='font-medium'>
-                        {selectedBatch.product?.name}
+                        {selectedBatch.harvestInvoiceDetail.product?.name}
                       </span>
                     </div>
                     <div>

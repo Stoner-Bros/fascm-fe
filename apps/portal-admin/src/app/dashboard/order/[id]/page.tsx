@@ -1,7 +1,5 @@
 'use client';
 
-import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
 import PageContainer from '@/components/layout/page-container';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -16,22 +14,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  fetchOrderScheduleById,
-  updateOrderScheduleStatus
-} from '@/services/order-schedule.service';
-import {
-  createOrderPhase,
-  fetchOrderPhasesBySchedule,
-  updateOrderPhaseStatus
-} from '@/services/order-phase.service';
-import type {
-  OrderSchedule,
-  OrderScheduleStatus,
-  OrderPhase,
-  CreateOrderInvoiceDetailDto
-} from '@/types/order';
 import {
   Table,
   TableBody,
@@ -40,7 +22,26 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
+import {
+  createOrderPhase,
+  fetchOrderPhasesBySchedule,
+  updateOrderPhaseStatus
+} from '@/services/order-phase.service';
+import {
+  fetchOrderScheduleById,
+  updateOrderScheduleStatus
+} from '@/services/order-schedule.service';
+import type {
+  CreateOrderInvoiceDetailDto,
+  OrderPhase,
+  OrderSchedule,
+  OrderScheduleStatus
+} from '@/types/order';
+import { Check } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 function getStatusBadge(status?: OrderScheduleStatus | null) {
   switch (status) {
@@ -94,6 +95,7 @@ export default function OrderScheduleDetailPage() {
   const [rejectReason, setRejectReason] = useState('');
   const [phaseData, setPhaseData] = useState({
     description: '',
+    taxRate: 5,
     phaseNumber: 1,
     invoiceDetails: [] as CreateOrderInvoiceDetailDto[]
   });
@@ -197,10 +199,11 @@ export default function OrderScheduleDetailPage() {
       return;
     }
 
-    // Calculate total amount
-    const totalAmount = validDetails.reduce((sum, detail) => {
+    // Calculate total amount with tax
+    const subtotal = validDetails.reduce((sum, detail) => {
       return sum + detail.quantity! * (detail.unitPrice || 0);
     }, 0);
+    const totalAmount = subtotal * (1 + phaseData.taxRate / 100);
 
     setUpdating(true);
     try {
@@ -209,7 +212,8 @@ export default function OrderScheduleDetailPage() {
         phaseNumber: phaseData.phaseNumber,
         orderSchedule: { id: schedule.id },
         orderInvoice: {
-          totalAmount
+          totalAmount,
+          taxRate: phaseData.taxRate
         },
         orderInvoiceDetails: validDetails
       });
@@ -218,6 +222,7 @@ export default function OrderScheduleDetailPage() {
       // Reset phase data
       setPhaseData({
         description: '',
+        taxRate: 5,
         phaseNumber: phases.length + 2,
         invoiceDetails: schedule.orderDetails!.map((detail) => ({
           product: { id: detail.product!.id },
@@ -353,9 +358,22 @@ export default function OrderScheduleDetailPage() {
                 </Button>
               </>
             )}
-            {schedule.status === 'approved' && hasRemainingQuantity && (
-              <Button onClick={() => setShowPhaseDialog(true)}>
-                Tạo đợt giao hàng
+            {(schedule.status === 'approved' ||
+              schedule.status === 'processing') &&
+              hasRemainingQuantity && (
+                <Button onClick={() => setShowPhaseDialog(true)}>
+                  Tạo đợt giao hàng
+                </Button>
+              )}
+            {schedule.status === 'processing' && !hasRemainingQuantity && (
+              <Button
+                onClick={() => {
+                  updateOrderScheduleStatus(schedule.id, 'completed');
+                  window.location.reload();
+                }}
+              >
+                <Check className='mr-2 h-4 w-4' />
+                Đánh dấu hoàn thành
               </Button>
             )}
           </div>
@@ -589,6 +607,28 @@ export default function OrderScheduleDetailPage() {
                             </TableRow>
                           );
                         })}
+                        {phase.orderInvoice?.taxRate != null && (
+                          <TableRow>
+                            <TableCell
+                              colSpan={4}
+                              className='text-muted-foreground text-right text-sm'
+                            >
+                              Thuế ({phase.orderInvoice.taxRate}%):
+                            </TableCell>
+                            <TableCell className='text-muted-foreground text-sm'>
+                              {(
+                                (phase.orderInvoiceDetails?.reduce(
+                                  (sum, d) =>
+                                    sum +
+                                    (d.quantity || 0) * (d.unitPrice || 0),
+                                  0
+                                ) || 0) *
+                                (phase.orderInvoice.taxRate / 100)
+                              ).toLocaleString('vi-VN')}{' '}
+                              đ
+                            </TableCell>
+                          </TableRow>
+                        )}
                         <TableRow>
                           <TableCell
                             colSpan={4}
@@ -598,7 +638,7 @@ export default function OrderScheduleDetailPage() {
                           </TableCell>
                           <TableCell className='font-semibold'>
                             {(
-                              phase.orderInvoice?.totalAmount || 0
+                              phase.orderInvoice?.totalPayment || 0
                             ).toLocaleString('vi-VN')}{' '}
                             đ
                           </TableCell>
@@ -671,6 +711,20 @@ export default function OrderScheduleDetailPage() {
                     setPhaseData((prev) => ({
                       ...prev,
                       phaseNumber: parseInt(e.target.value) || 1
+                    }))
+                  }
+                />
+              </div>
+              <div>
+                <Label htmlFor='taxRate'>Mức thuế (%)</Label>
+                <Input
+                  id='taxRate'
+                  type='number'
+                  value={phaseData.taxRate}
+                  onChange={(e) =>
+                    setPhaseData((prev) => ({
+                      ...prev,
+                      taxRate: parseInt(e.target.value) || 1
                     }))
                   }
                 />

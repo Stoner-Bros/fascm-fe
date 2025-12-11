@@ -350,17 +350,20 @@ export default function HarvestScheduleDetailPage() {
                 </Button>
               </>
             )}
-            {schedule.status === 'approved' && hasRemainingQuantity && (
-              <Button onClick={() => setShowPhaseDialog(true)}>
-                <Plus className='mr-2 h-4 w-4' />
-                Tạo đợt thu hoạch
-              </Button>
-            )}
+            {(schedule.status === 'approved' ||
+              schedule.status === 'processing') &&
+              hasRemainingQuantity && (
+                <Button onClick={() => setShowPhaseDialog(true)}>
+                  <Plus className='mr-2 h-4 w-4' />
+                  Tạo đợt thu hoạch
+                </Button>
+              )}
             {schedule.status === 'processing' && !hasRemainingQuantity && (
               <Button
-                onClick={() =>
-                  updateHarvestScheduleStatus(schedule.id, 'completed')
-                }
+                onClick={() => {
+                  updateHarvestScheduleStatus(schedule.id, 'completed');
+                  window.location.reload();
+                }}
               >
                 <Check className='mr-2 h-4 w-4' />
                 Đánh dấu hoàn thành

@@ -21,7 +21,10 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePaymentStatus } from '@/hooks/use-payment-status';
 import { useToast } from '@/hooks/use-toast';
-import { fetchOrderPhasesBySchedule } from '@/services/order-phases.service';
+import {
+  fetchOrderPhasesBySchedule,
+  updateOrderPhaseStatus
+} from '@/services/order-phases.service';
 import { fetchOrderScheduleById } from '@/services/order-schedule.service';
 import { createPayment } from '@/services/payment.service';
 import type {
@@ -48,9 +51,9 @@ import {
   IconTruck,
   IconX
 } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useParams, useRouter } from 'next/navigation';
-import { useTranslations } from 'next-intl';
 import QRCode from 'qrcode';
 import { useEffect, useState } from 'react';
 
@@ -784,13 +787,30 @@ export default function OrderDetailPage() {
                           {getPhaseStatusIcon(phase.status)}
                           {t('detail.phases.phase')} {phase.phaseNumber}
                         </CardTitle>
-                        <Badge
-                          variant={getPhaseStatusVariant(phase.status)}
-                          className='flex items-center gap-1'
-                        >
-                          {getPhaseStatusIcon(phase.status)}
-                          {getPhaseStatusLabel(phase.status)}
-                        </Badge>
+                        <div className='flex gap-2'>
+                          {/* Confirm button */}
+                          {phase.status === 'delivered' && (
+                            <Button
+                              onClick={() => {
+                                updateOrderPhaseStatus(phase.id, {
+                                  status: 'completed'
+                                });
+                                window.location.reload();
+                              }}
+                              className='mr-2'
+                            >
+                              <IconCheck className='h-4 w-4' />
+                              Xác nhận hoàn thành
+                            </Button>
+                          )}
+                          <Badge
+                            variant={getPhaseStatusVariant(phase.status)}
+                            className='flex items-center gap-1'
+                          >
+                            {getPhaseStatusIcon(phase.status)}
+                            {getPhaseStatusLabel(phase.status)}
+                          </Badge>
+                        </div>
                       </div>
                       {phase.description && (
                         <CardDescription>{phase.description}</CardDescription>

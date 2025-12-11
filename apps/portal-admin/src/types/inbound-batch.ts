@@ -3,32 +3,8 @@ export type InboundBatch = {
   quantity: number;
   unit: string;
   batchCode: string;
-  product: {
-    id: string;
-    name?: string;
-  };
-  harvestDetail: {
-    id: string;
-    code?: string;
-    harvestTicket?: {
-      id: string;
-      harvestScheduleId?: {
-        id: string;
-        supplierId?: {
-          id: string;
-          warehouse?: {
-            id: string;
-            name?: string;
-          };
-        };
-      };
-    };
-  };
-  warehouse?: {
-    id: string;
-    name?: string;
-  };
-  warehouseId?: string;
+  importTicket?: any;
+  harvestInvoiceDetail: any;
   createdAt?: string;
   updatedAt?: string;
 };

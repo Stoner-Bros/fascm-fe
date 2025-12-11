@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
+import { DateTimePicker } from '@/components/ui/date-time-picker';
 import {
   Dialog,
   DialogContent,
@@ -19,15 +20,6 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -35,32 +27,39 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import {
-  IconTruckLoading,
-  IconRefresh,
-  IconEye,
-  IconCalendar,
-  IconMapPin,
-  IconTruck,
-  IconPlayerPlay,
-  IconCheck,
-  IconArrowLeft
-} from '@tabler/icons-react';
-import { fetchHarvestSchedules } from '@/services/harvest-schedule.service';
-import { fetchHarvestPhasesBySchedule } from '@/services/harvest-phase.service';
-import { fetchTrucks } from '@/services/truck.service';
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import { useToast } from '@/components/ui/use-toast';
 import { fetchDeliveryStaffs } from '@/services/delivery-staff.service';
 import {
   createDelivery,
   fetchDeliveries,
   updateDeliveryStatus
 } from '@/services/delivery.service';
-import type { HarvestSchedule } from '@/types/harvest-schedule';
-import type { HarvestPhase } from '@/types/harvest-phase';
-import type { Truck } from '@/types/truck';
+import { fetchHarvestPhasesBySchedule } from '@/services/harvest-phase.service';
+import { fetchHarvestSchedules } from '@/services/harvest-schedule.service';
+import { fetchTrucks } from '@/services/truck.service';
 import type { Delivery } from '@/types/delivery';
 import type { DeliveryStaff } from '@/types/delivery-staff';
-import { useToast } from '@/components/ui/use-toast';
-import { DateTimePicker } from '@/components/ui/date-time-picker';
+import type { HarvestPhase } from '@/types/harvest-phase';
+import type { HarvestSchedule } from '@/types/harvest-schedule';
+import type { Truck } from '@/types/truck';
+import {
+  IconArrowLeft,
+  IconCalendar,
+  IconCheck,
+  IconEye,
+  IconPlayerPlay,
+  IconRefresh,
+  IconTruck,
+  IconTruckLoading
+} from '@tabler/icons-react';
+import { useEffect, useMemo, useState } from 'react';
 
 function StatusBadge({ status }: { status?: string | null }) {
   if (!status) return <Badge variant='outline'>Unknown</Badge>;
@@ -141,7 +140,7 @@ export function InboundTruckAssignment() {
       const res = await fetchHarvestSchedules({
         page: pagination.page,
         limit: pagination.limit,
-        status: 'approved'
+        status: 'processing'
       });
       // Display all schedules without filtering by status or assignment
       setSchedules(res.data);
@@ -529,7 +528,7 @@ export function InboundTruckAssignment() {
       </Card>
 
       {/* Available Trucks Card */}
-      <Card className='w-full'>
+      {/* <Card className='w-full'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <IconTruck className='h-5 w-5' />
@@ -576,7 +575,7 @@ export function InboundTruckAssignment() {
             )}
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Deliveries List */}
       <Card className='w-full'>

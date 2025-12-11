@@ -569,7 +569,7 @@ export default function AreaDetailView({
         );
         const tickets: ImportTicket[] = (ticketsRes.data || []).filter(
           (it) =>
-            (it.area?.id && it.area.id === areaId) ||
+            (it.areaName && it.areaName === areaId) ||
             importIdsFromBatches.has(it.id)
         );
         setAllImportTickets(tickets);
@@ -624,29 +624,15 @@ export default function AreaDetailView({
   // Tạo activities từ import và export tickets
   const historyActivities = useMemo(() => {
     const importActivities = (areaImportTickets || []).map((it) => {
-      const productName =
-        it.inboundBatch?.product?.name ??
-        it.inboundBatch?.harvestDetail?.product?.name ??
-        '-';
-      const productId =
-        it.inboundBatch?.product?.id ??
-        it.inboundBatch?.harvestDetail?.product?.id ??
-        '';
+      const productName = it?.productName ?? '-';
 
       return {
         id: it.id,
         date: it.importDate ?? it.createdAt ?? new Date().toISOString(),
         type: 'import' as const,
         productName,
-        productId,
-        quantity: Number(
-          it.realityQuantity ??
-            it.inboundBatch?.quantity ??
-            it.inboundBatch?.harvestTicket?.quantity ??
-            0
-        ),
-        unit:
-          it.inboundBatch?.unit ?? it.inboundBatch?.harvestTicket?.unit ?? 'kg',
+        quantity: it.quantity ?? 0,
+        unit: it.unit ?? it.unit ?? 'kg',
         status: 'completed' as
           | 'completed'
           | 'pending_assignment'
@@ -675,38 +661,17 @@ export default function AreaDetailView({
     return [...importActivities, ...exportActivities];
   }, [areaImportTickets, areaExportTickets]);
 
-  // Lấy danh sách sản phẩm unique cho filter
-  const historyProducts = useMemo(() => {
-    const productSet = new Set<string>();
-    historyActivities.forEach((activity) => {
-      if (activity.productId) {
-        productSet.add(activity.productId);
-      }
-    });
-    return Array.from(productSet).map((id) => {
-      const activity = historyActivities.find((a) => a.productId === id);
-      return { id, name: activity?.productName ?? id };
-    });
-  }, [historyActivities]);
-
   // Filter activities
   const filteredHistoryActivities = useMemo(() => {
     return historyActivities.filter((activity) => {
-      const matchesSearch =
-        activity.productName
-          .toLowerCase()
-          .includes(historySearchTerm.toLowerCase()) ||
-        activity.productId
-          .toLowerCase()
-          .includes(historySearchTerm.toLowerCase());
+      const matchesSearch = activity.productName
+        .toLowerCase()
+        .includes(historySearchTerm.toLowerCase());
 
       const matchesActivityType =
         selectedActivityType === 'Tất cả' ||
         (selectedActivityType === 'Nhập kho' && activity.type === 'import') ||
         (selectedActivityType === 'Xuất kho' && activity.type === 'export');
-
-      const matchesProduct =
-        selectedProduct === 'Tất cả' || activity.productId === selectedProduct;
 
       const matchesStatus =
         selectedStatus === 'Tất cả' ||
@@ -716,9 +681,7 @@ export default function AreaDetailView({
           activity.status !== 'cancelled') ||
         (selectedStatus === 'cancelled' && activity.status === 'cancelled');
 
-      return (
-        matchesSearch && matchesActivityType && matchesProduct && matchesStatus
-      );
+      return matchesSearch && matchesActivityType && matchesStatus;
     });
   }, [
     historyActivities,
@@ -1446,11 +1409,6 @@ export default function AreaDetailView({
                           <SelectItem value='Tất cả'>
                             Tất cả sản phẩm
                           </SelectItem>
-                          {historyProducts.map((product) => (
-                            <SelectItem key={product.id} value={product.id}>
-                              {product.name}
-                            </SelectItem>
-                          ))}
                         </SelectContent>
                       </Select>
 
@@ -1536,9 +1494,6 @@ export default function AreaDetailView({
                                 <div>
                                   <div className='text-sm font-medium'>
                                     {activity.productName}
-                                  </div>
-                                  <div className='text-xs text-gray-500'>
-                                    {activity.productId}
                                   </div>
                                 </div>
                               </TableCell>

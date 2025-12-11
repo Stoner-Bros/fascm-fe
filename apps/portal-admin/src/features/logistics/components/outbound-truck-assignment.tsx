@@ -51,7 +51,6 @@ import type { Truck } from '@/types/truck';
 import {
   IconCalendar,
   IconEye,
-  IconMapPin,
   IconRefresh,
   IconTruck,
   IconTruckDelivery
@@ -137,7 +136,7 @@ export function OutboundTruckAssignment() {
       const res = await fetchOrderSchedules({
         page: pagination.page,
         limit: pagination.limit,
-        status: 'approved'
+        status: 'processing'
       });
       // Display all schedules without filtering by status or assignment
       setSchedules(res.data);
@@ -528,7 +527,7 @@ export function OutboundTruckAssignment() {
       </Card>
 
       {/* Available Trucks Card */}
-      <Card className='w-full'>
+      {/* <Card className='w-full'>
         <CardHeader>
           <CardTitle className='flex items-center gap-2'>
             <IconTruck className='h-5 w-5' />
@@ -575,7 +574,7 @@ export function OutboundTruckAssignment() {
             )}
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       {/* Deliveries List */}
       <Card className='w-full'>

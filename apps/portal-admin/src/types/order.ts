@@ -126,6 +126,8 @@ export interface OrderPhase {
     id: string;
     invoiceNumber?: string;
     totalAmount?: number;
+    totalPayment?: number;
+    taxRate?: number | null;
     [key: string]: unknown;
   };
   orderInvoiceDetails?: Array<{
@@ -157,6 +159,7 @@ export interface CreateOrderInvoiceDetailDto {
 }
 
 export interface CreateOrderInvoiceDto {
+  taxRate?: number | null;
   invoiceNumber?: string | null;
   totalAmount?: number | null;
 }

@@ -394,8 +394,12 @@ export function InboundBatchManagement() {
                           {batch.quantity.toLocaleString('vi-VN')} {batch.unit}
                         </Badge>
                       </TableCell>
-                      <TableCell>{batch.product?.id ?? '—'}</TableCell>
-                      <TableCell>{batch.harvestDetail?.id ?? '—'}</TableCell>
+                      <TableCell>
+                        {batch.harvestInvoiceDetail.product?.id ?? '—'}
+                      </TableCell>
+                      <TableCell>
+                        {batch.harvestInvoiceDetail?.id ?? '—'}
+                      </TableCell>
                       <TableCell className='text-muted-foreground text-sm'>
                         <div>
                           Tạo:{' '}

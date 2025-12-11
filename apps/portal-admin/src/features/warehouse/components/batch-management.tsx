@@ -181,10 +181,8 @@ export function BatchManagement() {
           // Lấy warehouseId từ InboundBatch với full details
           // Ưu tiên: warehouseId trực tiếp -> warehouse.id -> harvestDetail.harvestTicket.harvestScheduleId.supplierId.warehouse.id
           const warehouseIdFromInbound =
-            fullInboundBatch.warehouseId ||
-            fullInboundBatch.warehouse?.id ||
-            fullInboundBatch.harvestDetail?.harvestTicket?.harvestScheduleId
-              ?.supplierId?.warehouse?.id;
+            fullInboundBatch.harvestInvoiceDetail?.harvestTicket
+              ?.harvestScheduleId?.supplierId?.warehouse?.id;
 
           if (warehouseIdFromInbound) {
             setWarehouseId(warehouseIdFromInbound);
@@ -370,10 +368,7 @@ export function BatchManagement() {
   // Gom các import ticket theo inbound batch để biết inbound nào đã có ticket
   const inboundWithTickets = useMemo(() => {
     const setIds = new Set<string>();
-    importTickets.forEach((ticket) => {
-      const id = ticket.inboundBatch?.id;
-      if (id) setIds.add(id);
-    });
+    importTickets.forEach((ticket) => {});
     return setIds;
   }, [importTickets]);
 
@@ -387,14 +382,9 @@ export function BatchManagement() {
     if (!filters.search) return importTickets;
     const keyword = filters.search.toLowerCase();
     return importTickets.filter((ticket) => {
-      const inboundId = ticket.inboundBatch?.id || '';
-      const productName =
-        ticket.inboundBatch?.product?.name ||
-        ticket.inboundBatch?.product?.id ||
-        '';
+      const productName = ticket?.productName ?? '';
       return (
         ticket.id.toLowerCase().includes(keyword) ||
-        inboundId.toLowerCase().includes(keyword) ||
         productName.toLowerCase().includes(keyword)
       );
     });
@@ -491,8 +481,8 @@ export function BatchManagement() {
                     <TableRow key={batch.id}>
                       <TableCell className='font-medium'>{batch.id}</TableCell>
                       <TableCell>
-                        {batch.product?.name ||
-                          batch.product?.id ||
+                        {batch.harvestInvoiceDetail.product?.name ||
+                          batch.harvestInvoiceDetail.product?.id ||
                           'Không có thông tin sản phẩm'}
                       </TableCell>
                       <TableCell>
@@ -574,18 +564,14 @@ export function BatchManagement() {
                   filteredImportTickets.map((ticket) => {
                     const batchesOfTicket =
                       batchesByImportTicket[ticket.id] ?? [];
-                    const product =
-                      ticket.inboundBatch?.product ??
-                      ticket.inboundBatch?.harvestDetail?.product;
+                    const product = ticket?.productName;
 
                     return (
                       <TableRow key={ticket.id}>
                         <TableCell className='font-medium'>
                           {ticket.id}
                         </TableCell>
-                        <TableCell>
-                          {product?.name || product?.id || '—'}
-                        </TableCell>
+                        <TableCell>{product ?? '—'}</TableCell>
                         <TableCell>
                           {typeof ticket.percent === 'number'
                             ? `${ticket.percent}%`
@@ -646,8 +632,10 @@ export function BatchManagement() {
                 <div>
                   <p className='font-semibold'>Sản phẩm</p>
                   <p>
-                    {selectedInboundForDetail.product?.name ||
-                      selectedInboundForDetail.product?.id ||
+                    {selectedInboundForDetail.harvestInvoiceDetail.product
+                      ?.name ||
+                      selectedInboundForDetail.harvestInvoiceDetail.product
+                        ?.id ||
                       '—'}
                   </p>
                 </div>

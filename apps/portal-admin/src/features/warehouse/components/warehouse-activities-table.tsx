@@ -35,11 +35,9 @@ import {
   IconArrowUp,
   IconCalendar,
   IconFilter,
-  IconMapPin,
   IconPackage,
   IconRefresh,
-  IconSearch,
-  IconUser
+  IconSearch
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -105,49 +103,23 @@ export function WarehouseActivitiesTable() {
           fetchExportTickets({ page: 1, limit: 50 })
         ]);
 
-        const importActivities: WarehouseActivity[] = (
-          importsRes.data ?? []
-        ).map((it) => ({
+        const importActivities: any[] = (importsRes.data ?? []).map((it) => ({
           id: String(it.id),
           date: String(
             it.importDate ?? it.createdAt ?? new Date().toISOString()
           ),
-          code: String(it.inboundBatch?.batchCode ?? it.id),
+          code: String(it?.batchCode ?? it.id),
           type: 'import',
-          productName: String(
-            it.inboundBatch?.product?.name ??
-              it?.inboundBatch?.harvestDetail?.product?.name ??
-              '-'
-          ),
-          productCode: String(
-            it?.inboundBatch?.harvestDetail?.product?.id ??
-              it?.inboundBatch?.harvestDetail?.product?.id ??
-              '-'
-          ),
-          quantity: Number(it.realityQuantity ?? it.percent ?? 0),
-          unit: String(
-            it.inboundBatch?.harvestTicket?.unit ?? it.inboundBatch?.unit ?? ''
-          ),
-          warehouse: String(
-            it.inboundBatch?.harvestTicket?.harvestScheduleId?.supplierId
-              ?.warehouse?.name ??
-              it.area?.name ??
-              '-'
-          ),
-          warehouseArea: it.area?.name ?? undefined,
-          user: String(
-            it.inboundBatch?.harvestTicket?.harvestScheduleId?.supplierId
-              ?.representativeName ?? '-'
-          ),
+          productName: String(it?.productName ?? '-'),
+          quantity: Number(it.quantity ?? it.percent ?? 0),
+          unit: String(it?.unit ?? it?.unit ?? ''),
+          warehouseArea: it.areaName ?? undefined,
           notes: undefined,
           status: 'completed',
           batchNumber:
             it.numberOfBatch !== undefined && it.numberOfBatch !== null
               ? String(it.numberOfBatch)
-              : undefined,
-          supplier:
-            it.inboundBatch?.harvestTicket?.harvestScheduleId?.supplierId
-              ?.representativeName ?? undefined
+              : undefined
         }));
 
         const exportActivities: WarehouseActivity[] = (

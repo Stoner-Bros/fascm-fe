@@ -130,7 +130,7 @@ export default function ExportTicketsPage() {
       const response = await fetchOrderSchedules({
         page: 1,
         limit: 100,
-        status: 'approved'
+        status: 'processing'
       });
       setOrderSchedules(response.data);
     } catch (error) {
