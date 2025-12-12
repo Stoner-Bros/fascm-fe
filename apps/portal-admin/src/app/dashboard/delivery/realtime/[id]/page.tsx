@@ -436,6 +436,12 @@ export default function DeliveryDetailPage() {
             scrollWheelZoom
             ref={(m: LeafletMap | null) => {
               mapRef.current = m;
+              if (m) {
+                const pb = m.createPane('pane-blue');
+                const pg = m.createPane('pane-gray');
+                if (pb) pb.style.zIndex = '390';
+                if (pg) pg.style.zIndex = '391';
+              }
             }}
           >
             <TileLayer url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' />
@@ -481,20 +487,62 @@ export default function DeliveryDetailPage() {
                   </Tooltip>
                 </Marker>
               ))}
-            {route.length > 1 && currentIndex > 0 && (
-              <Polyline
-                positions={route.slice(
-                  0,
-                  Math.min(currentIndex + 1, route.length)
+            {returning ? (
+              <>
+                {route.length - currentIndex >= 2 && (
+                  <Polyline
+                    positions={route.slice(Math.max(currentIndex, 0))}
+                    pathOptions={{
+                      pane: 'pane-gray',
+                      color: '#9ca3af',
+                      weight: 6,
+                      opacity: 0.95
+                    }}
+                  />
                 )}
-                color='gray'
-              />
-            )}
-            {route.length - currentIndex >= 2 && (
-              <Polyline
-                positions={route.slice(Math.max(currentIndex, 0))}
-                color='blue'
-              />
+                {route.length > 1 && currentIndex > 0 && (
+                  <Polyline
+                    positions={route.slice(
+                      0,
+                      Math.min(currentIndex + 1, route.length)
+                    )}
+                    pathOptions={{
+                      pane: 'pane-blue',
+                      color: '#2563eb',
+                      weight: 5,
+                      opacity: 0.95
+                    }}
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                {route.length > 1 && currentIndex > 0 && (
+                  <Polyline
+                    positions={route.slice(
+                      0,
+                      Math.min(currentIndex + 1, route.length)
+                    )}
+                    pathOptions={{
+                      pane: 'pane-gray',
+                      color: '#9ca3af',
+                      weight: 6,
+                      opacity: 0.95
+                    }}
+                  />
+                )}
+                {route.length - currentIndex >= 2 && (
+                  <Polyline
+                    positions={route.slice(Math.max(currentIndex, 0))}
+                    pathOptions={{
+                      pane: 'pane-blue',
+                      color: '#2563eb',
+                      weight: 5,
+                      opacity: 0.95
+                    }}
+                  />
+                )}
+              </>
             )}
           </MapContainer>
         )}
@@ -546,31 +594,173 @@ export default function DeliveryDetailPage() {
           </div>
           <div className='rounded-md border p-4'>
             <label className='text-sm'>Actions</label>
-            <div className='mt-1 flex flex-wrap gap-2'>
-              <button className='rounded border px-3 py-2' onClick={startTrip}>
-                Bắt đầu
-              </button>
-              <button
-                className='rounded border px-3 py-2'
-                onClick={simulate}
-                disabled={running || route.length < 2}
-              >
-                Giả lập
-              </button>
-              <button className='rounded border px-3 py-2' onClick={endTrip}>
-                Kết thúc
-              </button>
-              <button
-                className='rounded border px-3 py-2'
-                onClick={returnTrip}
-                disabled={running || route.length < 2}
-              >
-                Quay về kho
-              </button>
-              <button className='rounded border px-3 py-2' onClick={finishTrip}>
-                Kết thúc hành trình
-              </button>
-            </div>
+            {(() => {
+              const statusLower = String(selected?.status ?? '').toLowerCase();
+              const startEnabled =
+                !!start &&
+                statusLower !== 'delivering' &&
+                statusLower !== 'delivered' &&
+                statusLower !== 'returning' &&
+                statusLower !== 'completed';
+              const simulateEnabled =
+                statusLower === 'delivering' && !running && route.length >= 2;
+              const endEnabled = statusLower === 'delivering';
+              const returnEnabled =
+                statusLower === 'delivered' &&
+                !running &&
+                !returning &&
+                route.length >= 2;
+              const finishEnabled = statusLower === 'returning';
+
+              const steps = [
+                {
+                  key: 'start',
+                  label: 'Bắt đầu',
+                  action: startTrip,
+                  enabled: startEnabled,
+                  state:
+                    statusLower === ''
+                      ? 'pending'
+                      : [
+                            'delivering',
+                            'delivered',
+                            'returning',
+                            'completed'
+                          ].includes(statusLower)
+                        ? 'completed'
+                        : 'pending'
+                },
+                {
+                  key: 'simulate',
+                  label: 'Giả lập',
+                  action: simulate,
+                  enabled: simulateEnabled,
+                  state:
+                    statusLower === 'delivering'
+                      ? running
+                        ? 'in_progress'
+                        : 'pending'
+                      : ['delivered', 'returning', 'completed'].includes(
+                            statusLower
+                          )
+                        ? 'completed'
+                        : 'pending'
+                },
+                {
+                  key: 'end',
+                  label: 'Kết thúc',
+                  action: endTrip,
+                  enabled: endEnabled,
+                  state:
+                    statusLower === 'delivering'
+                      ? !running
+                        ? 'pending'
+                        : 'pending'
+                      : ['delivered', 'returning', 'completed'].includes(
+                            statusLower
+                          )
+                        ? 'completed'
+                        : 'pending'
+                },
+                {
+                  key: 'return',
+                  label: 'Quay về kho',
+                  action: returnTrip,
+                  enabled: returnEnabled,
+                  state:
+                    statusLower === 'returning'
+                      ? returning || running
+                        ? 'in_progress'
+                        : 'completed'
+                      : statusLower === 'delivered'
+                        ? 'pending'
+                        : statusLower === 'completed'
+                          ? 'completed'
+                          : 'pending'
+                },
+                {
+                  key: 'finish',
+                  label: 'Kết thúc hành trình',
+                  action: finishTrip,
+                  enabled: finishEnabled,
+                  state:
+                    statusLower === 'completed'
+                      ? 'completed'
+                      : statusLower === 'returning'
+                        ? 'pending'
+                        : 'pending'
+                }
+              ] as const;
+
+              const firstPending = steps.findIndex(
+                (s) => s.state === 'pending' || s.state === 'in_progress'
+              );
+              const activeIndex =
+                firstPending >= 0 ? firstPending : steps.length - 1;
+
+              return (
+                <div className='mt-2 space-y-3'>
+                  <div className='flex items-center gap-2'>
+                    {steps.map((s, i) => (
+                      <div
+                        key={s.key}
+                        className={`flex items-center gap-2 ${i < steps.length - 1 ? '' : ''}`}
+                      >
+                        <div
+                          className={`flex h-8 w-8 items-center justify-center rounded-full border text-xs ${
+                            s.state === 'completed'
+                              ? 'border-emerald-500 bg-emerald-500 text-white'
+                              : i === activeIndex
+                                ? 'border-blue-500 bg-blue-500 text-white'
+                                : 'border-gray-200 bg-gray-100 text-gray-700'
+                          }`}
+                        >
+                          {i + 1}
+                        </div>
+                        {i < steps.length - 1 && (
+                          <div className='mx-1 h-px w-8 bg-gray-300' />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <div className='space-y-2'>
+                    {steps.map((s, i) => (
+                      <div key={s.key} className='rounded border p-3'>
+                        <div className='flex items-center justify-between'>
+                          <div className='flex items-center gap-2'>
+                            <div className='text-sm font-medium'>{s.label}</div>
+                            <span
+                              className={`rounded px-2 py-0.5 text-xs ${
+                                s.state === 'completed'
+                                  ? 'bg-emerald-100 text-emerald-700'
+                                  : s.state === 'in_progress'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : 'bg-gray-100 text-gray-700'
+                              }`}
+                            >
+                              {s.state === 'completed'
+                                ? 'Hoàn thành'
+                                : s.state === 'in_progress'
+                                  ? 'Đang thực hiện'
+                                  : 'Chờ thực hiện'}
+                            </span>
+                          </div>
+                          <button
+                            className={`rounded border px-3 py-1 text-sm ${
+                              s.enabled ? '' : 'cursor-not-allowed opacity-50'
+                            }`}
+                            disabled={!s.enabled}
+                            onClick={s.action}
+                          >
+                            Thực hiện
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </div>

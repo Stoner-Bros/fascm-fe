@@ -335,7 +335,7 @@ export function OutboundTruckAssignment() {
         startLng: null,
         endLat: null,
         endLng: null,
-        startAddress: 'Kho trung tâm',
+        startAddress: '456, Quận 5, Tp Hồ Chí Minh',
         endAddress: selectedSchedule?.address || 'Địa chỉ khách hàng',
         harvestPhase: null
       });
