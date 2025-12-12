@@ -1,16 +1,5 @@
 import { NavItem } from '@/types';
 
-export type Product = {
-  photo_url: string;
-  name: string;
-  description: string;
-  created_at: string;
-  price: number;
-  id: number;
-  category: string;
-  updated_at: string;
-};
-
 //Info: The following data is used for the sidebar navigation and Cmd K bar.
 export const navItems: NavItem[] = [
   {
@@ -44,12 +33,53 @@ export const navItems: NavItem[] = [
     isActive: true,
     items: []
   },
+  // {
+  //   title: 'Order Pickup Management',
+  //   url: '',
+  //   icon: 'product',
+  //   shortcut: ['o', 'o'],
+  //   isActive: true,
+  //   items: [
+  //     {
+  //       title: 'Order Pickup',
+  //       url: '/dashboard/order-pickup-management/order-pickup',
+  //       shortcut: ['o', 'o']
+  //     },
+  //     {
+  //       title: 'Import',
+  //       url: '/dashboard/order-pickup-management/import',
+  //       shortcut: ['o', 'i']
+  //     },
+  //     {
+  //       title: 'Pickup',
+  //       url: '/dashboard/order-pickup-management/pickup',
+  //       shortcut: ['o', 'p']
+  //     }
+  //   ]
+  // },
   {
-    title: 'Order',
-    url: '/dashboard/order',
+    title: 'Order Management',
+    url: '',
     icon: 'order',
     shortcut: ['o', 'o'],
-    isActive: true
+    isActive: true,
+    items: [
+      {
+        title: 'Order',
+        url: '/dashboard/order-management/order',
+        shortcut: ['o', 'o']
+      },
+      {
+        title: 'Export',
+        url: '/dashboard/order-management/export',
+        shortcut: ['o', 'e']
+      },
+      {
+        title: 'Delivery',
+        url: '/dashboard/order-management/delivery',
+        shortcut: ['o', 'd']
+      }
+    ]
   },
   {
     title: 'Warehouse',
@@ -61,12 +91,6 @@ export const navItems: NavItem[] = [
       {
         title: 'Import',
         url: '/dashboard/warehouse/import',
-        icon: 'inventory',
-        shortcut: ['w', 'b']
-      },
-      {
-        title: 'Export',
-        url: '/dashboard/warehouse/export',
         icon: 'inventory',
         shortcut: ['w', 'b']
       }
@@ -84,12 +108,6 @@ export const navItems: NavItem[] = [
         url: '/dashboard/delivery/inbound',
         icon: 'warehouse',
         shortcut: ['d', 'i']
-      },
-      {
-        title: 'Outbound',
-        url: '/dashboard/delivery/outbound',
-        icon: 'delivery',
-        shortcut: ['d', 'o']
       },
       {
         title: 'Tracking',
@@ -167,56 +185,4 @@ export const navItems: NavItem[] = [
   //   isActive: false,
   //   items: [] // No child items
   // }
-];
-
-export interface SaleUser {
-  id: number;
-  name: string;
-  email: string;
-  amount: string;
-  image: string;
-  initials: string;
-}
-
-export const recentSalesData: SaleUser[] = [
-  {
-    id: 1,
-    name: 'Olivia Martin',
-    email: 'olivia.martin@email.com',
-    amount: '+$1,999.00',
-    image: 'https://api.slingacademy.com/public/sample-users/1.png',
-    initials: 'OM'
-  },
-  {
-    id: 2,
-    name: 'Jackson Lee',
-    email: 'jackson.lee@email.com',
-    amount: '+$39.00',
-    image: 'https://api.slingacademy.com/public/sample-users/2.png',
-    initials: 'JL'
-  },
-  {
-    id: 3,
-    name: 'Isabella Nguyen',
-    email: 'isabella.nguyen@email.com',
-    amount: '+$299.00',
-    image: 'https://api.slingacademy.com/public/sample-users/3.png',
-    initials: 'IN'
-  },
-  {
-    id: 4,
-    name: 'William Kim',
-    email: 'will@email.com',
-    amount: '+$99.00',
-    image: 'https://api.slingacademy.com/public/sample-users/4.png',
-    initials: 'WK'
-  },
-  {
-    id: 5,
-    name: 'Sofia Davis',
-    email: 'sofia.davis@email.com',
-    amount: '+$39.00',
-    image: 'https://api.slingacademy.com/public/sample-users/5.png',
-    initials: 'SD'
-  }
 ];

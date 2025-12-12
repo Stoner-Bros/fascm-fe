@@ -35,7 +35,7 @@ import {
 import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
-import { CreateProductDialog } from '../../../features/products/components/create-product-dialog';
+import { CreateProductDialog } from './_components/create-product-dialog';
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);

@@ -1,0 +1,102 @@
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import type { OrderSchedule } from '@/types/order';
+import { formatCurrency } from '../../utils/formatting';
+import type { ProductTotals } from '../../utils/calculations';
+
+interface OrderDetailsTableProps {
+  schedule: OrderSchedule;
+  totals?: ProductTotals;
+}
+
+export function OrderDetailsTable({
+  schedule,
+  totals
+}: OrderDetailsTableProps) {
+  const hasDetails = schedule.orderDetails && schedule.orderDetails.length > 0;
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Chi tiết đơn hàng</CardTitle>
+        {totals && (
+          <p className='text-muted-foreground text-sm'>
+            Tổng quan số lượng đã giao / tổng số lượng
+          </p>
+        )}
+      </CardHeader>
+      <CardContent>
+        <div className='overflow-x-auto rounded-md border'>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Sản phẩm</TableHead>
+                <TableHead>Số lượng</TableHead>
+                <TableHead>Đơn vị</TableHead>
+                <TableHead>Đơn giá</TableHead>
+                <TableHead>Thành tiền</TableHead>
+                {totals && <TableHead>Đã giao</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {hasDetails ? (
+                schedule.orderDetails!.map((detail) => {
+                  const productId = detail.product?.id || '';
+                  const productTotals = totals?.[productId];
+                  const quantity = detail.quantity || 0;
+                  const unitPrice = detail.unitPrice || 0;
+                  const amount = quantity * unitPrice;
+
+                  return (
+                    <TableRow key={detail.id}>
+                      <TableCell className='font-medium'>
+                        {detail.product?.name || '-'}
+                      </TableCell>
+                      <TableCell>{quantity}</TableCell>
+                      <TableCell>{detail.unit || '-'}</TableCell>
+                      <TableCell>{formatCurrency(unitPrice)}</TableCell>
+                      <TableCell className='font-medium'>
+                        {formatCurrency(amount)}
+                      </TableCell>
+                      {totals && (
+                        <TableCell>
+                          <span
+                            className={
+                              productTotals &&
+                              productTotals.used >= productTotals.total
+                                ? 'font-medium text-green-600'
+                                : 'font-medium text-orange-600'
+                            }
+                          >
+                            {productTotals?.used || 0} /{' '}
+                            {productTotals?.total || 0}
+                          </span>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={totals ? 6 : 5}
+                    className='text-muted-foreground py-8 text-center'
+                  >
+                    Không có chi tiết đơn hàng
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
