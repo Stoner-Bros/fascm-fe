@@ -231,5 +231,195 @@
         "loginButton": "Về trang đăng nhập"
       }
     }
+  },
+  "Orders": {
+    "list": {
+      "title": "Lịch giao hàng",
+      "subtitle": "Quản lý các lịch giao hàng cho khách hàng",
+      "cards": {
+        "totalOrders": "Tổng số đơn",
+        "pending": "Chờ duyệt",
+        "approved": "Đã duyệt",
+        "processing": "Đang xử lý",
+        "completed": "Đã hoàn thành"
+      },
+      "filters": {
+        "searchPlaceholder": "Tìm kiếm theo mã đơn, sản phẩm, khách hàng...",
+        "statusPlaceholder": "Lọc theo trạng thái",
+        "allStatus": "Tất cả trạng thái"
+      },
+      "table": {
+        "orderNumber": "Mã đơn",
+        "customer": "Khách hàng",
+        "products": "Sản phẩm",
+        "deliveryDate": "Ngày giao hàng",
+        "createdAt": "Ngày tạo",
+        "address": "Địa chỉ",
+        "status": "Trạng thái",
+        "actions": "Thao tác",
+        "loading": "Đang tải...",
+        "empty": "Không có dữ liệu",
+        "noProducts": "Không có sản phẩm"
+      },
+      "actions": {
+        "viewDetails": "Xem chi tiết",
+        "edit": "Chỉnh sửa",
+        "cancelOrder": "Hủy đơn",
+        "reject": "Từ chối",
+        "viewRejectionReason": "Xem lý do từ chối"
+      },
+      "statuses": {
+        "pending": "Chờ duyệt",
+        "rejected": "Từ chối",
+        "approved": "Đã duyệt",
+        "processing": "Đang xử lý",
+        "completed": "Hoàn thành",
+        "canceled": "Đã hủy",
+        "unknown": "Không xác định"
+      },
+      "dialog": {
+        "cancelTitle": "Xác nhận hủy đơn",
+        "cancelDescription": "Bạn có chắc chắn muốn hủy lịch giao hàng {id}? Hành động này không thể hoàn tác.",
+        "cancelKeep": "Giữ lại",
+        "cancelConfirm": "Xác nhận hủy",
+        "rejectionReasonDefault": "Không có lý do từ chối",
+        "rejectionReasonTitle": "Lý do từ chối"
+      },
+      "toast": {
+        "errorTitle": "Lỗi",
+        "errorDescription": "Không thể tải danh sách lịch giao hàng",
+        "cancelTitle": "Đã hủy",
+        "cancelDescription": "Đã hủy lịch giao hàng {id}"
+      }
+    },
+    "detail": {
+      "title": "Chi tiết lịch giao hàng",
+      "code": "Mã",
+      "tabs": {
+        "overview": "Tổng quan",
+        "phases": "Đợt giao hàng"
+      },
+      "header": {
+        "reject": "Từ chối",
+        "approve": "Duyệt",
+        "createPhase": "Tạo đợt giao hàng",
+        "markComplete": "Đánh dấu hoàn thành"
+      },
+      "statusStepper": {
+        "pending": "Chờ duyệt",
+        "approved": "Đã duyệt",
+        "processing": "Đang xử lý",
+        "completed": "Hoàn thành",
+        "rejected": "Từ chối",
+        "canceled": "Đã hủy"
+      },
+      "infoCard": {
+        "title": "Thông tin chung",
+        "status": "Trạng thái",
+        "deliveryDate": "Ngày giao hàng",
+        "customer": "Khách hàng",
+        "deliveryAddress": "Địa chỉ giao hàng",
+        "description": "Mô tả",
+        "rejectionReason": "Lý do từ chối",
+        "createdAt": "Ngày tạo",
+        "updatedAt": "Cập nhật lần cuối"
+      },
+      "detailsTable": {
+        "title": "Chi tiết đơn hàng",
+        "subtitle": "Tổng quan số lượng đã giao / tổng số lượng",
+        "product": "Sản phẩm",
+        "quantity": "Số lượng",
+        "unit": "Đơn vị",
+        "unitPrice": "Đơn giá",
+        "amount": "Thành tiền",
+        "delivered": "Đã giao",
+        "empty": "Không có chi tiết đơn hàng"
+      },
+      "phases": {
+        "title": "Các đợt giao hàng",
+        "subtitle": "Danh sách các đợt giao hàng đã tạo ({count})",
+        "phase": "Đợt",
+        "noDescription": "Không có mô tả",
+        "invoiceNumber": "Mã hóa đơn",
+        "confirmDelivery": "Xác nhận giao hàng",
+        "product": "Sản phẩm",
+        "quantity": "Số lượng",
+        "unit": "Đơn vị",
+        "unitPrice": "Đơn giá",
+        "amount": "Thành tiền",
+        "tax": "Thuế",
+        "total": "Tổng tiền",
+        "empty": "Không có chi tiết",
+        "statuses": {
+          "preparing": "Chuẩn bị",
+          "delivering": "Đang giao",
+          "delivered": "Đã giao",
+          "completed": "Hoàn thành",
+          "canceled": "Đã hủy"
+        }
+      },
+      "rejectDialog": {
+        "title": "Từ chối lịch giao hàng",
+        "description": "Vui lòng nhập lý do từ chối lịch giao hàng này",
+        "reasonLabel": "Lý do từ chối",
+        "reasonPlaceholder": "Nhập lý do từ chối...",
+        "cancel": "Hủy",
+        "confirm": "Xác nhận từ chối",
+        "processing": "Đang xử lý..."
+      },
+      "createPhase": {
+        "title": "Tạo đợt giao hàng mới",
+        "descriptionHeader": "Nhập thông tin cho đợt giao hàng mới. Vui lòng chọn số lượng sản phẩm cần giao.",
+        "phaseNumber": "Số đợt",
+        "phaseNumberHelper": "Số thứ tự đợt giao hàng",
+        "taxRate": "Mức thuế (%)",
+        "taxRateHelper": "Tỷ lệ thuế VAT",
+        "totalAmount": "Tổng tiền",
+        "products": "sản phẩm",
+        "description": "Mô tả (tùy chọn)",
+        "descriptionPlaceholder": "Nhập mô tả cho đợt giao hàng này...",
+        "productsTitle": "Chi tiết sản phẩm",
+        "productsHelper": "Nhập số lượng cần giao cho từng sản phẩm",
+        "product": "Sản phẩm",
+        "remaining": "Còn lại",
+        "deliveryQuantity": "Số lượng giao",
+        "unit": "Đơn vị",
+        "unitPrice": "Đơn giá",
+        "amount": "Thành tiền",
+        "summaryTitle": "Tóm tắt đợt giao hàng",
+        "subtotal": "Tổng tiền hàng",
+        "vat": "Thuế VAT",
+        "totalPayment": "Tổng thanh toán",
+        "validation": {
+          "title": "Lưu ý",
+          "message": "Vui lòng nhập số lượng cho ít nhất một sản phẩm để tạo đợt giao hàng."
+        },
+        "exceedsRemaining": "Vượt quá số lượng còn lại",
+        "cancel": "Hủy",
+        "create": "Tạo đợt giao hàng",
+        "creating": "Đang tạo..."
+      },
+      "toast": {
+        "error": "Lỗi",
+        "errorLoad": "Không thể tải dữ liệu lịch giao hàng",
+        "errorCreatePhase": "Không thể tạo đợt giao hàng",
+        "errorPhaseValidation": "Vui lòng nhập số lượng cho ít nhất một sản phẩm",
+        "success": "Thành công",
+        "successCreatePhase": "Đã tạo đợt giao hàng",
+        "successApprove": "Đã duyệt lịch giao hàng",
+        "successReject": "Đã từ chối lịch giao hàng",
+        "successComplete": "Đã đánh dấu hoàn thành",
+        "successConfirmDelivery": "Đã xác nhận giao hàng",
+        "errorApprove": "Không thể duyệt lịch giao hàng",
+        "errorReject": "Không thể từ chối lịch giao hàng",
+        "errorComplete": "Không thể cập nhật trạng thái",
+        "errorConfirmDelivery": "Không thể cập nhật trạng thái đợt giao hàng",
+        "rejectReasonRequired": "Vui lòng nhập lý do từ chối"
+      },
+      "empty": {
+        "title": "Không tìm thấy lịch giao hàng",
+        "back": "Quay lại"
+      }
+    }
   }
 }

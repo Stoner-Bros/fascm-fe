@@ -231,5 +231,195 @@
         "loginButton": "Go to login"
       }
     }
+  },
+  "Orders": {
+    "list": {
+      "title": "Delivery Schedule",
+      "subtitle": "Manage delivery schedules for customers",
+      "cards": {
+        "totalOrders": "Total Orders",
+        "pending": "Pending",
+        "approved": "Approved",
+        "processing": "Processing",
+        "completed": "Completed"
+      },
+      "filters": {
+        "searchPlaceholder": "Search by order code, products, customer...",
+        "statusPlaceholder": "Filter by status",
+        "allStatus": "All Status"
+      },
+      "table": {
+        "orderNumber": "Order Code",
+        "customer": "Customer",
+        "products": "Products",
+        "deliveryDate": "Delivery Date",
+        "createdAt": "Created At",
+        "address": "Address",
+        "status": "Status",
+        "actions": "Actions",
+        "loading": "Loading...",
+        "empty": "No data",
+        "noProducts": "No products"
+      },
+      "actions": {
+        "viewDetails": "View Details",
+        "edit": "Edit",
+        "cancelOrder": "Cancel Order",
+        "reject": "Reject",
+        "viewRejectionReason": "View Rejection Reason"
+      },
+      "statuses": {
+        "pending": "Pending",
+        "rejected": "Rejected",
+        "approved": "Approved",
+        "processing": "Processing",
+        "completed": "Completed",
+        "canceled": "Canceled",
+        "unknown": "Unknown"
+      },
+      "dialog": {
+        "cancelTitle": "Confirm Cancel Order",
+        "cancelDescription": "Are you sure you want to cancel delivery schedule {id}? This action cannot be undone.",
+        "cancelKeep": "Keep",
+        "cancelConfirm": "Confirm Cancel",
+        "rejectionReasonDefault": "No rejection reason",
+        "rejectionReasonTitle": "Rejection Reason"
+      },
+      "toast": {
+        "errorTitle": "Error",
+        "errorDescription": "Cannot load delivery schedule list",
+        "cancelTitle": "Canceled",
+        "cancelDescription": "Canceled delivery schedule {id}"
+      }
+    },
+    "detail": {
+      "title": "Delivery Schedule Details",
+      "code": "Code",
+      "tabs": {
+        "overview": "Overview",
+        "phases": "Delivery Phases"
+      },
+      "header": {
+        "reject": "Reject",
+        "approve": "Approve",
+        "createPhase": "Create Delivery Phase",
+        "markComplete": "Mark Complete"
+      },
+      "statusStepper": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "processing": "Processing",
+        "completed": "Completed",
+        "rejected": "Rejected",
+        "canceled": "Canceled"
+      },
+      "infoCard": {
+        "title": "General Information",
+        "status": "Status",
+        "deliveryDate": "Delivery Date",
+        "customer": "Customer",
+        "deliveryAddress": "Delivery Address",
+        "description": "Description",
+        "rejectionReason": "Rejection Reason",
+        "createdAt": "Created At",
+        "updatedAt": "Last Updated"
+      },
+      "detailsTable": {
+        "title": "Order Details",
+        "subtitle": "Overview of delivered quantity / total quantity",
+        "product": "Product",
+        "quantity": "Quantity",
+        "unit": "Unit",
+        "unitPrice": "Unit Price",
+        "amount": "Amount",
+        "delivered": "Delivered",
+        "empty": "No order details"
+      },
+      "phases": {
+        "title": "Delivery Phases",
+        "subtitle": "List of created delivery phases ({count})",
+        "phase": "Phase",
+        "noDescription": "No description",
+        "invoiceNumber": "Invoice Number",
+        "confirmDelivery": "Confirm Delivery",
+        "product": "Product",
+        "quantity": "Quantity",
+        "unit": "Unit",
+        "unitPrice": "Unit Price",
+        "amount": "Amount",
+        "tax": "Tax",
+        "total": "Total",
+        "empty": "No details",
+        "statuses": {
+          "preparing": "Preparing",
+          "delivering": "Delivering",
+          "delivered": "Delivered",
+          "completed": "Completed",
+          "canceled": "Canceled"
+        }
+      },
+      "rejectDialog": {
+        "title": "Reject Delivery Schedule",
+        "description": "Please enter the reason for rejecting this delivery schedule",
+        "reasonLabel": "Rejection Reason",
+        "reasonPlaceholder": "Enter rejection reason...",
+        "cancel": "Cancel",
+        "confirm": "Confirm Reject",
+        "processing": "Processing..."
+      },
+      "createPhase": {
+        "title": "Create New Delivery Phase",
+        "descriptionHeader": "Enter information for the new delivery phase. Please select the quantity of products to deliver.",
+        "phaseNumber": "Phase Number",
+        "phaseNumberHelper": "Sequence number of delivery phase",
+        "taxRate": "Tax Rate (%)",
+        "taxRateHelper": "VAT rate",
+        "totalAmount": "Total Amount",
+        "products": "products",
+        "description": "Description (optional)",
+        "descriptionPlaceholder": "Enter description for this delivery phase...",
+        "productsTitle": "Product Details",
+        "productsHelper": "Enter delivery quantity for each product",
+        "product": "Product",
+        "remaining": "Remaining",
+        "deliveryQuantity": "Delivery Quantity",
+        "unit": "Unit",
+        "unitPrice": "Unit Price",
+        "amount": "Amount",
+        "summaryTitle": "Delivery Phase Summary",
+        "subtotal": "Subtotal",
+        "vat": "VAT Tax",
+        "totalPayment": "Total Payment",
+        "validation": {
+          "title": "Note",
+          "message": "Please enter quantity for at least one product to create delivery phase."
+        },
+        "exceedsRemaining": "Exceeds remaining quantity",
+        "cancel": "Cancel",
+        "create": "Create Delivery Phase",
+        "creating": "Creating..."
+      },
+      "toast": {
+        "error": "Error",
+        "errorLoad": "Cannot load delivery schedule data",
+        "errorCreatePhase": "Cannot create delivery phase",
+        "errorPhaseValidation": "Please enter quantity for at least one product",
+        "success": "Success",
+        "successCreatePhase": "Delivery phase created",
+        "successApprove": "Delivery schedule approved",
+        "successReject": "Delivery schedule rejected",
+        "successComplete": "Marked as complete",
+        "successConfirmDelivery": "Delivery confirmed",
+        "errorApprove": "Cannot approve delivery schedule",
+        "errorReject": "Cannot reject delivery schedule",
+        "errorComplete": "Cannot update status",
+        "errorConfirmDelivery": "Cannot update delivery phase status",
+        "rejectReasonRequired": "Please enter rejection reason"
+      },
+      "empty": {
+        "title": "Delivery schedule not found",
+        "back": "Go Back"
+      }
+    }
   }
 }

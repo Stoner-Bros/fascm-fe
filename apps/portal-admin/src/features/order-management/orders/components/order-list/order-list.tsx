@@ -44,6 +44,7 @@ import {
 import { useToast } from '@/components/ui/use-toast';
 import { fetchOrderSchedules } from '@/services/order-schedule.service';
 import type { OrderSchedule, OrderScheduleStatus } from '@/types/order';
+import { IconCircleCheck } from '@tabler/icons-react';
 import {
   Check,
   Clock,
@@ -52,9 +53,11 @@ import {
   Info,
   MoreVertical,
   Search,
+  Truck,
   X
 } from 'lucide-react';
 import Link from 'next/link';
+import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useReducer } from 'react';
 import type {
   Action,
@@ -122,6 +125,7 @@ const normalizeStatus = (
 
 export default function OrderList() {
   const { toast } = useToast();
+  const t = useTranslations('Orders.list');
   const [state, dispatch] = useReducer(orderSchedulesReducer, initialState);
 
   const loadData = async () => {
@@ -150,7 +154,7 @@ export default function OrderList() {
         }
 
         const products =
-          Array.from(productNames).join(', ') || 'Không có sản phẩm';
+          Array.from(productNames).join(', ') || t('table.noProducts');
 
         const formatDateTime = (date: string | Date | null | undefined) => {
           if (!date) return '-';
@@ -188,8 +192,8 @@ export default function OrderList() {
     } catch (err) {
       dispatch({ type: 'LOAD_ERROR' });
       toast({
-        title: 'Lỗi',
-        description: 'Không thể tải danh sách lịch giao hàng',
+        title: t('toast.errorTitle'),
+        description: t('toast.errorDescription'),
         variant: 'destructive'
       });
     }
@@ -208,8 +212,10 @@ export default function OrderList() {
     if (state.selectedScheduleId) {
       dispatch({ type: 'CANCEL_ORDER', payload: state.selectedScheduleId });
       toast({
-        title: 'Đã hủy',
-        description: `Đã hủy lịch giao hàng ${state.selectedScheduleId}`
+        title: t('toast.cancelTitle'),
+        description: t('toast.cancelDescription', {
+          id: state.selectedScheduleId
+        })
       });
     }
   };
@@ -264,25 +270,21 @@ export default function OrderList() {
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
           <div>
-            <h2 className='text-3xl font-bold tracking-tight'>
-              Lịch giao hàng
-            </h2>
-            <p className='text-muted-foreground'>
-              Quản lý các lịch giao hàng cho khách hàng
-            </p>
+            <h2 className='text-3xl font-bold tracking-tight'>{t('title')}</h2>
+            <p className='text-muted-foreground'>{t('subtitle')}</p>
           </div>
         </div>
 
         {/* Status Cards */}
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-5'>
           <Card
             className='hover:border-primary cursor-pointer'
             onClick={() =>
               dispatch({ type: 'SET_STATUS_FILTER', payload: 'ALL' })
             }
           >
-            <CardHeader className='pb-3'>
-              <CardDescription>Tổng số đơn</CardDescription>
+            <CardHeader>
+              <CardDescription>{t('cards.totalOrders')}</CardDescription>
               <CardTitle className='text-3xl'>
                 {state.loading ? (
                   <div className='bg-muted h-8 w-16 animate-pulse rounded' />
@@ -298,10 +300,10 @@ export default function OrderList() {
               dispatch({ type: 'SET_STATUS_FILTER', payload: 'pending' })
             }
           >
-            <CardHeader className='pb-3'>
+            <CardHeader>
               <CardDescription className='flex items-center gap-2'>
                 <Clock className='h-4 w-4' />
-                Chờ duyệt
+                {t('cards.pending')}
               </CardDescription>
               <CardTitle className='text-3xl'>
                 {state.loading ? (
@@ -318,10 +320,10 @@ export default function OrderList() {
               dispatch({ type: 'SET_STATUS_FILTER', payload: 'approved' })
             }
           >
-            <CardHeader className='pb-3'>
+            <CardHeader>
               <CardDescription className='flex items-center gap-2'>
                 <Check className='h-4 w-4' />
-                Đã duyệt
+                {t('cards.approved')}
               </CardDescription>
               <CardTitle className='text-3xl'>
                 {state.loading ? (
@@ -335,13 +337,33 @@ export default function OrderList() {
           <Card
             className='hover:border-primary cursor-pointer'
             onClick={() =>
+              dispatch({ type: 'SET_STATUS_FILTER', payload: 'processing' })
+            }
+          >
+            <CardHeader>
+              <CardDescription className='flex items-center gap-2'>
+                <Truck className='h-4 w-4' />
+                {t('cards.processing')}
+              </CardDescription>
+              <CardTitle className='text-3xl'>
+                {state.loading ? (
+                  <div className='bg-muted h-8 w-16 animate-pulse rounded' />
+                ) : (
+                  statusCounts.processing
+                )}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          <Card
+            className='hover:border-primary cursor-pointer'
+            onClick={() =>
               dispatch({ type: 'SET_STATUS_FILTER', payload: 'completed' })
             }
           >
-            <CardHeader className='pb-3'>
+            <CardHeader>
               <CardDescription className='flex items-center gap-2'>
-                <Check className='h-4 w-4' />
-                Hoàn thành
+                <IconCircleCheck className='h-4 w-4' />
+                {t('cards.completed')}
               </CardDescription>
               <CardTitle className='text-3xl'>
                 {state.loading ? (
@@ -362,7 +384,7 @@ export default function OrderList() {
                 <div className='relative flex-1'>
                   <Search className='text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4' />
                   <Input
-                    placeholder='Tìm kiếm theo mã đơn, sản phẩm, khách hàng...'
+                    placeholder={t('filters.searchPlaceholder')}
                     className='pl-8'
                     value={state.searchQuery}
                     onChange={(e) =>
@@ -383,16 +405,30 @@ export default function OrderList() {
                   }
                 >
                   <SelectTrigger className='w-[180px]'>
-                    <SelectValue placeholder='Lọc theo trạng thái' />
+                    <SelectValue placeholder={t('filters.statusPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='ALL'>Tất cả trạng thái</SelectItem>
-                    <SelectItem value='pending'>Chờ duyệt</SelectItem>
-                    <SelectItem value='rejected'>Từ chối</SelectItem>
-                    <SelectItem value='approved'>Đã duyệt</SelectItem>
-                    <SelectItem value='processing'>Đang xử lý</SelectItem>
-                    <SelectItem value='completed'>Hoàn thành</SelectItem>
-                    <SelectItem value='canceled'>Đã hủy</SelectItem>
+                    <SelectItem value='ALL'>
+                      {t('filters.allStatus')}
+                    </SelectItem>
+                    <SelectItem value='pending'>
+                      {t('statuses.pending')}
+                    </SelectItem>
+                    <SelectItem value='rejected'>
+                      {t('statuses.rejected')}
+                    </SelectItem>
+                    <SelectItem value='approved'>
+                      {t('statuses.approved')}
+                    </SelectItem>
+                    <SelectItem value='processing'>
+                      {t('statuses.processing')}
+                    </SelectItem>
+                    <SelectItem value='completed'>
+                      {t('statuses.completed')}
+                    </SelectItem>
+                    <SelectItem value='canceled'>
+                      {t('statuses.canceled')}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -403,14 +439,16 @@ export default function OrderList() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Mã đơn</TableHead>
-                    <TableHead>Khách hàng</TableHead>
-                    <TableHead>Sản phẩm</TableHead>
-                    <TableHead>Ngày giao hàng</TableHead>
-                    <TableHead>Ngày tạo</TableHead>
-                    <TableHead>Địa chỉ</TableHead>
-                    <TableHead>Trạng thái</TableHead>
-                    <TableHead className='text-right'>Thao tác</TableHead>
+                    <TableHead>{t('table.orderNumber')}</TableHead>
+                    <TableHead>{t('table.customer')}</TableHead>
+                    <TableHead>{t('table.products')}</TableHead>
+                    <TableHead>{t('table.deliveryDate')}</TableHead>
+                    <TableHead>{t('table.createdAt')}</TableHead>
+                    <TableHead>{t('table.address')}</TableHead>
+                    <TableHead>{t('table.status')}</TableHead>
+                    <TableHead className='text-right'>
+                      {t('table.actions')}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -419,14 +457,16 @@ export default function OrderList() {
                       <TableCell colSpan={8} className='text-center'>
                         <div className='flex flex-col items-center justify-center py-12'>
                           <div className='border-primary mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
-                          <p className='text-muted-foreground'>Đang tải...</p>
+                          <p className='text-muted-foreground'>
+                            {t('table.loading')}
+                          </p>
                         </div>
                       </TableCell>
                     </TableRow>
                   ) : filteredSchedules.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={8} className='text-center'>
-                        Không có dữ liệu
+                        {t('table.empty')}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -451,7 +491,9 @@ export default function OrderList() {
                           {schedule.address}
                         </TableCell>
                         <TableCell>
-                          {getOrderStatusBadge(schedule.status)}
+                          {getOrderStatusBadge(schedule.status, (key) =>
+                            t(`statuses.${key}` as any)
+                          )}
                         </TableCell>
                         <TableCell className='text-right'>
                           <DropdownMenu>
@@ -467,7 +509,7 @@ export default function OrderList() {
                                   className='hover:border-primary flex cursor-pointer items-center hover:bg-transparent'
                                 >
                                   <Eye className='mr-2 h-4 w-4' />
-                                  Xem chi tiết
+                                  {t('actions.viewDetails')}
                                 </Link>
                               </DropdownMenuItem>
                               {normalizeStatus(schedule.status) ===
@@ -479,7 +521,7 @@ export default function OrderList() {
                                       className='hover:border-primary flex cursor-pointer items-center hover:bg-transparent'
                                     >
                                       <Edit className='mr-2 h-4 w-4' />
-                                      Chỉnh sửa
+                                      {t('actions.edit')}
                                     </Link>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
@@ -489,7 +531,7 @@ export default function OrderList() {
                                     className='text-destructive cursor-pointer hover:bg-transparent'
                                   >
                                     <X className='text-destructive mr-2 h-4 w-4' />
-                                    Từ chối
+                                    {t('actions.reject')}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() =>
@@ -498,7 +540,7 @@ export default function OrderList() {
                                     className='text-destructive cursor-pointer hover:bg-transparent'
                                   >
                                     <X className='text-destructive mr-2 h-4 w-4' />
-                                    Hủy đơn
+                                    {t('actions.cancelOrder')}
                                   </DropdownMenuItem>
                                 </>
                               )}
@@ -508,17 +550,17 @@ export default function OrderList() {
                                   onClick={() => {
                                     const reason =
                                       schedule.reason ||
-                                      'Không có lý do từ chối';
+                                      t('dialog.rejectionReasonDefault');
 
                                     toast({
-                                      title: 'Lý do từ chối',
+                                      title: t('dialog.rejectionReasonTitle'),
                                       description: reason,
                                       variant: 'default'
                                     });
                                   }}
                                 >
                                   <Info className='mr-2 h-4 w-4' />
-                                  Xem lý do từ chối
+                                  {t('actions.viewRejectionReason')}
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
@@ -541,17 +583,17 @@ export default function OrderList() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận hủy đơn</AlertDialogTitle>
+            <AlertDialogTitle>{t('dialog.cancelTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn hủy lịch giao hàng{' '}
-              {state.selectedScheduleId || ''}? Hành động này không thể hoàn
-              tác.
+              {t('dialog.cancelDescription', {
+                id: state.selectedScheduleId || ''
+              })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Giữ lại</AlertDialogCancel>
+            <AlertDialogCancel>{t('dialog.cancelKeep')}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmCancelOrder}>
-              Xác nhận hủy
+              {t('dialog.cancelConfirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

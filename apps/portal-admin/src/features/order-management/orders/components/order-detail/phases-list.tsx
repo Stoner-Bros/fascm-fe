@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { OrderPhase } from '@/types/order';
+import { useTranslations } from 'next-intl';
 import { PhaseCard } from './phase-card';
 
 interface PhasesListProps {
@@ -13,6 +14,7 @@ export function PhasesList({
   onConfirmDelivery,
   updatingPhaseId
 }: PhasesListProps) {
+  const t = useTranslations('Orders.detail.phases');
   if (phases.length === 0) {
     return null;
   }
@@ -20,9 +22,9 @@ export function PhasesList({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Các đợt giao hàng</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
         <p className='text-muted-foreground text-sm'>
-          Danh sách các đợt giao hàng đã tạo ({phases.length})
+          {t('subtitle', { count: phases.length })}
         </p>
       </CardHeader>
       <CardContent className='space-y-4'>

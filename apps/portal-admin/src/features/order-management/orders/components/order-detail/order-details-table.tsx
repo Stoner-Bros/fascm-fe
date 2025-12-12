@@ -8,6 +8,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import type { OrderSchedule } from '@/types/order';
+import { useTranslations } from 'next-intl';
 import { formatCurrency } from '../../utils/formatting';
 import type { ProductTotals } from '../../utils/calculations';
 
@@ -20,16 +21,15 @@ export function OrderDetailsTable({
   schedule,
   totals
 }: OrderDetailsTableProps) {
+  const t = useTranslations('Orders.detail.detailsTable');
   const hasDetails = schedule.orderDetails && schedule.orderDetails.length > 0;
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Chi tiết đơn hàng</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
         {totals && (
-          <p className='text-muted-foreground text-sm'>
-            Tổng quan số lượng đã giao / tổng số lượng
-          </p>
+          <p className='text-muted-foreground text-sm'>{t('subtitle')}</p>
         )}
       </CardHeader>
       <CardContent>
@@ -37,12 +37,12 @@ export function OrderDetailsTable({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Sản phẩm</TableHead>
-                <TableHead>Số lượng</TableHead>
-                <TableHead>Đơn vị</TableHead>
-                <TableHead>Đơn giá</TableHead>
-                <TableHead>Thành tiền</TableHead>
-                {totals && <TableHead>Đã giao</TableHead>}
+                <TableHead>{t('product')}</TableHead>
+                <TableHead>{t('quantity')}</TableHead>
+                <TableHead>{t('unit')}</TableHead>
+                <TableHead>{t('unitPrice')}</TableHead>
+                <TableHead>{t('amount')}</TableHead>
+                {totals && <TableHead>{t('delivered')}</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -89,7 +89,7 @@ export function OrderDetailsTable({
                     colSpan={totals ? 6 : 5}
                     className='text-muted-foreground py-8 text-center'
                   >
-                    Không có chi tiết đơn hàng
+                    {t('empty')}
                   </TableCell>
                 </TableRow>
               )}

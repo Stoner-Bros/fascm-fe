@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import type { OrderSchedule, OrderScheduleStatus } from '@/types/order';
-import { ArrowLeft, Check } from 'lucide-react';
+import { ArrowLeft, Check, Plus, X } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
 
 interface OrderHeaderProps {
@@ -25,6 +26,7 @@ export function OrderHeader({
   updating
 }: OrderHeaderProps) {
   const router = useRouter();
+  const t = useTranslations('Orders.detail');
 
   return (
     <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
@@ -38,11 +40,9 @@ export function OrderHeader({
           <ArrowLeft className='h-4 w-4' />
         </Button>
         <div>
-          <h1 className='text-2xl font-bold sm:text-3xl'>
-            Chi tiết lịch giao hàng
-          </h1>
+          <h1 className='text-2xl font-bold sm:text-3xl'>{t('title')}</h1>
           <p className='text-muted-foreground mt-1 text-sm sm:text-base'>
-            Mã: {schedule.id.slice(0, 8)}
+            {t('code')}: {schedule.id.slice(0, 11)}
           </p>
         </div>
       </div>
@@ -53,25 +53,27 @@ export function OrderHeader({
               variant='destructive'
               onClick={onReject}
               disabled={updating}
-              size='sm'
             >
-              Từ chối
+              <X className='mr-2 h-4 w-4' />
+              {t('header.reject')}
             </Button>
-            <Button onClick={onApprove} disabled={updating} size='sm'>
-              Duyệt
+            <Button onClick={onApprove} disabled={updating} variant='default'>
+              <Check className='mr-2 h-4 w-4' />
+              {t('header.approve')}
             </Button>
           </>
         )}
         {(status === 'approved' || status === 'processing') &&
           hasRemainingQuantity && (
-            <Button onClick={onCreatePhase} size='sm'>
-              Tạo đợt giao hàng
+            <Button onClick={onCreatePhase} variant='default'>
+              <Plus className='mr-2 h-4 w-4' />
+              {t('header.createPhase')}
             </Button>
           )}
         {status === 'processing' && !hasRemainingQuantity && (
-          <Button onClick={onComplete} size='sm'>
+          <Button onClick={onComplete} variant='default'>
             <Check className='mr-2 h-4 w-4' />
-            Đánh dấu hoàn thành
+            {t('header.markComplete')}
           </Button>
         )}
       </div>
