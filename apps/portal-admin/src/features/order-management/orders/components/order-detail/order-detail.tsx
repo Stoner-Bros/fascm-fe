@@ -2,15 +2,19 @@
 
 import PageContainer from '@/components/layout/page-container';
 import { useToast } from '@/components/ui/use-toast';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { createOrderPhase } from '@/services/order-phase.service';
 import type { CreateOrderInvoiceDetailDto } from '@/types/order';
+import { Package, Truck } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { CreatePhaseDialog } from './create-phase-dialog';
+import { CreatePhaseDialog } from './create-phase-modal';
 import { EmptyState } from './empty-state';
 import { LoadingState } from '../../../../../components/loading-state';
 import { OrderDetailsTable } from './order-details-table';
 import { OrderHeader } from './order-header';
 import { OrderInfoCard } from './order-info-card';
+import { OrderStatusStepper } from './order-status-stepper';
 import { PhasesList } from './phases-list';
 import { RejectDialog } from './reject-dialog';
 import {
@@ -26,6 +30,7 @@ import {
 
 export default function OrderDetail({ scheduleId }: { scheduleId: string }) {
   const { toast } = useToast();
+  const t = useTranslations('Orders.detail');
   const { schedule, phases, loading, refetch } = useOrderDetail(scheduleId);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [showPhaseDialog, setShowPhaseDialog] = useState(false);
@@ -86,8 +91,8 @@ export default function OrderDetail({ scheduleId }: { scheduleId: string }) {
     );
     if (validDetails.length === 0) {
       toast({
-        title: 'Lỗi',
-        description: 'Vui lòng nhập số lượng cho ít nhất một sản phẩm',
+        title: t('toast.error'),
+        description: t('toast.errorPhaseValidation'),
         variant: 'destructive'
       });
       return;
@@ -101,7 +106,9 @@ export default function OrderDetail({ scheduleId }: { scheduleId: string }) {
 
     try {
       await createOrderPhase({
-        description: phaseData.description || `Đợt ${phaseData.phaseNumber}`,
+        description:
+          phaseData.description ||
+          `${t('phases.phase')} ${phaseData.phaseNumber}`,
         phaseNumber: phaseData.phaseNumber,
         orderSchedule: { id: schedule.id },
         orderInvoice: {
@@ -123,14 +130,14 @@ export default function OrderDetail({ scheduleId }: { scheduleId: string }) {
       reset(newDetails, phases.length + 2);
 
       toast({
-        title: 'Thành công',
-        description: 'Đã tạo đợt giao hàng'
+        title: t('toast.success'),
+        description: t('toast.successCreatePhase')
       });
       await refetch();
     } catch (error: any) {
       toast({
-        title: 'Lỗi',
-        description: error.details?.message || 'Không thể tạo đợt giao hàng',
+        title: t('toast.error'),
+        description: error.details?.message || t('toast.errorCreatePhase'),
         variant: 'destructive'
       });
     }
@@ -158,15 +165,50 @@ export default function OrderDetail({ scheduleId }: { scheduleId: string }) {
           updating={updating}
         />
 
-        <OrderInfoCard schedule={schedule} />
+        {/* Order Status Stepper */}
+        <OrderStatusStepper status={schedule.status} reason={schedule.reason} />
 
-        <OrderDetailsTable schedule={schedule} totals={totals} />
+        {/* Main Tabs */}
+        <Tabs defaultValue='overview' className='w-full'>
+          <TabsList className='gap-1'>
+            <TabsTrigger
+              value='overview'
+              className='flex cursor-pointer items-center gap-2 hover:bg-transparent'
+            >
+              <Package className='h-4 w-4' />
+              {t('tabs.overview')}
+            </TabsTrigger>
+            <TabsTrigger
+              value='phases'
+              className='flex cursor-pointer items-center gap-2 hover:bg-transparent'
+            >
+              <Truck className='h-4 w-4' />
+              {t('tabs.phases')}
+              {phases.length > 0 && (
+                <span className='bg-primary text-primary-foreground ml-1 rounded-full px-2 py-0.5 text-xs font-medium'>
+                  {phases.length}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
 
-        <PhasesList
-          phases={phases}
-          onConfirmDelivery={confirmDelivery}
-          updatingPhaseId={updatingPhaseId}
-        />
+          {/* Overview Tab */}
+          <TabsContent value='overview' className='mt-6'>
+            <div className='space-y-6'>
+              <OrderInfoCard schedule={schedule} />
+              <OrderDetailsTable schedule={schedule} totals={totals} />
+            </div>
+          </TabsContent>
+
+          {/* Phases Tab */}
+          <TabsContent value='phases' className='mt-6'>
+            <PhasesList
+              phases={phases}
+              onConfirmDelivery={confirmDelivery}
+              updatingPhaseId={updatingPhaseId}
+            />
+          </TabsContent>
+        </Tabs>
 
         <RejectDialog
           open={showRejectDialog}

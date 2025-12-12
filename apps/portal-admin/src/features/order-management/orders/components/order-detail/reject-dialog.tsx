@@ -9,6 +9,7 @@ import {
 } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useTranslations } from 'next-intl';
 
 interface RejectDialogProps {
   open: boolean;
@@ -27,23 +28,22 @@ export function RejectDialog({
   onConfirm,
   loading
 }: RejectDialogProps) {
+  const t = useTranslations('Orders.detail.rejectDialog');
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Từ chối lịch giao hàng</DialogTitle>
-          <DialogDescription>
-            Vui lòng nhập lý do từ chối lịch giao hàng này
-          </DialogDescription>
+          <DialogTitle>{t('title')}</DialogTitle>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
         <div className='space-y-4'>
           <div>
-            <Label htmlFor='reason'>Lý do từ chối</Label>
+            <Label htmlFor='reason'>{t('reasonLabel')}</Label>
             <Textarea
               id='reason'
               value={reason}
               onChange={(e) => onReasonChange(e.target.value)}
-              placeholder='Nhập lý do từ chối...'
+              placeholder={t('reasonPlaceholder')}
               rows={4}
               className='mt-2'
             />
@@ -55,14 +55,14 @@ export function RejectDialog({
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
-            Hủy
+            {t('cancel')}
           </Button>
           <Button
             variant='destructive'
             onClick={onConfirm}
             disabled={loading || !reason.trim()}
           >
-            {loading ? 'Đang xử lý...' : 'Xác nhận từ chối'}
+            {loading ? t('processing') : t('confirm')}
           </Button>
         </DialogFooter>
       </DialogContent>

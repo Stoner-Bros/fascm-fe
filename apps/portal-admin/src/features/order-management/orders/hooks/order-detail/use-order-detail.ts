@@ -8,10 +8,12 @@ import {
   updateOrderScheduleStatus
 } from '@/services/order-schedule.service';
 import type { OrderPhase, OrderSchedule } from '@/types/order';
+import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
 
 export function useOrderDetail(scheduleId: string) {
   const { toast } = useToast();
+  const t = useTranslations('Orders.detail.toast');
   const [schedule, setSchedule] = useState<OrderSchedule | null>(null);
   const [phases, setPhases] = useState<OrderPhase[]>([]);
   const [loading, setLoading] = useState(true);
@@ -31,8 +33,8 @@ export function useOrderDetail(scheduleId: string) {
     } catch (error) {
       console.error('Failed to load data:', error);
       toast({
-        title: 'Lỗi',
-        description: 'Không thể tải dữ liệu lịch giao hàng',
+        title: t('error'),
+        description: t('errorLoad'),
         variant: 'destructive'
       });
     } finally {
@@ -58,6 +60,7 @@ export function useOrderStatusActions(
   onSuccess: () => void
 ) {
   const { toast } = useToast();
+  const t = useTranslations('Orders.detail.toast');
   const [updating, setUpdating] = useState(false);
 
   const approve = async () => {
@@ -66,14 +69,14 @@ export function useOrderStatusActions(
     try {
       await updateOrderScheduleStatus(schedule.id, 'approved');
       toast({
-        title: 'Thành công',
-        description: 'Đã duyệt lịch giao hàng'
+        title: t('success'),
+        description: t('successApprove')
       });
       onSuccess();
     } catch (error) {
       toast({
-        title: 'Lỗi',
-        description: 'Không thể duyệt lịch giao hàng',
+        title: t('error'),
+        description: t('errorApprove'),
         variant: 'destructive'
       });
     } finally {
@@ -84,7 +87,8 @@ export function useOrderStatusActions(
   const reject = async (reason: string) => {
     if (!schedule || !reason.trim()) {
       toast({
-        title: 'Vui lòng nhập lý do từ chối',
+        title: t('error'),
+        description: t('rejectReasonRequired'),
         variant: 'destructive'
       });
       return;
@@ -93,14 +97,14 @@ export function useOrderStatusActions(
     try {
       await updateOrderScheduleStatus(schedule.id, 'rejected', reason);
       toast({
-        title: 'Thành công',
-        description: 'Đã từ chối lịch giao hàng'
+        title: t('success'),
+        description: t('successReject')
       });
       onSuccess();
     } catch (error) {
       toast({
-        title: 'Lỗi',
-        description: 'Không thể từ chối lịch giao hàng',
+        title: t('error'),
+        description: t('errorReject'),
         variant: 'destructive'
       });
     } finally {
@@ -114,14 +118,14 @@ export function useOrderStatusActions(
     try {
       await updateOrderScheduleStatus(schedule.id, 'completed');
       toast({
-        title: 'Thành công',
-        description: 'Đã đánh dấu hoàn thành'
+        title: t('success'),
+        description: t('successComplete')
       });
       onSuccess();
     } catch (error) {
       toast({
-        title: 'Lỗi',
-        description: 'Không thể cập nhật trạng thái',
+        title: t('error'),
+        description: t('errorComplete'),
         variant: 'destructive'
       });
     } finally {
@@ -139,6 +143,7 @@ export function useOrderStatusActions(
 
 export function usePhaseActions(onSuccess: () => void) {
   const { toast } = useToast();
+  const t = useTranslations('Orders.detail.toast');
   const [updatingPhaseId, setUpdatingPhaseId] = useState<string | null>(null);
 
   const confirmDelivery = async (phaseId: string) => {
@@ -146,14 +151,14 @@ export function usePhaseActions(onSuccess: () => void) {
     try {
       await updateOrderPhaseStatus(phaseId, { status: 'completed' });
       toast({
-        title: 'Thành công',
-        description: 'Đã xác nhận giao hàng'
+        title: t('success'),
+        description: t('successConfirmDelivery')
       });
       onSuccess();
     } catch (error) {
       toast({
-        title: 'Lỗi',
-        description: 'Không thể cập nhật trạng thái đợt giao hàng',
+        title: t('error'),
+        description: t('errorConfirmDelivery'),
         variant: 'destructive'
       });
     } finally {

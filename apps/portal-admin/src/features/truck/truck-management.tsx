@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Modal } from '@/components/ui/modal';
+import { Modal } from '@/components/modal';
 import {
   Select,
   SelectContent,

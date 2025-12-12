@@ -1,4 +1,3 @@
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -10,6 +9,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import type { OrderPhase } from '@/types/order';
+import { useTranslations } from 'next-intl';
 import { formatCurrency } from '../../utils/formatting';
 import { getPhaseStatusBadge } from '../../utils/status-badges';
 
@@ -24,6 +24,7 @@ export function PhaseCard({
   onConfirmDelivery,
   updatingPhaseId
 }: PhaseCardProps) {
+  const t = useTranslations('Orders.detail.phases');
   const subtotal =
     phase.orderInvoiceDetails?.reduce(
       (sum, d) => sum + (d.quantity || 0) * (d.unitPrice || 0),
@@ -41,23 +42,26 @@ export function PhaseCard({
         <div className='flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
           <div>
             <CardTitle className='text-lg'>
-              Đợt {phase.phaseNumber}: {phase.description || 'Không có mô tả'}
+              {t('phase')} {phase.phaseNumber}:{' '}
+              {phase.description || t('noDescription')}
             </CardTitle>
             {phase.orderInvoice?.invoiceNumber && (
               <p className='text-muted-foreground mt-1 text-sm'>
-                Mã hóa đơn: {phase.orderInvoice.invoiceNumber}
+                {t('invoiceNumber')}: {phase.orderInvoice.invoiceNumber}
               </p>
             )}
           </div>
           <div className='flex items-center gap-2'>
-            {getPhaseStatusBadge(phase.status)}
+            {getPhaseStatusBadge(phase.status, (key) =>
+              t(`statuses.${key}` as any)
+            )}
             {phase.status === 'delivered' && onConfirmDelivery && (
               <Button
                 size='sm'
                 onClick={() => onConfirmDelivery(phase.id)}
                 disabled={updatingPhaseId === phase.id}
               >
-                Xác nhận giao hàng
+                {t('confirmDelivery')}
               </Button>
             )}
           </div>
@@ -68,11 +72,11 @@ export function PhaseCard({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Sản phẩm</TableHead>
-                <TableHead>Số lượng</TableHead>
-                <TableHead>Đơn vị</TableHead>
-                <TableHead>Đơn giá</TableHead>
-                <TableHead>Thành tiền</TableHead>
+                <TableHead>{t('product')}</TableHead>
+                <TableHead>{t('quantity')}</TableHead>
+                <TableHead>{t('unit')}</TableHead>
+                <TableHead>{t('unitPrice')}</TableHead>
+                <TableHead>{t('amount')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -104,7 +108,7 @@ export function PhaseCard({
                         colSpan={4}
                         className='text-muted-foreground text-right text-sm'
                       >
-                        Thuế ({phase.orderInvoice.taxRate}%):
+                        {t('tax')} ({phase.orderInvoice.taxRate}%):
                       </TableCell>
                       <TableCell className='text-muted-foreground text-sm font-medium'>
                         {formatCurrency(taxAmount)}
@@ -113,7 +117,7 @@ export function PhaseCard({
                   )}
                   <TableRow>
                     <TableCell colSpan={4} className='text-right font-semibold'>
-                      Tổng tiền:
+                      {t('total')}:
                     </TableCell>
                     <TableCell className='text-lg font-semibold'>
                       {formatCurrency(
@@ -128,7 +132,7 @@ export function PhaseCard({
                     colSpan={5}
                     className='text-muted-foreground py-8 text-center'
                   >
-                    Không có chi tiết
+                    {t('empty')}
                   </TableCell>
                 </TableRow>
               )}
