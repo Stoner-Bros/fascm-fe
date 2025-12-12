@@ -92,18 +92,204 @@
 
 ## 4. Harvest Schedule Tests
 
-Due to the character limit, I'll create a link to the full documentation. The document structure includes all 75 test cases covering all 30 API functions.
+### 4.1 Create Harvest Schedule
 
-### Summary of Remaining Sections:
-- Harvest Schedule Tests (11 test cases: TC_FE_HARV_001-011)
-- Order Schedule Tests (10 test cases: TC_FE_ORD_001-010)
-- Harvest Phase Tests (8 test cases: TC_FE_HPHASE_001-008)
-- Order Phase Tests (6 test cases: TC_FE_OPHASE_001-006)
-- Delivery Management Tests (5 test cases: TC_FE_DEL_001-005)
-- Payment Tests (6 test cases: TC_FE_PAY_001-006)
-- Import/Export Ticket Tests (6 test cases: TC_FE_IMP_001-003, TC_FE_EXP_001-003)
-- UI Components Tests (5 test cases: TC_FE_UI_001-005)
-- Responsive Design Tests (3 test cases: TC_FE_RESP_001-003)
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_HARV_001 | Supplier creates harvest schedule request | 1. Login as Supplier 2. Navigate to /supplier/harvest-schedules 3. Click "Create Harvest Schedule" button 4. Select products with quantities 5. Set harvest date 6. Upload certificates 7. Select location on map 8. Click "Submit" | Harvest schedule created successfully. Toast shows "Tạo lịch thu hoạch thành công". New schedule appears in list with status "Pending". Schedule ID generated | Supplier logged in. Products exist | | | | | | | | | | |
+| TC_FE_HARV_002 | Create harvest schedule with past date | 1. Login as Supplier 2. Navigate to create harvest schedule form 3. Select products 4. Set harvest date in the past 5. Click "Submit" | Form validation error: "Ngày thu hoạch phải là ngày trong tương lai". Form not submitted | Supplier logged in | | | | | | | | | | |
+| TC_FE_HARV_003 | Create harvest schedule without products | 1. Login as Supplier 2. Navigate to create harvest schedule form 3. Set harvest date 4. Leave products empty 5. Click "Submit" | Form validation error: "Phải chọn ít nhất một sản phẩm". Form not submitted | Supplier logged in | | | | | | | | | | |
+
+### 4.2 Get All/My Harvest Schedules
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_HARV_004 | View all harvest schedules (Admin view) | 1. Login as Admin 2. Navigate to Harvest Schedules page 3. Observe list | All harvest schedules from all suppliers displayed. List shows: Schedule ID, supplier name, products, harvest date, status. Pagination available | User logged in. Harvest schedules exist | | | | | | | | | | |
+| TC_FE_HARV_005 | Supplier views own harvest schedules | 1. Login as Supplier 2. Navigate to /supplier/harvest-schedules 3. Observe list | Only current supplier's harvest schedules displayed. Other suppliers' schedules not visible. List shows: Schedule ID, products, harvest date, status | Supplier logged in. Supplier has created harvest schedules | | | | | | | | | | |
+| TC_FE_HARV_006 | Filter my harvest schedules by status | 1. Login as Supplier 2. Navigate to harvest schedules page 3. Select status filter "Approved" 4. Observe results | List filters to show only "Approved" schedules. Other statuses hidden. Filter indicator visible. Count updates | Supplier logged in. Schedules with different statuses exist | | | | | | | | | | |
+
+### 4.3 Update Harvest Schedule
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_HARV_007 | Update pending harvest schedule | 1. Login as Supplier 2. Navigate to harvest schedules 3. Click on "Pending" schedule 4. Click "Edit" 5. Update harvest date and products 6. Click "Save Changes" | Schedule updated successfully. Toast shows "Cập nhật lịch thu hoạch thành công". Changes reflected in schedule details | Supplier logged in. Schedule exists with status "Pending" | | | | | | | | | | |
+| TC_FE_HARV_008 | Attempt to update approved schedule | 1. Login as Supplier 2. Navigate to harvest schedules 3. Click on "Approved" schedule 4. Observe edit button state | Edit button disabled or not visible for approved schedules. Toast or message: "Không thể chỉnh sửa lịch đã được phê duyệt" | Supplier logged in. Schedule exists with status "Approved" | | | | | | | | | | |
+
+### 4.4 Update Harvest Schedule Status
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_HARV_009 | Admin approves harvest schedule | 1. Login as Admin 2. Navigate to Harvest Schedules 3. Click on "Pending" schedule 4. Click "Approve" button 5. Confirm action | Schedule status changes to "Approved". Toast shows "Phê duyệt thành công". Supplier receives notification via Socket.IO | Admin logged in with approval permissions. Schedule status is "Pending" | | | | | | | | | | |
+| TC_FE_HARV_010 | Admin rejects harvest schedule | 1. Login as Admin 2. Navigate to Harvest Schedules 3. Click on "Pending" schedule 4. Click "Reject" button 5. Enter rejection reason 6. Confirm | Schedule status changes to "Rejected". Rejection reason saved. Toast shows success. Supplier receives notification with reason | Admin logged in. Schedule status is "Pending" | | | | | | | | | | |
+| TC_FE_HARV_011 | Supplier cancels own pending schedule | 1. Login as Supplier 2. Navigate to harvest schedules 3. Click on "Pending" schedule 4. Click "Cancel" button 5. Confirm cancellation | Schedule status changes to "Cancelled". Toast shows "Hủy lịch thành công". Schedule remains visible but marked as cancelled | Supplier logged in. Schedule status is "Pending" | | | | | | | | | | |
+
+---
+
+## 5. Order Schedule Tests
+
+### 5.1 Create Order Schedule
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_ORD_001 | Consignee creates order schedule | 1. Login as Consignee 2. Navigate to /consignee/orders/new 3. Select products from approved harvest schedules 4. Specify quantities 5. Enter delivery address 6. Select delivery date 7. Click "Submit Order" | Order schedule created successfully. Toast shows "Đặt hàng thành công". Order appears in list with status "Pending". Order ID generated. Redirected to order detail page | Consignee logged in. Approved harvest schedules with available products exist | | | | | | | | | | |
+| TC_FE_ORD_002 | Create order with quantity exceeding availability | 1. Login as Consignee 2. Navigate to create order 3. Select product 4. Enter quantity greater than available 5. Attempt to submit | Form validation error: "Số lượng vượt quá số lượng có sẵn". Order not created. Available quantity displayed | Consignee logged in. Product with limited quantity | | | | | | | | | | |
+| TC_FE_ORD_003 | Create order with delivery location on map | 1. Login as Consignee 2. Navigate to create order Step 2 3. Click "Select Location on Map" 4. Map opens 5. Click on location 6. Confirm selection 7. Complete order | Map modal opens with OpenStreetMap. Click places marker. Address auto-populated via OSRM. Latitude/longitude saved. Order created with location data | Consignee logged in. Step 1 completed | | | | | | | | | | |
+
+### 5.2 Get All/My Order Schedules
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_ORD_004 | View all order schedules (Admin/Staff view) | 1. Login as Admin or Staff 2. Navigate to Orders page 3. Observe list | All order schedules from all consignees displayed. List shows: Order ID, consignee name, products, total amount, delivery date, status. Pagination and filters available | User logged in with appropriate role. Order schedules exist | | | | | | | | | | |
+| TC_FE_ORD_005 | Consignee views own order schedules | 1. Login as Consignee 2. Navigate to /consignee/orders 3. Observe list | Only current consignee's orders displayed. Other consignees' orders not visible. List shows: Order ID, products, total, delivery date, status, payment status | Consignee logged in. Consignee has created orders | | | | | | | | | | |
+| TC_FE_ORD_006 | Search my orders by order number | 1. Login as Consignee 2. Navigate to orders page 3. Enter order number in search 4. Press Enter | Search returns matching order(s). Exact match prioritized. Order details displayed | Consignee logged in. Multiple orders exist | | | | | | | | | | |
+
+### 5.3 Update Order Schedule & Status
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_ORD_007 | Update pending order schedule | 1. Login as Consignee 2. Navigate to orders 3. Click on "Pending" order 4. Click "Edit" 5. Update delivery address or date 6. Click "Save Changes" | Order updated successfully. Toast shows "Cập nhật đơn hàng thành công". Changes reflected in order details | Consignee logged in. Order exists with status "Pending" | | | | | | | | | | |
+| TC_FE_ORD_008 | Admin/Staff approves order schedule | 1. Login as Admin or Staff 2. Navigate to Orders 3. Click on "Pending" order 4. Click "Approve" button 5. Confirm action | Order status changes to "Approved". Toast shows success message. Consignee receives notification. Order can proceed to phases | User logged in with approval permissions. Order status is "Pending" | | | | | | | | | | |
+| TC_FE_ORD_009 | Admin/Staff rejects order schedule | 1. Login as Admin or Staff 2. Navigate to Orders 3. Click on "Pending" order 4. Click "Reject" button 5. Enter reason 6. Confirm | Order status changes to "Rejected". Reason saved. Consignee receives notification with reason. Order cannot proceed | User logged in with approval permissions. Order status is "Pending" | | | | | | | | | | |
+| TC_FE_ORD_010 | Consignee cancels pending order | 1. Login as Consignee 2. Navigate to orders 3. Click on "Pending" or "Approved" order 4. Click "Cancel" button 5. Confirm cancellation | Confirmation modal appears. After confirm: Order status changes to "Cancelled". Toast shows "Đơn hàng đã được hủy". Refund initiated if paid | Consignee logged in. Order status is "Pending" or "Approved" | | | | | | | | | | |
+
+---
+
+## 6. Harvest Phase Tests
+
+### 6.1 Create Harvest Phases
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_HPHASE_001 | Create single harvest phase | 1. Login as Supplier or Admin 2. Navigate to approved harvest schedule 3. Click "Add Phase" button 4. Enter phase name 'Chuẩn bị đất' 5. Set start date, expected completion date 6. Enter description 7. Click "Create" | Harvest phase created successfully. Toast shows success message. Phase appears in schedule timeline. Phase status is "Pending" | User logged in with permissions. Harvest schedule status is "Approved" | | | | | | | | | | |
+| TC_FE_HPHASE_002 | Create multiple harvest phases | 1. Login as Supplier or Admin 2. Navigate to approved harvest schedule 3. Click "Add Multiple Phases" 4. Add phases: Chuẩn bị, Gieo trồng, Chăm sóc, Thu hoạch 5. Set dates for each 6. Click "Create All" | Multiple phases created successfully. All phases appear in timeline in order. Each phase has status "Pending". Toast shows "Tạo các giai đoạn thành công" | User logged in. Harvest schedule status is "Approved" | | | | | | | | | | |
+
+### 6.2 Update Harvest Phase Status
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_HPHASE_003 | Update harvest phase status to In Progress | 1. Login as Supplier 2. Navigate to harvest schedule 3. Click on "Pending" phase 4. Click "Start Phase" button 5. Confirm | Phase status changes to "In Progress". Toast shows success. Start date recorded. Phase highlighted in timeline | Supplier logged in. Phase status is "Pending" | | | | | | | | | | |
+| TC_FE_HPHASE_004 | Complete harvest phase | 1. Login as Supplier 2. Navigate to "In Progress" phase 3. Click "Complete Phase" button 4. Confirm completion | Phase status changes to "Completed". Completion date recorded. Next phase becomes available to start. Toast shows success | Supplier logged in. Phase status is "In Progress" | | | | | | | | | | |
+| TC_FE_HPHASE_005 | Attempt invalid phase status transition | 1. Login as Supplier 2. Navigate to "Pending" phase 3. Try to mark as "Completed" without starting | Action blocked. Error message: "Phải bắt đầu giai đoạn trước khi hoàn thành". Status remains "Pending" | Supplier logged in. Phase status is "Pending" | | | | | | | | | | |
+
+### 6.3 Upload Harvest Phase Proof
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_HPHASE_006 | Upload image proof for harvest phase | 1. Login as Supplier 2. Navigate to harvest phase details 3. Click "Upload Proof" button 4. Select valid image file (JPG/PNG, <5MB) 5. Add description 6. Click "Upload" | Image uploaded successfully. Progress indicator shows during upload. Image displayed in phase details with description. Upload timestamp recorded. Toast shows success | Supplier logged in. Phase exists. Valid image file available | | | | | | | | | | |
+| TC_FE_HPHASE_007 | Upload multiple proof images | 1. Login as Supplier 2. Navigate to phase 3. Upload image 1 4. Upload image 2 5. Upload image 3 | All images uploaded successfully. All images displayed in phase details. Image gallery/carousel shows all proofs | Supplier logged in. Phase exists | | | | | | | | | | |
+| TC_FE_HPHASE_008 | Attempt to upload invalid file type | 1. Login as Supplier 2. Navigate to phase 3. Select PDF or other non-image file 4. Attempt upload | Upload rejected. Error message: "Chỉ chấp nhận file ảnh JPG, PNG". File not uploaded | Supplier logged in. Non-image file available | | | | | | | | | | |
+
+---
+
+## 7. Order Phase Tests
+
+### 7.1 Create Order Phases
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_OPHASE_001 | Create single order phase | 1. Login as Admin or Staff 2. Navigate to approved order 3. Click "Add Phase" button 4. Enter phase name 'Xử lý đơn hàng' 5. Set expected dates 6. Click "Create" | Order phase created successfully. Phase appears in order timeline. Phase status is "Pending". Toast shows success message | User logged in with permissions. Order status is "Approved" | | | | | | | | | | |
+| TC_FE_OPHASE_002 | Create multiple order phases | 1. Login as Admin or Staff 2. Navigate to approved order 3. Click "Add Multiple Phases" 4. Add phases: Processing, Packing, Shipping, Delivery 5. Set dates for each 6. Click "Create All" | Multiple phases created in sequence. All phases visible in order timeline. First phase status "Pending", others "Not Started". Toast shows success | User logged in. Order status is "Approved" | | | | | | | | | | |
+
+### 7.2 Update Order Phase Status
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_OPHASE_003 | Update order phase status progression | 1. Login as Staff 2. Navigate to order 3. Click on current phase 4. Click "Move to Next Status" 5. Confirm | Phase status progresses: Pending → In Progress → Completed. Toast shows success. Next phase becomes active. Consignee receives notification | Staff logged in. Phase exists. Valid status transition available | | | | | | | | | | |
+| TC_FE_OPHASE_004 | Complete final order phase (Delivery) | 1. Login as Staff 2. Navigate to order 3. Click on "Delivery" phase 4. Click "Mark as Delivered" 5. Confirm | Final phase status changes to "Completed". Order status changes to "Delivered". Delivery date recorded. Consignee receives notification. Toast shows "Giao hàng thành công" | Staff logged in. Order is in Delivery phase | | | | | | | | | | |
+
+### 7.3 Upload Order Phase Proof
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_OPHASE_005 | Upload proof for order phase | 1. Login as Staff 2. Navigate to order phase 3. Click "Upload Proof" 4. Select image file 5. Add description 6. Click "Upload" | Image uploaded successfully. Image displayed in phase details. Timestamp recorded. Consignee can view proof in order details | Staff logged in. Order phase exists. Valid image file available | | | | | | | | | | |
+| TC_FE_OPHASE_006 | View uploaded phase proofs as Consignee | 1. Login as Consignee 2. Navigate to order details 3. Click on completed phase 4. View proof images | All uploaded proofs visible. Images displayed in gallery. Descriptions and timestamps shown. Download option available | Consignee logged in. Order phase has uploaded proofs | | | | | | | | | | |
+
+---
+
+## 8. Delivery Management Tests
+
+### 8.1 Create Delivery
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_DEL_001 | Create delivery for order | 1. Login as Admin or Staff 2. Navigate to order with completed packing phase 3. Click "Create Delivery" button 4. Assign driver/vehicle 5. Set estimated delivery time 6. Click "Create" | Delivery created successfully. Delivery ID generated. Status is "Pending Pickup". Toast shows success. Consignee receives notification with tracking info | User logged in with permissions. Order phase exists and is ready for delivery | | | | | | | | | | |
+| TC_FE_DEL_002 | Create delivery with route planning | 1. Login as Staff 2. Navigate to create delivery 3. View delivery location on map 4. System calculates route using OSRM 5. Review route and distance 6. Confirm delivery creation | Delivery created with optimized route. Route displayed on map. Distance and estimated time shown. Delivery assigned to driver | Staff logged in. Order has delivery location. OSRM service available | | | | | | | | | | |
+
+### 8.2 Update Delivery Status
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_DEL_003 | Update delivery status to In Transit | 1. Login as Driver or Staff 2. Navigate to delivery 3. Click "Start Delivery" button 4. Confirm | Delivery status changes to "In Transit". Start time recorded. Real-time tracking activated. Consignee can track on map. Socket.IO sends location updates | Driver/Staff logged in. Delivery status is "Pending Pickup" | | | | | | | | | | |
+| TC_FE_DEL_004 | Track delivery in real-time | 1. Login as Consignee 2. Navigate to order details 3. Click "Track Delivery" 4. Observe map | Map displays with: Current delivery location (moving marker), Delivery route from OSRM, Destination marker, ETA. Map updates in real-time via Socket.IO every 5-10 seconds | Consignee logged in. Delivery status is "In Transit". Real-time tracking active | | | | | | | | | | |
+| TC_FE_DEL_005 | Complete delivery | 1. Login as Driver 2. Navigate to delivery 3. Click "Mark as Delivered" 4. Upload proof of delivery photo 5. Get consignee signature (optional) 6. Confirm | Delivery status changes to "Delivered". Completion time recorded. Order status updates to "Delivered". Proof uploaded. Toast shows success. All parties receive notification | Driver logged in. Delivery is "In Transit" and at destination | | | | | | | | | | |
+
+---
+
+## 9. Payment Tests
+
+### 9.1 Create Payment
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_PAY_001 | Create payment via VNPay | 1. Login as Consignee 2. Navigate to approved order 3. Click "Proceed to Payment" button 4. Select VNPay payment method 5. Click "Pay Now" | Redirected to VNPay payment gateway. Payment amount correct. Order ID passed to VNPay. Return URL configured. Payment transaction ID generated | Consignee logged in. Order exists with status "Approved" and "Pending Payment" | | | | | | | | | | |
+| TC_FE_PAY_002 | Complete VNPay payment successfully | 1. At VNPay gateway (from TC_FE_PAY_001) 2. Enter test card details 3. Complete payment 4. Observe redirect back | Redirected back to application with success status. Order payment status updates to "Paid". Toast shows "Thanh toán thành công". Payment receipt available. Supplier receives notification | VNPay sandbox credentials available. Payment initiated | | | | | | | | | | |
+| TC_FE_PAY_003 | Cancel VNPay payment | 1. At VNPay gateway 2. Click "Cancel" or "Back" button | Redirected back to application. Order payment status remains "Pending Payment". Toast shows "Thanh toán bị hủy". User can retry payment | Payment initiated at VNPay | | | | | | | | | | |
+| TC_FE_PAY_004 | Create payment via PayOS | 1. Login as Consignee 2. Navigate to order 3. Select PayOS payment method 4. Click "Pay Now" | Redirected to PayOS payment page. Payment code generated. QR code displayed for scanning. Amount and order details correct | Consignee logged in. Order pending payment | | | | | | | | | | |
+
+### 9.2 Get PayOS Payment Info
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_PAY_005 | Query PayOS payment status | 1. Login as Consignee 2. Navigate to order with PayOS payment 3. Click "Check Payment Status" 4. Observe status | System queries PayOS API. Payment status displayed: Pending/Success/Failed. If successful: Order payment status updates automatically. Toast shows current status | Consignee logged in. Payment code exists in PayOS system | | | | | | | | | | |
+| TC_FE_PAY_006 | View payment receipt | 1. Login as Consignee 2. Navigate to paid order 3. Click "View Receipt" button | Payment receipt displays with: Order ID, payment method, amount, payment date, transaction ID. Download/Print option available | Consignee logged in. Order payment status is "Paid" | | | | | | | | | | |
+
+---
+
+## 10. Import/Export Ticket Tests
+
+### 10.1 Import Ticket Tests
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_IMP_001 | Create import ticket | 1. Login as Staff 2. Navigate to Warehouse/Import Tickets 3. Click "Create Import Ticket" 4. Select harvest schedule/products 5. Enter quantities received 6. Select storage area 7. Add notes 8. Click "Create" | Import ticket created successfully. Ticket ID generated. Products added to inventory. Storage area updated. Toast shows "Tạo phiếu nhập thành công" | Staff logged in with warehouse role. Harvest schedule approved or products available | | | | | | | | | | |
+| TC_FE_IMP_002 | Create import ticket with quality check | 1. Login as Staff 2. Navigate to create import ticket 3. Add products 4. For each product, enter quality check results 5. Mark quality status (Pass/Fail) 6. Upload quality check photos 7. Click "Create" | Import ticket created with quality data. Quality status recorded for each product. Photos attached. Only products passing quality check added to inventory | Staff logged in. Products available for import | | | | | | | | | | |
+| TC_FE_IMP_003 | View import tickets filtered by storage area | 1. Login as Staff 2. Navigate to Import Tickets 3. Select area filter 'Area A' 4. Observe filtered results | List shows only import tickets for selected area. Each ticket shows: Ticket ID, import date, products, quantities, staff name. Total imported quantity per area displayed | Staff logged in. Storage area exists. Import tickets exist for that area | | | | | | | | | | |
+
+### 10.2 Export Ticket Tests
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_EXP_001 | Create export ticket for order | 1. Login as Staff 2. Navigate to approved order 3. Click "Create Export Ticket" 4. Verify products and quantities 5. Select pickup area 6. Click "Create" | Export ticket created successfully. Ticket ID generated. Products deducted from inventory. Pickup area updated. Order status progresses. Toast shows success | Staff logged in. Order approved. Products available in inventory | | | | | | | | | | |
+| TC_FE_EXP_002 | Attempt export with insufficient inventory | 1. Login as Staff 2. Navigate to order 3. Attempt to create export ticket 4. System checks inventory | Export blocked. Error message: "Số lượng tồn kho không đủ". Shows available vs required quantities. Export ticket not created | Staff logged in. Order requires more quantity than available in inventory | | | | | | | | | | |
+| TC_FE_EXP_003 | View export tickets filtered by area | 1. Login as Staff 2. Navigate to Export Tickets 3. Select area filter 'Area B' 4. Observe filtered results | List shows only export tickets for selected area. Each ticket shows: Ticket ID, export date, order ID, products, quantities, staff name. Total exported quantity per area displayed | Staff logged in. Storage area exists. Export tickets exist for that area | | | | | | | | | | |
+
+---
+
+## 11. UI Components Tests
+
+### 11.1 Theme and Language
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_UI_001 | Toggle theme (light to dark) | 1. Login to any dashboard 2. Click theme toggle button (sun/moon icon) 3. Observe theme change | Theme switches from light to dark mode. All pages update: Background dark, Text light colored, Component styles adapt. Theme preference saved. Persists after page reload | User logged in | | | | | | | | | | |
+| TC_FE_UI_002 | Switch language (English to Vietnamese) | 1. Login to any dashboard 2. Click language selector 3. Select "Tiếng Việt" 4. Observe language change | All UI text translates to Vietnamese. Buttons, labels, messages update. Language preference saved. Persists after page reload. next-intl handles translations | User logged in | | | | | | | | | | |
+| TC_FE_UI_003 | Display toast notification | 1. Perform action that triggers notification (e.g., save profile) 2. Observe toast | Toast notification appears. Shows success/error icon. Message displayed correctly. Auto-dismisses after 3-5 seconds. Close button available | User logged in | | | | | | | | | | |
+| TC_FE_UI_004 | Show loading spinner during data fetch | 1. Login to dashboard 2. Navigate to page with data loading 3. Observe loading state | Loading spinner/skeleton displayed while fetching. Prevents interaction during load. After data loads, spinner disappears, content renders | User logged in | | | | | | | | | | |
+| TC_FE_UI_005 | Render 404 page for invalid routes | 1. Navigate to non-existent route (e.g., /invalid-page-12345) 2. Observe 404 page | Custom 404 error page displays. Shows "Page Not Found" message. "Go Home" button redirects to /. URL remains invalid | None | | | | | | | | | | |
+
+---
+
+## 12. Responsive Design Tests
+
+### 12.1 Mobile, Tablet, Desktop Layouts
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| TC_FE_RESP_001 | Test mobile layout (<640px) | 1. Open application on mobile device or resize browser to <640px 2. Navigate through all pages 3. Test interactions | All content stacks vertically. Text readable without horizontal scroll. Buttons appropriately sized for touch. Hamburger menu for navigation. Forms usable. Tables scroll or adapt | None | | | | | | | | | | |
+| TC_FE_RESP_002 | Test tablet layout (640-1024px) | 1. Open application on tablet or resize browser to 768px 2. Navigate through pages 3. Test layout | Sidebar may collapse or remain visible. Content uses space efficiently. Grid layouts show 2 columns. Navigation adapted for touch. Forms utilize width | None | | | | | | | | | | |
+| TC_FE_RESP_003 | Test desktop layout (>1024px) | 1. Open application on desktop (1920x1080 or larger) 2. Navigate through pages 3. Observe layout | Full sidebar visible. Content centered with max-width. Multi-column layouts. All features accessible. Hover states work. Optimal reading width | None | | | | | | | | | | |
+
+---
 
 ## API Function Coverage Map
 
@@ -150,5 +336,5 @@ Due to the character limit, I'll create a link to the full documentation. The do
 **Next Review Date:** 2025-03-12  
 **Approval:** [Pending]  
 **Change Log:**
-- 2025-12-12 v2.0.0: Restructured based on API function list (30 functions). Added Import/Export Ticket tests. Improved organization by feature modules. All tests aligned with backend API functions.
+- 2025-12-12 v2.0.0: Complete version with all 75 detailed test cases covering all 30 API functions. All sections fully populated with test procedures, expected results, and pre-conditions.
 - 2025-12-12 v1.0.0: Initial version created
