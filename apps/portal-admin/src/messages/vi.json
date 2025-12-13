@@ -421,5 +421,27 @@
         "back": "Quay lại"
       }
     }
+  },
+  "Notifications": {
+    "defaultTitle": "Thông báo",
+    "defaultMessage": "",
+    "ui": {
+      "title": "Thông báo",
+      "loading": "Đang tải…",
+      "empty": "Không có thông báo",
+      "markRead": "Đã đọc",
+      "loadMore": "Tải thêm",
+      "close": "Đóng"
+    },
+    "orderScheduleApproved": "Đã duyệt đơn",
+    "harvestScheduleApproved": "Đã duyệt lịch thu hoạch",
+    "orderScheduleHasBeenApproved": "Lịch đặt hàng {orderScheduleId} đã được duyệt",
+    "harvestScheduleHasBeenApproved": "Lịch thu hoạch {harvestScheduleId} đã được duyệt",
+    "orderScheduleCompleted": "Đã hoàn thành đơn",
+    "orderScheduleHasBeenCompleted": "Lịch đặt hàng {orderScheduleId} đã hoàn thành",
+    "orderScheduleCanceled": "Đã hủy đơn",
+    "orderScheduleHasBeenCanceled": "Lịch đặt hàng {orderScheduleId} đã bị hủy",
+    "orderScheduleRejected": "Đã từ chối đơn",
+    "orderScheduleHasBeenRejected": "Lịch đặt hàng {orderScheduleId} đã bị từ chối"
   }
 }

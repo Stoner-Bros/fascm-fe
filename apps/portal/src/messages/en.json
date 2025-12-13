@@ -337,6 +337,95 @@
       "description": "This action will cancel harvest batch {id}. This cannot be undone.",
       "keep": "No, keep it",
       "confirm": "Yes, cancel batch"
+    },
+    "phaseStatuses": {
+      "preparing": "Preparing",
+      "delivering": "Delivering",
+      "delivered": "Delivered",
+      "completed": "Completed",
+      "canceled": "Canceled"
+    },
+    "detail": {
+      "title": "Harvest Batch Details",
+      "id": "ID",
+      "loading": "Loading harvest details...",
+      "notFound": {
+        "title": "Harvest Batch Not Found",
+        "description": "The requested harvest batch could not be found.",
+        "backButton": "Back to Batches"
+      },
+      "statusBanner": {
+        "lastUpdated": "Last updated: {date}",
+        "rejectionReasonTitle": "Rejection reason:"
+      },
+      "tabs": {
+        "overview": "Overview",
+        "phases": "Phases ({count})",
+        "products": "Products"
+      },
+      "overview": {
+        "title": "Harvest Information",
+        "description": "Details of harvest time and location",
+        "harvestDate": "Harvest Date",
+        "location": "Location",
+        "harvestAddress": "Harvest Address",
+        "notes": "Notes"
+      },
+      "phases": {
+        "phaseLabel": "Phase {number}",
+        "trackingTitle": "Transport Tracking",
+        "cargo": "Cargo {quantity} kg",
+        "startAddressDefault": "Supplier Warehouse",
+        "quantity": "Quantity",
+        "amount": "Amount",
+        "productsLabel": "Products:",
+        "taxWithRate": "Tax ({rate}%):",
+        "emptyTitle": "No harvest phases yet",
+        "emptyDescription": "Phases will appear after being created"
+      },
+      "products": {
+        "title": "Product Information",
+        "totalQuantity": "Total Quantity",
+        "totalPrice": "Total Price",
+        "listLabel": "Products",
+        "table": {
+          "product": "Product",
+          "quantity": "Quantity",
+          "unit": "Unit",
+          "unitPrice": "Unit Price"
+        },
+        "unknownProduct": "Unknown"
+      },
+      "sidebar": {
+        "overviewTitle": "Overview",
+        "overviewDescription": "Harvest batch statistics",
+        "totalQuantity": "Total Quantity",
+        "totalPriceBeforeTax": "Total Value (Before Tax)",
+        "productsCount": "Products Count",
+        "phasesCount": "Phases Count"
+      },
+      "extra": {
+        "title": "Additional Information",
+        "createdAt": "Created At",
+        "updatedAt": "Last Updated",
+        "supplier": "Supplier"
+      },
+      "quickActions": {
+        "title": "Quick Actions",
+        "viewAllBatches": "View all batches",
+        "createNewBatch": "Create new batch"
+      },
+      "buttons": {
+        "edit": "Edit",
+        "cancelBatch": "Cancel Batch",
+        "no": "No",
+        "confirmCancel": "Confirm Cancel"
+      },
+      "toast": {
+        "errorTitle": "Error",
+        "errorLoadDetails": "Failed to load harvest batch details",
+        "cancelErrorDescription": "Failed to cancel harvest batch {id}."
+      }
     }
   },
   "Sidebar": {
@@ -584,7 +673,23 @@
   "Notifications": {
     "defaultTitle": "Notification",
     "defaultMessage": "",
+    "harvestScheduleApproved": "Harvest Approved",
+    "harvestScheduleHasBeenApproved": "Harvest schedule {harvestScheduleId} has been approved",
     "orderScheduleApproved": "Order Approved",
-    "orderScheduleHasBeenApproved": "Order schedule {orderScheduleId} has been approved"
+    "orderScheduleHasBeenApproved": "Order schedule {orderScheduleId} has been approved",
+    "orderScheduleCompleted": "Order Completed",
+    "orderScheduleHasBeenCompleted": "Order schedule {orderScheduleId} has been completed",
+    "orderScheduleCanceled": "Order Canceled",
+    "orderScheduleHasBeenCanceled": "Order schedule {orderScheduleId} has been canceled",
+    "orderScheduleRejected": "Order Rejected",
+    "orderScheduleHasBeenRejected": "Order schedule {orderScheduleId} has been rejected",
+    "ui": {
+      "title": "Notifications",
+      "loading": "Loading…",
+      "empty": "No notifications",
+      "markRead": "Mark as read",
+      "loadMore": "Load more",
+      "close": "Close"
+    }
   }
 }

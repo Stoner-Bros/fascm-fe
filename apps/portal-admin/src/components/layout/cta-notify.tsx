@@ -8,6 +8,7 @@ import {
 } from '@/services/notifications.service';
 import { format } from 'date-fns';
 import { useNotificationsStore } from '@/stores/notifications.store';
+import { useTranslations } from 'next-intl';
 
 export default function CtaNotify() {
   const [open, setOpen] = useState(false);
@@ -18,6 +19,8 @@ export default function CtaNotify() {
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
+  const tUi = useTranslations('Notifications.ui');
+  const tNoti = useTranslations('Notifications');
 
   const unreadCount = useMemo(
     () => items.filter((n) => !n.isRead).length,
@@ -81,15 +84,17 @@ export default function CtaNotify() {
       {open && (
         <div className='border-border bg-card text-card-foreground absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-md border shadow-lg'>
           <div className='flex items-center justify-between px-3 py-2'>
-            <span className='text-sm font-medium'>Thông báo</span>
+            <span className='text-sm font-medium'>{tUi('title')}</span>
             {loading && (
-              <span className='text-muted-foreground text-xs'>Đang tải…</span>
+              <span className='text-muted-foreground text-xs'>
+                {tUi('loading')}
+              </span>
             )}
           </div>
           <div className='max-h-80 overflow-auto'>
             {items.length === 0 && !loading ? (
               <div className='text-muted-foreground px-3 py-8 text-center text-sm'>
-                Không có thông báo
+                {tUi('empty')}
               </div>
             ) : (
               items.map((n) => (
@@ -104,11 +109,126 @@ export default function CtaNotify() {
                     <div
                       className={`text-sm font-medium ${n.type === 'system' ? 'text-red-500' : 'text-foreground'}`}
                     >
-                      {n.title || 'Thông báo'}
+                      {(() => {
+                        const typeMap: Record<string, string> = {
+                          'order-approved': 'orderScheduleApproved',
+                          'order-completed': 'orderScheduleCompleted',
+                          'order-canceled': 'orderScheduleCanceled',
+                          'order-rejected': 'orderScheduleRejected',
+                          'harvest-approved': 'harvestScheduleApproved'
+                        };
+                        const keyFromType = typeMap[String(n.type || '')];
+                        if (keyFromType) {
+                          try {
+                            return tNoti(keyFromType);
+                          } catch {}
+                        }
+                        const looksLikeKey =
+                          typeof n.title === 'string' &&
+                          /^[A-Za-z0-9_.-]+$/.test(n.title);
+                        if (looksLikeKey) {
+                          try {
+                            const raw = n.title || 'defaultTitle';
+                            const sanitized = raw.startsWith('Notifications.')
+                              ? raw.slice('Notifications.'.length)
+                              : raw;
+                            return tNoti(sanitized);
+                          } catch {}
+                        }
+                        return n.title || tNoti('defaultTitle');
+                      })()}
                     </div>
                     {n.message && (
                       <div className='text-muted-foreground line-clamp-2 text-xs'>
-                        {n.message}
+                        {(() => {
+                          let vars: any = {};
+                          if (typeof (n as any).data === 'string') {
+                            try {
+                              const parsed = JSON.parse((n as any).data);
+                              vars.orderScheduleId =
+                                parsed?.orderScheduleId ?? '';
+                              vars.harvestScheduleId =
+                                parsed?.harvestScheduleId ?? '';
+                            } catch {
+                              vars.orderScheduleId = '';
+                              vars.harvestScheduleId = '';
+                            }
+                          } else if (
+                            n &&
+                            typeof (n as any).data === 'object' &&
+                            (n as any).data !== null
+                          ) {
+                            vars.orderScheduleId =
+                              (n as any).data.orderScheduleId ?? '';
+                            vars.harvestScheduleId =
+                              (n as any).data.harvestScheduleId ?? '';
+                          } else {
+                            vars.orderScheduleId = '';
+                            vars.harvestScheduleId = '';
+                          }
+                          const msgMap: Record<string, string> = {
+                            'order-approved': 'orderScheduleHasBeenApproved',
+                            'order-completed': 'orderScheduleHasBeenCompleted',
+                            'order-canceled': 'orderScheduleHasBeenCanceled',
+                            'order-rejected': 'orderScheduleHasBeenRejected',
+                            'harvest-approved': 'harvestScheduleHasBeenApproved'
+                          };
+                          const keyFromType = msgMap[String(n.type || '')];
+                          if (keyFromType) {
+                            try {
+                              return tNoti(keyFromType, vars);
+                            } catch {
+                              const titleFallback: Record<string, string> = {
+                                'order-approved': 'orderScheduleApproved',
+                                'order-completed': 'orderScheduleCompleted',
+                                'order-canceled': 'orderScheduleCanceled',
+                                'order-rejected': 'orderScheduleRejected'
+                              };
+                              const tf = titleFallback[String(n.type || '')];
+                              if (tf) {
+                                try {
+                                  return tNoti(tf);
+                                } catch {}
+                              }
+                            }
+                          }
+                          const looksLikeKey =
+                            typeof n.message === 'string' &&
+                            /^[A-Za-z0-9_.-]+$/.test(n.message);
+                          if (looksLikeKey) {
+                            try {
+                              const raw = n.message || 'defaultMessage';
+                              const sanitized = raw.startsWith('Notifications.')
+                                ? raw.slice('Notifications.'.length)
+                                : raw;
+                              return tNoti(sanitized, vars);
+                            } catch {
+                              const baseFallbackMap: Record<string, string> = {
+                                orderScheduleHasBeenApproved:
+                                  'orderScheduleApproved',
+                                orderScheduleHasBeenCompleted:
+                                  'orderScheduleCompleted',
+                                orderScheduleHasBeenCanceled:
+                                  'orderScheduleCanceled',
+                                orderScheduleHasBeenRejected:
+                                  'orderScheduleRejected',
+                                harvestScheduleHasBeenApproved:
+                                  'harvestScheduleApproved'
+                              };
+                              const raw = n.message || '';
+                              const sanitized = raw.startsWith('Notifications.')
+                                ? raw.slice('Notifications.'.length)
+                                : raw;
+                              const bf = baseFallbackMap[sanitized];
+                              if (bf) {
+                                try {
+                                  return tNoti(bf);
+                                } catch {}
+                              }
+                            }
+                          }
+                          return n.message;
+                        })()}
                       </div>
                     )}
                     <div className='text-muted-foreground mt-1 text-[11px]'>
@@ -123,7 +243,7 @@ export default function CtaNotify() {
                       size='sm'
                       onClick={() => markRead(n.id)}
                     >
-                      Đã đọc
+                      {tUi('markRead')}
                     </Button>
                   )}
                 </div>
@@ -137,10 +257,10 @@ export default function CtaNotify() {
               disabled={!hasNextPage || loading}
               onClick={() => load(page + 1)}
             >
-              Tải thêm
+              {tUi('loadMore')}
             </Button>
             <Button variant='ghost' size='sm' onClick={() => setOpen(false)}>
-              Đóng
+              {tUi('close')}
             </Button>
           </div>
         </div>
