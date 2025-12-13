@@ -11,6 +11,7 @@ import { useNotificationsStore } from '@/stores/notifications.store';
 import { RoleEnum } from '@/constants/enums';
 import { fetchMine } from '@/services/auth.service';
 import { useAuthStore } from '@/stores/auth.store';
+import { useTranslations } from 'next-intl';
 
 export default function NotificationListener() {
   const addItem = useNotificationsStore((s) => s.addItem);
@@ -19,17 +20,27 @@ export default function NotificationListener() {
   const [subType, setSubType] = useState<
     'global' | 'manager' | 'staff' | 'delivery'
   >('global');
+  const t = useTranslations('Notifications');
 
   useEffect(() => {
     const unsubscribe = subscribeGlobalNotifications(
       (p: NotificationPayload) => {
         const id =
           p.id || `tmp_${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        let parsed: any = null;
+        if (typeof p.data === 'string') {
+          try {
+            parsed = JSON.parse(p.data);
+          } catch {}
+        } else {
+          parsed = p.data ?? null;
+        }
+        const orderScheduleId = parsed?.orderScheduleId ?? '';
         addItem({
           id,
           type: p.type,
-          title: p.title,
-          message: p.message,
+          title: t(p.title ?? 'defaultTitle'),
+          message: t(p.message ?? 'defaultMessage', { orderScheduleId }),
           isRead: false,
           createdAt: p.timestamp
         });
@@ -68,11 +79,24 @@ export default function NotificationListener() {
     const onNotify = (p: NotificationPayload) => {
       const nid =
         p.id || `tmp_${Date.now()}-${Math.random().toString(16).slice(2)}`;
+      let parsed: any = null;
+      if (typeof p.data === 'string') {
+        try {
+          parsed = JSON.parse(p.data);
+        } catch {}
+      } else {
+        parsed = p.data ?? null;
+      }
+      const orderScheduleId = parsed?.orderScheduleId ?? '';
+      const harvestScheduleId = parsed?.harvestScheduleId ?? '';
       addItem({
         id: nid,
         type: p.type,
-        title: p.title,
-        message: p.message,
+        title: t(p.title ?? 'defaultTitle'),
+        message: t(p.message ?? 'defaultMessage', {
+          orderScheduleId,
+          harvestScheduleId
+        }),
         isRead: false,
         createdAt: p.timestamp
       });

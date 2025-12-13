@@ -52,7 +52,7 @@ export default function ConsigneeNotificationListener() {
       } else {
         parsed = p.data ?? null;
       }
-      const orderScheduleId = parsed?.orderScheduleId ?? undefined;
+      const orderScheduleId = parsed?.orderScheduleId ?? '';
       const title = t(p.title ?? 'defaultTitle');
       const desc = t(p.message ?? 'defaultMessage', { orderScheduleId });
       toast(title, { description: desc });

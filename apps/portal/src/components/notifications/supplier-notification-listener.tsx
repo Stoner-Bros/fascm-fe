@@ -8,12 +8,14 @@ import { fetchSupplier } from '@/services/supplier.service';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
 import { useNotificationsStore } from '@/stores/notifications.store';
+import { useTranslations } from 'next-intl';
 
 export default function SupplierNotificationListener() {
   const [supplierId, setSupplierId] = useState<string>('');
   const { setFullInfo } = useAuth();
   const addItem = useNotificationsStore((s) => s.addItem);
   const setItems = useNotificationsStore((s) => s.setItems);
+  const t = useTranslations('Notifications');
 
   useEffect(() => {
     let mounted = true;
@@ -43,15 +45,28 @@ export default function SupplierNotificationListener() {
     const id = supplierId?.trim();
     if (!id) return;
     const unsub = subscribeSupplierNotifications(id, (p) => {
-      const title = p.title || 'Thông báo';
-      const desc = p.message || '';
+      let parsed: any = null;
+      if (typeof p.data === 'string') {
+        try {
+          parsed = JSON.parse(p.data);
+        } catch {}
+      } else {
+        parsed = p.data ?? null;
+      }
+      const orderScheduleId = parsed?.orderScheduleId ?? '';
+      const harvestScheduleId = parsed?.harvestScheduleId ?? '';
+      const title = t(p.title ?? 'defaultTitle');
+      const desc = t(p.message ?? 'defaultMessage', {
+        orderScheduleId,
+        harvestScheduleId
+      });
       toast(title, { description: desc });
       const genId = `tmp_${Date.now()}-${Math.random().toString(16).slice(2)}`;
       addItem({
         id: p.id ?? genId,
         type: p.type,
-        title: p.title ?? 'Thông báo',
-        message: p.message ?? '',
+        title,
+        message: desc,
         isRead: false,
         createdAt: p.timestamp ?? new Date().toISOString()
       });

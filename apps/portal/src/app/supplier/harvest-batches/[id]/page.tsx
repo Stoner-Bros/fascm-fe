@@ -53,6 +53,7 @@ import { fetchDeliveriesByHarvestSchedule } from '@/services/delivery.service';
 import { fetchHarvestPhasesBySchedule } from '@/services/harvest-phase.service';
 import type { HarvestPhase } from '@/types/harvest-phase';
 import dynamic from 'next/dynamic';
+import { useTranslations } from 'next-intl';
 
 type DetailRow = {
   id: string;
@@ -172,6 +173,7 @@ export default function HarvestBatchDetailPage() {
   const params = useParams();
   const { toast } = useToast();
   const scheduleId = String(params.id);
+  const t = useTranslations('SupplierHarvestBatches');
 
   const [schedule, setSchedule] = useState<HarvestSchedule | null>(null);
   const [details, setDetails] = useState<DetailRow[]>([]);
@@ -211,8 +213,8 @@ export default function HarvestBatchDetailPage() {
       } catch (err) {
         if (cancelled) return;
         toast({
-          title: 'Error',
-          description: 'Failed to load harvest batch details',
+          title: t('detail.toast.errorTitle'),
+          description: t('detail.toast.errorLoadDetails'),
           variant: 'destructive'
         });
       } finally {
@@ -294,14 +296,16 @@ export default function HarvestBatchDetailPage() {
             setSchedule({ ...schedule, status: 'CANCELED' });
           }
           toast({
-            title: 'Batch Cancelled',
-            description: `Harvest batch ${scheduleId} has been cancelled.`
+            title: t('toast.cancelTitle'),
+            description: t('toast.cancelDescription', { id: scheduleId })
           });
         })
         .catch(() => {
           toast({
-            title: 'Error',
-            description: `Failed to cancel harvest batch ${scheduleId}.`,
+            title: t('detail.toast.errorTitle'),
+            description: t('detail.toast.cancelErrorDescription', {
+              id: scheduleId
+            }),
             variant: 'destructive'
           });
         });
@@ -310,6 +314,18 @@ export default function HarvestBatchDetailPage() {
 
   const statusConfig = getStatusConfig(schedule?.status);
   const statusNormalized = String(schedule?.status ?? 'pending').toLowerCase();
+  const statusKeyMap: Record<string, string> = {
+    pending: 'pending',
+    rejected: 'rejected',
+    approved: 'approved',
+    processing: 'inProgress',
+    completed: 'completed',
+    canceled: 'cancelled'
+  };
+  const statusLabel = t(
+    `statuses.${statusKeyMap[statusNormalized] ?? 'unknown'}`
+  );
+  const statusConfigI18n = { ...statusConfig, label: statusLabel };
   const showMap = phases.some((p) =>
     ['delivering', 'delivered'].includes(String(p.status ?? '').toLowerCase())
   );
@@ -350,7 +366,7 @@ export default function HarvestBatchDetailPage() {
         <div className='flex h-[50vh] w-full items-center justify-center'>
           <div className='flex flex-col items-center gap-2'>
             <div className='border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
-            <p className='text-muted-foreground'>Loading harvest details...</p>
+            <p className='text-muted-foreground'>{t('detail.loading')}</p>
           </div>
         </div>
       </PageContainer>
@@ -364,13 +380,13 @@ export default function HarvestBatchDetailPage() {
           <div className='text-center'>
             <IconAlertCircle className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
             <h3 className='mb-2 text-lg font-semibold'>
-              Harvest Batch Not Found
+              {t('detail.notFound.title')}
             </h3>
             <p className='text-muted-foreground mb-4'>
-              The requested harvest batch could not be found.
+              {t('detail.notFound.description')}
             </p>
             <Button onClick={() => router.push('/supplier/harvest-batches')}>
-              Back to Batches
+              {t('detail.notFound.backButton')}
             </Button>
           </div>
         </div>
@@ -389,9 +405,11 @@ export default function HarvestBatchDetailPage() {
             </Button>
             <div>
               <h2 className='text-3xl font-bold tracking-tight'>
-                Chi tiết lô thu hoạch
+                {t('detail.title')}
               </h2>
-              <p className='text-muted-foreground'>ID: {scheduleId}</p>
+              <p className='text-muted-foreground'>
+                {t('detail.id')}: {scheduleId}
+              </p>
             </div>
           </div>
           <div className='flex gap-2'>
@@ -400,29 +418,27 @@ export default function HarvestBatchDetailPage() {
                 <Link href={`/supplier/harvest-batches/${scheduleId}/edit`}>
                   <Button variant='outline'>
                     <IconEdit className='mr-2 h-4 w-4' />
-                    Chỉnh sửa
+                    {t('actionsMenu.edit')}
                   </Button>
                 </Link>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant='destructive'>
                       <IconX className='mr-2 h-4 w-4' />
-                      Hủy đơn
+                      {t('actionsMenu.cancelBatch')}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Hủy lô thu hoạch?</AlertDialogTitle>
+                      <AlertDialogTitle>{t('dialog.title')}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        Hành động này sẽ hủy lô thu hoạch{' '}
-                        <strong>{scheduleId}</strong>. Không thể hoàn tác sau
-                        khi thực hiện.
+                        {t('dialog.description', { id: scheduleId })}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Không</AlertDialogCancel>
+                      <AlertDialogCancel>{t('dialog.keep')}</AlertDialogCancel>
                       <AlertDialogAction onClick={handleCancelBatch}>
-                        Xác nhận hủy
+                        {t('dialog.confirm')}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>
@@ -435,28 +451,30 @@ export default function HarvestBatchDetailPage() {
         <Separator />
 
         {/* Status Banner */}
-        <Card className={statusConfig.bgColor}>
+        <Card className={statusConfigI18n.bgColor}>
           <CardContent>
             <div className='flex items-center justify-between'>
               <div className='flex items-center gap-3'>
                 <div
-                  className={`rounded-full p-2 ${statusConfig.textColor} bg-white`}
+                  className={`rounded-full p-2 ${statusConfigI18n.textColor} bg-white`}
                 >
-                  {statusConfig.icon}
+                  {statusConfigI18n.icon}
                 </div>
                 <div>
                   <h3
-                    className={`text-lg font-semibold ${statusConfig.textColor}`}
+                    className={`text-lg font-semibold ${statusConfigI18n.textColor}`}
                   >
-                    {statusConfig.label}
+                    {statusConfigI18n.label}
                   </h3>
                   <p className='text-sm text-gray-600'>
-                    Cập nhật lần cuối: {updatedDate}
+                    {t('detail.statusBanner.lastUpdated', {
+                      date: updatedDate
+                    })}
                   </p>
                 </div>
               </div>
-              <Badge variant={statusConfig.variant} className='px-4 py-2'>
-                {statusConfig.label}
+              <Badge variant={statusConfigI18n.variant} className='px-4 py-2'>
+                {statusConfigI18n.label}
               </Badge>
             </div>
             {schedule.status?.toUpperCase() === 'REJECTED' &&
@@ -465,7 +483,7 @@ export default function HarvestBatchDetailPage() {
                   <IconInfoCircle className='mt-0.5 h-5 w-5 flex-shrink-0 text-red-600' />
                   <div>
                     <p className='text-sm font-medium text-red-900'>
-                      Lý do từ chối:
+                      {t('reason.title')}
                     </p>
                     <p className='text-sm text-red-700'>{schedule.reason}</p>
                   </div>
@@ -479,9 +497,15 @@ export default function HarvestBatchDetailPage() {
           <div className='space-y-6 lg:col-span-2'>
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className='grid w-full grid-cols-3'>
-                <TabsTrigger value='overview'>Tổng quan</TabsTrigger>
-                <TabsTrigger value='phases'>Đợt ({phases.length})</TabsTrigger>
-                <TabsTrigger value='products'>Sản phẩm</TabsTrigger>
+                <TabsTrigger value='overview'>
+                  {t('detail.tabs.overview')}
+                </TabsTrigger>
+                <TabsTrigger value='phases'>
+                  {t('detail.tabs.phases', { count: phases.length })}
+                </TabsTrigger>
+                <TabsTrigger value='products'>
+                  {t('detail.tabs.products')}
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value='overview' className='space-y-6'>
@@ -490,10 +514,10 @@ export default function HarvestBatchDetailPage() {
                   <CardHeader>
                     <CardTitle className='flex items-center gap-2'>
                       <IconCalendar className='h-5 w-5' />
-                      Thông tin thu hoạch
+                      {t('detail.overview.title')}
                     </CardTitle>
                     <CardDescription>
-                      Chi tiết thời gian và địa điểm thu hoạch
+                      {t('detail.overview.description')}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className='space-y-4'>
@@ -502,7 +526,7 @@ export default function HarvestBatchDetailPage() {
                         <IconCalendar className='text-primary mt-0.5 h-5 w-5' />
                         <div className='flex-1'>
                           <p className='text-muted-foreground text-sm'>
-                            Ngày thu hoạch
+                            {t('detail.overview.harvestDate')}
                           </p>
                           <p className='font-medium'>{harvestDate}</p>
                         </div>
@@ -511,7 +535,7 @@ export default function HarvestBatchDetailPage() {
                         <IconMapPin className='text-primary mt-0.5 h-5 w-5' />
                         <div className='flex-1'>
                           <p className='text-muted-foreground text-sm'>
-                            Địa điểm
+                            {t('detail.overview.location')}
                           </p>
                           <p className='font-medium'>
                             {schedule?.supplier?.gardenName || '-'}
@@ -522,7 +546,7 @@ export default function HarvestBatchDetailPage() {
                         <IconMapPin className='text-primary mt-0.5 h-5 w-5' />
                         <div className='flex-1'>
                           <p className='text-muted-foreground text-sm'>
-                            Địa chỉ thu hoạch
+                            {t('detail.overview.harvestAddress')}
                           </p>
                           <p className='font-medium'>
                             {schedule?.address || '—'}
@@ -536,7 +560,7 @@ export default function HarvestBatchDetailPage() {
                 {schedule.description && (
                   <Card>
                     <CardHeader>
-                      <CardTitle>Ghi chú</CardTitle>
+                      <CardTitle>{t('detail.overview.notes')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                       <p className='text-sm text-gray-700'>
@@ -551,7 +575,26 @@ export default function HarvestBatchDetailPage() {
                 {phases.length > 0 ? (
                   <div className='space-y-3'>
                     {phases.map((phase) => {
-                      const phaseConfig = getPhaseStatusConfig(phase.status);
+                      const phaseConfigBase = getPhaseStatusConfig(
+                        phase.status
+                      );
+                      const phaseStatusNormalized = String(
+                        phase.status ?? ''
+                      ).toLowerCase();
+                      const phaseKeyMap: Record<string, string> = {
+                        preparing: 'preparing',
+                        delivering: 'delivering',
+                        delivered: 'delivered',
+                        completed: 'completed',
+                        canceled: 'canceled'
+                      };
+                      const phaseLabel = t(
+                        `phaseStatuses.${phaseKeyMap[phaseStatusNormalized] ?? 'preparing'}`
+                      );
+                      const phaseConfig = {
+                        ...phaseConfigBase,
+                        label: phaseLabel
+                      };
                       const totalPhaseQuantity =
                         phase.harvestInvoiceDetails?.reduce(
                           (sum, detail) => sum + (detail.quantity ?? 0),
@@ -567,7 +610,9 @@ export default function HarvestBatchDetailPage() {
                               <div className='flex-1'>
                                 <div className='mb-2 flex items-center gap-2'>
                                   <h4 className='text-lg font-semibold'>
-                                    Đợt {phase.phaseNumber ?? '?'}
+                                    {t('detail.phases.phaseLabel', {
+                                      number: phase.phaseNumber ?? '?'
+                                    })}
                                   </h4>
                                   <Badge
                                     variant={phaseConfig.variant}
@@ -586,13 +631,17 @@ export default function HarvestBatchDetailPage() {
                                     <CardHeader>
                                       <CardTitle className='flex items-center gap-2'>
                                         <IconMapPin className='h-5 w-5' />
-                                        Theo dõi vận chuyển
+                                        {t('detail.phases.trackingTitle')}
                                       </CardTitle>
                                     </CardHeader>
                                     <CardContent>
                                       <HarvestRouteSim
-                                        cargo={`Khối lượng ${totalPhaseQuantity} kg`}
-                                        startAddress={'Kho Nhà Cung Cấp'}
+                                        cargo={t('detail.phases.cargo', {
+                                          quantity: totalPhaseQuantity
+                                        })}
+                                        startAddress={t(
+                                          'detail.phases.startAddressDefault'
+                                        )}
                                         endAddress={String(
                                           schedule.address ?? ''
                                         )}
@@ -619,7 +668,7 @@ export default function HarvestBatchDetailPage() {
                                 <div className='mb-3 grid grid-cols-2 gap-3'>
                                   <div className='rounded-lg border bg-gray-50 p-3'>
                                     <p className='text-muted-foreground text-xs'>
-                                      Khối lượng
+                                      {t('detail.phases.quantity')}
                                     </p>
                                     <p className='text-lg font-semibold'>
                                       {totalPhaseQuantity} kg
@@ -627,7 +676,7 @@ export default function HarvestBatchDetailPage() {
                                   </div>
                                   <div className='rounded-lg border bg-gray-50 p-3'>
                                     <p className='text-muted-foreground text-xs'>
-                                      Giá trị
+                                      {t('detail.phases.amount')}
                                     </p>
                                     <p className='text-lg font-semibold'>
                                       {formatCurrency(totalPhaseAmount)}
@@ -639,7 +688,7 @@ export default function HarvestBatchDetailPage() {
                                   phase.harvestInvoiceDetails.length > 0 && (
                                     <div className='rounded-md border bg-white p-3'>
                                       <p className='text-muted-foreground mb-2 text-sm font-medium'>
-                                        Sản phẩm:
+                                        {t('detail.phases.productsLabel')}
                                       </p>
                                       <div className='space-y-2'>
                                         {phase.harvestInvoiceDetails.map(
@@ -650,7 +699,9 @@ export default function HarvestBatchDetailPage() {
                                             >
                                               <span className='font-medium'>
                                                 {detail.product?.name ||
-                                                  'Unknown'}
+                                                  t(
+                                                    'detail.products.unknownProduct'
+                                                  )}
                                               </span>
                                               <span className='text-muted-foreground'>
                                                 {detail.quantity} {detail.unit}{' '}
@@ -668,9 +719,13 @@ export default function HarvestBatchDetailPage() {
                                             <div className='border-t pt-2'>
                                               <div className='flex items-center justify-between text-sm'>
                                                 <span className='text-muted-foreground'>
-                                                  Thuế (
-                                                  {phase.harvestInvoice.taxRate}
-                                                  %):
+                                                  {t(
+                                                    'detail.phases.taxWithRate',
+                                                    {
+                                                      rate: phase.harvestInvoice
+                                                        .taxRate
+                                                    }
+                                                  )}
                                                 </span>
                                                 <span className='text-muted-foreground'>
                                                   {formatCurrency(
@@ -705,10 +760,10 @@ export default function HarvestBatchDetailPage() {
                     <CardContent className='py-12 text-center'>
                       <IconClock className='text-muted-foreground mx-auto mb-3 h-12 w-12' />
                       <h3 className='mb-2 text-lg font-semibold'>
-                        Chưa có đợt thu hoạch
+                        {t('detail.phases.emptyTitle')}
                       </h3>
                       <p className='text-muted-foreground text-sm'>
-                        Các đợt thu hoạch sẽ xuất hiện sau khi được tạo
+                        {t('detail.phases.emptyDescription')}
                       </p>
                     </CardContent>
                   </Card>
@@ -721,14 +776,14 @@ export default function HarvestBatchDetailPage() {
                   <CardHeader>
                     <CardTitle className='flex items-center gap-2'>
                       <IconPackage className='h-5 w-5' />
-                      Thông tin sản phẩm
+                      {t('detail.products.title')}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className='space-y-4'>
                     <div className='grid grid-cols-2 gap-4'>
                       <div>
                         <p className='text-muted-foreground text-sm'>
-                          Total Quantity
+                          {t('detail.products.totalQuantity')}
                         </p>
                         <p className='font-medium'>
                           {loading ? '...' : totalQuantity}
@@ -736,7 +791,7 @@ export default function HarvestBatchDetailPage() {
                       </div>
                       <div>
                         <p className='text-muted-foreground text-sm'>
-                          Total Price
+                          {t('detail.products.totalPrice')}
                         </p>
                         <p className='text-lg font-bold'>
                           {loading ? '...' : formatCurrency(totalPrice)}
@@ -747,14 +802,16 @@ export default function HarvestBatchDetailPage() {
                     {details.length > 0 && (
                       <div className='border-t pt-4'>
                         <p className='text-muted-foreground mb-3 text-sm'>
-                          Products
+                          {t('detail.products.listLabel')}
                         </p>
                         <div className='rounded-md border text-sm'>
                           <div className='bg-muted text-muted-foreground grid grid-cols-5 gap-2 border-b px-3 py-2 text-xs font-medium tracking-wide uppercase'>
-                            <span className='col-span-2'>Product</span>
-                            <span>Quantity</span>
-                            <span>Unit</span>
-                            <span>Unit Price</span>
+                            <span className='col-span-2'>
+                              {t('detail.products.table.product')}
+                            </span>
+                            <span>{t('detail.products.table.quantity')}</span>
+                            <span>{t('detail.products.table.unit')}</span>
+                            <span>{t('detail.products.table.unitPrice')}</span>
                           </div>
                           {details.map((product) => (
                             <div
@@ -794,19 +851,21 @@ export default function HarvestBatchDetailPage() {
           <div className='space-y-6'>
             <Card>
               <CardHeader>
-                <CardTitle>Tổng quan</CardTitle>
-                <CardDescription>Thống kê lô thu hoạch</CardDescription>
+                <CardTitle>{t('detail.sidebar.overviewTitle')}</CardTitle>
+                <CardDescription>
+                  {t('detail.sidebar.overviewDescription')}
+                </CardDescription>
               </CardHeader>
               <CardContent className='space-y-4'>
                 <div className='rounded-lg border p-3'>
                   <p className='text-muted-foreground mb-1 text-sm'>
-                    Tổng khối lượng
+                    {t('detail.sidebar.totalQuantity')}
                   </p>
                   <p className='text-2xl font-bold'>{totalQuantity} kg</p>
                 </div>
                 <div className='rounded-lg border p-3'>
                   <p className='text-muted-foreground mb-1 text-sm'>
-                    Tổng giá trị (Chưa thuế)
+                    {t('detail.sidebar.totalPriceBeforeTax')}
                   </p>
                   <p className='text-2xl font-bold'>
                     {formatCurrency(totalPrice)}
@@ -814,13 +873,13 @@ export default function HarvestBatchDetailPage() {
                 </div>
                 <div className='rounded-lg border p-3'>
                   <p className='text-muted-foreground mb-1 text-sm'>
-                    Số sản phẩm
+                    {t('detail.sidebar.productsCount')}
                   </p>
                   <p className='text-2xl font-bold'>{details.length}</p>
                 </div>
                 <div className='rounded-lg border p-3'>
                   <p className='text-muted-foreground mb-1 text-sm'>
-                    Số đợt thu hoạch
+                    {t('detail.sidebar.phasesCount')}
                   </p>
                   <p className='text-2xl font-bold'>{phases.length}</p>
                 </div>
@@ -829,23 +888,29 @@ export default function HarvestBatchDetailPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Thông tin bổ sung</CardTitle>
+                <CardTitle>{t('detail.extra.title')}</CardTitle>
               </CardHeader>
               <CardContent className='space-y-3 text-sm'>
                 <div>
-                  <p className='text-muted-foreground'>Ngày tạo</p>
+                  <p className='text-muted-foreground'>
+                    {t('detail.extra.createdAt')}
+                  </p>
                   <p className='font-medium'>{createdDate}</p>
                 </div>
                 <Separator />
                 <div>
-                  <p className='text-muted-foreground'>Cập nhật lần cuối</p>
+                  <p className='text-muted-foreground'>
+                    {t('detail.extra.updatedAt')}
+                  </p>
                   <p className='font-medium'>{updatedDate}</p>
                 </div>
                 {schedule.supplier && (
                   <>
                     <Separator />
                     <div>
-                      <p className='text-muted-foreground'>Nhà cung cấp</p>
+                      <p className='text-muted-foreground'>
+                        {t('detail.extra.supplier')}
+                      </p>
                       <p className='font-medium'>
                         {schedule.supplier.gardenName || 'N/A'}
                       </p>
@@ -857,13 +922,13 @@ export default function HarvestBatchDetailPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Thao tác nhanh</CardTitle>
+                <CardTitle>{t('detail.quickActions.title')}</CardTitle>
               </CardHeader>
               <CardContent className='space-y-2'>
                 <Link href='/supplier/harvest-batches' className='block w-full'>
                   <Button variant='outline' className='w-full justify-start'>
                     <IconPackage className='mr-2 h-4 w-4' />
-                    Xem tất cả lô hàng
+                    {t('detail.quickActions.viewAllBatches')}
                   </Button>
                 </Link>
                 <Link
@@ -872,7 +937,7 @@ export default function HarvestBatchDetailPage() {
                 >
                   <Button variant='outline' className='w-full justify-start'>
                     <IconPackage className='mr-2 h-4 w-4' />
-                    Tạo lô hàng mới
+                    {t('detail.quickActions.createNewBatch')}
                   </Button>
                 </Link>
               </CardContent>

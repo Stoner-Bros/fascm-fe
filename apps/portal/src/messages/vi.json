@@ -337,6 +337,95 @@
       "description": "Thao tác này sẽ hủy lô thu hoạch {id}. Hành động này không thể hoàn tác.",
       "keep": "Không, giữ lại",
       "confirm": "Có, hủy lô"
+    },
+    "phaseStatuses": {
+      "preparing": "Đang chuẩn bị",
+      "delivering": "Đang giao hàng",
+      "delivered": "Đã giao hàng",
+      "completed": "Hoàn thành",
+      "canceled": "Đã hủy"
+    },
+    "detail": {
+      "title": "Chi tiết lô thu hoạch",
+      "id": "ID",
+      "loading": "Đang tải chi tiết lô thu hoạch...",
+      "notFound": {
+        "title": "Không tìm thấy lô thu hoạch",
+        "description": "Không thể tìm thấy lô thu hoạch được yêu cầu.",
+        "backButton": "Về danh sách lô"
+      },
+      "statusBanner": {
+        "lastUpdated": "Cập nhật lần cuối: {date}",
+        "rejectionReasonTitle": "Lý do từ chối:"
+      },
+      "tabs": {
+        "overview": "Tổng quan",
+        "phases": "Đợt ({count})",
+        "products": "Sản phẩm"
+      },
+      "overview": {
+        "title": "Thông tin thu hoạch",
+        "description": "Chi tiết thời gian và địa điểm thu hoạch",
+        "harvestDate": "Ngày thu hoạch",
+        "location": "Địa điểm",
+        "harvestAddress": "Địa chỉ thu hoạch",
+        "notes": "Ghi chú"
+      },
+      "phases": {
+        "phaseLabel": "Đợt {number}",
+        "trackingTitle": "Theo dõi vận chuyển",
+        "cargo": "Khối lượng {quantity} kg",
+        "startAddressDefault": "Kho Nhà Cung Cấp",
+        "quantity": "Khối lượng",
+        "amount": "Giá trị",
+        "productsLabel": "Sản phẩm:",
+        "taxWithRate": "Thuế ({rate}%):",
+        "emptyTitle": "Chưa có đợt thu hoạch",
+        "emptyDescription": "Các đợt thu hoạch sẽ xuất hiện sau khi được tạo"
+      },
+      "products": {
+        "title": "Thông tin sản phẩm",
+        "totalQuantity": "Tổng khối lượng",
+        "totalPrice": "Tổng giá trị",
+        "listLabel": "Sản phẩm",
+        "table": {
+          "product": "Sản phẩm",
+          "quantity": "Số lượng",
+          "unit": "Đơn vị",
+          "unitPrice": "Đơn giá"
+        },
+        "unknownProduct": "Không xác định"
+      },
+      "sidebar": {
+        "overviewTitle": "Tổng quan",
+        "overviewDescription": "Thống kê lô thu hoạch",
+        "totalQuantity": "Tổng khối lượng",
+        "totalPriceBeforeTax": "Tổng giá trị (Chưa thuế)",
+        "productsCount": "Số sản phẩm",
+        "phasesCount": "Số đợt thu hoạch"
+      },
+      "extra": {
+        "title": "Thông tin bổ sung",
+        "createdAt": "Ngày tạo",
+        "updatedAt": "Cập nhật lần cuối",
+        "supplier": "Nhà cung cấp"
+      },
+      "quickActions": {
+        "title": "Thao tác nhanh",
+        "viewAllBatches": "Xem tất cả lô hàng",
+        "createNewBatch": "Tạo lô hàng mới"
+      },
+      "buttons": {
+        "edit": "Chỉnh sửa",
+        "cancelBatch": "Hủy đơn",
+        "no": "Không",
+        "confirmCancel": "Xác nhận hủy"
+      },
+      "toast": {
+        "errorTitle": "Lỗi",
+        "errorLoadDetails": "Không thể tải chi tiết lô thu hoạch",
+        "cancelErrorDescription": "Không thể hủy lô thu hoạch {id}."
+      }
     }
   },
   "Sidebar": {
@@ -584,7 +673,23 @@
   "Notifications": {
     "defaultTitle": "Thông báo",
     "defaultMessage": "",
+    "harvestScheduleApproved": "Đã duyệt lịch thu hoạch",
+    "harvestScheduleHasBeenApproved": "Lịch thu hoạch {harvestScheduleId} đã được duyệt",
     "orderScheduleApproved": "Đã duyệt đơn",
-    "orderScheduleHasBeenApproved": "Lịch đặt hàng {orderScheduleId} đã được duyệt"
+    "orderScheduleHasBeenApproved": "Lịch đặt hàng {orderScheduleId} đã được duyệt",
+    "orderScheduleCompleted": "Đã hoàn thành đơn",
+    "orderScheduleHasBeenCompleted": "Lịch đặt hàng {orderScheduleId} đã hoàn thành",
+    "orderScheduleCanceled": "Đã hủy đơn",
+    "orderScheduleHasBeenCanceled": "Lịch đặt hàng {orderScheduleId} đã bị hủy",
+    "orderScheduleRejected": "Đã từ chối đơn",
+    "orderScheduleHasBeenRejected": "Lịch đặt hàng {orderScheduleId} đã bị từ chối",
+    "ui": {
+      "title": "Thông báo",
+      "loading": "Đang tải…",
+      "empty": "Không có thông báo",
+      "markRead": "Đã đọc",
+      "loadMore": "Tải thêm",
+      "close": "Đóng"
+    }
   }
 }

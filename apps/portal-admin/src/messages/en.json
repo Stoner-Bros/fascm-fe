@@ -421,5 +421,27 @@
         "back": "Go Back"
       }
     }
+  },
+  "Notifications": {
+    "defaultTitle": "Notification",
+    "defaultMessage": "",
+    "ui": {
+      "title": "Notifications",
+      "loading": "Loading…",
+      "empty": "No notifications",
+      "markRead": "Mark as read",
+      "loadMore": "Load more",
+      "close": "Close"
+    },
+    "orderScheduleApproved": "Order Approved",
+    "harvestScheduleApproved": "Harvest Approved",
+    "orderScheduleHasBeenApproved": "Order schedule {orderScheduleId} has been approved",
+    "harvestScheduleHasBeenApproved": "Harvest schedule {harvestScheduleId} has been approved",
+    "orderScheduleCompleted": "Order Completed",
+    "orderScheduleHasBeenCompleted": "Order schedule {orderScheduleId} has been completed",
+    "orderScheduleCanceled": "Order Canceled",
+    "orderScheduleHasBeenCanceled": "Order schedule {orderScheduleId} has been canceled",
+    "orderScheduleRejected": "Order Rejected",
+    "orderScheduleHasBeenRejected": "Order schedule {orderScheduleId} has been rejected"
   }
 }

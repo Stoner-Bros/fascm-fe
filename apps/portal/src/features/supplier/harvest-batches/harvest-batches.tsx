@@ -63,6 +63,7 @@ import {
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 type HarvestBatchRow = {
   id: string;
@@ -121,24 +122,25 @@ const getStatusLabel = (status: string) => {
   const s = normalizeStatus(status);
   switch (s) {
     case 'pending':
-      return 'Chờ duyệt đơn';
+      return 'statuses.pending';
     case 'rejected':
-      return 'Đã từ chối đơn';
+      return 'statuses.rejected';
     case 'approved':
-      return 'Đã duyệt đơn';
+      return 'statuses.approved';
     case 'processing':
-      return 'Đang xử lý';
+      return 'statuses.inProgress';
     case 'completed':
-      return 'Đã hoàn thành';
+      return 'statuses.completed';
     case 'canceled':
-      return 'Đã hủy đơn';
+      return 'statuses.cancelled';
     default:
-      return status || 'Unknown';
+      return 'statuses.unknown';
   }
 };
 
 export default function SupplierHarvestBatchesFeature() {
   const { toast } = useToast();
+  const t = useTranslations('SupplierHarvestBatches');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<
@@ -184,7 +186,8 @@ export default function SupplierHarvestBatchesFeature() {
             }
           }
 
-          const products = Array.from(productNames).join(', ') || 'No products';
+          const products =
+            Array.from(productNames).join(', ') || t('table.noProducts');
 
           const harvestDate = schedule.harvestDate
             ? new Date(
@@ -209,8 +212,8 @@ export default function SupplierHarvestBatchesFeature() {
       } catch (err) {
         if (cancelled) return;
         toast({
-          title: 'Error',
-          description: 'Failed to load harvest batches',
+          title: t('toast.errorTitle'),
+          description: t('toast.errorDescription'),
           variant: 'destructive'
         });
       } finally {
@@ -244,14 +247,14 @@ export default function SupplierHarvestBatchesFeature() {
             )
           );
           toast({
-            title: 'Batch Cancelled',
-            description: `Harvest batch ${selectedBatchId} has been cancelled.`
+            title: t('toast.cancelTitle'),
+            description: t('toast.cancelDescription', { id: selectedBatchId })
           });
         })
         .catch(() => {
           toast({
-            title: 'Error',
-            description: `Failed to cancel harvest batch ${selectedBatchId}.`,
+            title: t('toast.errorTitle'),
+            description: t('toast.errorDescription'),
             variant: 'destructive'
           });
         });
@@ -302,16 +305,14 @@ export default function SupplierHarvestBatchesFeature() {
         <div className='flex items-center justify-between'>
           <div>
             <h2 className='text-3xl font-bold tracking-tight'>
-              Harvest Batches
+              {t('header.title')}
             </h2>
-            <p className='text-muted-foreground'>
-              Manage and track your harvest batches
-            </p>
+            <p className='text-muted-foreground'>{t('header.subtitle')}</p>
           </div>
           <Link href='/supplier/harvest-batches/new'>
             <Button>
               <IconPlus className='mr-2 h-4 w-4' />
-              New Batch
+              {t('header.newBatch')}
             </Button>
           </Link>
         </div>
@@ -323,7 +324,7 @@ export default function SupplierHarvestBatchesFeature() {
             onClick={() => setStatusFilter('ALL')}
           >
             <CardHeader className='pb-3'>
-              <CardDescription>Total Batches</CardDescription>
+              <CardDescription>{t('cards.total')}</CardDescription>
               <CardTitle className='text-3xl'>
                 {loading ? (
                   <div className='bg-muted h-8 w-16 animate-pulse rounded' />
@@ -340,7 +341,7 @@ export default function SupplierHarvestBatchesFeature() {
             <CardHeader className='pb-3'>
               <CardDescription className='flex items-center gap-2'>
                 <IconClock className='h-4 w-4' />
-                Chờ duyệt đơn
+                {t('statuses.pending')}
               </CardDescription>
               <CardTitle className='text-3xl'>
                 {loading ? (
@@ -358,7 +359,7 @@ export default function SupplierHarvestBatchesFeature() {
             <CardHeader className='pb-3'>
               <CardDescription className='flex items-center gap-2'>
                 <IconCheck className='h-4 w-4' />
-                Đã duyệt đơn
+                {t('statuses.approved')}
               </CardDescription>
               <CardTitle className='text-3xl'>
                 {loading ? (
@@ -376,7 +377,7 @@ export default function SupplierHarvestBatchesFeature() {
             <CardHeader className='pb-3'>
               <CardDescription className='flex items-center gap-2'>
                 <IconCheck className='h-4 w-4' />
-                Đã hoàn thành
+                {t('statuses.completed')}
               </CardDescription>
               <CardTitle className='text-3xl'>
                 {loading ? (
@@ -397,7 +398,7 @@ export default function SupplierHarvestBatchesFeature() {
                 <div className='relative flex-1'>
                   <IconSearch className='text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4' />
                   <Input
-                    placeholder='Search by Schedule ID or product...'
+                    placeholder={t('filters.searchPlaceholder')}
                     className='pl-8'
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -419,16 +420,30 @@ export default function SupplierHarvestBatchesFeature() {
                   }
                 >
                   <SelectTrigger className='w-[180px]'>
-                    <SelectValue placeholder='Filter by status' />
+                    <SelectValue placeholder={t('filters.statusPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='ALL'>Tất cả trạng thái</SelectItem>
-                    <SelectItem value='pending'>Chờ duyệt đơn</SelectItem>
-                    <SelectItem value='rejected'>Đã từ chối đơn</SelectItem>
-                    <SelectItem value='approved'>Đã duyệt đơn</SelectItem>
-                    <SelectItem value='processing'>Đang xử lý</SelectItem>
-                    <SelectItem value='completed'>Đã hoàn thành</SelectItem>
-                    <SelectItem value='canceled'>Đã hủy đơn</SelectItem>
+                    <SelectItem value='ALL'>
+                      {t('filters.allStatus')}
+                    </SelectItem>
+                    <SelectItem value='pending'>
+                      {t('statuses.pending')}
+                    </SelectItem>
+                    <SelectItem value='rejected'>
+                      {t('statuses.rejected')}
+                    </SelectItem>
+                    <SelectItem value='approved'>
+                      {t('statuses.approved')}
+                    </SelectItem>
+                    <SelectItem value='processing'>
+                      {t('statuses.inProgress')}
+                    </SelectItem>
+                    <SelectItem value='completed'>
+                      {t('statuses.completed')}
+                    </SelectItem>
+                    <SelectItem value='canceled'>
+                      {t('statuses.cancelled')}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -439,12 +454,14 @@ export default function SupplierHarvestBatchesFeature() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Schedule</TableHead>
-                    <TableHead>Product(s)</TableHead>
-                    <TableHead>Harvest Date</TableHead>
-                    <TableHead>Location</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className='text-right'>Actions</TableHead>
+                    <TableHead>{t('table.id')}</TableHead>
+                    <TableHead>{t('table.products')}</TableHead>
+                    <TableHead>{t('table.harvestDate')}</TableHead>
+                    <TableHead>{t('table.location')}</TableHead>
+                    <TableHead>{t('table.status')}</TableHead>
+                    <TableHead className='text-right'>
+                      {t('table.actions')}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -454,7 +471,7 @@ export default function SupplierHarvestBatchesFeature() {
                         <div className='flex flex-col items-center justify-center py-12'>
                           <div className='border-primary mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
                           <p className='text-muted-foreground'>
-                            Loading harvest batches...
+                            {t('table.loading')}
                           </p>
                         </div>
                       </TableCell>
@@ -462,7 +479,7 @@ export default function SupplierHarvestBatchesFeature() {
                   ) : filteredBatches.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className='text-center'>
-                        No harvest batches found
+                        {t('table.empty')}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -480,18 +497,20 @@ export default function SupplierHarvestBatchesFeature() {
                             className='flex w-fit items-center gap-1'
                           >
                             {getStatusIcon(batch.status)}
-                            {getStatusLabel(batch.status)}
+                            {t(getStatusLabel(batch.status))}
                           </Badge>
                         </TableCell>
                         <TableCell className='text-right'>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant='ghost' size='sm'>
-                                Actions
+                                {t('actionsMenu.trigger')}
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align='end'>
-                              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                              <DropdownMenuLabel>
+                                {t('actionsMenu.label')}
+                              </DropdownMenuLabel>
                               <DropdownMenuSeparator />
                               <DropdownMenuItem asChild>
                                 <Link
@@ -499,7 +518,7 @@ export default function SupplierHarvestBatchesFeature() {
                                   className='flex items-center'
                                 >
                                   <IconEye className='mr-2 h-4 w-4' />
-                                  View Details
+                                  {t('actionsMenu.viewDetails')}
                                 </Link>
                               </DropdownMenuItem>
                               {normalizeStatus(batch.status) === 'pending' && (
@@ -510,7 +529,7 @@ export default function SupplierHarvestBatchesFeature() {
                                       className='flex items-center'
                                     >
                                       <IconEdit className='mr-2 h-4 w-4' />
-                                      Edit
+                                      {t('actionsMenu.edit')}
                                     </Link>
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
@@ -518,7 +537,7 @@ export default function SupplierHarvestBatchesFeature() {
                                     className='text-destructive'
                                   >
                                     <IconX className='mr-2 h-4 w-4 text-red-500' />
-                                    Cancel Batch
+                                    {t('actionsMenu.cancelBatch')}
                                   </DropdownMenuItem>
                                 </>
                               )}
@@ -527,18 +546,17 @@ export default function SupplierHarvestBatchesFeature() {
                                   onClick={() => {
                                     // Sử dụng reason từ dữ liệu đã load
                                     const reason =
-                                      batch.reason ||
-                                      'Không có lý do được cung cấp.';
+                                      batch.reason || t('reason.default');
 
                                     toast({
-                                      title: 'Lý do từ chối',
+                                      title: t('reason.title'),
                                       description: reason,
                                       variant: 'default'
                                     });
                                   }}
                                 >
                                   <IconInfoCircle className='mr-2 h-4 w-4' />
-                                  Xem lý do từ chối
+                                  {t('actionsMenu.viewReason')}
                                 </DropdownMenuItem>
                               )}
                             </DropdownMenuContent>
@@ -558,16 +576,15 @@ export default function SupplierHarvestBatchesFeature() {
       <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Cancel Harvest Batch?</AlertDialogTitle>
+            <AlertDialogTitle>{t('dialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This action will cancel the harvest batch{' '}
-              <strong>{selectedBatchId}</strong>. This cannot be undone.
+              {t('dialog.description', { id: selectedBatchId ?? '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>No, Keep It</AlertDialogCancel>
+            <AlertDialogCancel>{t('dialog.keep')}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmCancelBatch}>
-              Yes, Cancel Batch
+              {t('dialog.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
