@@ -147,6 +147,6 @@ export function getPhaseStatusBadge(
         </Badge>
       );
     default:
-      return <Badge variant='outline'>-</Badge>;
+      return <Badge variant='outline'>Đợi xử lý</Badge>;
   }
 }

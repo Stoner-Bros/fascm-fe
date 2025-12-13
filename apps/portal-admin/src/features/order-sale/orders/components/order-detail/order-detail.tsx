@@ -1,47 +1,45 @@
 'use client';
 
 import PageContainer from '@/components/layout/page-container';
-import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { createOrderPhase } from '@/services/order-phase.service';
 import type { CreateOrderInvoiceDetailDto } from '@/types/order';
 import { Package, Truck } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
-import { CreatePhaseDialog } from './create-phase-modal';
-import { EmptyState } from './empty-state';
 import { LoadingState } from '../../../../../components/loading-state';
-import { OrderDetailsTable } from './order-details-table';
-import { OrderHeader } from './order-header';
-import { OrderInfoCard } from './order-info-card';
-import { OrderStatusStepper } from './order-status-stepper';
-import { PhasesList } from './phases-list';
-import { RejectDialog } from './reject-dialog';
 import {
   useOrderDetail,
-  useOrderStatusActions,
-  usePhaseActions
+  useOrderStatusActions
 } from '../../hooks/order-detail/use-order-detail';
 import { usePhaseForm } from '../../hooks/order-detail/use-phase-form';
 import {
   calculateScheduleTotals,
   hasRemainingQuantity
 } from '../../utils/calculations';
+import { CreatePhaseDialog } from './create-phase-modal';
+import { EmptyState } from './empty-state';
+import { OrderDetailsTable } from './order-details-table';
+import { OrderHeader } from './order-header';
+import { OrderInfoCard } from './order-info-card';
+import { OrderStatusStepper } from './order-status-stepper';
+import { PhasesList } from './phases-list';
+import { RejectDialog } from './reject-dialog';
 
 export default function OrderDetail({ scheduleId }: { scheduleId: string }) {
-  const { toast } = useToast();
   const t = useTranslations('Orders.detail');
-  const { schedule, phases, loading, refetch } = useOrderDetail(scheduleId);
+  const { schedule, phases, loading, fetchSchedule, fetchPhases } =
+    useOrderDetail(scheduleId);
   const [showRejectDialog, setShowRejectDialog] = useState(false);
   const [showPhaseDialog, setShowPhaseDialog] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
 
   const { approve, reject, complete, updating } = useOrderStatusActions(
     schedule,
-    refetch
+    () => {
+      fetchSchedule();
+      fetchPhases();
+    }
   );
-
-  const { confirmDelivery, updatingPhaseId } = usePhaseActions(refetch);
 
   // Initialize phase form
   const initialDetails: CreateOrderInvoiceDetailDto[] =
@@ -52,9 +50,20 @@ export default function OrderDetail({ scheduleId }: { scheduleId: string }) {
       unit: detail.unit || ''
     })) || [];
 
-  const { phaseData, updatePhaseData, updateQuantity, reset } = usePhaseForm(
+  const {
+    phaseData,
+    updatePhaseData,
+    updateQuantity,
+    reset,
+    handleCreatePhase,
+    loading: createPhaseLoading
+  } = usePhaseForm(
     initialDetails,
-    phases.length + 1
+    phases.length + 1,
+    schedule,
+    phases,
+    setShowPhaseDialog,
+    fetchPhases
   );
 
   // Reset phase form when schedule changes
@@ -80,67 +89,6 @@ export default function OrderDetail({ scheduleId }: { scheduleId: string }) {
     await reject(rejectReason);
     setShowRejectDialog(false);
     setRejectReason('');
-  };
-
-  const handleCreatePhase = async () => {
-    if (!schedule) return;
-
-    // Validate invoice details
-    const validDetails = phaseData.invoiceDetails.filter(
-      (d) => d.quantity && d.quantity > 0
-    );
-    if (validDetails.length === 0) {
-      toast({
-        title: t('toast.error'),
-        description: t('toast.errorPhaseValidation'),
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    // Calculate total amount with tax
-    const subtotal = validDetails.reduce((sum, detail) => {
-      return sum + detail.quantity! * (detail.unitPrice || 0);
-    }, 0);
-    const totalAmount = subtotal * (1 + phaseData.taxRate / 100);
-
-    try {
-      await createOrderPhase({
-        description:
-          phaseData.description ||
-          `${t('phases.phase')} ${phaseData.phaseNumber}`,
-        phaseNumber: phaseData.phaseNumber,
-        orderSchedule: { id: schedule.id },
-        orderInvoice: {
-          totalAmount,
-          taxRate: phaseData.taxRate
-        },
-        orderInvoiceDetails: validDetails
-      });
-
-      setShowPhaseDialog(false);
-      // Reset phase form
-      const newDetails: CreateOrderInvoiceDetailDto[] =
-        schedule.orderDetails!.map((detail) => ({
-          product: { id: detail.product!.id },
-          quantity: 0,
-          unitPrice: detail.unitPrice || 0,
-          unit: detail.unit || ''
-        }));
-      reset(newDetails, phases.length + 2);
-
-      toast({
-        title: t('toast.success'),
-        description: t('toast.successCreatePhase')
-      });
-      await refetch();
-    } catch (error: any) {
-      toast({
-        title: t('toast.error'),
-        description: error.details?.message || t('toast.errorCreatePhase'),
-        variant: 'destructive'
-      });
-    }
   };
 
   if (loading) {
@@ -202,11 +150,7 @@ export default function OrderDetail({ scheduleId }: { scheduleId: string }) {
 
           {/* Phases Tab */}
           <TabsContent value='phases' className='mt-6'>
-            <PhasesList
-              phases={phases}
-              onConfirmDelivery={confirmDelivery}
-              updatingPhaseId={updatingPhaseId}
-            />
+            <PhasesList phases={phases} />
           </TabsContent>
         </Tabs>
 
@@ -225,10 +169,11 @@ export default function OrderDetail({ scheduleId }: { scheduleId: string }) {
           schedule={schedule}
           totals={totals}
           phaseData={phaseData}
+          phaseNumber={phases.length + 1}
           onPhaseDataChange={updatePhaseData}
           onQuantityChange={updateQuantity}
           onCreate={handleCreatePhase}
-          loading={updating}
+          loading={createPhaseLoading}
         />
       </div>
     </PageContainer>

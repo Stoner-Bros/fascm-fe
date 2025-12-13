@@ -80,7 +80,7 @@ function getStatusBadge(status?: HarvestScheduleStatus | null) {
   }
 }
 
-export default function HarvestSchedulesPage() {
+export default function OrderPurchasePage() {
   const [schedules, setSchedules] = useState<HarvestSchedule[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);

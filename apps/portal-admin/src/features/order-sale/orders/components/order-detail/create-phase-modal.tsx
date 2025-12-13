@@ -15,7 +15,7 @@ import { Textarea } from '@/components/ui/textarea';
 import type { OrderSchedule } from '@/types/order';
 import { Minus, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { PhaseFormData } from '../../hooks/order-detail/use-phase-form';
 import type { ProductTotals } from '../../utils/calculations';
 import { formatCurrency } from '../../utils/formatting';
@@ -25,6 +25,7 @@ interface CreatePhaseDialogProps {
   schedule: OrderSchedule;
   totals: ProductTotals;
   phaseData: PhaseFormData;
+  phaseNumber: number;
   onPhaseDataChange: (updates: Partial<PhaseFormData>) => void;
   onQuantityChange: (productId: string, quantity: number) => void;
   onCreate: () => void;
@@ -37,11 +38,24 @@ export function CreatePhaseDialog({
   schedule,
   totals,
   phaseData,
+  phaseNumber,
   onPhaseDataChange,
   onQuantityChange,
   onCreate,
   loading
 }: CreatePhaseDialogProps) {
+  // Calculate next phase number based on existing phases count
+  const nextPhaseNumber = useMemo(() => {
+    return phaseNumber;
+  }, [phaseNumber]);
+
+  // Sync phase number when it changes
+  useEffect(() => {
+    if (phaseData.phaseNumber !== nextPhaseNumber) {
+      onPhaseDataChange({ phaseNumber: nextPhaseNumber });
+    }
+  }, [nextPhaseNumber, phaseData.phaseNumber, onPhaseDataChange]);
+
   // Calculate totals in real-time
   const calculatedTotals = useMemo(() => {
     const validDetails = phaseData.invoiceDetails.filter(
@@ -102,14 +116,11 @@ export function CreatePhaseDialog({
           <Input
             id='phaseNumber'
             type='number'
-            value={phaseData.phaseNumber}
-            onChange={(e) =>
-              onPhaseDataChange({
-                phaseNumber: parseInt(e.target.value) || 1
-              })
-            }
+            value={nextPhaseNumber}
             className='mt-2'
             min={1}
+            disabled
+            readOnly
           />
           <p className='text-muted-foreground mt-1 text-xs'>
             {t('phaseNumberHelper')}

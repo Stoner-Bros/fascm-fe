@@ -17,24 +17,38 @@ export function useOrderDetail(scheduleId: string) {
   const [schedule, setSchedule] = useState<OrderSchedule | null>(null);
   const [phases, setPhases] = useState<OrderPhase[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingPhases, setLoadingPhases] = useState(false);
 
-  const loadData = async () => {
-    setLoading(true);
+  const fetchPhases = async () => {
+    setLoadingPhases(true);
     try {
-      const [scheduleData, phasesData] = await Promise.all([
-        fetchOrderScheduleById(scheduleId),
-        fetchOrderPhasesBySchedule({
-          orderScheduleId: scheduleId,
-          limit: 50
-        })
-      ]);
-      setSchedule(scheduleData);
+      const phasesData = await fetchOrderPhasesBySchedule({
+        orderScheduleId: scheduleId,
+        limit: 50
+      });
       setPhases(phasesData.data);
     } catch (error) {
-      console.error('Failed to load data:', error);
+      console.error('Failed to fetch phases:', error);
       toast({
         title: t('error'),
-        description: t('errorLoad'),
+        description: t('errorFetchPhases'),
+        variant: 'destructive'
+      });
+    } finally {
+      setLoadingPhases(false);
+    }
+  };
+
+  const fetchSchedule = async () => {
+    setLoading(true);
+    try {
+      const scheduleData = await fetchOrderScheduleById(scheduleId);
+      setSchedule(scheduleData);
+    } catch (error) {
+      console.error('Failed to fetch schedule:', error);
+      toast({
+        title: t('error'),
+        description: t('errorFetchSchedule'),
         variant: 'destructive'
       });
     } finally {
@@ -43,7 +57,8 @@ export function useOrderDetail(scheduleId: string) {
   };
 
   useEffect(() => {
-    loadData();
+    fetchSchedule();
+    fetchPhases();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scheduleId]);
 
@@ -51,7 +66,9 @@ export function useOrderDetail(scheduleId: string) {
     schedule,
     phases,
     loading,
-    refetch: loadData
+    fetchPhases,
+    fetchSchedule,
+    loadingPhases
   };
 }
 

@@ -505,7 +505,7 @@ export default function OrderList() {
                             <DropdownMenuContent align='end'>
                               <DropdownMenuItem asChild>
                                 <Link
-                                  href={`/dashboard/order-management/order/${schedule.id}`}
+                                  href={`/dashboard/order-sale/order/${schedule.id}`}
                                   className='hover:border-primary flex cursor-pointer items-center hover:bg-transparent'
                                 >
                                   <Eye className='mr-2 h-4 w-4' />
