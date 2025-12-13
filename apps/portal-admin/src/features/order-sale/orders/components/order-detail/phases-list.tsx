@@ -5,19 +5,20 @@ import { PhaseCard } from './phase-card';
 
 interface PhasesListProps {
   phases: OrderPhase[];
-  onConfirmDelivery?: (phaseId: string) => void;
-  updatingPhaseId?: string | null;
 }
 
-export function PhasesList({
-  phases,
-  onConfirmDelivery,
-  updatingPhaseId
-}: PhasesListProps) {
+export function PhasesList({ phases }: PhasesListProps) {
   const t = useTranslations('Orders.detail.phases');
   if (phases.length === 0) {
     return null;
   }
+
+  // Sort phases by phaseNumber in descending order
+  const sortedPhases = [...phases].sort((a, b) => {
+    const aPhaseNumber = a.phaseNumber || 0;
+    const bPhaseNumber = b.phaseNumber || 0;
+    return bPhaseNumber - aPhaseNumber;
+  });
 
   return (
     <Card>
@@ -28,13 +29,8 @@ export function PhasesList({
         </p>
       </CardHeader>
       <CardContent className='space-y-4'>
-        {phases.map((phase) => (
-          <PhaseCard
-            key={phase.id}
-            phase={phase}
-            onConfirmDelivery={onConfirmDelivery}
-            updatingPhaseId={updatingPhaseId}
-          />
+        {sortedPhases.map((phase) => (
+          <PhaseCard key={phase.id} phase={phase} />
         ))}
       </CardContent>
     </Card>

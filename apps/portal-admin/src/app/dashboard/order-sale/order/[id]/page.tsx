@@ -1,6 +1,6 @@
 'use client';
 
-import { OrderDetail } from '@/features/order-management/orders/components/order-detail';
+import { OrderDetail } from '@/features/order-sale/orders/components/order-detail';
 import { useParams } from 'next/navigation';
 
 export default function OrderDetailPage() {

@@ -1,4 +1,3 @@
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
@@ -15,15 +14,9 @@ import { getPhaseStatusBadge } from '../../utils/status-badges';
 
 interface PhaseCardProps {
   phase: OrderPhase;
-  onConfirmDelivery?: (phaseId: string) => void;
-  updatingPhaseId?: string | null;
 }
 
-export function PhaseCard({
-  phase,
-  onConfirmDelivery,
-  updatingPhaseId
-}: PhaseCardProps) {
+export function PhaseCard({ phase }: PhaseCardProps) {
   const t = useTranslations('Orders.detail.phases');
   const subtotal =
     phase.orderInvoiceDetails?.reduce(
@@ -54,15 +47,6 @@ export function PhaseCard({
           <div className='flex items-center gap-2'>
             {getPhaseStatusBadge(phase.status, (key) =>
               t(`statuses.${key}` as any)
-            )}
-            {phase.status === 'delivered' && onConfirmDelivery && (
-              <Button
-                size='sm'
-                onClick={() => onConfirmDelivery(phase.id)}
-                disabled={updatingPhaseId === phase.id}
-              >
-                {t('confirmDelivery')}
-              </Button>
             )}
           </div>
         </div>

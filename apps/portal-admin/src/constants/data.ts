@@ -33,32 +33,32 @@ export const navItems: NavItem[] = [
     isActive: true,
     items: []
   },
-  // {
-  //   title: 'Order Pickup Management',
-  //   url: '',
-  //   icon: 'product',
-  //   shortcut: ['o', 'o'],
-  //   isActive: true,
-  //   items: [
-  //     {
-  //       title: 'Order Pickup',
-  //       url: '/dashboard/order-pickup-management/order-pickup',
-  //       shortcut: ['o', 'o']
-  //     },
-  //     {
-  //       title: 'Import',
-  //       url: '/dashboard/order-pickup-management/import',
-  //       shortcut: ['o', 'i']
-  //     },
-  //     {
-  //       title: 'Pickup',
-  //       url: '/dashboard/order-pickup-management/pickup',
-  //       shortcut: ['o', 'p']
-  //     }
-  //   ]
-  // },
   {
-    title: 'Order Management',
+    title: 'Order Purchase',
+    url: '',
+    icon: 'product',
+    shortcut: ['o', 'o'],
+    isActive: true,
+    items: [
+      {
+        title: 'Order',
+        url: '/dashboard/order-purchase/order',
+        shortcut: ['o', 'o']
+      },
+      {
+        title: 'Import',
+        url: '/dashboard/order-purchase/import',
+        shortcut: ['o', 'i']
+      },
+      {
+        title: 'Pickup',
+        url: '/dashboard/order-purchase/pickup',
+        shortcut: ['o', 'p']
+      }
+    ]
+  },
+  {
+    title: 'Order Sale',
     url: '',
     icon: 'order',
     shortcut: ['o', 'o'],
@@ -66,17 +66,17 @@ export const navItems: NavItem[] = [
     items: [
       {
         title: 'Order',
-        url: '/dashboard/order-management/order',
+        url: '/dashboard/order-sale/order',
         shortcut: ['o', 'o']
       },
       {
         title: 'Export',
-        url: '/dashboard/order-management/export',
+        url: '/dashboard/order-sale/export',
         shortcut: ['o', 'e']
       },
       {
         title: 'Delivery',
-        url: '/dashboard/order-management/delivery',
+        url: '/dashboard/order-sale/delivery',
         shortcut: ['o', 'd']
       }
     ]
@@ -87,14 +87,7 @@ export const navItems: NavItem[] = [
     icon: 'inventory',
     shortcut: ['w', 'w'],
     isActive: true,
-    items: [
-      {
-        title: 'Import',
-        url: '/dashboard/warehouse/import',
-        icon: 'inventory',
-        shortcut: ['w', 'b']
-      }
-    ]
+    items: []
   },
   {
     title: 'Delivery',
@@ -103,12 +96,6 @@ export const navItems: NavItem[] = [
     shortcut: ['d', 'l'],
     isActive: true,
     items: [
-      {
-        title: 'Inbound',
-        url: '/dashboard/delivery/inbound',
-        icon: 'warehouse',
-        shortcut: ['d', 'i']
-      },
       {
         title: 'Tracking',
         url: '/dashboard/delivery/tracking',
