@@ -422,6 +422,198 @@
       }
     }
   },
+  "HarvestOrders": {
+    "list": {
+      "title": "Harvest Schedules",
+      "subtitle": "Manage harvest schedules from suppliers",
+      "cards": {
+        "totalSchedules": "Total Schedules",
+        "pending": "Pending",
+        "approved": "Approved",
+        "processing": "Processing",
+        "completed": "Completed"
+      },
+      "filters": {
+        "searchPlaceholder": "Search by schedule ID, products, supplier...",
+        "statusPlaceholder": "Filter by status",
+        "allStatus": "All statuses"
+      },
+      "table": {
+        "scheduleNumber": "Schedule ID",
+        "supplier": "Supplier",
+        "products": "Products",
+        "harvestDate": "Harvest Date",
+        "createdAt": "Created At",
+        "address": "Address",
+        "status": "Status",
+        "actions": "Actions",
+        "loading": "Loading...",
+        "empty": "No data",
+        "noProducts": "No products"
+      },
+      "actions": {
+        "viewDetails": "View Details",
+        "edit": "Edit",
+        "cancelSchedule": "Cancel Schedule",
+        "reject": "Reject",
+        "viewRejectionReason": "View Rejection Reason"
+      },
+      "statuses": {
+        "pending": "Pending",
+        "rejected": "Rejected",
+        "approved": "Approved",
+        "processing": "Processing",
+        "completed": "Completed",
+        "canceled": "Canceled",
+        "unknown": "Unknown"
+      },
+      "dialog": {
+        "cancelTitle": "Confirm Cancel",
+        "cancelDescription": "Are you sure you want to cancel harvest schedule {id}? This action cannot be undone.",
+        "cancelKeep": "Keep",
+        "cancelConfirm": "Confirm Cancel",
+        "rejectionReasonDefault": "No rejection reason",
+        "rejectionReasonTitle": "Rejection Reason"
+      },
+      "toast": {
+        "errorTitle": "Error",
+        "errorDescription": "Could not load harvest schedules",
+        "cancelTitle": "Canceled",
+        "cancelDescription": "Canceled harvest schedule {id}"
+      }
+    },
+    "detail": {
+      "title": "Harvest Schedule Details",
+      "code": "Code",
+      "tabs": {
+        "overview": "Overview",
+        "phases": "Harvest Phases"
+      },
+      "header": {
+        "reject": "Reject",
+        "approve": "Approve",
+        "createPhase": "Create Harvest Phase",
+        "markComplete": "Mark as Complete"
+      },
+      "statusStepper": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "processing": "Processing",
+        "completed": "Completed",
+        "rejected": "Rejected",
+        "canceled": "Canceled"
+      },
+      "infoCard": {
+        "title": "General Information",
+        "status": "Status",
+        "harvestDate": "Harvest Date",
+        "supplier": "Supplier",
+        "harvestAddress": "Harvest Address",
+        "description": "Description",
+        "rejectionReason": "Rejection Reason",
+        "createdAt": "Created At",
+        "updatedAt": "Last Updated"
+      },
+      "detailsTable": {
+        "title": "Harvest Product Details",
+        "subtitle": "Overview of received / total quantities",
+        "product": "Product",
+        "quantity": "Quantity",
+        "unit": "Unit",
+        "unitPrice": "Unit Price",
+        "amount": "Amount",
+        "received": "Received",
+        "empty": "No product details"
+      },
+      "phases": {
+        "title": "Harvest Phases",
+        "subtitle": "List of created harvest phases ({count})",
+        "phase": "Phase",
+        "noDescription": "No description",
+        "invoiceNumber": "Invoice Number",
+        "confirmDelivery": "Confirm Receipt",
+        "product": "Product",
+        "quantity": "Quantity",
+        "unit": "Unit",
+        "unitPrice": "Unit Price",
+        "amount": "Amount",
+        "tax": "Tax",
+        "total": "Total",
+        "empty": "No details",
+        "statuses": {
+          "preparing": "Preparing",
+          "delivering": "Delivering",
+          "delivered": "Delivered",
+          "completed": "Completed",
+          "canceled": "Canceled"
+        }
+      },
+      "rejectDialog": {
+        "title": "Reject Harvest Schedule",
+        "description": "Please enter the reason for rejecting this harvest schedule",
+        "reasonLabel": "Rejection Reason",
+        "reasonPlaceholder": "Enter rejection reason...",
+        "cancel": "Cancel",
+        "confirm": "Confirm Reject",
+        "processing": "Processing..."
+      },
+      "createPhase": {
+        "title": "Create New Harvest Phase",
+        "descriptionHeader": "Enter information for the new harvest phase. Please select the quantity of products to receive.",
+        "phaseNumber": "Phase Number",
+        "phaseNumberHelper": "Phase order number",
+        "taxRate": "Tax Rate (%)",
+        "taxRateHelper": "VAT tax rate",
+        "totalAmount": "Total Amount",
+        "products": "products",
+        "description": "Description (optional)",
+        "descriptionPlaceholder": "Enter description for this harvest phase...",
+        "productsTitle": "Product Details",
+        "productsHelper": "Enter quantity to receive for each product",
+        "product": "Product",
+        "remaining": "Remaining",
+        "receiveQuantity": "Receive Quantity",
+        "unit": "Unit",
+        "unitPrice": "Unit Price",
+        "amount": "Amount",
+        "summaryTitle": "Harvest Phase Summary",
+        "subtotal": "Subtotal",
+        "vat": "VAT",
+        "totalPayment": "Total Payment",
+        "validation": {
+          "title": "Note",
+          "message": "Please enter quantity for at least one product to create harvest phase."
+        },
+        "exceedsRemaining": "Exceeds remaining quantity",
+        "cancel": "Cancel",
+        "create": "Create Harvest Phase",
+        "creating": "Creating..."
+      },
+      "toast": {
+        "error": "Error",
+        "errorLoad": "Could not load harvest schedule data",
+        "errorFetchSchedule": "Could not load harvest schedule data",
+        "errorFetchPhases": "Could not load harvest phases",
+        "errorCreatePhase": "Could not create harvest phase",
+        "errorPhaseValidation": "Please enter quantity for at least one product",
+        "success": "Success",
+        "successCreatePhase": "Harvest phase created",
+        "successApprove": "Harvest schedule approved",
+        "successReject": "Harvest schedule rejected",
+        "successComplete": "Marked as complete",
+        "successConfirmDelivery": "Receipt confirmed",
+        "errorApprove": "Could not approve harvest schedule",
+        "errorReject": "Could not reject harvest schedule",
+        "errorComplete": "Could not update status",
+        "errorConfirmDelivery": "Could not update harvest phase status",
+        "rejectReasonRequired": "Please enter rejection reason"
+      },
+      "empty": {
+        "title": "Harvest schedule not found",
+        "back": "Go Back"
+      }
+    }
+  },
   "Notifications": {
     "defaultTitle": "Notification",
     "defaultMessage": "",

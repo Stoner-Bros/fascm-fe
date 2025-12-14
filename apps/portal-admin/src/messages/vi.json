@@ -422,6 +422,198 @@
       }
     }
   },
+  "HarvestOrders": {
+    "list": {
+      "title": "Lịch thu hoạch",
+      "subtitle": "Quản lý các lịch thu hoạch từ nhà cung cấp",
+      "cards": {
+        "totalSchedules": "Tổng số lịch",
+        "pending": "Chờ duyệt",
+        "approved": "Đã duyệt",
+        "processing": "Đang xử lý",
+        "completed": "Đã hoàn thành"
+      },
+      "filters": {
+        "searchPlaceholder": "Tìm kiếm theo mã lịch, sản phẩm, nhà cung cấp...",
+        "statusPlaceholder": "Lọc theo trạng thái",
+        "allStatus": "Tất cả trạng thái"
+      },
+      "table": {
+        "scheduleNumber": "Mã lịch",
+        "supplier": "Nhà cung cấp",
+        "products": "Sản phẩm",
+        "harvestDate": "Ngày thu hoạch",
+        "createdAt": "Ngày tạo",
+        "address": "Địa chỉ",
+        "status": "Trạng thái",
+        "actions": "Thao tác",
+        "loading": "Đang tải...",
+        "empty": "Không có dữ liệu",
+        "noProducts": "Không có sản phẩm"
+      },
+      "actions": {
+        "viewDetails": "Xem chi tiết",
+        "edit": "Chỉnh sửa",
+        "cancelSchedule": "Hủy lịch",
+        "reject": "Từ chối",
+        "viewRejectionReason": "Xem lý do từ chối"
+      },
+      "statuses": {
+        "pending": "Chờ duyệt",
+        "rejected": "Từ chối",
+        "approved": "Đã duyệt",
+        "processing": "Đang xử lý",
+        "completed": "Hoàn thành",
+        "canceled": "Đã hủy",
+        "unknown": "Không xác định"
+      },
+      "dialog": {
+        "cancelTitle": "Xác nhận hủy lịch",
+        "cancelDescription": "Bạn có chắc chắn muốn hủy lịch thu hoạch {id}? Hành động này không thể hoàn tác.",
+        "cancelKeep": "Giữ lại",
+        "cancelConfirm": "Xác nhận hủy",
+        "rejectionReasonDefault": "Không có lý do từ chối",
+        "rejectionReasonTitle": "Lý do từ chối"
+      },
+      "toast": {
+        "errorTitle": "Lỗi",
+        "errorDescription": "Không thể tải danh sách lịch thu hoạch",
+        "cancelTitle": "Đã hủy",
+        "cancelDescription": "Đã hủy lịch thu hoạch {id}"
+      }
+    },
+    "detail": {
+      "title": "Chi tiết lịch thu hoạch",
+      "code": "Mã",
+      "tabs": {
+        "overview": "Tổng quan",
+        "phases": "Đợt thu hoạch"
+      },
+      "header": {
+        "reject": "Từ chối",
+        "approve": "Duyệt",
+        "createPhase": "Tạo đợt thu hoạch",
+        "markComplete": "Đánh dấu hoàn thành"
+      },
+      "statusStepper": {
+        "pending": "Chờ duyệt",
+        "approved": "Đã duyệt",
+        "processing": "Đang xử lý",
+        "completed": "Hoàn thành",
+        "rejected": "Từ chối",
+        "canceled": "Đã hủy"
+      },
+      "infoCard": {
+        "title": "Thông tin chung",
+        "status": "Trạng thái",
+        "harvestDate": "Ngày thu hoạch",
+        "supplier": "Nhà cung cấp",
+        "harvestAddress": "Địa chỉ thu hoạch",
+        "description": "Mô tả",
+        "rejectionReason": "Lý do từ chối",
+        "createdAt": "Ngày tạo",
+        "updatedAt": "Cập nhật lần cuối"
+      },
+      "detailsTable": {
+        "title": "Chi tiết sản phẩm thu hoạch",
+        "subtitle": "Tổng quan số lượng đã nhận / tổng số lượng",
+        "product": "Sản phẩm",
+        "quantity": "Số lượng",
+        "unit": "Đơn vị",
+        "unitPrice": "Đơn giá",
+        "amount": "Thành tiền",
+        "received": "Đã nhận",
+        "empty": "Không có chi tiết sản phẩm"
+      },
+      "phases": {
+        "title": "Các đợt thu hoạch",
+        "subtitle": "Danh sách các đợt thu hoạch đã tạo ({count})",
+        "phase": "Đợt",
+        "noDescription": "Không có mô tả",
+        "invoiceNumber": "Mã hóa đơn",
+        "confirmDelivery": "Xác nhận nhận hàng",
+        "product": "Sản phẩm",
+        "quantity": "Số lượng",
+        "unit": "Đơn vị",
+        "unitPrice": "Đơn giá",
+        "amount": "Thành tiền",
+        "tax": "Thuế",
+        "total": "Tổng tiền",
+        "empty": "Không có chi tiết",
+        "statuses": {
+          "preparing": "Chuẩn bị",
+          "delivering": "Đang giao",
+          "delivered": "Đã giao",
+          "completed": "Hoàn thành",
+          "canceled": "Đã hủy"
+        }
+      },
+      "rejectDialog": {
+        "title": "Từ chối lịch thu hoạch",
+        "description": "Vui lòng nhập lý do từ chối lịch thu hoạch này",
+        "reasonLabel": "Lý do từ chối",
+        "reasonPlaceholder": "Nhập lý do từ chối...",
+        "cancel": "Hủy",
+        "confirm": "Xác nhận từ chối",
+        "processing": "Đang xử lý..."
+      },
+      "createPhase": {
+        "title": "Tạo đợt thu hoạch mới",
+        "descriptionHeader": "Nhập thông tin cho đợt thu hoạch mới. Vui lòng chọn số lượng sản phẩm cần nhận.",
+        "phaseNumber": "Số đợt",
+        "phaseNumberHelper": "Số thứ tự đợt thu hoạch",
+        "taxRate": "Mức thuế (%)",
+        "taxRateHelper": "Tỷ lệ thuế VAT",
+        "totalAmount": "Tổng tiền",
+        "products": "sản phẩm",
+        "description": "Mô tả (tùy chọn)",
+        "descriptionPlaceholder": "Nhập mô tả cho đợt thu hoạch này...",
+        "productsTitle": "Chi tiết sản phẩm",
+        "productsHelper": "Nhập số lượng cần nhận cho từng sản phẩm",
+        "product": "Sản phẩm",
+        "remaining": "Còn lại",
+        "receiveQuantity": "Số lượng nhận",
+        "unit": "Đơn vị",
+        "unitPrice": "Đơn giá",
+        "amount": "Thành tiền",
+        "summaryTitle": "Tóm tắt đợt thu hoạch",
+        "subtotal": "Tổng tiền hàng",
+        "vat": "Thuế VAT",
+        "totalPayment": "Tổng thanh toán",
+        "validation": {
+          "title": "Lưu ý",
+          "message": "Vui lòng nhập số lượng cho ít nhất một sản phẩm để tạo đợt thu hoạch."
+        },
+        "exceedsRemaining": "Vượt quá số lượng còn lại",
+        "cancel": "Hủy",
+        "create": "Tạo đợt thu hoạch",
+        "creating": "Đang tạo..."
+      },
+      "toast": {
+        "error": "Lỗi",
+        "errorLoad": "Không thể tải dữ liệu lịch thu hoạch",
+        "errorFetchSchedule": "Không thể tải dữ liệu lịch thu hoạch",
+        "errorFetchPhases": "Không thể tải danh sách đợt thu hoạch",
+        "errorCreatePhase": "Không thể tạo đợt thu hoạch",
+        "errorPhaseValidation": "Vui lòng nhập số lượng cho ít nhất một sản phẩm",
+        "success": "Thành công",
+        "successCreatePhase": "Đã tạo đợt thu hoạch",
+        "successApprove": "Đã duyệt lịch thu hoạch",
+        "successReject": "Đã từ chối lịch thu hoạch",
+        "successComplete": "Đã đánh dấu hoàn thành",
+        "successConfirmDelivery": "Đã xác nhận nhận hàng",
+        "errorApprove": "Không thể duyệt lịch thu hoạch",
+        "errorReject": "Không thể từ chối lịch thu hoạch",
+        "errorComplete": "Không thể cập nhật trạng thái",
+        "errorConfirmDelivery": "Không thể cập nhật trạng thái đợt thu hoạch",
+        "rejectReasonRequired": "Vui lòng nhập lý do từ chối"
+      },
+      "empty": {
+        "title": "Không tìm thấy lịch thu hoạch",
+        "back": "Quay lại"
+      }
+    }
+  },
   "Notifications": {
     "defaultTitle": "Thông báo",
     "defaultMessage": "",
