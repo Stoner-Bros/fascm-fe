@@ -216,14 +216,16 @@ export default function HarvestBatchDetailPage() {
           const quantity = Number(detail.quantity ?? 0);
           const unitPrice = Number(detail.unitPrice ?? 0);
           const productName =
-            detail.product?.name || detail.product?.id || 'Unknown product';
+            detail.product?.name ||
+            detail.product?.id ||
+            t('detail.products.unknownProduct');
 
           return {
             id: detail.id,
             productName: String(productName),
             productImage: detail.product?.image as string | undefined,
             quantity,
-            unit: String(detail.unit ?? 'kg'),
+            unit: String(detail.unit ?? t('common.unit.kg')),
             unitPrice,
             totalPrice: quantity * unitPrice
           };
@@ -496,7 +498,7 @@ export default function HarvestBatchDetailPage() {
                 </Badge>
                 {schedule.reason && (
                   <p className='text-muted-foreground text-sm'>
-                    - {schedule.reason}
+                    {t('common.separator')} {schedule.reason}
                   </p>
                 )}
               </div>
@@ -600,7 +602,9 @@ export default function HarvestBatchDetailPage() {
                         <p className='text-muted-foreground mb-1 text-xs'>
                           {t('detail.products.totalQuantity')}
                         </p>
-                        <p className='font-medium'>{totalQuantity} kg</p>
+                        <p className='font-medium'>
+                          {totalQuantity} {t('common.unit.kg')}
+                        </p>
                       </div>
                       <div>
                         <p className='text-muted-foreground mb-1 text-xs'>
@@ -611,7 +615,7 @@ export default function HarvestBatchDetailPage() {
                             ? formatDate(
                                 schedule.harvestDate as unknown as string
                               )
-                            : '-'}
+                            : t('common.notSpecified')}
                         </p>
                       </div>
                       <div>
@@ -623,7 +627,7 @@ export default function HarvestBatchDetailPage() {
                             ? formatDate(
                                 schedule.createdAt as unknown as string
                               )
-                            : '-'}
+                            : t('common.notSpecified')}
                         </p>
                       </div>
                     </div>
@@ -643,14 +647,17 @@ export default function HarvestBatchDetailPage() {
                           {t('detail.overview.location')}
                         </p>
                         <p className='font-medium'>
-                          {schedule.supplier?.gardenName || '-'}
+                          {schedule.supplier?.gardenName ||
+                            t('common.notSpecified')}
                         </p>
                       </div>
                       <div>
                         <p className='text-muted-foreground mb-1 text-xs'>
                           {t('detail.overview.harvestAddress')}
                         </p>
-                        <p className='font-medium'>{schedule.address || '-'}</p>
+                        <p className='font-medium'>
+                          {schedule.address || t('common.notSpecified')}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -834,8 +841,6 @@ export default function HarvestBatchDetailPage() {
                       (sum, detail) => sum + (detail.quantity ?? 0),
                       0
                     ) ?? 0;
-                  const totalPhaseAmount =
-                    phase.harvestInvoice?.totalPayment ?? 0;
 
                   return (
                     <Card key={phase.id}>
@@ -910,7 +915,8 @@ export default function HarvestBatchDetailPage() {
                                         <Image
                                           src={detail.product.image}
                                           alt={
-                                            detail.product?.name || 'Product'
+                                            detail.product?.name ||
+                                            t('detail.products.unknownProduct')
                                           }
                                           fill
                                           className='object-cover'
@@ -964,67 +970,6 @@ export default function HarvestBatchDetailPage() {
                               </div>
                             </div>
                           )}
-
-                        {/* Invoice Information - Highlighted */}
-                        {phase.harvestInvoice && (
-                          <div className='border-primary/30 from-primary/5 to-primary/10 space-y-4 rounded-lg border-2 bg-gradient-to-br p-6 shadow-md'>
-                            <div className='flex items-center justify-between'>
-                              <div className='flex items-center gap-2 text-lg font-bold'>
-                                <IconFileInvoice className='text-primary h-6 w-6' />
-                                <span className='text-primary'>
-                                  {t('detail.phases.invoiceInformation')}
-                                </span>
-                              </div>
-                            </div>
-                            <Separator className='bg-primary/20' />
-                            <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
-                              <div>
-                                <p className='text-muted-foreground mb-1 text-xs'>
-                                  {t('detail.phases.totalAmount')}
-                                </p>
-                                <p className='text-base font-semibold'>
-                                  {formatCurrency(
-                                    phase.harvestInvoice.totalAmount || 0
-                                  )}
-                                </p>
-                              </div>
-                              <div>
-                                <p className='text-muted-foreground mb-1 text-xs'>
-                                  {t('detail.phases.vat')} (
-                                  {phase.harvestInvoice.taxRate || 0}%)
-                                </p>
-                                <p className='text-base font-semibold'>
-                                  {formatCurrency(
-                                    (phase.harvestInvoiceDetails?.reduce(
-                                      (sum, d) =>
-                                        sum +
-                                        (d.quantity ?? 0) * (d.unitPrice ?? 0),
-                                      0
-                                    ) ?? 0) *
-                                      ((phase.harvestInvoice.taxRate ?? 0) /
-                                        100)
-                                  )}
-                                </p>
-                              </div>
-                              <div className='col-span-2 md:col-span-1'>
-                                <p className='text-muted-foreground mb-1 text-xs'>
-                                  {t('detail.phases.totalPayment')}
-                                </p>
-                                <p className='text-primary text-2xl font-bold'>
-                                  {formatCurrency(totalPhaseAmount)}
-                                </p>
-                              </div>
-                              <div>
-                                <p className='text-muted-foreground mb-1 text-xs'>
-                                  {t('detail.phases.quantity')}
-                                </p>
-                                <p className='text-base font-semibold'>
-                                  {totalPhaseQuantity} kg
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        )}
 
                         {/* Phase Dates */}
                         <div className='text-muted-foreground flex items-center justify-between border-t pt-4 text-sm'>

@@ -569,7 +569,8 @@
       "errorTitle": "Error",
       "errorDescription": "Failed to load order schedules",
       "cancelTitle": "Order Cancelled",
-      "cancelDescription": "Order schedule {id} has been cancelled."
+      "cancelDescription": "Order schedule {id} has been cancelled.",
+      "errorLoadDetails": "Failed to load order details"
     },
     "detail": {
       "title": "Order Details",
@@ -646,8 +647,17 @@
         "totalPayment": "Total Payment",
         "quantity": "Quantity",
         "imageProofs": "Image Proofs",
+        "imageProof": "Image Proof",
         "created": "Created",
-        "updated": "Updated"
+        "updated": "Updated",
+        "confirmDelivery": "Confirm Completion",
+        "trackingTitle": "Transport Tracking",
+        "cargo": "Cargo {quantity} {unit}",
+        "startAddressDefault": "Central Warehouse",
+        "confirmSuccessTitle": "Success!",
+        "confirmSuccessDescription": "Phase completion confirmed successfully",
+        "confirmErrorDescription": "Failed to confirm completion. Please try again.",
+        "errorLoadPhases": "Failed to load phases"
       },
       "payment": {
         "successTitle": "Payment successful!",
@@ -752,6 +762,13 @@
       "markRead": "Mark as read",
       "loadMore": "Load more",
       "close": "Close"
+    }
+  },
+  "common": {
+    "notSpecified": "-",
+    "separator": "-",
+    "unit": {
+      "kg": "kg"
     }
   }
 }

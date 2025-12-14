@@ -576,12 +576,13 @@
       "rejectionReasonTitle": "Lý do từ chối",
       "rejectionReasonDefault": "Không có lý do được cung cấp."
     },
-    "toast": {
-      "errorTitle": "Lỗi",
-      "errorDescription": "Không thể tải lịch đặt hàng",
-      "cancelTitle": "Đã hủy đơn hàng",
-      "cancelDescription": "Lịch đặt hàng {id} đã được hủy."
-    },
+      "toast": {
+        "errorTitle": "Lỗi",
+        "errorDescription": "Không thể tải lịch đặt hàng",
+        "cancelTitle": "Đã hủy đơn hàng",
+        "cancelDescription": "Lịch đặt hàng {id} đã được hủy.",
+        "errorLoadDetails": "Không thể tải chi tiết đơn hàng"
+      },
     "detail": {
       "title": "Chi tiết đơn hàng",
       "orderId": "Mã đơn hàng",
@@ -657,8 +658,17 @@
         "totalPayment": "Tổng thanh toán",
         "quantity": "Số lượng",
         "imageProofs": "Hình ảnh minh chứng",
+        "imageProof": "Hình ảnh minh chứng",
         "created": "Tạo lúc",
-        "updated": "Cập nhật"
+        "updated": "Cập nhật",
+        "confirmDelivery": "Xác nhận hoàn thành",
+        "trackingTitle": "Theo dõi vận chuyển",
+        "cargo": "Khối lượng {quantity} {unit}",
+        "startAddressDefault": "Kho trung tâm",
+        "confirmSuccessTitle": "Thành công!",
+        "confirmSuccessDescription": "Đã xác nhận hoàn thành giai đoạn giao hàng",
+        "confirmErrorDescription": "Không thể xác nhận hoàn thành. Vui lòng thử lại.",
+        "errorLoadPhases": "Không thể tải danh sách giai đoạn"
       },
       "payment": {
         "successTitle": "Thanh toán thành công!",
@@ -763,6 +773,13 @@
       "markRead": "Đã đọc",
       "loadMore": "Tải thêm",
       "close": "Đóng"
+    }
+  },
+  "common": {
+    "notSpecified": "-",
+    "separator": "-",
+    "unit": {
+      "kg": "kg"
     }
   }
 }
