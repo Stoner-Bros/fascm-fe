@@ -26,15 +26,7 @@ export const navItems: NavItem[] = [
     ]
   },
   {
-    title: 'Harvest',
-    url: '/dashboard/harvest',
-    icon: 'product',
-    shortcut: ['h', 'h'],
-    isActive: true,
-    items: []
-  },
-  {
-    title: 'Order Purchase',
+    title: 'Purchase Order',
     url: '',
     icon: 'product',
     shortcut: ['o', 'o'],
@@ -46,19 +38,19 @@ export const navItems: NavItem[] = [
         shortcut: ['o', 'o']
       },
       {
-        title: 'Import',
-        url: '/dashboard/order-purchase/import',
-        shortcut: ['o', 'i']
-      },
-      {
         title: 'Pickup',
         url: '/dashboard/order-purchase/pickup',
         shortcut: ['o', 'p']
+      },
+      {
+        title: 'Import',
+        url: '/dashboard/order-purchase/import',
+        shortcut: ['o', 'i']
       }
     ]
   },
   {
-    title: 'Order Sale',
+    title: 'Sale Order',
     url: '',
     icon: 'order',
     shortcut: ['o', 'o'],
