@@ -22,8 +22,6 @@ export type CreateImportTicketDto = {
   area: {
     id: string;
   };
-  numberOfBigBatch?: number | null;
-  numberOfSmallBatch?: number | null;
 };
 
 export type UpdateImportTicketDto = Partial<CreateImportTicketDto>;

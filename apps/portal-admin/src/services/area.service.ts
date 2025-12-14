@@ -6,7 +6,6 @@ import type {
   FindAllAreasDto
 } from '@/types/area';
 import type { InfinityPaginationResponse } from '@/types/common';
-import type { Area as AreaEntity } from '@/types/area';
 
 const BASE_PATH = '/areas';
 
@@ -18,8 +17,8 @@ export async function createArea(body: CreateAreaDto) {
 }
 
 export async function fetchAreas({
-  page = 1,
-  limit = 10,
+  page,
+  limit,
   search,
   warehouseId
 }: FindAllAreasDto = {}) {

@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
 interface ModalProps {
   title: string;
@@ -15,6 +16,7 @@ interface ModalProps {
   onClose: () => void;
   children?: React.ReactNode;
   footer?: React.ReactNode;
+  className?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -23,7 +25,8 @@ export const Modal: React.FC<ModalProps> = ({
   isOpen,
   onClose,
   children,
-  footer
+  footer,
+  className
 }) => {
   const onChange = (open: boolean) => {
     if (!open) {
@@ -33,13 +36,15 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onChange}>
-      <DialogContent className='lg:max-w-4xl'>
+      <DialogContent className={cn('lg:max-w-4xl', className)}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <div className='h-[70vh] space-y-6 overflow-y-auto p-1'>{children}</div>
-        <DialogFooter>{footer}</DialogFooter>
+        <div className='max-h-[70vh] space-y-6 overflow-y-auto p-1'>
+          {children}
+        </div>
+        {footer && <DialogFooter>{footer}</DialogFooter>}
       </DialogContent>
     </Dialog>
   );
