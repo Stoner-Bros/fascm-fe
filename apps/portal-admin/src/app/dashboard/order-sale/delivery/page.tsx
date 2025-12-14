@@ -1,10 +1,11 @@
 import PageContainer from '@/components/layout/page-container';
-import { OutboundTruckAssignment } from '@/features/logistics/components/outbound-truck-assignment';
 
 export default function DeliveryPage() {
   return (
     <PageContainer scrollable={true}>
-      <OutboundTruckAssignment />
+      <div>
+        <h1>Delivery</h1>
+      </div>
     </PageContainer>
   );
 }
