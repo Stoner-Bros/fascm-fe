@@ -364,8 +364,18 @@ export function PhaseDetailPane({
                                     <span className='text-muted-foreground'>
                                       Điểm đi:
                                     </span>
-                                    <span className='max-w-[150px] truncate text-[10px]'>
+                                    <span className='truncate text-[10px]'>
                                       {delivery.startAddress}
+                                    </span>
+                                  </div>
+                                )}
+                                {delivery.endAddress && (
+                                  <div className='flex items-center justify-between'>
+                                    <span className='text-muted-foreground'>
+                                      Điểm đến:
+                                    </span>
+                                    <span className='truncate text-[10px]'>
+                                      {delivery.endAddress}
                                     </span>
                                   </div>
                                 )}

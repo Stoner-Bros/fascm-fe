@@ -92,8 +92,8 @@ export function CreatePickupDialog({
       harvestPhase: { id: phase.id },
       truck: { id: selectedTruckId },
       deliveryStaff: { id: selectedStaffId },
-      startAddress: startAddress || schedule?.address || undefined,
-      endAddress: schedule?.supplier?.address || undefined,
+      startAddress: startAddress || undefined,
+      endAddress: schedule?.address || undefined,
       status: 'scheduled'
     };
 
