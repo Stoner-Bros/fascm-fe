@@ -50,7 +50,8 @@ type UIIoTDevice = {
   areaId: string;
   id: string;
   type: string;
-  status: 'online' | 'offline' | 'warning';
+  status: 'online' | 'offline';
+  backendStatus?: string | null;
   lastDataTime: string;
   data: any;
 };
@@ -85,8 +86,26 @@ function toUiStatus(s?: string | null): UIIoTDevice['status'] {
   const v = String(s ?? '').toLowerCase();
   if (v === 'active' || v === 'online') return 'online';
   if (v === 'inactive' || v === 'offline') return 'offline';
-  if (v === 'warning') return 'warning';
   return 'offline';
+}
+
+function isRecent(t?: string | null, seconds = 120): boolean {
+  const iso = String(t ?? '').trim();
+  if (!iso) return false;
+  const ts = Date.parse(iso);
+  if (Number.isNaN(ts)) return false;
+  return Date.now() - ts <= seconds * 1000;
+}
+
+function deriveStatus(args: {
+  status?: string | null;
+  lastDataTime?: string | null;
+  data?: any;
+}): UIIoTDevice['status'] {
+  const mapped = toUiStatus(args.status);
+  if (mapped === 'online') return 'online';
+  if (mapped === 'offline') return 'offline';
+  return isRecent(args.lastDataTime) ? 'online' : 'offline';
 }
 
 function formatLastUpdate(t: string): string {
@@ -116,8 +135,6 @@ const getStatusColor = (status: string) => {
   switch (status) {
     case 'online':
       return 'text-green-500';
-    case 'warning':
-      return 'text-yellow-500';
     case 'offline':
       return 'text-gray-500';
     default:
@@ -129,8 +146,6 @@ const getStatusBadge = (status: string) => {
   switch (status) {
     case 'online':
       return <Badge className='bg-green-100 text-green-800'>Hoạt động</Badge>;
-    case 'warning':
-      return <Badge className='bg-yellow-100 text-yellow-800'>Cảnh báo</Badge>;
     case 'offline':
       return <Badge className='bg-gray-100 text-gray-800'>Offline</Badge>;
     default:
@@ -165,8 +180,7 @@ export function IoTDeviceManagement() {
     return {
       total: devices.length,
       online: devices.filter((d) => d.status === 'online').length,
-      offline: devices.filter((d) => d.status === 'offline').length,
-      warning: devices.filter((d) => d.status === 'warning').length
+      offline: devices.filter((d) => d.status === 'offline').length
     };
   }, [devices]);
 
@@ -191,11 +205,18 @@ export function IoTDeviceManagement() {
       const raw = await fetchIoTDevices();
       const mapped: UIIoTDevice[] = (raw?.data ?? []).map((d: any) => {
         return {
-          truckId: d?.truck?.id || '',
-          areaId: d?.area?.id || '',
+          truckId: d?.truck?.id || d?.truckId || '',
+          areaId: d?.area?.id || d?.areaId || '',
           id: d.id || '',
           type: String(d.type ?? 'sensor'),
-          status: toUiStatus(d.status),
+          status: deriveStatus({
+            status: d?.status,
+            lastDataTime: String(d?.lastDataTime ?? '').trim(),
+            data: d?.data
+          }),
+          backendStatus: String(d?.status ?? '')
+            .trim()
+            .toLowerCase(),
           lastDataTime: String(d?.lastDataTime ?? '').trim(),
           data: d?.data ?? null
         };
@@ -230,20 +251,25 @@ export function IoTDeviceManagement() {
         const idx = prev.findIndex((d) => d.id === pId);
         const next: UIIoTDevice = {
           truckId:
-            (payload as any)?.truck?.id || (idx >= 0 ? prev[idx].truckId : ''),
+            (payload as any)?.truck?.id ??
+            (payload as any)?.truckId ??
+            (idx >= 0 ? prev[idx].truckId : ''),
           areaId:
-            (payload as any)?.area?.id || (idx >= 0 ? prev[idx].areaId : ''),
+            (payload as any)?.area?.id ??
+            (payload as any)?.areaId ??
+            (idx >= 0 ? prev[idx].areaId : ''),
           id: pId || (idx >= 0 ? prev[idx].id : ''),
           type: String(
             (payload as any)?.type ?? (idx >= 0 ? prev[idx].type : 'sensor')
           ),
-          status:
-            toUiStatus((payload as any)?.status) ??
-            (idx >= 0 ? prev[idx].status : 'offline'),
           lastDataTime: String(
             (payload as any)?.lastDataTime ??
               (payload as any)?.timestamp ??
-              (idx >= 0 ? prev[idx].lastDataTime : '')
+              (readings.temperature != null || readings.humidity != null
+                ? new Date().toISOString()
+                : idx >= 0
+                  ? prev[idx].lastDataTime
+                  : '')
           ).trim(),
           data:
             (payload as any)?.data ??
@@ -251,7 +277,72 @@ export function IoTDeviceManagement() {
               ? readings
               : idx >= 0
                 ? prev[idx].data
-                : null)
+                : null),
+          status: deriveStatus({
+            status:
+              (payload as any)?.status ??
+              (idx >= 0 ? prev[idx].backendStatus : undefined),
+            lastDataTime: String(
+              (payload as any)?.lastDataTime ??
+                (payload as any)?.timestamp ??
+                (readings.temperature != null || readings.humidity != null
+                  ? new Date().toISOString()
+                  : idx >= 0
+                    ? prev[idx].lastDataTime
+                    : '')
+            ).trim(),
+            data:
+              (payload as any)?.data ??
+              (readings.temperature != null || readings.humidity != null
+                ? readings
+                : idx >= 0
+                  ? prev[idx].data
+                  : null)
+          }),
+          backendStatus: ((payload as any)?.status ??
+            (idx >= 0 ? prev[idx].backendStatus : null)) as any
+        };
+        if (idx >= 0) {
+          const copy = prev.slice();
+          copy[idx] = next;
+          return copy;
+        }
+        return [next, ...prev];
+      });
+    };
+    const onStatus = (payload: any) => {
+      setDevices((prev) => {
+        const pId = String(
+          (payload as any)?.id ?? (payload as any)?.deviceId ?? ''
+        ).trim();
+        if (!pId) return prev;
+        const idx = prev.findIndex((d) => d.id === pId);
+        const ts = String(
+          (payload as any)?.lastDataTime ??
+            (payload as any)?.timestamp ??
+            (idx >= 0 ? prev[idx].lastDataTime : '')
+        ).trim();
+        const next: UIIoTDevice = {
+          truckId:
+            (payload as any)?.truck?.id ??
+            (payload as any)?.truckId ??
+            (idx >= 0 ? prev[idx].truckId : ''),
+          areaId:
+            (payload as any)?.area?.id ??
+            (payload as any)?.areaId ??
+            (idx >= 0 ? prev[idx].areaId : ''),
+          id: pId || (idx >= 0 ? prev[idx].id : ''),
+          type: String(
+            (payload as any)?.type ?? (idx >= 0 ? prev[idx].type : 'sensor')
+          ),
+          lastDataTime: ts,
+          data: idx >= 0 ? prev[idx].data : null,
+          status: deriveStatus({
+            status: (payload as any)?.status,
+            lastDataTime: ts,
+            data: idx >= 0 ? prev[idx].data : null
+          }),
+          backendStatus: String((payload as any)?.status ?? '').toLowerCase()
         };
         if (idx >= 0) {
           const copy = prev.slice();
@@ -262,11 +353,29 @@ export function IoTDeviceManagement() {
       });
     };
     socket.on('iot:update', onUpdate);
+    socket.on('iot:status', onStatus);
     return () => {
       socket.off('iot:update', onUpdate);
+      socket.off('iot:status', onStatus);
       socket.disconnect();
       socketRef.current = null;
     };
+  }, []);
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setDevices((prev) =>
+        prev.map((d) => ({
+          ...d,
+          status: deriveStatus({
+            status: d.backendStatus ?? undefined,
+            lastDataTime: d.lastDataTime,
+            data: d.data
+          })
+        }))
+      );
+    }, 30000);
+    return () => clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -289,7 +398,15 @@ export function IoTDeviceManagement() {
             ? {
                 ...d,
                 lastDataTime: String(raw?.lastDataTime ?? d.lastDataTime),
-                data: raw?.data ?? d.data
+                data: raw?.data ?? d.data,
+                status: deriveStatus({
+                  status: (raw as any)?.status,
+                  lastDataTime: String(raw?.lastDataTime ?? d.lastDataTime),
+                  data: raw?.data ?? d.data
+                }),
+                backendStatus: String(
+                  (raw as any)?.status ?? d.backendStatus ?? ''
+                ).toLowerCase()
               }
             : d
         )
@@ -465,13 +582,13 @@ export function IoTDeviceManagement() {
         <Card className='border-2 bg-gradient-to-br from-yellow-50 to-amber-100/50 dark:from-yellow-950/20 dark:to-amber-900/10'>
           <CardHeader className='pb-3'>
             <CardDescription className='text-yellow-700 dark:text-yellow-400'>
-              {t('stats.warning')}
+              {t('stats.offline')}
             </CardDescription>
             <CardTitle className='text-3xl font-bold text-yellow-900 dark:text-yellow-100'>
               {isLoading ? (
                 <div className='h-8 w-16 animate-pulse rounded bg-yellow-200 dark:bg-yellow-800' />
               ) : (
-                stats.warning
+                stats.offline
               )}
             </CardTitle>
           </CardHeader>
@@ -500,7 +617,6 @@ export function IoTDeviceManagement() {
                   <SelectItem value='all'>{t('filters.allStatus')}</SelectItem>
                   <SelectItem value='online'>{t('status.online')}</SelectItem>
                   <SelectItem value='offline'>{t('status.offline')}</SelectItem>
-                  <SelectItem value='warning'>{t('status.warning')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -534,11 +650,9 @@ export function IoTDeviceManagement() {
               <Card
                 key={device.id}
                 className={`transition-all hover:shadow-lg ${
-                  device.status === 'warning'
-                    ? 'border-yellow-300'
-                    : device.status === 'online'
-                      ? 'border-green-300'
-                      : 'border-gray-200'
+                  device.status === 'online'
+                    ? 'border-green-300'
+                    : 'border-gray-200'
                 }`}
               >
                 <CardHeader className='pb-3'>
@@ -548,9 +662,7 @@ export function IoTDeviceManagement() {
                         className={`rounded-lg p-2 ${
                           device.status === 'online'
                             ? 'bg-green-100'
-                            : device.status === 'warning'
-                              ? 'bg-yellow-100'
-                              : 'bg-gray-100'
+                            : 'bg-gray-100'
                         }`}
                       >
                         <IconComponent
@@ -571,12 +683,6 @@ export function IoTDeviceManagement() {
                           return (
                             <Badge className='bg-green-100 text-green-800'>
                               {t('status.online')}
-                            </Badge>
-                          );
-                        case 'warning':
-                          return (
-                            <Badge className='bg-yellow-100 text-yellow-800'>
-                              {t('status.warning')}
                             </Badge>
                           );
                         case 'offline':
@@ -698,12 +804,6 @@ export function IoTDeviceManagement() {
                                           {t('status.online')}
                                         </Badge>
                                       );
-                                    case 'warning':
-                                      return (
-                                        <Badge className='bg-yellow-100 text-yellow-800'>
-                                          {t('status.warning')}
-                                        </Badge>
-                                      );
                                     case 'offline':
                                       return (
                                         <Badge className='bg-gray-100 text-gray-800'>
@@ -755,6 +855,16 @@ export function IoTDeviceManagement() {
                                   {formatLastUpdate(
                                     selectedDevice.lastDataTime
                                   )}
+                                </p>
+                              </div>
+                              <div className='space-y-2'>
+                                <Label>{t('labels.location')}</Label>
+                                <p className='font-medium'>
+                                  {selectedDevice.truckId
+                                    ? `${t('labels.truckPrefix')} ${selectedDevice.truckId}`
+                                    : selectedDevice.areaId
+                                      ? `${t('labels.areaPrefix')} ${selectedDevice.areaId}`
+                                      : '—'}
                                 </p>
                               </div>
                             </div>
