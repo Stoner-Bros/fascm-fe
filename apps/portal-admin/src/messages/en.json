@@ -525,6 +525,7 @@
       "actions": {
         "viewDetails": "View Details",
         "edit": "Edit",
+        "approve": "Approve",
         "cancelOrder": "Cancel Order",
         "reject": "Reject",
         "confirm": "Confirm",
@@ -544,14 +545,27 @@
         "cancelDescription": "Are you sure you want to cancel delivery schedule {id}? This action cannot be undone.",
         "cancelKeep": "Keep",
         "cancelConfirm": "Confirm Cancel",
+        "rejectTitle": "Confirm Reject",
+        "rejectDescription": "Are you sure you want to reject delivery schedule {id}? This action cannot be undone.",
+        "rejectConfirm": "Confirm Reject",
+        "reasonLabel": "Reason",
+        "reasonPlaceholder": "Please enter the reason for cancellation...",
+        "rejectReasonPlaceholder": "Please enter the reason for rejection...",
         "rejectionReasonDefault": "No rejection reason",
         "rejectionReasonTitle": "Rejection Reason"
       },
       "toast": {
         "errorTitle": "Error",
         "errorDescription": "Cannot load delivery schedule list",
+        "approveTitle": "Approved",
+        "approveDescription": "Delivery schedule has been approved",
+        "errorApproveDescription": "Could not approve delivery schedule",
         "cancelTitle": "Canceled",
-        "cancelDescription": "Canceled delivery schedule {id}"
+        "cancelDescription": "Canceled delivery schedule {id}",
+        "errorCancelDescription": "Could not cancel delivery schedule",
+        "rejectTitle": "Rejected",
+        "rejectDescription": "Rejected delivery schedule {id}",
+        "errorRejectDescription": "Could not reject delivery schedule"
       }
     },
     "detail": {

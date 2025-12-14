@@ -558,10 +558,10 @@ export default function HarvestRouteSim({
         <div className='flex items-center justify-between text-xs'>
           <div className='text-muted-foreground flex items-center gap-1'>
             <span className='inline-block h-2 w-2 rounded-full bg-green-500' />
-            <span className='max-w-[150px] truncate'>{displayStartAddr}</span>
+            <span className=''>{displayStartAddr}</span>
           </div>
           <div className='text-muted-foreground flex items-center gap-1'>
-            <span className='max-w-[150px] truncate'>{displayEndAddr}</span>
+            <span className=''>{displayEndAddr}</span>
             <span className='inline-block h-2 w-2 rounded-full bg-red-500' />
           </div>
         </div>

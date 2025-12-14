@@ -525,6 +525,7 @@
       "actions": {
         "viewDetails": "Xem chi tiết",
         "edit": "Chỉnh sửa",
+        "approve": "Duyệt",
         "cancelOrder": "Hủy đơn",
         "reject": "Từ chối",
         "confirm": "Xác nhận",
@@ -544,14 +545,27 @@
         "cancelDescription": "Bạn có chắc chắn muốn hủy lịch giao hàng {id}? Hành động này không thể hoàn tác.",
         "cancelKeep": "Giữ lại",
         "cancelConfirm": "Xác nhận hủy",
+        "rejectTitle": "Xác nhận từ chối",
+        "rejectDescription": "Bạn có chắc chắn muốn từ chối lịch giao hàng {id}? Hành động này không thể hoàn tác.",
+        "rejectConfirm": "Xác nhận từ chối",
+        "reasonLabel": "Lý do",
+        "reasonPlaceholder": "Vui lòng nhập lý do hủy...",
+        "rejectReasonPlaceholder": "Vui lòng nhập lý do từ chối...",
         "rejectionReasonDefault": "Không có lý do từ chối",
         "rejectionReasonTitle": "Lý do từ chối"
       },
       "toast": {
         "errorTitle": "Lỗi",
         "errorDescription": "Không thể tải danh sách lịch giao hàng",
+        "approveTitle": "Đã duyệt",
+        "approveDescription": "Lịch giao hàng đã được duyệt",
+        "errorApproveDescription": "Không thể duyệt lịch giao hàng",
         "cancelTitle": "Đã hủy",
-        "cancelDescription": "Đã hủy lịch giao hàng {id}"
+        "cancelDescription": "Đã hủy lịch giao hàng {id}",
+        "errorCancelDescription": "Không thể hủy lịch giao hàng",
+        "rejectTitle": "Đã từ chối",
+        "rejectDescription": "Đã từ chối lịch giao hàng {id}",
+        "errorRejectDescription": "Không thể từ chối lịch giao hàng"
       }
     },
     "detail": {

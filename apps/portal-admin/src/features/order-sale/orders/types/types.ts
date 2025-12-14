@@ -29,7 +29,9 @@ export type State = {
   searchQuery: string;
   statusFilter: StatusFilter;
   cancelDialogOpen: boolean;
+  rejectDialogOpen: boolean;
   selectedScheduleId: string | null;
+  updatingStatusIds: Set<string>;
 };
 
 export type Action =
@@ -39,5 +41,10 @@ export type Action =
   | { type: 'SET_STATUS_FILTER'; payload: StatusFilter }
   | { type: 'OPEN_CANCEL_DIALOG'; payload: string }
   | { type: 'CLOSE_CANCEL_DIALOG' }
+  | { type: 'OPEN_REJECT_DIALOG'; payload: string }
+  | { type: 'CLOSE_REJECT_DIALOG' }
   | { type: 'CANCEL_ORDER'; payload: string }
+  | { type: 'REJECT_ORDER'; payload: string }
+  | { type: 'APPROVE_ORDER'; payload: string }
+  | { type: 'SET_UPDATING_STATUS'; payload: { id: string; updating: boolean } }
   | { type: 'LOAD_ERROR' };
