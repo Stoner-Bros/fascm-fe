@@ -338,6 +338,59 @@
       "keep": "Không, giữ lại",
       "confirm": "Có, hủy lô"
     },
+    "new": {
+      "title": "Tạo lô thu hoạch mới",
+      "subtitle": "Chọn sản phẩm và nhập thông tin thu hoạch",
+      "steps": {
+        "products": "Chọn sản phẩm",
+        "schedule": "Lịch thu hoạch",
+        "review": "Xác nhận"
+      },
+      "products": {
+        "title": "Chọn sản phẩm",
+        "description": "Chọn các sản phẩm bạn muốn thu hoạch",
+        "selected": "Đã chọn",
+        "empty": "Không có sản phẩm nào",
+        "noDescription": "Không có mô tả",
+        "enterDetails": "Nhập chi tiết",
+        "enterDetailsDescription": "Điều chỉnh số lượng và giá cho từng sản phẩm",
+        "quantity": "Số lượng",
+        "unitPrice": "Đơn giá",
+        "total": "Tổng cộng"
+      },
+      "schedule": {
+        "title": "Lịch thu hoạch",
+        "description": "Nhập thời gian và địa điểm thu hoạch",
+        "harvestDate": "Ngày thu hoạch",
+        "harvestAddress": "Địa chỉ thu hoạch",
+        "selectOnMap": "Chọn trên bản đồ",
+        "notes": "Ghi chú",
+        "notesPlaceholder": "Nhập ghi chú bổ sung..."
+      },
+      "review": {
+        "title": "Xác nhận thông tin",
+        "description": "Kiểm tra lại thông tin trước khi tạo lô thu hoạch",
+        "selectedProducts": "Sản phẩm đã chọn",
+        "harvestInfo": "Thông tin thu hoạch",
+        "totalAmount": "Tổng giá trị",
+        "totalQuantity": "Tổng khối lượng"
+      },
+      "buttons": {
+        "cancel": "Hủy bỏ",
+        "previous": "Quay lại",
+        "next": "Tiếp theo",
+        "closeMap": "Đóng bản đồ",
+        "submit": "Tạo lô thu hoạch",
+        "submitting": "Đang tạo..."
+      },
+      "toast": {
+        "errorTitle": "Lỗi",
+        "errorLoadProducts": "Không thể tải danh sách sản phẩm",
+        "errorCreateDescription": "Không thể tạo lô thu hoạch. Vui lòng thử lại.",
+        "successTitle": "Thành công!",
+        "successDescription": "Lô thu hoạch đã được tạo thành công."
+      }
+    },
     "phaseStatuses": {
       "preparing": "Đang chuẩn bị",
       "delivering": "Đang giao hàng",
@@ -360,16 +413,25 @@
       },
       "tabs": {
         "overview": "Tổng quan",
-        "phases": "Đợt ({count})",
+        "phases": "Đợt",
         "products": "Sản phẩm"
+      },
+      "statusSteps": {
+        "pending": "Chờ duyệt",
+        "approved": "Đã duyệt",
+        "processing": "Đang xử lý",
+        "completed": "Hoàn thành"
       },
       "overview": {
         "title": "Thông tin thu hoạch",
         "description": "Chi tiết thời gian và địa điểm thu hoạch",
         "harvestDate": "Ngày thu hoạch",
+        "harvestDetails": "Chi tiết thu hoạch",
         "location": "Địa điểm",
         "harvestAddress": "Địa chỉ thu hoạch",
-        "notes": "Ghi chú"
+        "notes": "Ghi chú",
+        "deliveryInformation": "Thông tin vận chuyển",
+        "notSpecified": "Chưa xác định"
       },
       "phases": {
         "phaseLabel": "Đợt {number}",
@@ -378,10 +440,17 @@
         "startAddressDefault": "Kho Nhà Cung Cấp",
         "quantity": "Khối lượng",
         "amount": "Giá trị",
-        "productsLabel": "Sản phẩm:",
+        "productsLabel": "Sản phẩm trong đợt này",
         "taxWithRate": "Thuế ({rate}%):",
         "emptyTitle": "Chưa có đợt thu hoạch",
-        "emptyDescription": "Các đợt thu hoạch sẽ xuất hiện sau khi được tạo"
+        "emptyDescription": "Các đợt thu hoạch sẽ xuất hiện sau khi được tạo",
+        "loading": "Đang tải đợt thu hoạch...",
+        "invoiceInformation": "Thông tin hóa đơn",
+        "totalAmount": "Tổng tiền hàng",
+        "vat": "VAT",
+        "totalPayment": "Tổng thanh toán",
+        "created": "Tạo lúc",
+        "updated": "Cập nhật"
       },
       "products": {
         "title": "Thông tin sản phẩm",
@@ -394,7 +463,11 @@
           "unit": "Đơn vị",
           "unitPrice": "Đơn giá"
         },
-        "unknownProduct": "Không xác định"
+        "unknownProduct": "Không xác định",
+        "itemsInHarvest": "sản phẩm trong lô thu hoạch này",
+        "amount": "Thành tiền",
+        "subtotal": "Tạm tính",
+        "total": "Tổng cộng"
       },
       "sidebar": {
         "overviewTitle": "Tổng quan",

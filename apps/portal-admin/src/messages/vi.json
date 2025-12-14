@@ -527,6 +527,7 @@
         "edit": "Chỉnh sửa",
         "cancelOrder": "Hủy đơn",
         "reject": "Từ chối",
+        "confirm": "Xác nhận",
         "viewRejectionReason": "Xem lý do từ chối"
       },
       "statuses": {
@@ -717,6 +718,7 @@
         "edit": "Chỉnh sửa",
         "cancelSchedule": "Hủy lịch",
         "reject": "Từ chối",
+        "confirm": "Xác nhận",
         "viewRejectionReason": "Xem lý do từ chối"
       },
       "statuses": {
@@ -733,14 +735,27 @@
         "cancelDescription": "Bạn có chắc chắn muốn hủy lịch thu hoạch {id}? Hành động này không thể hoàn tác.",
         "cancelKeep": "Giữ lại",
         "cancelConfirm": "Xác nhận hủy",
+        "rejectTitle": "Xác nhận từ chối",
+        "rejectDescription": "Bạn có chắc chắn muốn từ chối lịch thu hoạch {id}? Hành động này không thể hoàn tác.",
+        "rejectConfirm": "Xác nhận từ chối",
+        "reasonLabel": "Lý do",
+        "reasonPlaceholder": "Vui lòng nhập lý do hủy...",
+        "rejectReasonPlaceholder": "Vui lòng nhập lý do từ chối...",
         "rejectionReasonDefault": "Không có lý do từ chối",
         "rejectionReasonTitle": "Lý do từ chối"
       },
       "toast": {
         "errorTitle": "Lỗi",
         "errorDescription": "Không thể tải danh sách lịch thu hoạch",
+        "errorApproveDescription": "Không thể duyệt lịch thu hoạch",
+        "errorCancelDescription": "Không thể hủy lịch thu hoạch",
+        "errorRejectDescription": "Không thể từ chối lịch thu hoạch",
+        "approveTitle": "Đã duyệt",
+        "approveDescription": "Lịch thu hoạch đã được duyệt",
         "cancelTitle": "Đã hủy",
-        "cancelDescription": "Đã hủy lịch thu hoạch {id}"
+        "cancelDescription": "Đã hủy lịch thu hoạch {id}",
+        "rejectTitle": "Đã từ chối",
+        "rejectDescription": "Đã từ chối lịch thu hoạch {id}"
       }
     },
     "detail": {

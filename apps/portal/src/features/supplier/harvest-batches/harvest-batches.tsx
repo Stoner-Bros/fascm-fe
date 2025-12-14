@@ -24,8 +24,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
@@ -61,9 +59,10 @@ import {
   IconTruck,
   IconX
 } from '@tabler/icons-react';
+import { MoreVertical } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { useTranslations } from 'next-intl';
 
 type HarvestBatchRow = {
   id: string;
@@ -301,7 +300,7 @@ export default function SupplierHarvestBatchesFeature() {
 
   return (
     <PageContainer>
-      <div className='w-full space-y-6'>
+      <div className='w-full flex-1 space-y-6'>
         <div className='flex items-center justify-between'>
           <div>
             <h2 className='text-3xl font-bold tracking-tight'>
@@ -454,12 +453,20 @@ export default function SupplierHarvestBatchesFeature() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{t('table.id')}</TableHead>
-                    <TableHead>{t('table.products')}</TableHead>
-                    <TableHead>{t('table.harvestDate')}</TableHead>
-                    <TableHead>{t('table.location')}</TableHead>
-                    <TableHead>{t('table.status')}</TableHead>
-                    <TableHead className='text-right'>
+                    <TableHead className='w-[120px]'>{t('table.id')}</TableHead>
+                    <TableHead className='max-w-[200px]'>
+                      {t('table.products')}
+                    </TableHead>
+                    <TableHead className='w-[160px]'>
+                      {t('table.harvestDate')}
+                    </TableHead>
+                    <TableHead className='max-w-[200px]'>
+                      {t('table.location')}
+                    </TableHead>
+                    <TableHead className='w-[140px]'>
+                      {t('table.status')}
+                    </TableHead>
+                    <TableHead className='w-[80px] text-right'>
                       {t('table.actions')}
                     </TableHead>
                   </TableRow>
@@ -485,12 +492,27 @@ export default function SupplierHarvestBatchesFeature() {
                   ) : (
                     filteredBatches.map((batch) => (
                       <TableRow key={batch.id}>
-                        <TableCell className='font-medium'>
+                        <TableCell
+                          className='max-w-[120px] truncate font-medium'
+                          title={batch.id}
+                        >
                           {batch.id}
                         </TableCell>
-                        <TableCell>{batch.products}</TableCell>
-                        <TableCell>{batch.harvestDate}</TableCell>
-                        <TableCell>{batch.location}</TableCell>
+                        <TableCell
+                          className='max-w-[200px] truncate'
+                          title={batch.products}
+                        >
+                          {batch.products}
+                        </TableCell>
+                        <TableCell className='w-[160px] whitespace-nowrap'>
+                          {batch.harvestDate}
+                        </TableCell>
+                        <TableCell
+                          className='max-w-[200px] truncate'
+                          title={batch.location}
+                        >
+                          {batch.location}
+                        </TableCell>
                         <TableCell>
                           <Badge
                             variant={getStatusVariant(batch.status)}
@@ -504,15 +526,14 @@ export default function SupplierHarvestBatchesFeature() {
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant='ghost' size='sm'>
-                                {t('actionsMenu.trigger')}
+                                <MoreVertical className='h-4 w-4' />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align='end'>
-                              <DropdownMenuLabel>
-                                {t('actionsMenu.label')}
-                              </DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem asChild>
+                              <DropdownMenuItem
+                                className='cursor-pointer'
+                                asChild
+                              >
                                 <Link
                                   href={`/supplier/harvest-batches/${batch.id}`}
                                   className='flex items-center'
@@ -523,7 +544,10 @@ export default function SupplierHarvestBatchesFeature() {
                               </DropdownMenuItem>
                               {normalizeStatus(batch.status) === 'pending' && (
                                 <>
-                                  <DropdownMenuItem asChild>
+                                  <DropdownMenuItem
+                                    className='cursor-pointer'
+                                    asChild
+                                  >
                                     <Link
                                       href={`/supplier/harvest-batches/${batch.id}/edit`}
                                       className='flex items-center'
@@ -534,7 +558,7 @@ export default function SupplierHarvestBatchesFeature() {
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() => handleCancelBatch(batch.id)}
-                                    className='text-destructive'
+                                    className='text-destructive cursor-pointer'
                                   >
                                     <IconX className='mr-2 h-4 w-4 text-red-500' />
                                     {t('actionsMenu.cancelBatch')}
@@ -543,6 +567,7 @@ export default function SupplierHarvestBatchesFeature() {
                               )}
                               {normalizeStatus(batch.status) === 'rejected' && (
                                 <DropdownMenuItem
+                                  className='cursor-pointer'
                                   onClick={() => {
                                     // Sử dụng reason từ dữ liệu đã load
                                     const reason =

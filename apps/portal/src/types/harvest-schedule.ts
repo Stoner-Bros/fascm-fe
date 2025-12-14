@@ -46,12 +46,8 @@ export type CreateHarvestScheduleDto = {
   address?: string | null;
   description?: string | null;
   harvestDate: string | Date;
-  harvestTicket: {
-    ticketNumber?: string | null;
-    ticketUrl?: string | null;
-  };
   harvestDetails: Array<{
-    unitPrice?: number | null;
+    expectedUnitPrice?: number | null;
     quantity?: number | null;
     unit?: string | null;
     product?: {
