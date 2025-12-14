@@ -17,7 +17,8 @@ const nextConfig: NextConfig = {
       }
     ]
   },
-  transpilePackages: ['geist']
+  transpilePackages: ['geist'],
+  reactStrictMode: false
 };
 
 export default withNextIntl(nextConfig);

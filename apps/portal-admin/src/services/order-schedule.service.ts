@@ -1,10 +1,6 @@
 import { fetchJSON } from '@/lib/client';
+import type { FindAllOrderSchedulesDto, OrderSchedule } from '@/types/order';
 import type { InfinityPaginationResponse } from '../types/common';
-import type {
-  FindAllOrderSchedulesDto,
-  OrderSchedule,
-  UpdateOrderScheduleStatusDto
-} from '@/types/order';
 
 export async function fetchOrderSchedules({
   page = 1,
