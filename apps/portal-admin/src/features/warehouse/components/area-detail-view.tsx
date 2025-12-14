@@ -72,6 +72,7 @@ import {
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
+import { useTranslations, useLocale } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import { io } from 'socket.io-client';
 
@@ -85,6 +86,8 @@ export default function AreaDetailView({
   areaId
 }: AreaDetailViewProps) {
   const router = useRouter();
+  const t = useTranslations('AreaDetail');
+  const locale = useLocale();
   const [realTimeData, setRealTimeData] = useState<Date | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [area, setArea] = useState<AreaEntity | null>(null);
@@ -724,11 +727,11 @@ export default function AreaDetailView({
   const getActivityTypeBadge = (type: 'import' | 'export') => {
     return type === 'import' ? (
       <Badge variant='secondary' className='bg-green-100 text-green-800'>
-        Nhập kho
+        {t('history.import')}
       </Badge>
     ) : (
       <Badge variant='secondary' className='bg-blue-100 text-blue-800'>
-        Xuất kho
+        {t('history.export')}
       </Badge>
     );
   };
@@ -736,29 +739,29 @@ export default function AreaDetailView({
   const getHistoryStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; className: string }> = {
       pending_assignment: {
-        label: 'Chờ phân công',
+        label: t('history.status.pendingAssignment'),
         className: 'bg-yellow-100 text-yellow-800 border-yellow-200'
       },
       assigned: {
-        label: 'Đã phân công',
+        label: t('history.status.assigned'),
         className: 'bg-blue-100 text-blue-800 border-blue-200'
       },
       delivering: {
-        label: 'Đang giao hàng',
+        label: t('history.status.delivering'),
         className: 'bg-purple-100 text-purple-800 border-purple-200'
       },
       completed: {
-        label: 'Hoàn tất',
+        label: t('history.status.completed'),
         className: 'bg-green-100 text-green-800 border-green-200'
       },
       cancelled: {
-        label: 'Đã hủy',
+        label: t('history.status.cancelled'),
         className: 'bg-red-100 text-red-800 border-red-200'
       }
     };
 
     const config = statusConfig[status] ?? {
-      label: 'Không xác định',
+      label: t('history.status.unknown'),
       className: 'bg-gray-100 text-gray-800 border-gray-200'
     };
 
@@ -815,7 +818,7 @@ export default function AreaDetailView({
     const productMap = new Map<string, { name: string; value: number }>();
     overviewBatches.forEach((batch) => {
       const key = batch.product?.id || 'unknown';
-      const name = batch.product?.name || 'Sản phẩm khác';
+      const name = batch.product?.name || t('overview.otherProduct');
       const quantity = toNumber(batch.quantity);
       const prev = productMap.get(key);
       productMap.set(key, { name, value: (prev?.value ?? 0) + quantity });
@@ -828,7 +831,7 @@ export default function AreaDetailView({
 
     return distribution.length
       ? distribution
-      : [{ name: 'Chưa có dữ liệu', value: 1, color: palette[0] }];
+      : [{ name: t('overview.noData'), value: 1, color: palette[0] }];
   }, [overviewBatches]);
 
   useEffect(() => {
@@ -974,23 +977,23 @@ export default function AreaDetailView({
       case 'normal':
         return (
           <Badge className='bg-green-100 text-green-800 dark:bg-green-600 dark:text-white'>
-            Bình thường
+            {t('status.normal')}
           </Badge>
         );
       case 'warning':
         return (
           <Badge className='bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'>
-            Cảnh báo
+            {t('status.warning')}
           </Badge>
         );
       case 'critical':
         return (
           <Badge className='bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'>
-            Nghiêm trọng
+            {t('status.critical')}
           </Badge>
         );
       default:
-        return <Badge variant='secondary'>Không xác định</Badge>;
+        return <Badge variant='secondary'>{t('status.unknown')}</Badge>;
     }
   };
 
@@ -1005,7 +1008,8 @@ export default function AreaDetailView({
   const areaName = area?.name;
   const areaCode = area?.id || areaId;
   const areaDescription = area?.description || '';
-  const warehouseName = warehouse?.name || `Kho ${warehouseId}`;
+  const warehouseName =
+    warehouse?.name || `${t('common.warehouse')} ${warehouseId}`;
 
   return areaName ? (
     <div className='mx-auto w-full space-y-6'>
@@ -1023,12 +1027,13 @@ export default function AreaDetailView({
           <div>
             <h1 className='text-3xl font-bold'>
               {areaName}
-              {isLoadingArea && ' (đang tải...)'}
+              {isLoadingArea && ` (${t('header.loading')})`}
             </h1>
             <p className='text-muted-foreground'>
               {warehouseName}
-              {isLoadingWarehouse && ' (đang tải...)'} • Cập nhật lần cuối:{' '}
-              {realTimeData ? realTimeData.toLocaleTimeString('vi-VN') : '—'}
+              {isLoadingWarehouse && ` (${t('header.loading')})`} •{' '}
+              {t('header.lastUpdated')}:{' '}
+              {realTimeData ? realTimeData.toLocaleTimeString(locale) : '—'}
             </p>
           </div>
         </div>
@@ -1044,11 +1049,11 @@ export default function AreaDetailView({
             disabled={isLoadingEnv}
           >
             <IconRefresh className='mr-2 h-4 w-4' />
-            {isLoadingEnv ? 'Đang tải...' : 'Làm mới'}
+            {isLoadingEnv ? t('loading') : t('actions.refresh')}
           </Button>
           <Button variant='outline' size='sm'>
             <IconSettings className='mr-2 h-4 w-4' />
-            Cài đặt
+            {t('actions.settings')}
           </Button>
         </div>
       </div>
@@ -1057,7 +1062,9 @@ export default function AreaDetailView({
       <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Nhiệt độ</CardTitle>
+            <CardTitle className='text-sm font-medium'>
+              {t('status.temperature')}
+            </CardTitle>
             <IconThermometer className='text-muted-foreground h-4 w-4' />
           </CardHeader>
           <CardContent>
@@ -1065,11 +1072,11 @@ export default function AreaDetailView({
               {temperature != null
                 ? `${temperature}°C`
                 : isLoadingEnv
-                  ? 'Đang tải...'
+                  ? t('loading')
                   : '—'}
             </div>
             <p className='text-muted-foreground text-xs'>
-              Ngưỡng:{' '}
+              {t('threshold')}:{' '}
               {areaSetting
                 ? `${areaSetting.minTemperature}–${areaSetting.maxTemperature}°C`
                 : '—'}
@@ -1080,7 +1087,9 @@ export default function AreaDetailView({
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Độ ẩm</CardTitle>
+            <CardTitle className='text-sm font-medium'>
+              {t('status.humidity')}
+            </CardTitle>
             <IconDroplet className='text-muted-foreground h-4 w-4' />
           </CardHeader>
           <CardContent>
@@ -1088,11 +1097,11 @@ export default function AreaDetailView({
               {humidity != null
                 ? `${humidity}%`
                 : isLoadingEnv
-                  ? 'Đang tải...'
+                  ? t('loading')
                   : '—'}
             </div>
             <p className='text-muted-foreground text-xs'>
-              Ngưỡng:{' '}
+              {t('threshold')}:{' '}
               {areaSetting
                 ? `${areaSetting.minHumidity}–${areaSetting.maxHumidity}%`
                 : '—'}
@@ -1103,7 +1112,9 @@ export default function AreaDetailView({
 
         <Card>
           <CardHeader className='flex flex-row items-center justify-between space-y-0 pb-2'>
-            <CardTitle className='text-sm font-medium'>Cảnh báo</CardTitle>
+            <CardTitle className='text-sm font-medium'>
+              {t('alerts.title')}
+            </CardTitle>
             <IconAlertTriangle className='text-muted-foreground h-4 w-4' />
           </CardHeader>
           <CardContent>
@@ -1111,11 +1122,11 @@ export default function AreaDetailView({
               <div className='space-y-1'>
                 <div className='text-2xl font-bold text-yellow-600'>1</div>
                 <p className='text-muted-foreground text-xs'>
-                  Cảnh báo đang hoạt động
+                  {t('alerts.active')}
                 </p>
                 <div className='mt-2'>
                   <Badge variant='outline' className='text-yellow-600'>
-                    {activeAlert.alertType || 'Alert'}
+                    {activeAlert.alertType || t('alerts.typeDefault')}
                   </Badge>
                 </div>
                 <p className='mt-1 text-sm'>{activeAlert.message || ''}</p>
@@ -1124,7 +1135,7 @@ export default function AreaDetailView({
               <div className='space-y-1'>
                 <div className='text-2xl font-bold'>0</div>
                 <p className='text-muted-foreground text-xs'>
-                  Không có cảnh báo
+                  {t('alerts.none')}
                 </p>
               </div>
             )}
@@ -1139,12 +1150,12 @@ export default function AreaDetailView({
         className='space-y-4'
       >
         <TabsList className='grid w-full grid-cols-6'>
-          <TabsTrigger value='overview'>Tổng quan</TabsTrigger>
-          <TabsTrigger value='products'>Sản phẩm</TabsTrigger>
-          <TabsTrigger value='alerts'>Cảnh báo</TabsTrigger>
-          <TabsTrigger value='history'>Lịch sử</TabsTrigger>
-          <TabsTrigger value='settings'>Cài đặt</TabsTrigger>
-          <TabsTrigger value='iot'>Thiết bị IoT</TabsTrigger>
+          <TabsTrigger value='overview'>{t('tabs.overview')}</TabsTrigger>
+          <TabsTrigger value='products'>{t('tabs.products')}</TabsTrigger>
+          <TabsTrigger value='alerts'>{t('tabs.alerts')}</TabsTrigger>
+          <TabsTrigger value='history'>{t('tabs.history')}</TabsTrigger>
+          <TabsTrigger value='settings'>{t('tabs.settings')}</TabsTrigger>
+          <TabsTrigger value='iot'>{t('tabs.iot')}</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -1155,26 +1166,26 @@ export default function AreaDetailView({
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
                   <IconMapPin className='h-5 w-5' />
-                  Thông tin khu vực
+                  {t('overview.title')}
                 </CardTitle>
               </CardHeader>
               <CardContent className='space-y-4'>
                 <div className='grid grid-cols-2 gap-4'>
                   <div>
                     <p className='text-muted-foreground text-sm font-medium'>
-                      Tên khu vực
+                      {t('overview.name')}
                     </p>
                     <p className='font-semibold'>{areaName}</p>
                   </div>
                   <div>
                     <p className='text-muted-foreground text-sm font-medium'>
-                      Mô tả
+                      {t('overview.description')}
                     </p>
                     <p className='font-semibold'>{areaDescription}</p>
                   </div>
                   <div>
                     <p className='text-muted-foreground text-sm font-medium'>
-                      Trạng thái
+                      {t('overview.status')}
                     </p>
                     {getStatusBadge('normal')}
                   </div>
@@ -1189,33 +1200,45 @@ export default function AreaDetailView({
         <TabsContent value='products' className='space-y-4'>
           <Card className='overflow-hidden'>
             <CardHeader>
-              <CardTitle>Nhóm lô nhập theo phiếu nhập</CardTitle>
+              <CardTitle>{t('products.group.title')}</CardTitle>
               <CardDescription>
-                Gộp theo Import Ticket trong khu vực
+                {t('products.group.description')}
               </CardDescription>
             </CardHeader>
             <CardContent className='p-0'>
               {isLoadingBatchGroups ? (
                 <div className='text-muted-foreground px-4 py-6 text-sm'>
-                  Đang tải dữ liệu nhóm lô...
+                  {t('products.group.loading')}
                 </div>
               ) : batchGroups.length === 0 ? (
                 <div className='text-muted-foreground px-4 py-6 text-sm'>
-                  Chưa có dữ liệu nhóm lô theo phiếu nhập.
+                  {t('products.group.empty')}
                 </div>
               ) : (
                 <div className='w-full overflow-x-auto'>
                   <table className='w-full text-sm'>
                     <thead className='bg-muted'>
                       <tr>
-                        <th className='px-4 py-2 text-left'>Import Ticket</th>
-                        <th className='px-4 py-2 text-left'>Sản phẩm</th>
-                        <th className='px-4 py-2 text-left'>Batch code</th>
-                        <th className='px-4 py-2 text-left'>Ngày nhập</th>
-                        <th className='px-4 py-2 text-left'>Hạn dùng</th>
-                        <th className='px-4 py-2 text-left'>Quy cách</th>
                         <th className='px-4 py-2 text-left'>
-                          Giá theo quy cách
+                          {t('products.group.columns.importTicket')}
+                        </th>
+                        <th className='px-4 py-2 text-left'>
+                          {t('products.group.columns.product')}
+                        </th>
+                        <th className='px-4 py-2 text-left'>
+                          {t('products.group.columns.batchCode')}
+                        </th>
+                        <th className='px-4 py-2 text-left'>
+                          {t('products.group.columns.importDate')}
+                        </th>
+                        <th className='px-4 py-2 text-left'>
+                          {t('products.group.columns.expiredAt')}
+                        </th>
+                        <th className='px-4 py-2 text-left'>
+                          {t('products.group.columns.spec')}
+                        </th>
+                        <th className='px-4 py-2 text-left'>
+                          {t('products.group.columns.priceBySpec')}
                         </th>
                       </tr>
                     </thead>
@@ -1245,13 +1268,13 @@ export default function AreaDetailView({
                             <td className='px-4 py-2'>{g.batchCode ?? '-'}</td>
                             <td className='px-4 py-2 text-xs'>
                               {g.importDate
-                                ? new Date(g.importDate).toLocaleString('vi-VN')
+                                ? new Date(g.importDate).toLocaleString(locale)
                                 : '—'}
                             </td>
                             <td className='px-4 py-2 text-xs'>
                               {g.expiredAt
                                 ? new Date(g.expiredAt).toLocaleDateString(
-                                    'vi-VN'
+                                    locale
                                   )
                                 : '—'}
                             </td>
@@ -1271,40 +1294,45 @@ export default function AreaDetailView({
         {/* Products Tab */}
         <TabsContent value='products' className='space-y-4'>
           <div className='flex items-center justify-between'>
-            <h3 className='text-lg font-semibold'>Sản phẩm trong khu vực</h3>
+            <h3 className='text-lg font-semibold'>{t('products.title')}</h3>
             <Button
               size='sm'
               variant='outline'
               onClick={() => router.push('/dashboard/warehouse/batches')}
             >
               <IconPackage className='mr-2 h-4 w-4' />
-              Quản lý nhập hàng
+              {t('products.manageImports')}
             </Button>
           </div>
 
           {isLoadingProducts ? (
             <div className='text-muted-foreground text-sm'>
-              Đang tải danh sách sản phẩm...
+              {t('products.loading')}
             </div>
           ) : productsInArea.length === 0 ? (
             <div className='text-muted-foreground text-sm'>
-              Chưa có sản phẩm nào trong khu vực này. Vui lòng tạo Import Ticket
-              và gán batch vào khu vực để hiển thị tại đây.
+              {t('products.empty')}
             </div>
           ) : (
             <div className='grid gap-4 lg:grid-cols-[2fr,3fr]'>
               <Card className='overflow-hidden'>
                 <CardHeader>
-                  <CardTitle>Danh sách sản phẩm</CardTitle>
+                  <CardTitle>{t('products.list.title')}</CardTitle>
                 </CardHeader>
                 <CardContent className='p-0'>
                   <div className='w-full overflow-x-auto'>
                     <table className='w-full text-sm'>
                       <thead className='bg-muted'>
                         <tr>
-                          <th className='px-4 py-2 text-left'>Sản phẩm</th>
-                          <th className='px-4 py-2 text-left'>Số lô</th>
-                          <th className='px-4 py-2 text-left'>Tổng số lượng</th>
+                          <th className='px-4 py-2 text-left'>
+                            {t('products.list.columns.product')}
+                          </th>
+                          <th className='px-4 py-2 text-left'>
+                            {t('products.list.columns.batchCount')}
+                          </th>
+                          <th className='px-4 py-2 text-left'>
+                            {t('products.list.columns.totalQuantity')}
+                          </th>
                         </tr>
                       </thead>
                       <tbody>
@@ -1339,16 +1367,15 @@ export default function AreaDetailView({
                 <CardHeader>
                   <CardTitle>
                     {selectedProductId
-                      ? 'Các lô hàng trong khu vực'
-                      : 'Chọn một sản phẩm để xem các lô hàng'}
+                      ? t('products.batches.title')
+                      : t('products.batches.selectPrompt')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className='p-0'>
                   {selectedProductId &&
                     batchesOfSelectedProduct.length === 0 && (
                       <div className='text-muted-foreground px-4 py-6 text-sm'>
-                        Không tìm thấy lô hàng nào cho sản phẩm này trong khu
-                        vực.
+                        {t('products.batches.empty')}
                       </div>
                     )}
                   {selectedProductId && batchesOfSelectedProduct.length > 0 && (
@@ -1356,11 +1383,17 @@ export default function AreaDetailView({
                       <table className='w-full text-sm'>
                         <thead className='bg-muted'>
                           <tr>
-                            <th className='px-4 py-2 text-left'>Batch code</th>
-                            <th className='px-4 py-2 text-left'>Số lượng</th>
-                            <th className='px-4 py-2 text-left'>Đơn vị</th>
                             <th className='px-4 py-2 text-left'>
-                              Ngày tạo batch
+                              {t('products.batches.columns.batchCode')}
+                            </th>
+                            <th className='px-4 py-2 text-left'>
+                              {t('products.batches.columns.quantity')}
+                            </th>
+                            <th className='px-4 py-2 text-left'>
+                              {t('products.batches.columns.unit')}
+                            </th>
+                            <th className='px-4 py-2 text-left'>
+                              {t('products.batches.columns.createdAt')}
                             </th>
                           </tr>
                         </thead>
@@ -1372,7 +1405,7 @@ export default function AreaDetailView({
                                   {b.batchCode}
                                 </div>
                                 <div className='text-muted-foreground text-xs'>
-                                  ID: {b.id}
+                                  {t('products.batches.columns.id')}: {b.id}
                                 </div>
                               </td>
                               <td className='px-4 py-2'>
@@ -1381,9 +1414,7 @@ export default function AreaDetailView({
                               <td className='px-4 py-2'>{b.unit}</td>
                               <td className='px-4 py-2 text-xs'>
                                 {b.createdAt
-                                  ? new Date(b.createdAt).toLocaleString(
-                                      'vi-VN'
-                                    )
+                                  ? new Date(b.createdAt).toLocaleString(locale)
                                   : '—'}
                               </td>
                             </tr>
@@ -1394,8 +1425,7 @@ export default function AreaDetailView({
                   )}
                   {!selectedProductId && (
                     <div className='text-muted-foreground px-4 py-6 text-sm'>
-                      Hãy chọn một sản phẩm ở bảng bên trái để xem chi tiết các
-                      lô hàng đang có trong khu vực.
+                      {t('products.batches.selectPrompt')}
                     </div>
                   )}
                 </CardContent>
@@ -1407,10 +1437,10 @@ export default function AreaDetailView({
         {/* Alerts Tab */}
         <TabsContent value='alerts' className='space-y-4'>
           <div className='flex items-center justify-between'>
-            <h3 className='text-lg font-semibold'>Cảnh báo và thông báo</h3>
+            <h3 className='text-lg font-semibold'>{t('alerts.header')}</h3>
             <Button variant='outline'>
               <IconBell className='mr-2 h-4 w-4' />
-              Cài đặt thông báo
+              {t('alerts.settings')}
             </Button>
           </div>
           {activeAlert &&
@@ -1419,9 +1449,9 @@ export default function AreaDetailView({
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
                   <IconAlertTriangle className='h-5 w-5 text-amber-600' />
-                  {activeAlert.alertType || 'Alert'}
+                  {activeAlert.alertType || t('alerts.typeDefault')}
                 </CardTitle>
-                <CardDescription>Cảnh báo môi trường khu vực</CardDescription>
+                <CardDescription>{t('alerts.description')}</CardDescription>
               </CardHeader>
               <CardContent>
                 <p className='text-sm'>{activeAlert.message || ''}</p>
@@ -1429,7 +1459,7 @@ export default function AreaDetailView({
             </Card>
           ) : (
             <div className='text-muted-foreground text-sm'>
-              Chưa có dữ liệu cảnh báo cho khu vực này.
+              {t('alerts.empty')}
             </div>
           )}
         </TabsContent>
@@ -1442,22 +1472,20 @@ export default function AreaDetailView({
                 <div>
                   <CardTitle className='flex items-center gap-2'>
                     <IconHistory className='h-5 w-5' />
-                    Lịch sử hoạt động
+                    {t('history.title')}
                   </CardTitle>
-                  <CardDescription>
-                    Theo dõi tất cả các hoạt động xuất nhập kho trong khu vực
-                  </CardDescription>
+                  <CardDescription>{t('history.description')}</CardDescription>
                 </div>
                 <Button variant='outline' size='sm'>
                   <IconClock className='mr-2 h-4 w-4' />
-                  Xuất báo cáo
+                  {t('history.exportReport')}
                 </Button>
               </div>
             </CardHeader>
             <CardContent>
               {isLoadingHistory ? (
                 <div className='py-8 text-center text-sm text-gray-500'>
-                  Đang tải lịch sử hoạt động...
+                  {t('history.loading')}
                 </div>
               ) : (
                 <>
@@ -1468,7 +1496,7 @@ export default function AreaDetailView({
                         <div className='relative'>
                           <IconSearch className='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400' />
                           <Input
-                            placeholder='Tìm kiếm sản phẩm...'
+                            placeholder={t('history.searchPlaceholder')}
                             value={historySearchTerm}
                             onChange={(e) =>
                               setHistorySearchTerm(e.target.value)
@@ -1483,7 +1511,7 @@ export default function AreaDetailView({
                       <div className='flex items-center gap-2'>
                         <IconFilter className='h-4 w-4 text-gray-500' />
                         <span className='text-sm font-medium text-gray-700'>
-                          Bộ lọc:
+                          {t('history.filters.label')}:
                         </span>
                       </div>
 
@@ -1492,12 +1520,20 @@ export default function AreaDetailView({
                         onValueChange={setSelectedActivityType}
                       >
                         <SelectTrigger className='w-[140px]'>
-                          <SelectValue placeholder='Loại hoạt động' />
+                          <SelectValue
+                            placeholder={t('history.filters.activityType')}
+                          />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value='Tất cả'>Tất cả</SelectItem>
-                          <SelectItem value='Nhập kho'>Nhập kho</SelectItem>
-                          <SelectItem value='Xuất kho'>Xuất kho</SelectItem>
+                          <SelectItem value='Tất cả'>
+                            {t('history.filters.all')}
+                          </SelectItem>
+                          <SelectItem value='Nhập kho'>
+                            {t('history.import')}
+                          </SelectItem>
+                          <SelectItem value='Xuất kho'>
+                            {t('history.export')}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
 
@@ -1506,11 +1542,13 @@ export default function AreaDetailView({
                         onValueChange={setSelectedProduct}
                       >
                         <SelectTrigger className='w-[180px]'>
-                          <SelectValue placeholder='Sản phẩm' />
+                          <SelectValue
+                            placeholder={t('history.filters.product')}
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value='Tất cả'>
-                            Tất cả sản phẩm
+                            {t('history.filters.allProducts')}
                           </SelectItem>
                         </SelectContent>
                       </Select>
@@ -1520,15 +1558,23 @@ export default function AreaDetailView({
                         onValueChange={setSelectedStatus}
                       >
                         <SelectTrigger className='w-[180px]'>
-                          <SelectValue placeholder='Tất cả trạng thái' />
+                          <SelectValue
+                            placeholder={t('history.filters.allStatuses')}
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value='Tất cả'>
-                            Tất cả trạng thái
+                            {t('history.filters.allStatuses')}
                           </SelectItem>
-                          <SelectItem value='completed'>Hoàn tất</SelectItem>
-                          <SelectItem value='Đang xử lý'>Đang xử lý</SelectItem>
-                          <SelectItem value='cancelled'>Đã hủy</SelectItem>
+                          <SelectItem value='completed'>
+                            {t('history.status.completed')}
+                          </SelectItem>
+                          <SelectItem value='Đang xử lý'>
+                            {t('history.status.processing')}
+                          </SelectItem>
+                          <SelectItem value='cancelled'>
+                            {t('history.status.cancelled')}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -1536,14 +1582,16 @@ export default function AreaDetailView({
 
                   {/* Results Summary */}
                   <div className='mb-4 text-sm text-gray-600'>
-                    Hiển thị {filteredHistoryActivities.length} kết quả từ tổng
-                    số {historyActivities.length} hoạt động
+                    {t('history.summary', {
+                      count: filteredHistoryActivities.length,
+                      total: historyActivities.length
+                    })}
                   </div>
 
                   {/* Activities Table */}
                   {filteredHistoryActivities.length === 0 ? (
                     <div className='py-8 text-center text-sm text-gray-500'>
-                      Không tìm thấy hoạt động nào phù hợp với bộ lọc
+                      {t('history.noResults')}
                     </div>
                   ) : (
                     <div className='overflow-hidden rounded-lg border'>
@@ -1551,19 +1599,19 @@ export default function AreaDetailView({
                         <TableHeader>
                           <TableRow className='bg-gray-50'>
                             <TableHead className='font-semibold'>
-                              Ngày và giờ
+                              {t('history.columns.datetime')}
                             </TableHead>
                             <TableHead className='font-semibold'>
-                              Loại hoạt động
+                              {t('history.columns.activityType')}
                             </TableHead>
                             <TableHead className='font-semibold'>
-                              Sản phẩm
+                              {t('history.columns.product')}
                             </TableHead>
                             <TableHead className='font-semibold'>
-                              Số lượng
+                              {t('history.columns.quantity')}
                             </TableHead>
                             <TableHead className='font-semibold'>
-                              Trạng thái
+                              {t('history.columns.status')}
                             </TableHead>
                           </TableRow>
                         </TableHeader>
@@ -1622,25 +1670,25 @@ export default function AreaDetailView({
         {/* Settings Tab */}
         <TabsContent value='settings' className='space-y-4'>
           <div className='flex items-center justify-between'>
-            <h3 className='text-lg font-semibold'>Cài đặt khu vực</h3>
+            <h3 className='text-lg font-semibold'>{t('settings.title')}</h3>
             <Button onClick={handleSaveSettings} disabled={isSavingSetting}>
               <IconShield className='mr-2 h-4 w-4' />
-              {isSavingSetting ? 'Đang lưu...' : 'Lưu thay đổi'}
+              {isSavingSetting ? t('settings.saving') : t('settings.save')}
             </Button>
           </div>
 
           <div className='grid gap-4 md:grid-cols-2'>
             <Card>
               <CardHeader>
-                <CardTitle>Ngưỡng cảnh báo</CardTitle>
+                <CardTitle>{t('settings.threshold.title')}</CardTitle>
                 <CardDescription>
-                  Nhiệt độ tối thiểu / tối đa theo cấu hình area-settings
+                  {t('settings.threshold.tempDescription')}
                 </CardDescription>
               </CardHeader>
               <CardContent className='space-y-4'>
                 <div>
                   <label className='text-sm font-medium'>
-                    Nhiệt độ tối thiểu (°C)
+                    {t('settings.fields.minTemperature')}
                   </label>
                   <input
                     type='number'
@@ -1657,7 +1705,7 @@ export default function AreaDetailView({
                 </div>
                 <div>
                   <label className='text-sm font-medium'>
-                    Nhiệt độ tối đa (°C)
+                    {t('settings.fields.maxTemperature')}
                   </label>
                   <input
                     type='number'
@@ -1674,7 +1722,7 @@ export default function AreaDetailView({
                 </div>
                 <div>
                   <label className='text-sm font-medium'>
-                    Sức chứa tối thiểu (kg)
+                    {t('settings.fields.minCapacity')}
                   </label>
                   <input
                     type='number'
@@ -1687,7 +1735,7 @@ export default function AreaDetailView({
                         minCapacity: e.target.value
                       }))
                     }
-                    placeholder='Ví dụ: 100'
+                    placeholder={t('settings.fields.minCapacityPlaceholder')}
                     className='mt-1 w-full rounded-md border px-3 py-2'
                   />
                 </div>
@@ -1696,15 +1744,15 @@ export default function AreaDetailView({
 
             <Card>
               <CardHeader>
-                <CardTitle>Ngưỡng cảnh báo</CardTitle>
+                <CardTitle>{t('settings.threshold.title')}</CardTitle>
                 <CardDescription>
-                  Độ ẩm tối thiểu / tối đa theo cấu hình area-settings
+                  {t('settings.threshold.humidityDescription')}
                 </CardDescription>
               </CardHeader>
               <CardContent className='space-y-4'>
                 <div>
                   <label className='text-sm font-medium'>
-                    Độ ẩm tối thiểu (%)
+                    {t('settings.fields.minHumidity')}
                   </label>
                   <input
                     type='number'
@@ -1721,7 +1769,7 @@ export default function AreaDetailView({
                 </div>
                 <div>
                   <label className='text-sm font-medium'>
-                    Độ ẩm tối đa (%)
+                    {t('settings.fields.maxHumidity')}
                   </label>
                   <input
                     type='number'
@@ -1745,12 +1793,12 @@ export default function AreaDetailView({
         <TabsContent value='iot' className='space-y-4'>
           <Card>
             <CardHeader>
-              <CardTitle>Thiết bị IoT</CardTitle>
+              <CardTitle>{t('iot.title')}</CardTitle>
             </CardHeader>
             <CardContent>
               {isLoadingIoT ? (
                 <div className='py-8 text-center text-sm text-gray-500'>
-                  Đang tải thiết bị IoT...
+                  {t('iot.loading')}
                 </div>
               ) : iotDevices && iotDevices.length > 0 ? (
                 <div className='grid gap-6 md:grid-cols-2 lg:grid-cols-3'>
@@ -1762,13 +1810,13 @@ export default function AreaDetailView({
                       status={device.status}
                       lastDataTime={String(device?.lastDataTime ?? '')}
                       data={device.data}
-                      locationLabel={`Area ${areaId}`}
+                      locationLabel={`${t('iot.areaLabel')} ${areaId}`}
                     />
                   ))}
                 </div>
               ) : (
                 <div className='py-8 text-center text-sm text-gray-500'>
-                  Chưa có thiết bị IoT
+                  {t('iot.empty')}
                 </div>
               )}
             </CardContent>
@@ -1777,6 +1825,6 @@ export default function AreaDetailView({
       </Tabs>
     </div>
   ) : (
-    <div className='w-full py-10 text-center'>Loading...</div>
+    <div className='w-full py-10 text-center'>{t('loading')}</div>
   );
 }

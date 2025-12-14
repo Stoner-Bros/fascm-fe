@@ -36,6 +36,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
+import { useTranslations } from 'next-intl';
 import {
   createSupplier,
   deleteSupplier,
@@ -77,6 +78,7 @@ const formatDateTime = (value?: string | Date) => {
 };
 
 export default function SuppliersAccount() {
+  const t = useTranslations('Accounts.Suppliers');
   const { toast } = useToast();
   const toastRef = useRef(toast);
   const [form, setForm] = useState(DEFAULT_FORM);
@@ -109,8 +111,9 @@ export default function SuppliersAccount() {
     } catch (error) {
       toastRef.current?.({
         variant: 'destructive',
-        title: 'Không thể tải danh sách suppliers',
-        description: error instanceof Error ? error.message : 'Vui lòng thử lại'
+        title: t('toast.loadError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
       });
     } finally {
       isFetchingRef.current = false;
@@ -149,7 +152,7 @@ export default function SuppliersAccount() {
     ) {
       toast({
         variant: 'destructive',
-        title: 'Vui lòng điền đầy đủ thông tin bắt buộc'
+        title: t('form.fillRequired')
       });
       return;
     }
@@ -180,7 +183,7 @@ export default function SuppliersAccount() {
             password: form.password || ''
           }
         });
-        toast({ title: 'Đã cập nhật supplier' });
+        toast({ title: t('toast.updateSuccess') });
       } else {
         await createSupplier({
           ...basePayload,
@@ -189,7 +192,7 @@ export default function SuppliersAccount() {
             password: form.password
           }
         });
-        toast({ title: 'Đã tạo supplier thành công' });
+        toast({ title: t('toast.createSuccess') });
       }
 
       resetForm();
@@ -200,9 +203,10 @@ export default function SuppliersAccount() {
       toast({
         variant: 'destructive',
         title: editingSupplier
-          ? 'Không thể cập nhật supplier'
-          : 'Không thể tạo supplier',
-        description: error instanceof Error ? error.message : 'Vui lòng thử lại'
+          ? t('toast.updateError')
+          : t('toast.createError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
       });
     } finally {
       setIsSubmitting(false);
@@ -210,16 +214,17 @@ export default function SuppliersAccount() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa supplier này?')) return;
+    if (!window.confirm(t('actions.confirmDelete'))) return;
     try {
       await deleteSupplier(id);
-      toast({ title: 'Đã xóa supplier' });
+      toast({ title: t('toast.deleteSuccess') });
       await loadData();
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Không thể xóa supplier',
-        description: error instanceof Error ? error.message : 'Vui lòng thử lại'
+        title: t('toast.deleteError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
       });
     }
   };
@@ -251,7 +256,7 @@ export default function SuppliersAccount() {
     });
     return sorted.map((supplier) => ({
       ...supplier,
-      warehouseName: supplier.warehouse?.name ?? 'Không gán',
+      warehouseName: supplier.warehouse?.name ?? t('labels.unassigned'),
       gardenNameDisplay: supplier.gardenName ?? '—',
       email: supplier.user?.email ?? '—',
       createdAtDisplay: formatDateTime(supplier.createdAt)
@@ -280,35 +285,35 @@ export default function SuppliersAccount() {
         <header className='flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
           <div className='space-y-2'>
             <h1 className='text-3xl font-bold tracking-tight'>
-              Quản lý tài khoản Suppliers
+              {t('header.title')}
             </h1>
-            <p className='text-muted-foreground'>
-              Danh sách hiển thị trước, hộp thoại đảm nhiệm tạo và chỉnh sửa.
-            </p>
+            <p className='text-muted-foreground'>{t('header.description')}</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
             <DialogTrigger asChild>
               <Button size='lg'>
-                + {editingSupplier ? 'Chỉnh sửa' : 'Tạo'} supplier
+                {editingSupplier
+                  ? t('actions.editSupplier')
+                  : t('actions.createSupplier')}
               </Button>
             </DialogTrigger>
             <DialogContent className='max-h-[95vh] overflow-y-auto sm:max-w-3xl'>
               <DialogHeader>
                 <DialogTitle>
                   {editingSupplier
-                    ? 'Cập nhật tài khoản supplier'
-                    : 'Tạo tài khoản supplier'}
+                    ? t('dialog.editTitle')
+                    : t('dialog.createTitle')}
                 </DialogTitle>
                 <DialogDescription>
                   {editingSupplier
-                    ? 'Điều chỉnh thông tin doanh nghiệp, warehouse và tài khoản đăng nhập.'
-                    : 'Nhập thông tin doanh nghiệp, warehouse (nếu có) và tài khoản đăng nhập.'}
+                    ? t('dialog.editDescription')
+                    : t('dialog.createDescription')}
                 </DialogDescription>
               </DialogHeader>
               <div className='space-y-4'>
                 <div className='grid gap-4 md:grid-cols-2'>
                   <div className='space-y-2'>
-                    <Label>Tên vườn *</Label>
+                    <Label>{t('form.gardenName')}</Label>
                     <Input
                       value={form.gardenName}
                       onChange={(e) =>
@@ -317,11 +322,11 @@ export default function SuppliersAccount() {
                           gardenName: e.target.value
                         }))
                       }
-                      placeholder='Vườn Cam X'
+                      placeholder={t('placeholders.gardenName')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Người đại diện *</Label>
+                    <Label>{t('form.representativeName')}</Label>
                     <Input
                       value={form.representativeName}
                       onChange={(e) =>
@@ -330,11 +335,11 @@ export default function SuppliersAccount() {
                           representativeName: e.target.value
                         }))
                       }
-                      placeholder='Nguyễn Văn B'
+                      placeholder={t('placeholders.representativeName')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Số liên hệ *</Label>
+                    <Label>{t('form.contact')}</Label>
                     <Input
                       value={form.contact}
                       onChange={(e) =>
@@ -343,11 +348,11 @@ export default function SuppliersAccount() {
                           contact: e.target.value
                         }))
                       }
-                      placeholder='0123456789'
+                      placeholder={t('placeholders.contact')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Mã số thuế *</Label>
+                    <Label>{t('form.taxCode')}</Label>
                     <Input
                       value={form.taxCode}
                       onChange={(e) =>
@@ -356,11 +361,11 @@ export default function SuppliersAccount() {
                           taxCode: e.target.value
                         }))
                       }
-                      placeholder='0123456789'
+                      placeholder={t('placeholders.taxCode')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Địa chỉ *</Label>
+                    <Label>{t('form.address')}</Label>
                     <Input
                       value={form.address}
                       onChange={(e) =>
@@ -369,11 +374,11 @@ export default function SuppliersAccount() {
                           address: e.target.value
                         }))
                       }
-                      placeholder='Số 456, Huyện C, Tỉnh D'
+                      placeholder={t('placeholders.address')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Giấy chứng nhận</Label>
+                    <Label>{t('form.certificate')}</Label>
                     <Input
                       value={form.certificate}
                       onChange={(e) =>
@@ -382,32 +387,36 @@ export default function SuppliersAccount() {
                           certificate: e.target.value
                         }))
                       }
-                      placeholder='VietGAP...'
+                      placeholder={t('placeholders.certificate')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>QR Code</Label>
+                    <Label>{t('form.qrCode')}</Label>
                     <Input
                       value={form.qrCode}
                       onChange={(e) =>
                         setForm((prev) => ({ ...prev, qrCode: e.target.value }))
                       }
-                      placeholder='URL hoặc mã'
+                      placeholder={t('placeholders.qrCode')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Email *</Label>
+                    <Label>{t('form.email')}</Label>
                     <Input
                       type='email'
                       value={form.email}
                       onChange={(e) =>
                         setForm((prev) => ({ ...prev, email: e.target.value }))
                       }
-                      placeholder='supplier@example.com'
+                      placeholder={t('placeholders.emailSupplier')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Mật khẩu *</Label>
+                    <Label>
+                      {editingSupplier
+                        ? t('form.passwordOptional')
+                        : t('form.password')}
+                    </Label>
                     <Input
                       type='password'
                       value={form.password}
@@ -417,11 +426,11 @@ export default function SuppliersAccount() {
                           password: e.target.value
                         }))
                       }
-                      placeholder='••••••••'
+                      placeholder={t('placeholders.password')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Họ *</Label>
+                    <Label>{t('form.firstName')}</Label>
                     <Input
                       value={form.firstName}
                       onChange={(e) =>
@@ -430,11 +439,11 @@ export default function SuppliersAccount() {
                           firstName: e.target.value
                         }))
                       }
-                      placeholder='Trần'
+                      placeholder={t('placeholders.firstName')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Tên *</Label>
+                    <Label>{t('form.lastName')}</Label>
                     <Input
                       value={form.lastName}
                       onChange={(e) =>
@@ -443,12 +452,12 @@ export default function SuppliersAccount() {
                           lastName: e.target.value
                         }))
                       }
-                      placeholder='Văn C'
+                      placeholder={t('placeholders.lastName')}
                     />
                   </div>
                 </div>
                 <div className='space-y-2'>
-                  <Label>Warehouse (tùy chọn)</Label>
+                  <Label>{t('form.warehouseOptional')}</Label>
                   <Select
                     value={form.warehouseId || NONE_VALUE}
                     onValueChange={(value) =>
@@ -459,11 +468,11 @@ export default function SuppliersAccount() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder='Chọn warehouse' />
+                      <SelectValue placeholder={t('placeholders.warehouse')} />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value={NONE_VALUE}>
-                        Không gán warehouse
+                        {t('form.unassignedWarehouse')}
                       </SelectItem>
                       {warehouses.map((warehouse) => (
                         <SelectItem key={warehouse.id} value={warehouse.id}>
@@ -480,16 +489,16 @@ export default function SuppliersAccount() {
                   onClick={resetForm}
                   disabled={isSubmitting}
                 >
-                  Xóa dữ liệu
+                  {t('actions.clear')}
                 </Button>
                 <Button onClick={handleSubmit} disabled={isSubmitting}>
                   {isSubmitting
                     ? editingSupplier
-                      ? 'Đang cập nhật...'
-                      : 'Đang xử lý...'
+                      ? t('actions.saving')
+                      : t('actions.creating')
                     : editingSupplier
-                      ? 'Cập nhật supplier'
-                      : 'Tạo supplier'}
+                      ? t('actions.saveChanges')
+                      : t('actions.create')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -500,18 +509,16 @@ export default function SuppliersAccount() {
           <CardHeader className='flex flex-col gap-4'>
             <div className='flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
               <div>
-                <CardTitle>Danh sách suppliers</CardTitle>
-                <CardDescription>
-                  Theo dõi và chỉnh sửa tài khoản supplier.
-                </CardDescription>
+                <CardTitle>{t('table.title')}</CardTitle>
+                <CardDescription>{t('table.description')}</CardDescription>
               </div>
               <Button variant='outline' onClick={loadData} disabled={isLoading}>
-                {isLoading ? 'Đang tải...' : 'Làm mới'}
+                {isLoading ? t('table.loading') : t('actions.refresh')}
               </Button>
             </div>
             <div className='flex flex-col gap-2 md:flex-row md:items-center'>
               <Input
-                placeholder='Tìm theo tổ chức, đại diện, email...'
+                placeholder={t('filters.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className='flex-1'
@@ -521,10 +528,14 @@ export default function SuppliersAccount() {
                 onValueChange={(value) => setWarehouseFilter(value)}
               >
                 <SelectTrigger className='md:w-[220px]'>
-                  <SelectValue placeholder='Lọc theo warehouse' />
+                  <SelectValue
+                    placeholder={t('filters.warehousePlaceholder')}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='ALL'>Tất cả warehouse</SelectItem>
+                  <SelectItem value='ALL'>
+                    {t('filters.allWarehouses')}
+                  </SelectItem>
                   {warehouses.map((warehouse) => (
                     <SelectItem key={warehouse.id} value={warehouse.id}>
                       {warehouse.name}
@@ -540,26 +551,28 @@ export default function SuppliersAccount() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>STT</TableHead>
-                      <TableHead>Tên vườn</TableHead>
-                      <TableHead>Đại diện</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Warehouse</TableHead>
-                      <TableHead>Địa chỉ</TableHead>
-                      <TableHead className='text-right'>Thao tác</TableHead>
+                      <TableHead>{t('table.columns.index')}</TableHead>
+                      <TableHead>{t('table.columns.garden')}</TableHead>
+                      <TableHead>{t('table.columns.representative')}</TableHead>
+                      <TableHead>{t('table.columns.email')}</TableHead>
+                      <TableHead>{t('table.columns.warehouse')}</TableHead>
+                      <TableHead>{t('table.columns.address')}</TableHead>
+                      <TableHead className='text-right'>
+                        {t('table.columns.actions')}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
                       <TableRow>
                         <TableCell colSpan={7} className='text-center'>
-                          Đang tải dữ liệu...
+                          {t('table.loading')}
                         </TableCell>
                       </TableRow>
                     ) : filteredSuppliers.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className='text-center'>
-                          Không có supplier nào phù hợp
+                          {t('table.empty')}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -590,14 +603,14 @@ export default function SuppliersAccount() {
                                 size='sm'
                                 onClick={() => handleEdit(supplier)}
                               >
-                                Sửa
+                                {t('actions.edit')}
                               </Button>
                               <Button
                                 variant='destructive'
                                 size='sm'
                                 onClick={() => handleDelete(supplier.id)}
                               >
-                                Xóa
+                                {t('actions.delete')}
                               </Button>
                             </div>
                           </TableCell>

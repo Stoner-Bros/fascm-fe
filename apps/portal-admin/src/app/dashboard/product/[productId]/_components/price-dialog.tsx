@@ -21,6 +21,7 @@ import {
 } from '@/services/price.service';
 import { IconDeviceFloppy } from '@tabler/icons-react';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface PriceDialogProps {
   open: boolean;
@@ -38,6 +39,7 @@ export function PriceDialog({
   onSuccess
 }: PriceDialogProps) {
   const { toast } = useToast();
+  const t = useTranslations('Product');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     price: price?.price?.toString() || '',
@@ -50,8 +52,8 @@ export function PriceDialog({
 
     if (!formData.price || !formData.quantity) {
       toast({
-        title: 'Validation Error',
-        description: 'Price and quantity are required',
+        title: t('toast.validationError'),
+        description: t('priceDialog.validation.required'),
         variant: 'destructive'
       });
       return;
@@ -69,8 +71,8 @@ export function PriceDialog({
         };
         await updatePrice(price.id, data);
         toast({
-          title: 'Success',
-          description: 'Price tier updated successfully'
+          title: t('toast.success'),
+          description: t('priceDialog.toast.updateSuccess')
         });
       } else {
         const data: CreatePriceDto = {
@@ -81,8 +83,8 @@ export function PriceDialog({
         };
         await createPrice(data);
         toast({
-          title: 'Success',
-          description: 'Price tier created successfully'
+          title: t('toast.success'),
+          description: t('priceDialog.toast.createSuccess')
         });
       }
 
@@ -90,9 +92,12 @@ export function PriceDialog({
       onSuccess?.();
     } catch (err: any) {
       toast({
-        title: 'Error',
+        title: t('toast.error'),
         description:
-          err?.message ?? `Failed to ${price ? 'update' : 'create'} price tier`,
+          err?.message ??
+          (price
+            ? t('priceDialog.toast.updateError')
+            : t('priceDialog.toast.createError')),
         variant: 'destructive'
       });
     } finally {
@@ -105,25 +110,26 @@ export function PriceDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {price ? 'Edit Price Tier' : 'Add Price Tier'}
+            {price ? t('priceDialog.title.edit') : t('priceDialog.title.add')}
           </DialogTitle>
           <DialogDescription>
             {price
-              ? 'Update the price tier details'
-              : 'Add a new price tier for this product'}
+              ? t('priceDialog.description.edit')
+              : t('priceDialog.description.add')}
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className='space-y-4'>
           <div className='space-y-2'>
             <Label htmlFor='quantity'>
-              Quantity <span className='text-red-500'>*</span>
+              {t('priceDialog.form.quantity')}{' '}
+              <span className='text-red-500'>*</span>
             </Label>
             <Input
               id='quantity'
               type='number'
               step='0.01'
               min='0'
-              placeholder='e.g., 100'
+              placeholder={t('priceDialog.form.quantityPlaceholder')}
               value={formData.quantity}
               onChange={(e) =>
                 setFormData({ ...formData, quantity: e.target.value })
@@ -134,14 +140,15 @@ export function PriceDialog({
 
           <div className='space-y-2'>
             <Label htmlFor='price'>
-              Price (VND) <span className='text-red-500'>*</span>
+              {t('priceDialog.form.price')}{' '}
+              <span className='text-red-500'>*</span>
             </Label>
             <Input
               id='price'
               type='number'
               step='1'
               min='0'
-              placeholder='e.g., 25000'
+              placeholder={t('priceDialog.form.pricePlaceholder')}
               value={formData.price}
               onChange={(e) =>
                 setFormData({ ...formData, price: e.target.value })
@@ -151,10 +158,10 @@ export function PriceDialog({
           </div>
 
           <div className='space-y-2'>
-            <Label htmlFor='unit'>Unit</Label>
+            <Label htmlFor='unit'>{t('priceDialog.form.unit')}</Label>
             <Input
               id='unit'
-              placeholder='e.g., kg, lb, box'
+              placeholder={t('priceDialog.form.unitPlaceholder')}
               value={formData.unit}
               onChange={(e) =>
                 setFormData({ ...formData, unit: e.target.value })
@@ -169,17 +176,17 @@ export function PriceDialog({
               onClick={() => onOpenChange(false)}
               disabled={loading}
             >
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button type='submit' disabled={loading}>
               <IconDeviceFloppy className='mr-2 h-4 w-4' />
               {loading
                 ? price
-                  ? 'Updating...'
-                  : 'Creating...'
+                  ? t('priceDialog.form.updating')
+                  : t('priceDialog.form.creating')
                 : price
-                  ? 'Update Price'
-                  : 'Add Price'}
+                  ? t('priceDialog.form.update')
+                  : t('priceDialog.form.add')}
             </Button>
           </DialogFooter>
         </form>

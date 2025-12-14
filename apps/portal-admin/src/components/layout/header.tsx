@@ -21,19 +21,12 @@ export default function Header() {
       .split('; ')
       .find((row) => row.startsWith('NEXT_LOCALE='))
       ?.split('=')[1];
-    if (cookieLocale) {
-      setLocale(cookieLocale);
-    } else {
-      const browserLocale = navigator.language.slice(0, 2);
-      setLocale(browserLocale);
-      document.cookie = `NEXT_LOCALE=${browserLocale}`;
-      router.refresh();
-    }
-  }, [router]);
+    setLocale(cookieLocale || 'en');
+  }, []);
 
   const handleLocaleChange = (locale: string) => {
     setLocale(locale);
-    document.cookie = `NEXT_LOCALE=${locale}`;
+    document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000`;
     router.refresh();
   };
 

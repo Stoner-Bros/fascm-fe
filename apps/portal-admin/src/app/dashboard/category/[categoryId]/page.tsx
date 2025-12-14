@@ -20,6 +20,7 @@ import {
   updateCategory
 } from '@/services/category.service';
 import type { Category } from '@/types/product';
+import { useTranslations } from 'next-intl';
 import {
   IconArrowLeft,
   IconDeviceFloppy,
@@ -35,6 +36,7 @@ export default function CategoryDetailPage() {
   const params = useParams();
   const categoryId = params.categoryId as string;
   const { toast } = useToast();
+  const t = useTranslations('Category');
 
   const [category, setCategory] = useState<Category | null>(null);
   const [loading, setLoading] = useState(true);
@@ -62,7 +64,7 @@ export default function CategoryDetailPage() {
         });
         setError(null);
       } catch (err: any) {
-        setError(err?.message ?? 'Failed to load category');
+        setError(err?.message ?? t('toast.loadError'));
       } finally {
         setLoading(false);
       }
@@ -78,8 +80,8 @@ export default function CategoryDetailPage() {
 
     if (!formData.name) {
       toast({
-        title: 'Validation Error',
-        description: 'Category name is required',
+        title: t('toast.validationError'),
+        description: t('detail.validation.nameRequired'),
         variant: 'destructive'
       });
       return;
@@ -93,13 +95,13 @@ export default function CategoryDetailPage() {
       setCategory(updated);
       setIsEditing(false);
       toast({
-        title: 'Success',
-        description: 'Category updated successfully'
+        title: t('toast.success'),
+        description: t('toast.updateSuccess')
       });
     } catch (err: any) {
       toast({
-        title: 'Error',
-        description: err?.message ?? 'Failed to update category',
+        title: t('toast.error'),
+        description: err?.message ?? t('toast.updateError'),
         variant: 'destructive'
       });
     } finally {
@@ -108,21 +110,21 @@ export default function CategoryDetailPage() {
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this category?')) {
+    if (!confirm(t('confirm.delete'))) {
       return;
     }
 
     try {
       await deleteCategory(categoryId);
       toast({
-        title: 'Success',
-        description: 'Category deleted successfully'
+        title: t('toast.success'),
+        description: t('toast.deleteSuccess')
       });
       router.push('/dashboard/category');
     } catch (err: any) {
       toast({
-        title: 'Error',
-        description: err?.message ?? 'Failed to delete category',
+        title: t('toast.error'),
+        description: err?.message ?? t('toast.deleteError'),
         variant: 'destructive'
       });
     }
@@ -145,13 +147,13 @@ export default function CategoryDetailPage() {
         <div className='w-full space-y-6'>
           <div className='rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200'>
             <p className='font-medium'>
-              Error: {error || 'Category not found'}
+              {t('toast.error')}: {error || t('detail.notFound')}
             </p>
           </div>
           <Link href='/dashboard/category'>
             <Button variant='outline'>
               <IconArrowLeft className='mr-2 h-4 w-4' />
-              Back to Categories
+              {t('detail.back')}
             </Button>
           </Link>
         </div>
@@ -169,10 +171,10 @@ export default function CategoryDetailPage() {
             </Button>
             <div>
               <h2 className='text-3xl font-bold tracking-tight'>
-                Category Details
+                {t('detail.title')}
               </h2>
               <p className='text-muted-foreground'>
-                Category ID: {category.id}
+                {t('detail.idLabel')}: {category.id}
               </p>
             </div>
           </div>
@@ -181,16 +183,16 @@ export default function CategoryDetailPage() {
               <>
                 <Button onClick={() => setIsEditing(true)}>
                   <IconTag className='mr-2 h-4 w-4' />
-                  Edit Category
+                  {t('detail.edit')}
                 </Button>
                 <Button variant='destructive' onClick={handleDelete}>
                   <IconTrash className='mr-2 h-4 w-4' />
-                  Delete
+                  {t('detail.delete')}
                 </Button>
               </>
             ) : (
               <Button variant='outline' onClick={() => setIsEditing(false)}>
-                Cancel
+                {t('detail.cancel')}
               </Button>
             )}
           </div>
@@ -202,15 +204,17 @@ export default function CategoryDetailPage() {
           <form onSubmit={handleUpdate}>
             <Card>
               <CardHeader>
-                <CardTitle>Edit Category</CardTitle>
-                <CardDescription>Update category information</CardDescription>
+                <CardTitle>{t('detail.form.title')}</CardTitle>
+                <CardDescription>
+                  {t('detail.form.description')}
+                </CardDescription>
               </CardHeader>
               <CardContent className='space-y-6'>
                 <div className='space-y-2'>
-                  <Label htmlFor='name'>Category Name</Label>
+                  <Label htmlFor='name'>{t('detail.form.nameLabel')}</Label>
                   <Input
                     id='name'
-                    placeholder='e.g., Vegetables'
+                    placeholder={t('detail.form.namePlaceholder')}
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({
@@ -228,11 +232,11 @@ export default function CategoryDetailPage() {
                     variant='outline'
                     onClick={() => setIsEditing(false)}
                   >
-                    Cancel
+                    {t('detail.form.cancel')}
                   </Button>
                   <Button type='submit' disabled={saving}>
                     <IconDeviceFloppy className='mr-2 h-4 w-4' />
-                    {saving ? 'Saving...' : 'Save Changes'}
+                    {saving ? t('detail.form.saving') : t('detail.form.save')}
                   </Button>
                 </div>
               </CardContent>
@@ -249,7 +253,7 @@ export default function CategoryDetailPage() {
                       <IconTag className='text-primary h-8 w-8' />
                       <div>
                         <CardTitle className='text-2xl'>
-                          {category.name || 'Unnamed Category'}
+                          {category.name || t('common.unnamed')}
                         </CardTitle>
                         {category.description && (
                           <CardDescription className='mt-1'>
@@ -262,13 +266,15 @@ export default function CategoryDetailPage() {
                 </CardHeader>
                 <CardContent className='space-y-4'>
                   <div>
-                    <h3 className='mb-3 font-semibold'>Details</h3>
+                    <h3 className='mb-3 font-semibold'>
+                      {t('detail.info.title')}
+                    </h3>
                     <div className='space-y-1'>
                       <p className='text-muted-foreground text-xs'>
-                        Category Name
+                        {t('detail.info.nameLabel')}
                       </p>
                       <p className='text-sm font-medium'>
-                        {category.name || 'Not set'}
+                        {category.name || t('detail.info.notSet')}
                       </p>
                     </div>
                   </div>
@@ -276,12 +282,14 @@ export default function CategoryDetailPage() {
                   <Separator />
 
                   <div>
-                    <h3 className='mb-3 font-semibold'>Timestamps</h3>
+                    <h3 className='mb-3 font-semibold'>
+                      {t('detail.timestamps.title')}
+                    </h3>
                     <div className='grid grid-cols-2 gap-3'>
                       {category.createdAt && (
                         <div>
                           <p className='text-muted-foreground text-xs'>
-                            Created
+                            {t('detail.timestamps.created')}
                           </p>
                           <p className='text-sm font-medium'>
                             {new Date(category.createdAt).toLocaleDateString()}
@@ -291,7 +299,7 @@ export default function CategoryDetailPage() {
                       {category.updatedAt && (
                         <div>
                           <p className='text-muted-foreground text-xs'>
-                            Last Updated
+                            {t('detail.timestamps.updated')}
                           </p>
                           <p className='text-sm font-medium'>
                             {new Date(category.updatedAt).toLocaleDateString()}
@@ -309,7 +317,7 @@ export default function CategoryDetailPage() {
               {/* Actions */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Quick Actions</CardTitle>
+                  <CardTitle>{t('detail.sidebar.quickActions')}</CardTitle>
                 </CardHeader>
                 <CardContent className='space-y-2'>
                   <Button
@@ -317,7 +325,7 @@ export default function CategoryDetailPage() {
                     onClick={() => setIsEditing(true)}
                   >
                     <IconTag className='mr-2 h-4 w-4' />
-                    Edit Category
+                    {t('detail.sidebar.edit')}
                   </Button>
                   <Button
                     variant='destructive'
@@ -325,12 +333,12 @@ export default function CategoryDetailPage() {
                     onClick={handleDelete}
                   >
                     <IconTrash className='mr-2 h-4 w-4' />
-                    Delete Category
+                    {t('detail.sidebar.delete')}
                   </Button>
                   <Link href='/dashboard/category' className='block w-full'>
                     <Button variant='outline' className='w-full justify-start'>
                       <IconArrowLeft className='mr-2 h-4 w-4' />
-                      Back to Categories
+                      {t('detail.sidebar.back')}
                     </Button>
                   </Link>
                 </CardContent>

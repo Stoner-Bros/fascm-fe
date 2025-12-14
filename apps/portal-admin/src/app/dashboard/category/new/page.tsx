@@ -17,10 +17,12 @@ import { IconArrowLeft, IconDeviceFloppy } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 export default function NewCategoryPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const t = useTranslations('Category');
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     englishName: '',
@@ -32,8 +34,8 @@ export default function NewCategoryPage() {
 
     if (!formData.englishName && !formData.vietnameseName) {
       toast({
-        title: 'Validation Error',
-        description: 'At least one name (English or Vietnamese) is required',
+        title: t('toast.validationError'),
+        description: t('new.validation.atLeastOneName'),
         variant: 'destructive'
       });
       return;
@@ -46,15 +48,15 @@ export default function NewCategoryPage() {
       });
 
       toast({
-        title: 'Success',
-        description: 'Category created successfully'
+        title: t('toast.success'),
+        description: t('toast.createSuccess')
       });
 
       router.push('/dashboard/category');
     } catch (err: any) {
       toast({
-        title: 'Error',
-        description: err?.message ?? 'Failed to create category',
+        title: t('toast.error'),
+        description: err?.message ?? t('toast.createError'),
         variant: 'destructive'
       });
     } finally {
@@ -72,11 +74,9 @@ export default function NewCategoryPage() {
             </Button>
             <div>
               <h2 className='text-3xl font-bold tracking-tight'>
-                Create New Category
+                {t('new.title')}
               </h2>
-              <p className='text-muted-foreground'>
-                Add a new category for products
-              </p>
+              <p className='text-muted-foreground'>{t('new.subtitle')}</p>
             </div>
           </div>
         </div>
@@ -84,18 +84,18 @@ export default function NewCategoryPage() {
         <form onSubmit={handleSubmit}>
           <Card>
             <CardHeader>
-              <CardTitle>Category Information</CardTitle>
-              <CardDescription>
-                Enter the details of the new category
-              </CardDescription>
+              <CardTitle>{t('new.card.title')}</CardTitle>
+              <CardDescription>{t('new.card.description')}</CardDescription>
             </CardHeader>
             <CardContent className='space-y-6'>
               <div className='grid gap-6 md:grid-cols-2'>
                 <div className='space-y-2'>
-                  <Label htmlFor='englishName'>English Name</Label>
+                  <Label htmlFor='englishName'>
+                    {t('new.form.englishLabel')}
+                  </Label>
                   <Input
                     id='englishName'
-                    placeholder='e.g., Vegetables'
+                    placeholder={t('new.form.englishPlaceholder')}
                     value={formData.englishName}
                     onChange={(e) =>
                       setFormData({ ...formData, englishName: e.target.value })
@@ -104,10 +104,12 @@ export default function NewCategoryPage() {
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='vietnameseName'>Vietnamese Name</Label>
+                  <Label htmlFor='vietnameseName'>
+                    {t('new.form.vietnameseLabel')}
+                  </Label>
                   <Input
                     id='vietnameseName'
-                    placeholder='e.g., Rau củ'
+                    placeholder={t('new.form.vietnamesePlaceholder')}
                     value={formData.vietnameseName}
                     onChange={(e) =>
                       setFormData({
@@ -122,12 +124,12 @@ export default function NewCategoryPage() {
               <div className='flex justify-end gap-4'>
                 <Link href='/dashboard/category'>
                   <Button type='button' variant='outline'>
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                 </Link>
                 <Button type='submit' disabled={loading}>
                   <IconDeviceFloppy className='mr-2 h-4 w-4' />
-                  {loading ? 'Creating...' : 'Create Category'}
+                  {loading ? t('new.form.creating') : t('new.form.submit')}
                 </Button>
               </div>
             </CardContent>

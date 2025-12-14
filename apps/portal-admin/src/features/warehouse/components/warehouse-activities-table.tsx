@@ -40,7 +40,7 @@ import {
   IconSearch
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
-import { vi } from 'date-fns/locale';
+import { useTranslations, useLocale } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 
 // Define types for warehouse activities
@@ -72,21 +72,18 @@ export interface WarehouseActivity {
   completedAt?: string;
 }
 
-const warehouses = [
-  'Tất cả',
-  'Kho chính',
-  'Kho lẻ',
-  'Kho lạnh',
-  'Kho tươi sống',
-  'Kho bánh kẹo'
-];
-const activityTypes = ['Tất cả', 'Xuất kho', 'Nhập kho'];
 export function WarehouseActivitiesTable() {
+  const t = useTranslations('WarehouseActivities');
+  const locale = useLocale();
   const [activities, setActivities] = useState<WarehouseActivity[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedWarehouse, setSelectedWarehouse] = useState('Tất cả');
-  const [selectedActivityType, setSelectedActivityType] = useState('Tất cả');
-  const [selectedStatus, setSelectedStatus] = useState('Tất cả');
+  const [selectedWarehouse, setSelectedWarehouse] = useState('all');
+  const [selectedActivityType, setSelectedActivityType] = useState<
+    'all' | 'export' | 'import'
+  >('all');
+  const [selectedStatus, setSelectedStatus] = useState<
+    'all' | WarehouseActivity['status']
+  >('all');
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [detailError, setDetailError] = useState<string | null>(null);
@@ -94,6 +91,30 @@ export function WarehouseActivitiesTable() {
     useState<WarehouseActivity | null>(null);
   const [importDetail, setImportDetail] = useState<any | null>(null);
   const [exportDetail, setExportDetail] = useState<any | null>(null);
+
+  const warehouses = useMemo(
+    () => [
+      { value: 'all', label: t('filters.warehouseOptions.all') },
+      { value: 'main', label: t('filters.warehouseOptions.main') },
+      { value: 'retail', label: t('filters.warehouseOptions.retail') },
+      { value: 'cold', label: t('filters.warehouseOptions.cold') },
+      { value: 'fresh', label: t('filters.warehouseOptions.fresh') },
+      {
+        value: 'confectionery',
+        label: t('filters.warehouseOptions.confectionery')
+      }
+    ],
+    [t]
+  );
+
+  const activityTypes = useMemo(
+    () => [
+      { value: 'all', label: t('filters.activityTypeOptions.all') },
+      { value: 'export', label: t('filters.activityTypeOptions.export') },
+      { value: 'import', label: t('filters.activityTypeOptions.import') }
+    ],
+    [t]
+  );
 
   useEffect(() => {
     const load = async () => {
@@ -175,22 +196,17 @@ export function WarehouseActivitiesTable() {
           activity.notes.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const matchesWarehouse =
-        selectedWarehouse === 'Tất cả' ||
-        activity.warehouse === selectedWarehouse;
+        selectedWarehouse === 'all' ||
+        activity.warehouse ===
+          (warehouses.find((w) => w.value === selectedWarehouse)?.label ?? '');
 
       const matchesActivityType =
-        selectedActivityType === 'Tất cả' ||
-        (selectedActivityType === 'Xuất kho' && activity.type === 'export') ||
-        (selectedActivityType === 'Nhập kho' && activity.type === 'import');
+        selectedActivityType === 'all' ||
+        (selectedActivityType === 'export' && activity.type === 'export') ||
+        (selectedActivityType === 'import' && activity.type === 'import');
 
       const matchesStatus =
-        selectedStatus === 'Tất cả' ||
-        (selectedStatus === 'Hoàn thành' && activity.status === 'completed') ||
-        (selectedStatus === 'Đang xử lý' &&
-          (activity.status === 'pending_assignment' ||
-            activity.status === 'assigned' ||
-            activity.status === 'delivering')) ||
-        (selectedStatus === 'Đã hủy' && activity.status === 'cancelled');
+        selectedStatus === 'all' || selectedStatus === activity.status;
 
       return (
         matchesSearch &&
@@ -245,11 +261,11 @@ export function WarehouseActivitiesTable() {
   const getActivityTypeBadge = (type: 'import' | 'export') => {
     return type === 'import' ? (
       <Badge variant='secondary' className='bg-green-100 text-green-800'>
-        Nhập kho
+        {t('badges.import')}
       </Badge>
     ) : (
       <Badge variant='secondary' className='bg-blue-100 text-blue-800'>
-        Xuất kho
+        {t('badges.export')}
       </Badge>
     );
   };
@@ -257,23 +273,23 @@ export function WarehouseActivitiesTable() {
   const getStatusBadge = (status: WarehouseActivity['status']) => {
     const statusConfig = {
       pending_assignment: {
-        label: 'Chờ phân công',
+        label: t('status.pendingAssignment'),
         className: 'bg-yellow-100 text-yellow-800 border-yellow-200'
       },
       assigned: {
-        label: 'Đã phân công',
+        label: t('status.assigned'),
         className: 'bg-blue-100 text-blue-800 border-blue-200'
       },
       delivering: {
-        label: 'Đang giao hàng',
+        label: t('status.delivering'),
         className: 'bg-purple-100 text-purple-800 border-purple-200'
       },
       completed: {
-        label: 'Hoàn tất',
+        label: t('status.completed'),
         className: 'bg-green-100 text-green-800 border-green-200'
       },
       cancelled: {
-        label: 'Đã hủy',
+        label: t('status.cancelled'),
         className: 'bg-red-100 text-red-800 border-red-200'
       }
     };
@@ -290,9 +306,9 @@ export function WarehouseActivitiesTable() {
 
   const clearFilters = () => {
     setSearchTerm('');
-    setSelectedWarehouse('Tất cả');
-    setSelectedActivityType('Tất cả');
-    setSelectedStatus('Tất cả');
+    setSelectedWarehouse('all');
+    setSelectedActivityType('all');
+    setSelectedStatus('all');
     setActivities((prev) => [...prev]);
   };
 
@@ -304,15 +320,13 @@ export function WarehouseActivitiesTable() {
             <div>
               <CardTitle className='flex items-center gap-2'>
                 <IconPackage className='h-5 w-5' />
-                Hoạt động xuất nhập kho gần đây
+                {t('title')}
               </CardTitle>
-              <CardDescription>
-                Theo dõi tất cả các hoạt động xuất nhập kho trong hệ thống
-              </CardDescription>
+              <CardDescription>{t('description')}</CardDescription>
             </div>
             <Button variant='outline' size='sm' onClick={clearFilters}>
               <IconRefresh className='mr-2 h-4 w-4' />
-              Làm mới
+              {t('actions.refresh')}
             </Button>
           </div>
         </CardHeader>
@@ -324,7 +338,7 @@ export function WarehouseActivitiesTable() {
                 <div className='relative'>
                   <IconSearch className='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400' />
                   <Input
-                    placeholder='Tìm kiếm sản phẩm, mã phiếu, người thực hiện...'
+                    placeholder={t('searchPlaceholder')}
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className='pl-10'
@@ -337,21 +351,23 @@ export function WarehouseActivitiesTable() {
               <div className='flex items-center gap-2'>
                 <IconFilter className='h-4 w-4 text-gray-500' />
                 <span className='text-sm font-medium text-gray-700'>
-                  Bộ lọc:
+                  {t('filters.label')}:
                 </span>
               </div>
 
               <Select
                 value={selectedActivityType}
-                onValueChange={setSelectedActivityType}
+                onValueChange={(v) =>
+                  setSelectedActivityType(v as 'all' | 'export' | 'import')
+                }
               >
                 <SelectTrigger className='w-[140px]'>
-                  <SelectValue placeholder='Loại hoạt động' />
+                  <SelectValue placeholder={t('filters.activityType')} />
                 </SelectTrigger>
                 <SelectContent>
                   {activityTypes.map((type) => (
-                    <SelectItem key={type} value={type}>
-                      {type}
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -362,30 +378,45 @@ export function WarehouseActivitiesTable() {
                 onValueChange={setSelectedWarehouse}
               >
                 <SelectTrigger className='w-[140px]'>
-                  <SelectValue placeholder='Kho hàng' />
+                  <SelectValue placeholder={t('filters.warehouse')} />
                 </SelectTrigger>
                 <SelectContent>
                   {warehouses.map((warehouse) => (
-                    <SelectItem key={warehouse} value={warehouse}>
-                      {warehouse}
+                    <SelectItem key={warehouse.value} value={warehouse.value}>
+                      {warehouse.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
 
-              <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+              <Select
+                value={selectedStatus}
+                onValueChange={(v) =>
+                  setSelectedStatus(v as 'all' | WarehouseActivity['status'])
+                }
+              >
                 <SelectTrigger className='w-[180px]'>
-                  <SelectValue placeholder='Tất cả trạng thái' />
+                  <SelectValue placeholder={t('filters.allStatuses')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='Tất cả'>Tất cả trạng thái</SelectItem>
-                  <SelectItem value='pending_assignment'>
-                    Chờ phân công
+                  <SelectItem value='all'>
+                    {t('filters.allStatuses')}
                   </SelectItem>
-                  <SelectItem value='assigned'>Đã phân công</SelectItem>
-                  <SelectItem value='delivering'>Đang giao hàng</SelectItem>
-                  <SelectItem value='completed'>Hoàn tất</SelectItem>
-                  <SelectItem value='cancelled'> Đã hủy</SelectItem>
+                  <SelectItem value='pending_assignment'>
+                    {t('status.pendingAssignment')}
+                  </SelectItem>
+                  <SelectItem value='assigned'>
+                    {t('status.assigned')}
+                  </SelectItem>
+                  <SelectItem value='delivering'>
+                    {t('status.delivering')}
+                  </SelectItem>
+                  <SelectItem value='completed'>
+                    {t('status.completed')}
+                  </SelectItem>
+                  <SelectItem value='cancelled'>
+                    {t('status.cancelled')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -393,8 +424,10 @@ export function WarehouseActivitiesTable() {
 
           {/* Results Summary */}
           <div className='mb-4 text-sm text-gray-600'>
-            Hiển thị {filteredActivities.length} kết quả từ tổng số{' '}
-            {activities.length} hoạt động
+            {t('summary', {
+              count: filteredActivities.length,
+              total: activities.length
+            })}
           </div>
 
           {/* Activities Table */}
@@ -402,14 +435,24 @@ export function WarehouseActivitiesTable() {
             <Table>
               <TableHeader>
                 <TableRow className='bg-gray-50'>
-                  <TableHead className='font-semibold'>Ngày</TableHead>
-                  <TableHead className='font-semibold'>Mã phiếu</TableHead>
                   <TableHead className='font-semibold'>
-                    Loại hoạt động
+                    {t('table.date')}
                   </TableHead>
-                  <TableHead className='font-semibold'>Sản phẩm</TableHead>
-                  <TableHead className='font-semibold'>Số lượng</TableHead>
-                  <TableHead className='font-semibold'>Đơn vị</TableHead>
+                  <TableHead className='font-semibold'>
+                    {t('table.code')}
+                  </TableHead>
+                  <TableHead className='font-semibold'>
+                    {t('table.activityType')}
+                  </TableHead>
+                  <TableHead className='font-semibold'>
+                    {t('table.product')}
+                  </TableHead>
+                  <TableHead className='font-semibold'>
+                    {t('table.quantity')}
+                  </TableHead>
+                  <TableHead className='font-semibold'>
+                    {t('table.unit')}
+                  </TableHead>
                   {/* <TableHead className='font-semibold'>Kho</TableHead> */}
                   {/* <TableHead className='font-semibold'>
                     Người thực hiện
@@ -417,9 +460,11 @@ export function WarehouseActivitiesTable() {
                   {/* <TableHead className='font-semibold'>
                     Nhân viên giao hàng
                   </TableHead> */}
-                  <TableHead className='font-semibold'>Trạng thái</TableHead>
+                  <TableHead className='font-semibold'>
+                    {t('table.status')}
+                  </TableHead>
                   <TableHead className='text-right font-semibold'>
-                    Hành động
+                    {t('table.actions')}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -430,7 +475,7 @@ export function WarehouseActivitiesTable() {
                       colSpan={11}
                       className='py-8 text-center text-gray-500'
                     >
-                      Không tìm thấy hoạt động nào phù hợp với bộ lọc
+                      {t('noResults')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -440,9 +485,7 @@ export function WarehouseActivitiesTable() {
                         <div className='flex items-center gap-2'>
                           <IconCalendar className='h-4 w-4 text-gray-400' />
                           <span className='text-sm'>
-                            {format(new Date(activity.date), 'dd/MM/yyyy', {
-                              locale: vi
-                            })}
+                            {format(new Date(activity.date), 'dd/MM/yyyy')}
                           </span>
                         </div>
                       </TableCell>
@@ -508,7 +551,7 @@ export function WarehouseActivitiesTable() {
                           variant='outline'
                           onClick={() => openDetail(activity)}
                         >
-                          Xem chi tiết
+                          {t('actions.viewDetails')}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -526,84 +569,110 @@ export function WarehouseActivitiesTable() {
           <div className='max-h-[80vh] w-full max-w-xl overflow-y-auto rounded-lg bg-white p-4 shadow-lg'>
             <div className='mb-3 flex items-center justify-between'>
               <div className='text-lg font-semibold'>
-                Chi tiết{' '}
+                {t('detail.title')}{' '}
                 {selectedActivity?.type === 'import'
-                  ? 'Import Ticket'
-                  : 'Export Ticket'}
+                  ? t('detail.importTicket')
+                  : t('detail.exportTicket')}
               </div>
               <Button variant='ghost' onClick={() => setDetailOpen(false)}>
-                Đóng
+                {t('detail.close')}
               </Button>
             </div>
             {detailLoading ? (
-              <div className='text-sm text-gray-500'>Đang tải...</div>
+              <div className='text-sm text-gray-500'>{t('detail.loading')}</div>
             ) : detailError ? (
               <div className='text-red-600'>{detailError}</div>
             ) : selectedActivity?.type === 'import' && importDetail ? (
               <div className='space-y-2 text-sm'>
                 <div>
-                  <span className='font-medium'>ID:</span> {importDetail.id}
+                  <span className='font-medium'>{t('detail.fields.id')}:</span>{' '}
+                  {importDetail.id}
                 </div>
                 <div>
-                  <span className='font-medium'>Ngày nhập:</span>{' '}
+                  <span className='font-medium'>
+                    {t('detail.fields.importDate')}:
+                  </span>{' '}
                   {importDetail.importDate
-                    ? new Date(importDetail.importDate).toLocaleString('vi-VN')
+                    ? new Date(importDetail.importDate).toLocaleString(locale)
                     : '-'}
                 </div>
                 <div>
-                  <span className='font-medium'>Số batch:</span>{' '}
+                  <span className='font-medium'>
+                    {t('detail.fields.batchCount')}:
+                  </span>{' '}
                   {importDetail.numberOfBatch ?? '-'}
                 </div>
                 <div>
-                  <span className='font-medium'>Sản phẩm:</span>{' '}
+                  <span className='font-medium'>
+                    {t('detail.fields.product')}:
+                  </span>{' '}
                   {importDetail.inboundBatch?.product?.name ??
                     importDetail.inboundBatch?.harvestDetail?.product?.name ??
                     '-'}
                 </div>
                 <div>
-                  <span className='font-medium'>Số lượng thực tế:</span>{' '}
+                  <span className='font-medium'>
+                    {t('detail.fields.actualQuantity')}:
+                  </span>{' '}
                   {importDetail.percent ?? '-'}
                 </div>
                 <div>
-                  <span className='font-medium'>Đơn vị:</span>{' '}
+                  <span className='font-medium'>
+                    {t('detail.fields.unit')}:
+                  </span>{' '}
                   {importDetail.inboundBatch?.unit ??
                     importDetail.inboundBatch?.harvestTicket?.unit ??
                     '-'}
                 </div>
                 <div>
-                  <span className='font-medium'>Khu vực kho:</span>{' '}
+                  <span className='font-medium'>
+                    {t('detail.fields.area')}:
+                  </span>{' '}
                   {importDetail.area?.name ?? '-'}
                 </div>
               </div>
             ) : selectedActivity?.type === 'export' && exportDetail ? (
               <div className='space-y-2 text-sm'>
                 <div>
-                  <span className='font-medium'>ID:</span> {exportDetail.id}
+                  <span className='font-medium'>{t('detail.fields.id')}:</span>{' '}
+                  {exportDetail.id}
                 </div>
                 <div>
-                  <span className='font-medium'>Ngày xuất:</span>{' '}
+                  <span className='font-medium'>
+                    {t('detail.fields.exportDate')}:
+                  </span>{' '}
                   {exportDetail.ExportDate
-                    ? new Date(exportDetail.ExportDate).toLocaleString('vi-VN')
+                    ? new Date(exportDetail.ExportDate).toLocaleString(locale)
                     : '-'}
                 </div>
                 <div>
-                  <span className='font-medium'>Số batch:</span>{' '}
+                  <span className='font-medium'>
+                    {t('detail.fields.batchCount')}:
+                  </span>{' '}
                   {exportDetail.numberOfBatch ?? '-'}
                 </div>
                 <div>
-                  <span className='font-medium'>Sản phẩm:</span>{' '}
+                  <span className='font-medium'>
+                    {t('detail.fields.product')}:
+                  </span>{' '}
                   {exportDetail.orderDetail?.product?.name ?? '-'}
                 </div>
                 <div>
-                  <span className='font-medium'>Số lượng:</span>{' '}
+                  <span className='font-medium'>
+                    {t('detail.fields.quantity')}:
+                  </span>{' '}
                   {exportDetail.orderDetail?.quantity ?? '-'}
                 </div>
                 <div>
-                  <span className='font-medium'>Đơn vị:</span>{' '}
+                  <span className='font-medium'>
+                    {t('detail.fields.unit')}:
+                  </span>{' '}
                   {exportDetail.orderDetail?.unit ?? '-'}
                 </div>
                 <div>
-                  <span className='font-medium'>Khách nhận:</span>{' '}
+                  <span className='font-medium'>
+                    {t('detail.fields.consignee')}:
+                  </span>{' '}
                   {exportDetail.orderDetail?.order?.orderSchedule?.consignee
                     ?.organizationName ??
                     exportDetail.orderDetail?.order?.orderSchedule?.consignee
@@ -612,9 +681,7 @@ export function WarehouseActivitiesTable() {
                 </div>
               </div>
             ) : (
-              <div className='text-sm text-gray-500'>
-                Không có dữ liệu chi tiết
-              </div>
+              <div className='text-sm text-gray-500'>{t('detail.empty')}</div>
             )}
           </div>
         </div>

@@ -22,6 +22,267 @@
       "logout": "Đăng xuất"
     }
   },
+  "Category": {
+    "list": {
+      "title": "Danh mục",
+      "subtitle": "Quản lý danh mục sản phẩm",
+      "new": "Thêm danh mục mới",
+      "searchPlaceholder": "Tìm kiếm theo tên hoặc mô tả danh mục...",
+      "empty": {
+        "title": "Không có danh mục",
+        "description": "Hãy thử điều chỉnh tìm kiếm"
+      }
+    },
+    "tablePage": {
+      "description": "Quản lý danh mục với lọc và sắp xếp nâng cao"
+    },
+    "toast": {
+      "loadError": "Không thể tải danh mục",
+      "success": "Thành công",
+      "deleteSuccess": "Xóa danh mục thành công",
+      "error": "Lỗi",
+      "deleteError": "Không thể xóa danh mục",
+      "validationError": "Lỗi xác thực",
+      "updateSuccess": "Cập nhật danh mục thành công",
+      "updateError": "Không thể cập nhật danh mục"
+    },
+    "confirm": {
+      "delete": "Bạn có chắc muốn xóa danh mục này?"
+    },
+    "pagination": {
+      "previous": "Trước",
+      "page": "Trang",
+      "next": "Sau"
+    },
+    "common": {
+      "unnamed": "Danh mục chưa đặt tên",
+      "created": "Tạo lúc:",
+      "view": "Xem",
+      "cancel": "Hủy"
+    },
+    "new": {
+      "title": "Tạo danh mục mới",
+      "subtitle": "Thêm một danh mục cho sản phẩm",
+      "card": {
+        "title": "Thông tin danh mục",
+        "description": "Nhập thông tin cho danh mục mới"
+      },
+      "form": {
+        "englishLabel": "Tên tiếng Anh",
+        "englishPlaceholder": "vd: Vegetables",
+        "vietnameseLabel": "Tên tiếng Việt",
+        "vietnamesePlaceholder": "vd: Rau củ",
+        "creating": "Đang tạo...",
+        "submit": "Tạo danh mục"
+      },
+      "validation": {
+        "atLeastOneName": "Cần ít nhất một tên (tiếng Anh hoặc tiếng Việt)"
+      }
+    },
+    "detail": {
+      "notFound": "Không tìm thấy danh mục",
+      "back": "Quay lại danh mục",
+      "title": "Chi tiết danh mục",
+      "idLabel": "Mã danh mục",
+      "edit": "Sửa danh mục",
+      "delete": "Xóa",
+      "cancel": "Hủy",
+      "form": {
+        "title": "Chỉnh sửa danh mục",
+        "description": "Cập nhật thông tin danh mục",
+        "nameLabel": "Tên danh mục",
+        "namePlaceholder": "vd: Rau củ",
+        "cancel": "Hủy",
+        "saving": "Đang lưu...",
+        "save": "Lưu thay đổi"
+      },
+      "info": {
+        "title": "Chi tiết",
+        "nameLabel": "Tên danh mục",
+        "notSet": "Chưa thiết lập"
+      },
+      "timestamps": {
+        "title": "Mốc thời gian",
+        "created": "Ngày tạo",
+        "updated": "Cập nhật lần cuối"
+      },
+      "sidebar": {
+        "quickActions": "Hành động nhanh",
+        "edit": "Sửa danh mục",
+        "delete": "Xóa danh mục",
+        "back": "Quay lại danh mục"
+      }
+    }
+  },
+  "Product": {
+    "list": {
+      "title": "Sản phẩm",
+      "subtitle": "Quản lý và duyệt tất cả sản phẩm",
+      "searchPlaceholder": "Tìm sản phẩm theo tên, danh mục hoặc mô tả...",
+      "filters": {
+        "title": "Bộ lọc",
+        "categoryLabel": "Danh mục",
+        "allCategories": "Tất cả danh mục",
+        "clear": "Xóa bộ lọc"
+      },
+      "showing": "Đang hiển thị",
+      "empty": {
+        "title": "Không có sản phẩm",
+        "description": "Hãy thử điều chỉnh tìm kiếm hoặc bộ lọc"
+      },
+      "card": {
+        "status": {
+          "active": "Hoạt động",
+          "inactive": "Không hoạt động"
+        }
+      }
+    },
+    "toast": {
+      "loadError": "Không thể tải sản phẩm",
+      "success": "Thành công",
+      "deleteSuccess": "Xóa sản phẩm thành công",
+      "error": "Lỗi",
+      "deleteError": "Không thể xóa sản phẩm",
+      "uploadSuccess": "Tải ảnh lên thành công",
+      "uploadError": "Không thể tải ảnh lên",
+      "createSuccess": "Tạo sản phẩm thành công",
+      "createError": "Không thể tạo sản phẩm",
+      "updateSuccess": "Cập nhật sản phẩm thành công",
+      "updateError": "Không thể cập nhật sản phẩm",
+      "validationError": "Lỗi xác thực"
+    },
+    "confirm": {
+      "delete": "Bạn có chắc muốn xóa sản phẩm này?"
+    },
+    "pagination": {
+      "previous": "Trước",
+      "page": "Trang",
+      "next": "Sau"
+    },
+    "common": {
+      "view": "Xem",
+      "product": "Sản phẩm",
+      "unnamedProduct": "Sản phẩm chưa đặt tên",
+      "noCategory": "Không có danh mục",
+      "unnamedCategory": "Danh mục chưa đặt tên",
+      "cancel": "Hủy"
+    },
+    "detail": {
+      "notFound": "Không tìm thấy sản phẩm",
+      "back": "Quay lại sản phẩm",
+      "title": "Chi tiết sản phẩm",
+      "idLabel": "Mã sản phẩm",
+      "edit": "Sửa sản phẩm",
+      "delete": "Xóa",
+      "description": {
+        "title": "Mô tả"
+      },
+      "price": {
+        "title": "Bậc giá",
+        "add": "Thêm giá",
+        "noTiers": "Chưa có bậc giá"
+      },
+      "meta": {
+        "title": "Thông tin sản phẩm",
+        "created": "Ngày tạo",
+        "updated": "Cập nhật lần cuối"
+      },
+      "categoryInfo": {
+        "title": "Thông tin danh mục"
+      },
+      "sidebar": {
+        "quickActions": "Hành động nhanh"
+      }
+    },
+    "edit": {
+      "title": "Chỉnh sửa sản phẩm",
+      "subtitle": "Cập nhật thông tin sản phẩm",
+      "card": {
+        "title": "Thông tin sản phẩm",
+        "description": "Chỉnh sửa chi tiết sản phẩm"
+      },
+      "form": {
+        "basicTitle": "Thông tin cơ bản",
+        "nameLabel": "Tên sản phẩm",
+        "namePlaceholder": "vd: Cà chua hữu cơ",
+        "categoryLabel": "Danh mục",
+        "categoryPlaceholder": "Chọn danh mục",
+        "descriptionLabel": "Mô tả",
+        "descriptionPlaceholder": "Nhập mô tả sản phẩm...",
+        "saving": "Đang lưu...",
+        "save": "Lưu thay đổi"
+      },
+      "image": {
+        "title": "Ảnh sản phẩm",
+        "previewAlt": "Xem trước sản phẩm",
+        "change": "Đổi ảnh"
+      },
+      "validation": {
+        "nameRequired": "Tên sản phẩm là bắt buộc"
+      }
+    },
+    "createDialog": {
+      "trigger": "Thêm sản phẩm mới",
+      "title": "Tạo sản phẩm mới",
+      "description": "Thêm sản phẩm mới vào kho của bạn",
+      "basicTitle": "Thông tin cơ bản",
+      "nameLabel": "Tên sản phẩm",
+      "namePlaceholder": "vd: Cà chua hữu cơ",
+      "categoryLabel": "Danh mục",
+      "categoryPlaceholder": "Chọn danh mục",
+      "descriptionLabel": "Mô tả",
+      "descriptionPlaceholder": "Nhập mô tả sản phẩm...",
+      "image": {
+        "title": "Ảnh sản phẩm",
+        "previewAlt": "Xem trước sản phẩm",
+        "change": "Đổi ảnh"
+      },
+      "footer": {
+        "creating": "Đang tạo...",
+        "submit": "Tạo sản phẩm"
+      },
+      "validation": {
+        "nameRequired": "Tên sản phẩm là bắt buộc"
+      },
+      "toast": {
+        "loadCategoriesError": "Không thể tải danh mục"
+      }
+    },
+    "priceDialog": {
+      "confirmDelete": "Bạn có chắc muốn xóa bậc giá này?",
+      "toast": {
+        "deleteSuccess": "Xóa bậc giá thành công",
+        "deleteError": "Không thể xóa bậc giá",
+        "updateSuccess": "Cập nhật bậc giá thành công",
+        "createSuccess": "Tạo bậc giá thành công",
+        "updateError": "Không thể cập nhật bậc giá",
+        "createError": "Không thể tạo bậc giá"
+      },
+      "validation": {
+        "required": "Giá và số lượng là bắt buộc"
+      },
+      "title": {
+        "edit": "Chỉnh sửa bậc giá",
+        "add": "Thêm bậc giá"
+      },
+      "description": {
+        "edit": "Cập nhật chi tiết bậc giá",
+        "add": "Thêm bậc giá mới cho sản phẩm này"
+      },
+      "form": {
+        "quantity": "Số lượng",
+        "quantityPlaceholder": "vd: 100",
+        "price": "Giá (VND)",
+        "pricePlaceholder": "vd: 25000",
+        "unit": "Đơn vị",
+        "unitPlaceholder": "vd: kg, lb, box",
+        "updating": "Đang cập nhật...",
+        "creating": "Đang tạo...",
+        "update": "Cập nhật giá",
+        "add": "Thêm giá"
+      }
+    }
+  },
   "Delivery": {
     "title": "Quản lý Vận chuyển",
     "description": "Tổng quan và quản lý các đợt vận chuyển với hệ thống xe tải thông minh",
@@ -443,5 +704,711 @@
     "orderScheduleHasBeenCanceled": "Lịch đặt hàng {orderScheduleId} đã bị hủy",
     "orderScheduleRejected": "Đã từ chối đơn",
     "orderScheduleHasBeenRejected": "Lịch đặt hàng {orderScheduleId} đã bị từ chối"
+  },
+  "WarehouseDetail": {
+    "loading": "Đang tải...",
+    "toast": {
+      "loadWarehouseError": "Không thể tải thông tin kho",
+      "loadAreasError": "Không thể tải danh sách khu vực"
+    },
+    "area": {
+      "noDescription": "Không có mô tả",
+      "alert": "Cảnh báo",
+      "normal": "Bình thường",
+      "temperature": "Nhiệt độ",
+      "humidity": "Độ ẩm"
+    },
+    "actions": {
+      "details": "Chi tiết"
+    }
+  },
+  "WarehouseActivities": {
+    "title": "Hoạt động xuất nhập kho gần đây",
+    "description": "Theo dõi tất cả các hoạt động xuất nhập kho trong hệ thống",
+    "actions": {
+      "refresh": "Làm mới",
+      "viewDetails": "Xem chi tiết"
+    },
+    "searchPlaceholder": "Tìm kiếm sản phẩm, mã phiếu, người thực hiện...",
+    "filters": {
+      "label": "Bộ lọc",
+      "activityType": "Loại hoạt động",
+      "warehouse": "Kho hàng",
+      "allStatuses": "Tất cả trạng thái",
+      "warehouseOptions": {
+        "all": "Tất cả",
+        "main": "Kho chính",
+        "retail": "Kho lẻ",
+        "cold": "Kho lạnh",
+        "fresh": "Kho tươi sống",
+        "confectionery": "Kho bánh kẹo"
+      },
+      "activityTypeOptions": {
+        "all": "Tất cả",
+        "export": "Xuất kho",
+        "import": "Nhập kho"
+      }
+    },
+    "badges": {
+      "import": "Nhập kho",
+      "export": "Xuất kho"
+    },
+    "status": {
+      "pendingAssignment": "Chờ phân công",
+      "assigned": "Đã phân công",
+      "delivering": "Đang giao hàng",
+      "completed": "Hoàn tất",
+      "cancelled": "Đã hủy"
+    },
+    "summary": "Hiển thị {count} kết quả từ tổng số {total} hoạt động",
+    "table": {
+      "date": "Ngày",
+      "code": "Mã phiếu",
+      "activityType": "Loại hoạt động",
+      "product": "Sản phẩm",
+      "quantity": "Số lượng",
+      "unit": "Đơn vị",
+      "status": "Trạng thái",
+      "actions": "Hành động"
+    },
+    "noResults": "Không tìm thấy hoạt động nào phù hợp với bộ lọc",
+    "detail": {
+      "title": "Chi tiết",
+      "importTicket": "Import Ticket",
+      "exportTicket": "Export Ticket",
+      "close": "Đóng",
+      "loading": "Đang tải...",
+      "empty": "Không có dữ liệu chi tiết",
+      "fields": {
+        "id": "ID",
+        "importDate": "Ngày nhập",
+        "exportDate": "Ngày xuất",
+        "batchCount": "Số batch",
+        "product": "Sản phẩm",
+        "actualQuantity": "Số lượng thực tế",
+        "quantity": "Số lượng",
+        "unit": "Đơn vị",
+        "area": "Khu vực kho",
+        "consignee": "Khách nhận"
+      }
+    }
+  },
+  "AreaDetail": {
+    "loading": "Đang tải...",
+    "common": {
+      "warehouse": "Kho"
+    },
+    "header": {
+      "loading": "đang tải...",
+      "lastUpdated": "Cập nhật lần cuối"
+    },
+    "actions": {
+      "refresh": "Làm mới",
+      "settings": "Cài đặt"
+    },
+    "status": {
+      "normal": "Bình thường",
+      "warning": "Cảnh báo",
+      "critical": "Nghiêm trọng",
+      "unknown": "Không xác định",
+      "temperature": "Nhiệt độ",
+      "humidity": "Độ ẩm"
+    },
+    "threshold": "Ngưỡng",
+    "alerts": {
+      "title": "Cảnh báo",
+      "active": "Cảnh báo đang hoạt động",
+      "typeDefault": "Alert",
+      "none": "Không có cảnh báo",
+      "header": "Cảnh báo và thông báo",
+      "settings": "Cài đặt thông báo",
+      "description": "Cảnh báo môi trường khu vực",
+      "empty": "Chưa có dữ liệu cảnh báo cho khu vực này."
+    },
+    "tabs": {
+      "overview": "Tổng quan",
+      "products": "Sản phẩm",
+      "alerts": "Cảnh báo",
+      "history": "Lịch sử",
+      "settings": "Cài đặt",
+      "iot": "Thiết bị IoT"
+    },
+    "overview": {
+      "title": "Thông tin khu vực",
+      "name": "Tên khu vực",
+      "description": "Mô tả",
+      "status": "Trạng thái",
+      "otherProduct": "Sản phẩm khác",
+      "noData": "Chưa có dữ liệu"
+    },
+    "products": {
+      "title": "Sản phẩm trong khu vực",
+      "manageImports": "Quản lý nhập hàng",
+      "loading": "Đang tải danh sách sản phẩm...",
+      "empty": "Chưa có sản phẩm nào trong khu vực này. Vui lòng tạo Import Ticket và gán batch vào khu vực để hiển thị tại đây.",
+      "group": {
+        "title": "Nhóm lô nhập theo phiếu nhập",
+        "description": "Gộp theo Import Ticket trong khu vực",
+        "loading": "Đang tải dữ liệu nhóm lô...",
+        "empty": "Chưa có dữ liệu nhóm lô theo phiếu nhập.",
+        "columns": {
+          "importTicket": "Import Ticket",
+          "product": "Sản phẩm",
+          "batchCode": "Batch code",
+          "importDate": "Ngày nhập",
+          "expiredAt": "Hạn dùng",
+          "spec": "Quy cách",
+          "priceBySpec": "Giá theo quy cách"
+        }
+      },
+      "list": {
+        "title": "Danh sách sản phẩm",
+        "columns": {
+          "product": "Sản phẩm",
+          "batchCount": "Số lô",
+          "totalQuantity": "Tổng số lượng"
+        }
+      },
+      "batches": {
+        "title": "Các lô hàng trong khu vực",
+        "selectPrompt": "Chọn một sản phẩm để xem các lô hàng",
+        "empty": "Không tìm thấy lô hàng nào cho sản phẩm này trong khu vực.",
+        "columns": {
+          "batchCode": "Batch code",
+          "quantity": "Số lượng",
+          "unit": "Đơn vị",
+          "createdAt": "Ngày tạo batch",
+          "id": "ID"
+        }
+      }
+    },
+    "history": {
+      "title": "Lịch sử hoạt động",
+      "description": "Theo dõi tất cả các hoạt động xuất nhập kho trong khu vực",
+      "exportReport": "Xuất báo cáo",
+      "loading": "Đang tải lịch sử hoạt động...",
+      "searchPlaceholder": "Tìm kiếm sản phẩm...",
+      "filters": {
+        "label": "Bộ lọc",
+        "activityType": "Loại hoạt động",
+        "all": "Tất cả",
+        "product": "Sản phẩm",
+        "allProducts": "Tất cả sản phẩm",
+        "allStatuses": "Tất cả trạng thái"
+      },
+      "import": "Nhập kho",
+      "export": "Xuất kho",
+      "status": {
+        "pendingAssignment": "Chờ phân công",
+        "assigned": "Đã phân công",
+        "delivering": "Đang giao hàng",
+        "completed": "Hoàn tất",
+        "cancelled": "Đã hủy",
+        "unknown": "Không xác định",
+        "processing": "Đang xử lý"
+      },
+      "summary": "Hiển thị {count} kết quả từ tổng số {total} hoạt động",
+      "noResults": "Không tìm thấy hoạt động nào phù hợp với bộ lọc",
+      "columns": {
+        "datetime": "Ngày và giờ",
+        "activityType": "Loại hoạt động",
+        "product": "Sản phẩm",
+        "quantity": "Số lượng",
+        "status": "Trạng thái"
+      }
+    },
+    "settings": {
+      "title": "Cài đặt khu vực",
+      "saving": "Đang lưu...",
+      "save": "Lưu thay đổi",
+      "threshold": {
+        "title": "Ngưỡng cảnh báo",
+        "tempDescription": "Nhiệt độ tối thiểu / tối đa theo cấu hình area-settings",
+        "humidityDescription": "Độ ẩm tối thiểu / tối đa theo cấu hình area-settings"
+      },
+      "fields": {
+        "minTemperature": "Nhiệt độ tối thiểu (°C)",
+        "maxTemperature": "Nhiệt độ tối đa (°C)",
+        "minCapacity": "Sức chứa tối thiểu (kg)",
+        "minCapacityPlaceholder": "Ví dụ: 100",
+        "minHumidity": "Độ ẩm tối thiểu (%)",
+        "maxHumidity": "Độ ẩm tối đa (%)"
+      }
+    },
+    "iot": {
+      "title": "Thiết bị IoT",
+      "loading": "Đang tải thiết bị IoT...",
+      "areaLabel": "Area",
+      "empty": "Chưa có thiết bị IoT"
+    }
+  }
+  ,
+  "IoTDevices": {
+    "metadata": {
+      "title": "Bảng điều khiển: Quản lý thiết bị IoT"
+    },
+    "header": {
+      "title": "Quản lý thiết bị IoT",
+      "description": "Giám sát và điều khiển các thiết bị IoT trong kho"
+    },
+    "actions": {
+      "add": "Thêm thiết bị",
+      "refresh": "Làm mới",
+      "cancel": "Hủy",
+      "creating": "Đang tạo...",
+      "create": "Tạo thiết bị",
+      "details": "Chi tiết",
+      "clearInput": "Xóa nhập",
+      "updating": "Đang cập nhật...",
+      "updateLocation": "Cập nhật vị trí"
+    },
+    "dialog": {
+      "addTitle": "Thêm thiết bị IoT",
+      "detailsTitle": "Chi tiết thiết bị {id}"
+    },
+    "stats": {
+      "totalDevices": "Tổng thiết bị",
+      "online": "Đang hoạt động",
+      "offline": "Offline",
+      "warning": "Cảnh báo",
+      "loading": "Đang tải thiết bị IoT..."
+    },
+    "filters": {
+      "searchPlaceholder": "Tìm kiếm theo ID, loại, Area hoặc Truck...",
+      "statusPlaceholder": "Lọc theo trạng thái",
+      "allStatus": "Tất cả trạng thái"
+    },
+    "status": {
+      "online": "Hoạt động",
+      "offline": "Offline",
+      "warning": "Cảnh báo",
+      "unknown": "Không xác định"
+    },
+    "empty": {
+      "title": "Không tìm thấy thiết bị",
+      "description": "Thử điều chỉnh bộ lọc hoặc tìm kiếm của bạn"
+    },
+    "labels": {
+      "temperature": "Nhiệt độ",
+      "humidity": "Độ ẩm",
+      "updated": "Cập nhật",
+      "location": "Vị trí",
+      "truckPrefix": "Truck",
+      "areaPrefix": "Area"
+    },
+    "detail": {
+      "status": "Trạng thái",
+      "currentValues": "Giá trị hiện tại",
+      "lastUpdate": "Cập nhật lần cuối"
+    },
+    "edit": {
+      "areaId": "Area ID",
+      "areaPlaceholder": "VD: AREA_0001",
+      "truckId": "Truck ID",
+      "truckPlaceholder": "VD: TRUCK_0001",
+      "hintForTruck": "Để trống nếu muốn gán theo Truck",
+      "hintForArea": "Để trống nếu muốn gán theo Area"
+    },
+    "errors": {
+      "createNeedAreaOrTruck": "Cần nhập Area ID hoặc Truck ID",
+      "createOnlyOne": "Chỉ được chọn một trong Area hoặc Truck",
+      "createFailed": "Tạo thiết bị thất bại",
+      "updateOnlyOne": "Chỉ được chọn một trong Area hoặc Truck",
+      "updateNeed": "Nhập Area ID hoặc Truck ID để cập nhật",
+      "updateFailed": "Cập nhật thất bại"
+    }
+  },
+  "Accounts": {
+    "Managers": {
+      "header": {
+        "title": "Quản lý tài khoản Quản lý",
+        "description": "Quản lý tài khoản và thông tin người quản lý"
+      },
+      "actions": {
+        "createManager": "Tạo Quản lý",
+        "edit": "Sửa",
+        "delete": "Xóa",
+        "clearForm": "Xóa biểu mẫu",
+        "refresh": "Làm mới",
+        "saving": "Đang lưu...",
+        "creating": "Đang tạo...",
+        "saveChanges": "Lưu thay đổi"
+      },
+      "dialog": {
+        "editTitle": "Cập nhật tài khoản quản lý",
+        "createTitle": "Tạo tài khoản quản lý",
+        "editDescription": "Điều chỉnh thông tin cá nhân, kho (tùy chọn) và tài khoản đăng nhập.",
+        "createDescription": "Nhập thông tin cá nhân, kho (tùy chọn) và tài khoản đăng nhập."
+      },
+      "form": {
+        "firstName": "Họ *",
+        "lastName": "Tên *",
+        "email": "Email *",
+        "password": "Mật khẩu *",
+        "warehouseOptional": "Kho (tùy chọn)",
+        "warehouseHelper": "Để trống nếu không gán vào kho"
+      },
+      "placeholders": {
+        "firstName": "Nguyễn",
+        "lastName": "Văn A",
+        "emailManager": "manager@example.com",
+        "password": "••••••••",
+        "selectWarehouse": "Chọn kho",
+        "noWarehouse": "Không có kho"
+      },
+      "filters": {
+        "searchPlaceholder": "Tìm theo tên, email, mã tài khoản...",
+        "warehousePlaceholder": "Lọc theo kho",
+        "allWarehouses": "Tất cả kho"
+      },
+      "table": {
+        "title": "Danh sách quản lý",
+        "description": "Theo dõi và chỉnh sửa tài khoản quản lý.",
+        "loading": "Đang tải dữ liệu...",
+        "empty": "Không có quản lý phù hợp",
+        "columns": {
+          "index": "STT",
+          "firstName": "Họ",
+          "lastName": "Tên",
+          "email": "Email",
+          "warehouse": "Kho",
+          "address": "Địa chỉ",
+          "actions": "Thao tác"
+        }
+      },
+      "toast": {
+        "loadError": "Không thể tải danh sách quản lý",
+        "tryAgain": "Vui lòng thử lại",
+        "updateSuccess": "Đã cập nhật quản lý",
+        "createSuccess": "Đã tạo quản lý",
+        "updateError": "Không thể cập nhật quản lý",
+        "createError": "Không thể tạo quản lý",
+        "deleteSuccess": "Đã xóa quản lý",
+        "deleteError": "Không thể xóa quản lý"
+      }
+    },
+    "Consignees": {
+      "header": {
+        "title": "Quản lý tài khoản Consignee",
+        "description": "Quản lý tài khoản và thông tin khách nhận"
+      },
+      "actions": {
+        "editConsignee": "Chỉnh sửa Consignee",
+        "createConsignee": "Tạo Consignee",
+        "edit": "Sửa",
+        "delete": "Xóa",
+        "cancel": "Hủy",
+        "refresh": "Làm mới",
+        "saving": "Đang lưu...",
+        "creating": "Đang tạo...",
+        "saveChanges": "Lưu thay đổi",
+        "create": "Tạo",
+        "confirmDelete": "Bạn có chắc chắn muốn xóa consignee này?"
+      },
+      "dialog": {
+        "editTitle": "Cập nhật tài khoản consignee",
+        "createTitle": "Tạo tài khoản consignee",
+        "editDescription": "Điều chỉnh thông tin tổ chức và tài khoản đăng nhập.",
+        "createDescription": "Nhập thông tin tổ chức và tài khoản đăng nhập."
+      },
+      "form": {
+        "organizationName": "Tên tổ chức *",
+        "representativeName": "Người đại diện *",
+        "contact": "Số liên hệ *",
+        "taxCode": "Mã số thuế *",
+        "address": "Địa chỉ *",
+        "certificate": "Giấy chứng nhận",
+        "qrCode": "QR Code",
+        "email": "Email *",
+        "password": "Mật khẩu *",
+        "passwordOptional": "Mật khẩu (tùy chọn)",
+        "firstName": "Họ *",
+        "lastName": "Tên *"
+      },
+      "placeholders": {
+        "organizationName": "Công ty ABC",
+        "representativeName": "Nguyễn Văn B",
+        "contact": "0123456789",
+        "taxCode": "0123456789",
+        "address": "Số 456, Huyện C, Tỉnh D",
+        "certificate": "VietGAP...",
+        "qrCode": "URL hoặc mã",
+        "emailConsignee": "consignee@example.com",
+        "password": "••••••••",
+        "firstName": "Nguyễn",
+        "lastName": "Văn C"
+      },
+      "filters": {
+        "searchPlaceholder": "Tìm theo tổ chức, đại diện, email...",
+        "organizationPlaceholder": "Lọc theo tổ chức",
+        "allOrganizations": "Tất cả tổ chức"
+      },
+      "table": {
+        "title": "Danh sách consignee",
+        "description": "Theo dõi và chỉnh sửa tài khoản consignee.",
+        "loading": "Đang tải dữ liệu...",
+        "empty": "Không có consignee phù hợp",
+        "columns": {
+          "index": "STT",
+          "organization": "Tổ chức",
+          "representative": "Đại diện",
+          "contact": "Liên hệ",
+          "email": "Email",
+          "actions": "Thao tác"
+        }
+      },
+      "toast": {
+        "loadError": "Không thể tải danh sách consignee",
+        "tryAgain": "Vui lòng thử lại",
+        "updateSuccess": "Đã cập nhật consignee",
+        "createSuccess": "Đã tạo consignee",
+        "updateError": "Không thể cập nhật consignee",
+        "createError": "Không thể tạo consignee",
+        "deleteSuccess": "Đã xóa consignee",
+        "deleteError": "Không thể xóa consignee"
+      }
+    },
+    "Suppliers": {
+      "header": {
+        "title": "Quản lý tài khoản nhà cung cấp",
+        "description": "Quản lý tài khoản và thông tin nhà cung cấp"
+      },
+      "actions": {
+        "editSupplier": "Chỉnh sửa nhà cung cấp",
+        "createSupplier": "Tạo nhà cung cấp",
+        "edit": "Sửa",
+        "delete": "Xóa",
+        "clear": "Xóa dữ liệu",
+        "refresh": "Làm mới",
+        "saving": "Đang lưu...",
+        "creating": "Đang tạo...",
+        "saveChanges": "Lưu thay đổi",
+        "create": "Tạo",
+        "confirmDelete": "Bạn có chắc chắn muốn xóa supplier này?"
+      },
+      "dialog": {
+        "editTitle": "Cập nhật tài khoản nhà cung cấp",
+        "createTitle": "Tạo tài khoản nhà cung cấp",
+        "editDescription": "Điều chỉnh thông tin doanh nghiệp, kho và tài khoản đăng nhập.",
+        "createDescription": "Nhập thông tin doanh nghiệp, kho (nếu có) và tài khoản đăng nhập."
+      },
+      "form": {
+        "fillRequired": "Vui lòng điền đầy đủ thông tin bắt buộc",
+        "gardenName": "Tên vườn *",
+        "representativeName": "Người đại diện *",
+        "contact": "Số liên hệ *",
+        "taxCode": "Mã số thuế *",
+        "address": "Địa chỉ *",
+        "certificate": "Giấy chứng nhận",
+        "qrCode": "QR Code",
+        "email": "Email *",
+        "password": "Mật khẩu *",
+        "passwordOptional": "Mật khẩu (tùy chọn)",
+        "firstName": "Họ *",
+        "lastName": "Tên *",
+        "warehouseOptional": "Kho (tùy chọn)",
+        "unassignedWarehouse": "Không gán kho"
+      },
+      "placeholders": {
+        "gardenName": "Vườn Cam X",
+        "representativeName": "Nguyễn Văn B",
+        "contact": "0123456789",
+        "taxCode": "0123456789",
+        "address": "Số 456, Huyện C, Tỉnh D",
+        "certificate": "VietGAP...",
+        "qrCode": "URL hoặc mã",
+        "emailSupplier": "supplier@example.com",
+        "password": "••••••••",
+        "firstName": "Trần",
+        "lastName": "Văn C",
+        "warehouse": "Chọn warehouse"
+      },
+      "filters": {
+        "searchPlaceholder": "Tìm theo vườn, đại diện, email...",
+        "warehousePlaceholder": "Lọc theo kho",
+        "allWarehouses": "Tất cả kho"
+      },
+      "labels": {
+        "unassigned": "Không gán"
+      },
+      "table": {
+        "title": "Danh sách nhà cung cấp",
+        "description": "Theo dõi và chỉnh sửa tài khoản nhà cung cấp.",
+        "loading": "Đang tải dữ liệu...",
+        "empty": "Không có nhà cung cấp phù hợp",
+        "columns": {
+          "index": "STT",
+          "garden": "Tên vườn",
+          "representative": "Đại diện",
+          "email": "Email",
+          "warehouse": "Kho",
+          "address": "Địa chỉ",
+          "actions": "Thao tác"
+        }
+      },
+      "toast": {
+        "loadError": "Không thể tải danh sách nhà cung cấp",
+        "tryAgain": "Vui lòng thử lại",
+        "updateSuccess": "Đã cập nhật nhà cung cấp",
+        "createSuccess": "Đã tạo nhà cung cấp",
+        "updateError": "Không thể cập nhật nhà cung cấp",
+        "createError": "Không thể tạo nhà cung cấp",
+        "deleteSuccess": "Đã xóa nhà cung cấp",
+        "deleteError": "Không thể xóa nhà cung cấp"
+      }
+    },
+    "DeliveryStaffs": {
+      "header": {
+        "title": "Quản lý tài khoản Tài xế",
+        "description": "Quản lý tài khoản tài xế, giấy phép và phân công"
+      },
+      "actions": {
+        "editDeliveryStaff": "Chỉnh sửa Tài xế",
+        "createDeliveryStaff": "Tạo Tài xế",
+        "edit": "Sửa",
+        "delete": "Xóa",
+        "clearForm": "Xóa biểu mẫu",
+        "refresh": "Làm mới",
+        "saving": "Đang lưu...",
+        "creating": "Đang tạo...",
+        "saveChanges": "Lưu thay đổi",
+        "create": "Tạo",
+        "confirmDelete": "Bạn có chắc chắn muốn xóa tài xế này?"
+      },
+      "dialog": {
+        "editTitle": "Cập nhật tài khoản tài xế",
+        "createTitle": "Tạo tài khoản tài xế",
+        "editDescription": "Điều chỉnh thông tin giấy phép, kho/xe (tùy chọn) và tài khoản đăng nhập.",
+        "createDescription": "Nhập thông tin giấy phép, kho/xe (tùy chọn) và tài khoản đăng nhập."
+      },
+      "form": {
+        "warehouseOptional": "Kho (tùy chọn)",
+        "truckOptional": "Xe tải (tùy chọn)",
+        "licenseNumber": "Số giấy phép *",
+        "licensePhoto": "Ảnh giấy phép",
+        "licenseExpiredAt": "Ngày hết hạn giấy phép *",
+        "firstName": "Họ *",
+        "lastName": "Tên *",
+        "email": "Email *",
+        "password": "Mật khẩu *",
+        "passwordOptional": "Mật khẩu (tùy chọn)"
+      },
+      "placeholders": {
+        "selectWarehouse": "Chọn kho",
+        "noWarehouse": "Không có kho",
+        "selectTruck": "Chọn xe tải",
+        "noTruck": "Không có xe tải",
+        "licenseNumber": "VD: 0123456789",
+        "licensePhoto": "https://...",
+        "firstName": "Nguyễn",
+        "lastName": "Văn A",
+        "emailDriver": "driver@example.com",
+        "password": "••••••••"
+      },
+      "filters": {
+        "searchPlaceholder": "Tìm theo tên, email, xe, giấy phép...",
+        "warehousePlaceholder": "Lọc theo kho",
+        "allWarehouses": "Tất cả kho"
+      },
+      "table": {
+        "title": "Danh sách tài xế",
+        "description": "Theo dõi và chỉnh sửa tài khoản tài xế.",
+        "loading": "Đang tải dữ liệu...",
+        "empty": "Không có tài xế phù hợp",
+        "columns": {
+          "index": "STT",
+          "firstName": "Họ",
+          "lastName": "Tên",
+          "email": "Email",
+          "warehouse": "Kho",
+          "truck": "Xe tải",
+          "licenseExpired": "Hết hạn giấy phép",
+          "actions": "Thao tác"
+        }
+      },
+      "toast": {
+        "loadError": "Không thể tải danh sách tài xế",
+        "tryAgain": "Vui lòng thử lại",
+        "updateSuccess": "Đã cập nhật tài xế",
+        "createSuccess": "Đã tạo tài xế",
+        "updateError": "Không thể cập nhật tài xế",
+        "createError": "Không thể tạo tài xế",
+        "deleteSuccess": "Đã xóa tài xế",
+        "deleteError": "Không thể xóa tài xế"
+      }
+    },
+    "Staffs": {
+      "header": {
+        "title": "Quản lý tài khoản Nhân viên",
+        "description": "Quản lý tài khoản và thông tin nhân viên nội bộ"
+      },
+      "actions": {
+        "editStaff": "Chỉnh sửa Nhân viên",
+        "createStaff": "Tạo Nhân viên",
+        "edit": "Sửa",
+        "delete": "Xóa",
+        "clearForm": "Xóa biểu mẫu",
+        "refresh": "Làm mới",
+        "saving": "Đang lưu...",
+        "creating": "Đang tạo...",
+        "saveChanges": "Lưu thay đổi",
+        "create": "Tạo",
+        "confirmDelete": "Bạn có chắc chắn muốn xóa nhân viên này?"
+      },
+      "dialog": {
+        "editTitle": "Cập nhật tài khoản nhân viên",
+        "createTitle": "Tạo tài khoản nhân viên",
+        "editDescription": "Điều chỉnh vị trí, kho (tùy chọn) và tài khoản đăng nhập.",
+        "createDescription": "Nhập vị trí, kho (tùy chọn) và tài khoản đăng nhập."
+      },
+      "form": {
+        "position": "Vị trí *",
+        "warehouseOptional": "Kho (tùy chọn)",
+        "firstName": "Họ *",
+        "lastName": "Tên *",
+        "email": "Email *",
+        "password": "Mật khẩu *"
+      },
+      "placeholders": {
+        "position": "VD: Giám sát",
+        "selectWarehouse": "Chọn kho",
+        "noWarehouse": "Không có kho",
+        "firstName": "Nguyễn",
+        "lastName": "Văn A",
+        "emailStaff": "staff@example.com",
+        "password": "••••••••"
+      },
+      "filters": {
+        "searchPlaceholder": "Tìm theo tên, email, vị trí...",
+        "warehousePlaceholder": "Lọc theo kho",
+        "allWarehouses": "Tất cả kho"
+      },
+      "table": {
+        "title": "Danh sách nhân viên",
+        "description": "Theo dõi và chỉnh sửa tài khoản nhân viên.",
+        "loading": "Đang tải dữ liệu...",
+        "empty": "Không có nhân viên phù hợp",
+        "columns": {
+          "index": "STT",
+          "firstName": "Họ",
+          "lastName": "Tên",
+          "email": "Email",
+          "position": "Vị trí",
+          "warehouse": "Kho",
+          "createdAt": "Ngày tạo",
+          "actions": "Thao tác"
+        }
+      },
+      "toast": {
+        "loadError": "Không thể tải danh sách nhân viên",
+        "tryAgain": "Vui lòng thử lại",
+        "updateSuccess": "Đã cập nhật nhân viên",
+        "createSuccess": "Đã tạo nhân viên",
+        "updateError": "Không thể cập nhật nhân viên",
+        "createError": "Không thể tạo nhân viên",
+        "deleteSuccess": "Đã xóa nhân viên",
+        "deleteError": "Không thể xóa nhân viên"
+      }
+    }
   }
 }
