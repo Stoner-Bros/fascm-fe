@@ -1,503 +1,116 @@
 'use client';
 
 import PageContainer from '@/components/layout/page-container';
-import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
-import { IconArrowLeft, IconDeviceFloppy } from '@tabler/icons-react';
-import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import { useRouter } from 'next/navigation';
-import { useToast } from '@/hooks/use-toast';
-import { Product, fetchProducts } from '@/services/product.service';
-import { createHarvestSchedule } from '@/services/harvest-schedule.service';
-import { fetchSupplier } from '@/services/supplier.service';
-import type { Supplier } from '@/types/supplier';
-import { DateTimePicker } from '@/components/ui/date-time-picker';
+import { IconLoader2 } from '@tabler/icons-react';
 
-const AddressPickerMap = dynamic(
-  () => import('@/components/map/osrm-map').then((m) => m.AddressPickerMap),
-  { ssr: false }
-);
-
-type HarvestDetailForm = {
-  productId: string;
-  quantity: number;
-  unitPrice: number;
-  unit: string;
-};
+import { useCreateHarvestSchedule } from '../../../../features/supplier/harvest-batches/hooks/use-create-harvest-schedule';
+import {
+  ProductSelectionStep,
+  ScheduleStep,
+  ReviewStep,
+  StepProgress,
+  StepNavigation
+} from '../../../../features/supplier/harvest-batches/components';
 
 export default function NewHarvestBatchPage() {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [showMap, setShowMap] = useState(false);
-  const [harvestPosition, setHarvestPosition] = useState<
-    { lat: number; lng: number } | undefined
-  >(undefined);
+  const {
+    state,
+    toggleProduct,
+    updateHarvestDetail,
+    setStep,
+    setHarvestDate,
+    setHarvestAddress,
+    setDescription,
+    setHarvestPos,
+    toggleMap,
+    calculateTotal,
+    calculateTotalQuantity,
+    canProceedToSchedule,
+    canProceedToReview,
+    handleSubmit,
+    handleBack,
+    t
+  } = useCreateHarvestSchedule();
 
-  // Step 1: Harvest Schedule
-  const [scheduleData, setScheduleData] = useState({
-    description: '',
-    harvestDate: '',
-    address: ''
-  });
-
-  // Step 2: Harvest Details - Khởi tạo với 1 detail mặc định
-  const [harvestDetails, setHarvestDetails] = useState<HarvestDetailForm[]>([
-    {
-      productId: '',
-      quantity: 0,
-      unitPrice: 0,
-      unit: 'kg'
-    }
-  ]);
-
-  useEffect(() => {
-    let mounted = true;
-
-    // Load products
-    fetchProducts({ page: 1, limit: 100 })
-      .then((res) => {
-        if (!mounted) return;
-        setProducts(res.data ?? []);
-      })
-      .catch(() => {
-        if (!mounted) return;
-        toast({
-          title: 'Error',
-          description: 'Failed to load products',
-          variant: 'destructive'
-        });
-      });
-
-    // Prefill address from supplier
-    fetchSupplier()
-      .then((supplier: Supplier) => {
-        if (!mounted) return;
-        if (supplier?.address) {
-          setScheduleData((prev) => ({
-            ...prev,
-            address: supplier.address
-          }));
-        }
-      })
-      .catch(() => {
-        if (!mounted) return;
-      });
-
-    return () => {
-      mounted = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const handleScheduleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setScheduleData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const addHarvestDetail = () => {
-    setHarvestDetails((prev) => [
-      ...prev,
-      {
-        productId: '',
-        quantity: 0,
-        unitPrice: 0,
-        unit: 'kg'
-      }
-    ]);
-  };
-
-  const removeHarvestDetail = (index: number) => {
-    setHarvestDetails((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const updateHarvestDetail = (
-    index: number,
-    field: keyof HarvestDetailForm,
-    value: string | number
-  ) => {
-    setHarvestDetails((prev) =>
-      prev.map((detail, i) => {
-        if (i === index) {
-          return { ...detail, [field]: value };
-        }
-        return detail;
-      })
+  if (state.loading) {
+    return (
+      <PageContainer>
+        <div className='flex h-[60vh] flex-1 items-center justify-center'>
+          <IconLoader2 className='text-muted-foreground h-8 w-8 animate-spin' />
+        </div>
+      </PageContainer>
     );
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (harvestDetails.length === 0) {
-      toast({
-        title: 'Validation Error',
-        description: 'Please add at least one harvest detail',
-        variant: 'destructive'
-      });
-      return;
-    }
-
-    // Validate all harvest details
-    for (const detail of harvestDetails) {
-      if (!detail.productId || !detail.quantity || !detail.unitPrice) {
-        toast({
-          title: 'Validation Error',
-          description: 'Please fill all required fields in harvest details',
-          variant: 'destructive'
-        });
-        return;
-      }
-
-      if (detail.quantity <= 0) {
-        toast({
-          title: 'Validation Error',
-          description: 'Quantity must be greater than 0',
-          variant: 'destructive'
-        });
-        return;
-      }
-    }
-
-    setLoading(true);
-
-    try {
-      await createHarvestSchedule({
-        description: scheduleData.description || null,
-        harvestDate: new Date(scheduleData.harvestDate).toISOString(),
-        address: scheduleData.address || null,
-        harvestTicket: {
-          ticketNumber: null,
-          ticketUrl: null
-        },
-        harvestDetails: harvestDetails.map((detail) => ({
-          product: {
-            id: detail.productId
-          },
-          quantity: detail.quantity,
-          unitPrice: detail.unitPrice,
-          unit: detail.unit
-        }))
-      });
-
-      toast({
-        title: 'Success',
-        description: 'Harvest batch created successfully!'
-      });
-      router.push('/supplier/harvest-batches');
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description:
-          error?.message || 'Failed to create harvest batch. Please try again.',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCancel = () => {
-    router.push('/supplier/harvest-batches');
-  };
+  }
 
   return (
     <PageContainer>
-      <div className='w-full space-y-6'>
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <Button variant='ghost' size='icon' onClick={() => router.back()}>
-              <IconArrowLeft className='h-5 w-5' />
-            </Button>
-            <div>
-              <h2 className='text-3xl font-bold tracking-tight'>
-                Create New Harvest Batch
-              </h2>
-              <p className='text-muted-foreground'>
-                Submit details of your new harvest
-              </p>
-            </div>
-          </div>
+      <div className='mx-auto w-full max-w-6xl space-y-6 pb-12'>
+        {/* Header */}
+        <div>
+          <h1 className='text-3xl font-bold tracking-tight'>
+            {t('new.title')}
+          </h1>
+          <p className='text-muted-foreground mt-2'>{t('new.subtitle')}</p>
         </div>
 
-        <Separator />
+        {/* Progress Steps */}
+        <StepProgress currentStep={state.currentStep} t={t} />
 
-        <form onSubmit={handleSubmit}>
-          <div className='grid gap-6'>
-            {/* Harvest Schedule */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Harvest Schedule</CardTitle>
-                <CardDescription>
-                  When the harvest is scheduled to take place
-                </CardDescription>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='harvestDate'>
-                    Harvest Date & Time{' '}
-                    <span className='text-destructive'>*</span>
-                  </Label>
-                  <DateTimePicker
-                    value={scheduleData.harvestDate}
-                    onChange={(value) =>
-                      setScheduleData((prev) => ({
-                        ...prev,
-                        harvestDate: value
-                      }))
-                    }
-                    placeholder='Select harvest date and time'
-                  />
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='address'>
-                    Harvest Address <span className='text-destructive'>*</span>
-                  </Label>
-                  <Input
-                    id='address'
-                    name='address'
-                    value={scheduleData.address}
-                    onChange={handleScheduleChange}
-                    placeholder='Enter harvest address'
-                  />
-                </div>
-                <div className='space-y-3'>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    size='sm'
-                    onClick={() => setShowMap((v) => !v)}
-                  >
-                    {showMap ? 'Close map' : 'Pick location on map'}
-                  </Button>
-                  {showMap && (
-                    <div className='rounded-lg border p-2'>
-                      <AddressPickerMap
-                        value={{
-                          position: harvestPosition,
-                          address: scheduleData.address
-                        }}
-                        onChange={(v) => {
-                          setHarvestPosition(v.position);
-                          setScheduleData((prev) => ({
-                            ...prev,
-                            address: v.address || prev.address
-                          }));
-                        }}
-                      />
-                    </div>
-                  )}
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='description'>Description</Label>
-                  <textarea
-                    id='description'
-                    name='description'
-                    value={scheduleData.description}
-                    onChange={handleScheduleChange}
-                    placeholder='Optional description...'
-                    className='border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex min-h-[80px] w-full rounded-md border px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50'
-                    rows={3}
-                  />
-                </div>
-              </CardContent>
-            </Card>
+        {/* Step 1: Products */}
+        {state.currentStep === 'products' && (
+          <ProductSelectionStep
+            products={state.products}
+            harvestDetails={state.harvestDetails}
+            selectedProducts={state.selectedProducts}
+            onToggleProduct={toggleProduct}
+            onUpdateHarvestDetail={updateHarvestDetail}
+            calculateTotal={calculateTotal}
+            t={t}
+          />
+        )}
 
-            {/* Harvest Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Harvest Details</CardTitle>
-                <CardDescription>
-                  Products and quantities for this harvest
-                </CardDescription>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                {harvestDetails.map((detail, index) => (
-                  <Card key={index} className='border-dashed'>
-                    <CardContent className='pt-6'>
-                      <div className='space-y-4'>
-                        <div className='flex items-center justify-between'>
-                          <h4 className='font-medium'>Product #{index + 1}</h4>
-                          {harvestDetails.length > 1 && (
-                            <Button
-                              type='button'
-                              variant='ghost'
-                              size='sm'
-                              onClick={() => removeHarvestDetail(index)}
-                            >
-                              Remove
-                            </Button>
-                          )}
-                        </div>
+        {/* Step 2: Schedule */}
+        {state.currentStep === 'schedule' && (
+          <ScheduleStep
+            harvestDate={state.harvestDate}
+            harvestAddress={state.harvestAddress}
+            description={state.description}
+            harvestPos={state.harvestPos}
+            showMap={state.showMap}
+            onSetHarvestDate={setHarvestDate}
+            onSetHarvestAddress={setHarvestAddress}
+            onSetDescription={setDescription}
+            onSetHarvestPos={setHarvestPos}
+            onToggleMap={toggleMap}
+            t={t}
+          />
+        )}
 
-                        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                          <div className='space-y-2'>
-                            <Label>
-                              Product{' '}
-                              <span className='text-destructive'>*</span>
-                            </Label>
-                            <Select
-                              value={detail.productId}
-                              onValueChange={(value) =>
-                                updateHarvestDetail(index, 'productId', value)
-                              }
-                              required
-                            >
-                              <SelectTrigger>
-                                <SelectValue placeholder='Select product' />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {products.map((product) => (
-                                  <SelectItem
-                                    key={product.id}
-                                    value={product.id}
-                                  >
-                                    {product.name || 'Unnamed Product'}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
+        {/* Step 3: Review */}
+        {state.currentStep === 'review' && (
+          <ReviewStep
+            products={state.products}
+            harvestDetails={state.harvestDetails}
+            harvestDate={state.harvestDate}
+            harvestAddress={state.harvestAddress}
+            description={state.description}
+            calculateTotal={calculateTotal}
+            calculateTotalQuantity={calculateTotalQuantity}
+            t={t}
+          />
+        )}
 
-                          <div className='space-y-2'>
-                            <Label>
-                              Unit <span className='text-destructive'>*</span>
-                            </Label>
-                            <Input
-                              value='kg'
-                              readOnly
-                              disabled
-                              className='bg-muted cursor-not-allowed'
-                            />
-                          </div>
-                        </div>
-
-                        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-                          <div className='space-y-2'>
-                            <Label>
-                              Quantity{' '}
-                              <span className='text-destructive'>*</span>
-                            </Label>
-                            <Input
-                              type='number'
-                              inputMode='numeric'
-                              value={detail.quantity || ''}
-                              onChange={(e) => {
-                                const value = e.target.value;
-                                // Chỉ cho phép số dương
-                                if (
-                                  value === '' ||
-                                  /^\d+(\.\d*)?$/.test(value)
-                                ) {
-                                  updateHarvestDetail(
-                                    index,
-                                    'quantity',
-                                    value === '' ? 0 : parseFloat(value) || 0
-                                  );
-                                }
-                              }}
-                              onWheel={(e) => {
-                                // Prevent scroll wheel from changing value
-                                e.currentTarget.blur();
-                              }}
-                              placeholder='Enter quantity'
-                              min='1'
-                              step='1'
-                              required
-                              className='[&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
-                            />
-                          </div>
-
-                          <div className='space-y-2'>
-                            <Label>
-                              Unit Price{' '}
-                              <span className='text-destructive'>*</span>
-                            </Label>
-                            <div className='relative'>
-                              <Input
-                                type='text'
-                                inputMode='numeric'
-                                value={detail.unitPrice || ''}
-                                onChange={(e) => {
-                                  const value = e.target.value;
-                                  // Chỉ cho phép số
-                                  if (value === '' || /^\d+$/.test(value)) {
-                                    updateHarvestDetail(
-                                      index,
-                                      'unitPrice',
-                                      value === '' ? 0 : parseInt(value) || 0
-                                    );
-                                  }
-                                }}
-                                onWheel={(e) => {
-                                  // Prevent scroll wheel from changing value
-                                  e.currentTarget.blur();
-                                }}
-                                placeholder='0'
-                                required
-                                className='pr-12 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
-                              />
-                              <span className='text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-sm'>
-                                VND
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-
-                <Button
-                  type='button'
-                  variant='outline'
-                  onClick={addHarvestDetail}
-                  className='w-full'
-                >
-                  + Add Product
-                </Button>
-              </CardContent>
-            </Card>
-
-            <div className='flex justify-end gap-2'>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={handleCancel}
-                disabled={loading}
-              >
-                Cancel
-              </Button>
-              <Button type='submit' disabled={loading}>
-                <IconDeviceFloppy className='mr-2 h-4 w-4' />
-                {loading ? 'Creating...' : 'Create Batch'}
-              </Button>
-            </div>
-          </div>
-        </form>
+        {/* Navigation Buttons */}
+        <StepNavigation
+          currentStep={state.currentStep}
+          submitting={state.submitting}
+          canProceedToSchedule={canProceedToSchedule}
+          canProceedToReview={canProceedToReview}
+          onBack={handleBack}
+          onSetStep={setStep}
+          onSubmit={handleSubmit}
+          t={t}
+        />
       </div>
     </PageContainer>
   );

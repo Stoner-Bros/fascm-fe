@@ -5,7 +5,6 @@ import {
   TileLayer,
   Polyline,
   Marker,
-  CircleMarker,
   Tooltip,
   useMap
 } from 'react-leaflet';
@@ -18,6 +17,12 @@ import {
   fetchDeliveriesByHarvestSchedule
 } from '@/services/delivery.service';
 import { updateHarvestScheduleStatus } from '@/services/harvest-schedule.service';
+import {
+  IconMapPin,
+  IconTruck,
+  IconClock,
+  IconRoute
+} from '@tabler/icons-react';
 
 type LatLng = { lat: number; lng: number };
 
@@ -47,7 +52,10 @@ function FitBounds({
       pts.push(route[0], route[route.length - 1]);
     }
     if (pts.length >= 2) {
-      map.fitBounds(pts as any, { padding: [30, 30], maxZoom: 14 });
+      map.fitBounds(pts as [number, number][], {
+        padding: [40, 40],
+        maxZoom: 14
+      });
     }
   }, [map, from?.lat, from?.lng, to?.lat, to?.lng, route.length]);
   return null;
@@ -122,10 +130,10 @@ export default function HarvestRouteSim({
   const [routeOsrm, setRouteOsrm] = useState<[number, number][]>([]);
   const [distance, setDistance] = useState<number>(0);
   const [duration, setDuration] = useState<number>(0);
-  const [running, setRunning] = useState<boolean>(false);
+  const [running] = useState<boolean>(true);
   const [idx, setIdx] = useState<number>(0);
   const [subT, setSubT] = useState<number>(0);
-  const timerRef = useRef<any>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [carIcon, setCarIcon] = useState<Icon | undefined>(undefined);
   const [startIcon, setStartIcon] = useState<Icon | undefined>(undefined);
@@ -134,9 +142,6 @@ export default function HarvestRouteSim({
   const [pos, setPos] = useState<LatLng | undefined>(undefined);
   const [startPos, setStartPos] = useState<LatLng | undefined>(undefined);
   const [endPos, setEndPos] = useState<LatLng | undefined>(undefined);
-  const [connected, setConnected] = useState<boolean>(false);
-  const [room, setRoom] = useState<string>('');
-  const [lastEvent, setLastEvent] = useState<string>('');
   const [autoDeliveryId, setAutoDeliveryId] = useState<string>('');
   const activeDeliveryId = (deliveryId ?? '').trim() || autoDeliveryId;
   const [startAddr, setStartAddr] = useState<string | undefined>(
@@ -155,11 +160,9 @@ export default function HarvestRouteSim({
     let mounted = true;
     import('leaflet').then(({ default: L }) => {
       if (!mounted) return;
-      const url = '/images/longCar.png';
-      const warehouseUrl = '/images/warehouse.png';
       setCarIcon(
         L.icon({
-          iconUrl: url,
+          iconUrl: '/images/longCar.png',
           shadowUrl:
             'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
           iconSize: [40, 40],
@@ -169,7 +172,7 @@ export default function HarvestRouteSim({
       );
       setStartIcon(
         L.icon({
-          iconUrl: warehouseUrl,
+          iconUrl: '/images/warehouse.png',
           shadowUrl:
             'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
           iconSize: [25, 41],
@@ -279,41 +282,51 @@ export default function HarvestRouteSim({
 
   useEffect(() => {
     if (!activeDeliveryId) return;
-    socket.on('connect', () => setConnected(true));
-    socket.on('disconnect', () => setConnected(false));
+    socket.on('connect', () => {});
+    socket.on('disconnect', () => {});
     socket.emit('delivery:subscribe', { deliveryId: activeDeliveryId });
-    socket.on('delivery:subscribed', (p: any) => setRoom(p?.room ?? ''));
-    socket.on('delivery:start', (p: any) => {
-      setLastEvent('start');
-      setStartPos({ lat: p.startLat, lng: p.startLng });
-      setEndPos(undefined);
-      setPos({ lat: p.startLat, lng: p.startLng });
-      if (p.startAddress) setStartAddr(normalizeAddress(p.startAddress));
-      if (Array.isArray(p.route)) setRoute(p.route);
-    });
-    socket.on('delivery:update', (p: any) => {
-      setLastEvent('update');
+    socket.on('delivery:subscribed', () => {});
+    socket.on(
+      'delivery:start',
+      (p: {
+        startLat: number;
+        startLng: number;
+        startAddress?: string;
+        route?: [number, number][];
+      }) => {
+        setStartPos({ lat: p.startLat, lng: p.startLng });
+        setEndPos(undefined);
+        setPos({ lat: p.startLat, lng: p.startLng });
+        if (p.startAddress) setStartAddr(normalizeAddress(p.startAddress));
+        if (Array.isArray(p.route)) setRoute(p.route);
+      }
+    );
+    socket.on('delivery:update', (p: { lat: number; lng: number }) => {
       setPos({ lat: p.lat, lng: p.lng });
     });
-    socket.on('delivery:end', async (p: any) => {
-      setLastEvent('end');
-      setEndPos({ lat: p.endLat, lng: p.endLng });
-      setPos({ lat: p.endLat, lng: p.endLng });
-      if (p.endAddress) setEndAddr(normalizeAddress(p.endAddress));
-      const id = activeDeliveryId.trim();
-      if (id && harvestScheduleId) {
-        try {
-          const d = await fetchDeliveryById(id);
-          const st = String(d.status ?? '').toLowerCase();
-          if (st === 'completed') {
-            await updateHarvestScheduleStatus(
-              harvestScheduleId as string,
-              'COMPLETED'
-            );
+    socket.on(
+      'delivery:end',
+      async (p: { endLat: number; endLng: number; endAddress?: string }) => {
+        setEndPos({ lat: p.endLat, lng: p.endLng });
+        setPos({ lat: p.endLat, lng: p.endLng });
+        if (p.endAddress) setEndAddr(normalizeAddress(p.endAddress));
+        const id = activeDeliveryId.trim();
+        if (id && harvestScheduleId) {
+          try {
+            const d = await fetchDeliveryById(id);
+            const st = String(d.status ?? '').toLowerCase();
+            if (st === 'completed') {
+              await updateHarvestScheduleStatus(
+                harvestScheduleId as string,
+                'COMPLETED'
+              );
+            }
+          } catch {
+            // Ignore errors
           }
-        } catch {}
+        }
       }
-    });
+    );
     return () => {
       socket.off('delivery:start');
       socket.off('delivery:update');
@@ -452,13 +465,6 @@ export default function HarvestRouteSim({
   const progress =
     route.length > 1 ? Math.round((idx / (route.length - 1)) * 100) : 0;
 
-  const poiIdx1 = Math.floor(route.length * 0.25);
-  const poiIdx2 = Math.floor(route.length * 0.6);
-  const poiIdx3 = Math.floor(route.length * 0.8);
-  const poi1 = route[poiIdx1];
-  const poi2 = route[poiIdx2];
-  const poi3 = route[poiIdx3];
-
   const currentPos = (() => {
     const cur = route[idx];
     const next = route[Math.min(idx + 1, route.length - 1)];
@@ -488,28 +494,81 @@ export default function HarvestRouteSim({
     return arr;
   })();
 
+  const displayStartAddr =
+    startAddr ?? normalizeAddress(startAddress) ?? 'Điểm xuất phát';
+  const displayEndAddr = endAddr ?? normalizeAddress(endAddress) ?? 'Điểm đến';
+
   return (
-    <div className='grid grid-cols-1 gap-4 lg:grid-cols-3'>
-      <div className='lg:col-span-2'>
-        <div className='mb-2 flex items-center justify-between'>
-          <div className='text-sm'>Hàng: {cargo}</div>
-          <div className='flex gap-2'>
-            <button
-              className='rounded border px-2 py-1 text-sm'
-              onClick={() => setRunning(true)}
-              disabled={!!activeDeliveryId}
-            >
-              Bắt đầu
-            </button>
-            <button
-              className='rounded border px-2 py-1 text-sm'
-              onClick={() => setRunning(false)}
-              disabled={!!activeDeliveryId}
-            >
-              Tạm dừng
-            </button>
+    <div className='space-y-4'>
+      {/* Info Cards */}
+      <div className='grid grid-cols-2 gap-3 md:grid-cols-4'>
+        <div className='bg-primary/5 flex items-center gap-3 rounded-lg border p-3'>
+          <div className='bg-primary/10 rounded-full p-2'>
+            <IconTruck className='text-primary h-5 w-5' />
+          </div>
+          <div className='min-w-0 flex-1'>
+            <p className='text-muted-foreground text-xs'>Hàng hóa</p>
+            <p className='truncate text-sm font-medium'>{cargo}</p>
           </div>
         </div>
+
+        <div className='flex items-center gap-3 rounded-lg border bg-blue-50 p-3 dark:bg-blue-950/30'>
+          <div className='rounded-full bg-blue-100 p-2 dark:bg-blue-900/50'>
+            <IconRoute className='h-5 w-5 text-blue-600 dark:text-blue-400' />
+          </div>
+          <div className='min-w-0 flex-1'>
+            <p className='text-muted-foreground text-xs'>Quãng đường</p>
+            <p className='text-sm font-medium'>
+              {distance > 0 ? `${(distance / 1000).toFixed(1)} km` : '—'}
+            </p>
+          </div>
+        </div>
+
+        <div className='flex items-center gap-3 rounded-lg border bg-orange-50 p-3 dark:bg-orange-950/30'>
+          <div className='rounded-full bg-orange-100 p-2 dark:bg-orange-900/50'>
+            <IconClock className='h-5 w-5 text-orange-600 dark:text-orange-400' />
+          </div>
+          <div className='min-w-0 flex-1'>
+            <p className='text-muted-foreground text-xs'>Thời gian dự kiến</p>
+            <p className='text-sm font-medium'>
+              {duration > 0 ? `${Math.round(duration / 60)} phút` : '—'}
+            </p>
+          </div>
+        </div>
+
+        <div className='flex items-center gap-3 rounded-lg border bg-green-50 p-3 dark:bg-green-950/30'>
+          <div className='rounded-full bg-green-100 p-2 dark:bg-green-900/50'>
+            <IconMapPin className='h-5 w-5 text-green-600 dark:text-green-400' />
+          </div>
+          <div className='min-w-0 flex-1'>
+            <p className='text-muted-foreground text-xs'>Tiến độ</p>
+            <p className='text-sm font-medium'>{progress}%</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Progress Bar */}
+      <div className='space-y-2'>
+        <div className='bg-muted h-2 overflow-hidden rounded-full'>
+          <div
+            className='bg-primary h-full rounded-full transition-all duration-300'
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+        <div className='flex items-center justify-between text-xs'>
+          <div className='text-muted-foreground flex items-center gap-1'>
+            <span className='inline-block h-2 w-2 rounded-full bg-green-500' />
+            <span className='max-w-[150px] truncate'>{displayStartAddr}</span>
+          </div>
+          <div className='text-muted-foreground flex items-center gap-1'>
+            <span className='max-w-[150px] truncate'>{displayEndAddr}</span>
+            <span className='inline-block h-2 w-2 rounded-full bg-red-500' />
+          </div>
+        </div>
+      </div>
+
+      {/* Map */}
+      <div className='overflow-hidden rounded-xl border shadow-sm'>
         <MapContainer
           center={
             activeDeliveryId
@@ -531,7 +590,7 @@ export default function HarvestRouteSim({
                 ? 12
                 : 6
           }
-          style={{ height: 380, width: '100%' }}
+          style={{ height: 400, width: '100%' }}
           scrollWheelZoom
         >
           <FitBounds
@@ -540,12 +599,23 @@ export default function HarvestRouteSim({
             route={route.length > 0 ? route : routeOsrm}
           />
           <TileLayer url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' />
+
+          {/* Traveled route (gray) */}
           {route.length > 0 && traveled.length > 0 && (
-            <Polyline positions={traveled} color='#9ca3af' />
+            <Polyline
+              positions={traveled}
+              color='#9ca3af'
+              weight={4}
+              opacity={0.6}
+            />
           )}
+
+          {/* Remaining route (blue) */}
           {route.length > 0 && remaining.length > 0 && (
-            <Polyline positions={remaining} color='blue' />
+            <Polyline positions={remaining} color='#3b82f6' weight={4} />
           )}
+
+          {/* OSRM fallback route */}
           {route.length === 0 &&
             routeOsrm.length > 0 &&
             (() => {
@@ -578,159 +648,78 @@ export default function HarvestRouteSim({
               return (
                 <>
                   {traveledOsrm.length > 0 && (
-                    <Polyline positions={traveledOsrm} color='#9ca3af' />
+                    <Polyline
+                      positions={traveledOsrm}
+                      color='#9ca3af'
+                      weight={4}
+                      opacity={0.6}
+                    />
                   )}
                   {remainingOsrm.length > 0 && (
-                    <Polyline positions={remainingOsrm} color='blue' />
+                    <Polyline
+                      positions={remainingOsrm}
+                      color='#3b82f6'
+                      weight={4}
+                    />
                   )}
                 </>
               );
             })()}
-          {from &&
-            (startIcon ? (
-              <Marker position={[from.lat, from.lng]} icon={startIcon}>
-                <Tooltip direction='top' offset={[0, -12]}>
-                  <div className='text-xs'>
-                    <div>Xuất phát</div>
-                    <div>{startAddr ?? '-'}</div>
+
+          {/* Start marker */}
+          {(from || startPos) && (
+            <Marker
+              position={
+                from ? [from.lat, from.lng] : [startPos!.lat, startPos!.lng]
+              }
+              icon={startIcon}
+            >
+              <Tooltip direction='top' offset={[0, -12]}>
+                <div className='text-xs font-medium'>
+                  <div className='text-green-600'>Xuất phát</div>
+                  <div className='text-muted-foreground'>
+                    {displayStartAddr}
                   </div>
-                </Tooltip>
-              </Marker>
-            ) : (
-              <Marker position={[from.lat, from.lng]}>
-                <Tooltip direction='top' offset={[0, -12]}>
-                  <div className='text-xs'>
-                    <div>Xuất phát</div>
-                    <div>{startAddr ?? '-'}</div>
-                  </div>
-                </Tooltip>
-              </Marker>
-            ))}
-          {startPos &&
-            !from &&
-            (startIcon ? (
-              <Marker position={[startPos.lat, startPos.lng]} icon={startIcon}>
-                <Tooltip direction='top' offset={[0, -12]}>
-                  <div className='text-xs'>
-                    <div>Xuất phát</div>
-                    <div>{startAddr ?? '-'}</div>
-                  </div>
-                </Tooltip>
-              </Marker>
-            ) : (
-              <Marker position={[startPos.lat, startPos.lng]}>
-                <Tooltip direction='top' offset={[0, -12]}>
-                  <div className='text-xs'>
-                    <div>Xuất phát</div>
-                    <div>{startAddr ?? '-'}</div>
-                  </div>
-                </Tooltip>
-              </Marker>
-            ))}
-          {to &&
-            (endIcon ? (
-              <Marker position={[to.lat, to.lng]} icon={endIcon}>
-                <Tooltip direction='top' offset={[0, -12]}>
-                  <div className='text-xs'>
-                    <div>Điểm đến</div>
-                    <div>{endAddr ?? normalizeAddress(endAddress) ?? '-'}</div>
-                  </div>
-                </Tooltip>
-              </Marker>
-            ) : (
-              <Marker position={[to.lat, to.lng]}>
-                <Tooltip direction='top' offset={[0, -12]}>
-                  <div className='text-xs'>
-                    <div>Điểm đến</div>
-                    <div>{endAddr ?? normalizeAddress(endAddress) ?? '-'}</div>
-                  </div>
-                </Tooltip>
-              </Marker>
-            ))}
-          {endPos &&
-            !to &&
-            (endIcon ? (
-              <Marker position={[endPos.lat, endPos.lng]} icon={endIcon}>
-                <Tooltip direction='top' offset={[0, -12]}>
-                  <div className='text-xs'>
-                    <div>Điểm đến</div>
-                    <div>{endAddr ?? normalizeAddress(endAddress) ?? '-'}</div>
-                  </div>
-                </Tooltip>
-              </Marker>
-            ) : (
-              <Marker position={[endPos.lat, endPos.lng]}>
-                <Tooltip direction='top' offset={[0, -12]}>
-                  <div className='text-xs'>
-                    <div>Điểm đến</div>
-                    <div>{endAddr ?? '-'}</div>
-                  </div>
-                </Tooltip>
-              </Marker>
-            ))}
-          {viewPos &&
-            (carIcon ? (
-              <Marker position={viewPos} icon={carIcon}>
-                <Tooltip direction='top' offset={[0, -20]}>
-                  <div className='text-xs'>
-                    <div>Xe vận tải</div>
-                    <div>Sản phẩm: {productName ?? '-'}</div>
-                    <div>Hàng: {cargo}</div>
-                    <div>Tiến độ: {progress}%</div>
-                  </div>
-                </Tooltip>
-              </Marker>
-            ) : (
-              <Marker position={viewPos}>
-                <Tooltip direction='top' offset={[0, -20]}>
-                  <div className='text-xs'>
-                    <div>Xe vận tải</div>
-                    <div>Sản phẩm: {productName ?? '-'}</div>
-                    <div>Hàng: {cargo}</div>
-                    <div>Tiến độ: {progress}%</div>
-                  </div>
-                </Tooltip>
-              </Marker>
-            ))}
-          {poi1 && <CircleMarker center={poi1} radius={6} color='orange' />}
-          {poi2 && <CircleMarker center={poi2} radius={6} color='purple' />}
-          {poi3 && <CircleMarker center={poi3} radius={6} color='green' />}
-        </MapContainer>
-      </div>
-      <div className='lg:col-span-1'>
-        <div className='rounded border p-3'>
-          <div className='text-sm'>Tiến độ: {progress}%</div>
-          <div className='mt-2 text-sm'>
-            Quãng đường: {(distance / 1000).toFixed(1)} km
-          </div>
-          <div className='text-sm'>
-            Thời gian dự kiến: {Math.round(duration / 60)} phút
-          </div>
-          <div className='text-sm'>
-            Khởi hành: {startAddr ?? normalizeAddress(startAddress) ?? '-'}
-          </div>
-          <div className='text-sm'>
-            Đích đến: {endAddr ?? normalizeAddress(endAddress) ?? '-'}
-          </div>
-          {activeDeliveryId && (
-            <div className='mt-2 text-xs'>
-              <span className='mr-2'>
-                Socket: {connected ? 'connected' : 'disconnected'}
-              </span>
-              <span className='mr-2'>Room: {room || '-'}</span>
-              <span>Last: {lastEvent || '-'}</span>
-            </div>
+                </div>
+              </Tooltip>
+            </Marker>
           )}
-          <div className='mt-3 space-y-2'>
-            <div className={progress >= 0 ? 'font-medium' : ''}>Khởi hành</div>
-            <div className={progress >= 25 ? 'font-medium' : ''}>
-              Dừng nhiên liệu
-            </div>
-            <div className={progress >= 60 ? 'font-medium' : ''}>Kiểm tra</div>
-            <div className={progress >= 80 ? 'font-medium' : ''}>Nghỉ ngắn</div>
-            <div className={progress >= 100 ? 'font-medium' : ''}>Đến nơi</div>
-          </div>
-        </div>
+
+          {/* End marker */}
+          {(to || endPos) && (
+            <Marker
+              position={to ? [to.lat, to.lng] : [endPos!.lat, endPos!.lng]}
+              icon={endIcon}
+            >
+              <Tooltip direction='top' offset={[0, -12]}>
+                <div className='text-xs font-medium'>
+                  <div className='text-red-600'>Điểm đến</div>
+                  <div className='text-muted-foreground'>{displayEndAddr}</div>
+                </div>
+              </Tooltip>
+            </Marker>
+          )}
+
+          {/* Current position (vehicle) */}
+          {viewPos && (
+            <Marker position={viewPos} icon={carIcon}>
+              <Tooltip direction='top' offset={[0, -20]}>
+                <div className='space-y-1 text-xs'>
+                  <div className='font-semibold'>Xe vận tải</div>
+                  {productName && (
+                    <div className='text-muted-foreground'>
+                      Sản phẩm: {productName}
+                    </div>
+                  )}
+                  <div className='text-muted-foreground'>Hàng: {cargo}</div>
+                  <div className='text-primary font-medium'>
+                    Tiến độ: {progress}%
+                  </div>
+                </div>
+              </Tooltip>
+            </Marker>
+          )}
+        </MapContainer>
       </div>
     </div>
   );

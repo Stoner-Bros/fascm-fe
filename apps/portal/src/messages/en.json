@@ -338,6 +338,59 @@
       "keep": "No, keep it",
       "confirm": "Yes, cancel batch"
     },
+    "new": {
+      "title": "Create New Harvest Batch",
+      "subtitle": "Select products and enter harvest information",
+      "steps": {
+        "products": "Select Products",
+        "schedule": "Harvest Schedule",
+        "review": "Review"
+      },
+      "products": {
+        "title": "Select Products",
+        "description": "Choose the products you want to harvest",
+        "selected": "Selected",
+        "empty": "No products available",
+        "noDescription": "No description",
+        "enterDetails": "Enter Details",
+        "enterDetailsDescription": "Adjust quantity and price for each product",
+        "quantity": "Quantity",
+        "unitPrice": "Unit Price",
+        "total": "Total"
+      },
+      "schedule": {
+        "title": "Harvest Schedule",
+        "description": "Enter harvest date and location",
+        "harvestDate": "Harvest Date",
+        "harvestAddress": "Harvest Address",
+        "selectOnMap": "Select on Map",
+        "notes": "Notes",
+        "notesPlaceholder": "Enter additional notes..."
+      },
+      "review": {
+        "title": "Review Information",
+        "description": "Review the information before creating the harvest batch",
+        "selectedProducts": "Selected Products",
+        "harvestInfo": "Harvest Information",
+        "totalAmount": "Total Amount",
+        "totalQuantity": "Total Quantity"
+      },
+      "buttons": {
+        "cancel": "Cancel",
+        "previous": "Previous",
+        "next": "Next",
+        "closeMap": "Close Map",
+        "submit": "Create Harvest Batch",
+        "submitting": "Creating..."
+      },
+      "toast": {
+        "errorTitle": "Error",
+        "errorLoadProducts": "Failed to load products",
+        "errorCreateDescription": "Failed to create harvest batch. Please try again.",
+        "successTitle": "Success!",
+        "successDescription": "Harvest batch created successfully."
+      }
+    },
     "phaseStatuses": {
       "preparing": "Preparing",
       "delivering": "Delivering",
@@ -360,16 +413,25 @@
       },
       "tabs": {
         "overview": "Overview",
-        "phases": "Phases ({count})",
+        "phases": "Phases",
         "products": "Products"
+      },
+      "statusSteps": {
+        "pending": "Pending",
+        "approved": "Approved",
+        "processing": "Processing",
+        "completed": "Completed"
       },
       "overview": {
         "title": "Harvest Information",
         "description": "Details of harvest time and location",
         "harvestDate": "Harvest Date",
+        "harvestDetails": "Harvest Details",
         "location": "Location",
         "harvestAddress": "Harvest Address",
-        "notes": "Notes"
+        "notes": "Notes",
+        "deliveryInformation": "Delivery Information",
+        "notSpecified": "Not Specified"
       },
       "phases": {
         "phaseLabel": "Phase {number}",

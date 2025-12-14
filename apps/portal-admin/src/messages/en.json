@@ -527,6 +527,7 @@
         "edit": "Edit",
         "cancelOrder": "Cancel Order",
         "reject": "Reject",
+        "confirm": "Confirm",
         "viewRejectionReason": "View Rejection Reason"
       },
       "statuses": {
@@ -710,13 +711,15 @@
         "actions": "Actions",
         "loading": "Loading...",
         "empty": "No data",
-        "noProducts": "No products"
+        "noProducts": "No products",
+        "updating": "Updating..."
       },
       "actions": {
         "viewDetails": "View Details",
         "edit": "Edit",
         "cancelSchedule": "Cancel Schedule",
         "reject": "Reject",
+        "confirm": "Confirm",
         "viewRejectionReason": "View Rejection Reason"
       },
       "statuses": {
@@ -733,14 +736,27 @@
         "cancelDescription": "Are you sure you want to cancel harvest schedule {id}? This action cannot be undone.",
         "cancelKeep": "Keep",
         "cancelConfirm": "Confirm Cancel",
+        "rejectTitle": "Confirm Reject",
+        "rejectDescription": "Are you sure you want to reject harvest schedule {id}? This action cannot be undone.",
+        "rejectConfirm": "Confirm Reject",
+        "reasonLabel": "Reason",
+        "reasonPlaceholder": "Please enter the reason for cancellation...",
+        "rejectReasonPlaceholder": "Please enter the reason for rejection...",
         "rejectionReasonDefault": "No rejection reason",
         "rejectionReasonTitle": "Rejection Reason"
       },
       "toast": {
         "errorTitle": "Error",
         "errorDescription": "Could not load harvest schedules",
+        "errorApproveDescription": "Could not approve harvest schedule",
+        "errorCancelDescription": "Could not cancel harvest schedule",
+        "errorRejectDescription": "Could not reject harvest schedule",
+        "approveTitle": "Approved",
+        "approveDescription": "Harvest schedule has been approved",
         "cancelTitle": "Canceled",
-        "cancelDescription": "Canceled harvest schedule {id}"
+        "cancelDescription": "Canceled harvest schedule {id}",
+        "rejectTitle": "Rejected",
+        "rejectDescription": "Rejected harvest schedule {id}"
       }
     },
     "detail": {

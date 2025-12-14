@@ -30,15 +30,16 @@ import {
 } from '@/services/harvest-schedule.service';
 import type { HarvestSchedule } from '@/types/harvest-schedule';
 import {
-  IconAlertCircle,
   IconArrowLeft,
+  IconBuilding,
   IconCalendar,
   IconCheck,
   IconClock,
   IconEdit,
-  IconInfoCircle,
+  IconFileInvoice,
   IconMapPin,
   IconPackage,
+  IconTruck,
   IconX
 } from '@tabler/icons-react';
 import Link from 'next/link';
@@ -52,121 +53,104 @@ const HarvestRouteSim = dynamic(
 import { fetchDeliveriesByHarvestSchedule } from '@/services/delivery.service';
 import { fetchHarvestPhasesBySchedule } from '@/services/harvest-phase.service';
 import type { HarvestPhase } from '@/types/harvest-phase';
-import dynamic from 'next/dynamic';
 import { useTranslations } from 'next-intl';
+import dynamic from 'next/dynamic';
+import Image from 'next/image';
 
 type DetailRow = {
   id: string;
   productName: string;
+  productImage?: string;
   quantity: number;
   unit: string;
   unitPrice: number;
   totalPrice: number;
 };
 
-type StatusConfig = {
-  label: string;
-  icon: React.ReactNode;
-  variant: 'default' | 'secondary' | 'destructive' | 'outline';
-  bgColor: string;
-  textColor: string;
-};
+type HarvestScheduleStatus =
+  | 'pending'
+  | 'rejected'
+  | 'approved'
+  | 'processing'
+  | 'completed'
+  | 'canceled';
 
-const STATUS_MAP: Record<string, StatusConfig> = {
-  pending: {
-    label: 'Chờ duyệt đơn',
-    icon: <IconClock className='h-4 w-4' />,
-    variant: 'outline',
-    bgColor: 'bg-yellow-50',
-    textColor: 'text-yellow-700'
-  },
-  rejected: {
-    label: 'Đã từ chối',
-    icon: <IconX className='h-4 w-4' />,
-    variant: 'destructive',
-    bgColor: 'bg-red-50',
-    textColor: 'text-red-700'
-  },
-  approved: {
-    label: 'Đã duyệt đơn',
-    icon: <IconCheck className='h-4 w-4' />,
-    variant: 'default',
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-700'
-  },
-  processing: {
-    label: 'Đang xử lý',
-    icon: <IconPackage className='h-4 w-4' />,
-    variant: 'secondary',
-    bgColor: 'bg-indigo-50',
-    textColor: 'text-indigo-700'
-  },
-  completed: {
-    label: 'Hoàn thành',
-    icon: <IconCheck className='h-4 w-4' />,
-    variant: 'default',
-    bgColor: 'bg-green-50',
-    textColor: 'text-green-700'
-  },
-  canceled: {
-    label: 'Đã hủy',
-    icon: <IconX className='h-4 w-4' />,
-    variant: 'destructive',
-    bgColor: 'bg-red-50',
-    textColor: 'text-red-700'
+type HarvestPhaseStatus =
+  | 'preparing'
+  | 'delivering'
+  | 'delivered'
+  | 'completed'
+  | 'canceled';
+
+const getStatusIcon = (status: HarvestScheduleStatus) => {
+  switch (status) {
+    case 'pending':
+      return <IconClock className='h-4 w-4' />;
+    case 'approved':
+      return <IconCheck className='h-4 w-4' />;
+    case 'processing':
+      return <IconTruck className='h-4 w-4' />;
+    case 'completed':
+      return <IconCheck className='h-4 w-4' />;
+    case 'rejected':
+      return <IconX className='h-4 w-4' />;
+    case 'canceled':
+      return <IconX className='h-4 w-4' />;
+    default:
+      return <IconPackage className='h-4 w-4' />;
   }
 };
 
-const PHASE_STATUS_MAP: Record<string, StatusConfig> = {
-  preparing: {
-    label: 'Đang chuẩn bị',
-    icon: <IconClock className='h-4 w-4' />,
-    variant: 'outline',
-    bgColor: 'bg-yellow-50',
-    textColor: 'text-yellow-700'
-  },
-  delivering: {
-    label: 'Đang giao hàng',
-    icon: <IconPackage className='h-4 w-4' />,
-    variant: 'secondary',
-    bgColor: 'bg-blue-50',
-    textColor: 'text-blue-700'
-  },
-  delivered: {
-    label: 'Đã giao hàng',
-    icon: <IconCheck className='h-4 w-4' />,
-    variant: 'default',
-    bgColor: 'bg-indigo-50',
-    textColor: 'text-indigo-700'
-  },
-  completed: {
-    label: 'Hoàn thành',
-    icon: <IconCheck className='h-4 w-4' />,
-    variant: 'default',
-    bgColor: 'bg-green-50',
-    textColor: 'text-green-700'
-  },
-  canceled: {
-    label: 'Đã hủy',
-    icon: <IconX className='h-4 w-4' />,
-    variant: 'destructive',
-    bgColor: 'bg-red-50',
-    textColor: 'text-red-700'
+const getPhaseStatusIcon = (status?: HarvestPhaseStatus | null) => {
+  if (!status) return <IconClock className='h-4 w-4' />;
+  switch (status) {
+    case 'preparing':
+      return <IconPackage className='h-4 w-4' />;
+    case 'delivering':
+      return <IconTruck className='h-4 w-4' />;
+    case 'delivered':
+      return <IconCheck className='h-4 w-4' />;
+    case 'completed':
+      return <IconCheck className='h-4 w-4' />;
+    case 'canceled':
+      return <IconX className='h-4 w-4' />;
+    default:
+      return <IconClock className='h-4 w-4' />;
   }
 };
 
-const getStatusConfig = (status?: string | null): StatusConfig => {
-  const normalizedStatus = status?.toLowerCase() || 'pending';
-  return STATUS_MAP[normalizedStatus] || STATUS_MAP.pending;
-};
-
-const getPhaseStatusConfig = (status?: string | null): StatusConfig => {
-  const normalizedStatus = status?.toLowerCase() || 'preparing';
-  return PHASE_STATUS_MAP[normalizedStatus] || PHASE_STATUS_MAP.preparing;
+const getPhaseStatusVariant = (
+  status?: HarvestPhaseStatus | null
+): 'outline' | 'default' | 'secondary' | 'destructive' => {
+  if (!status) return 'outline';
+  switch (status) {
+    case 'preparing':
+      return 'secondary';
+    case 'delivering':
+      return 'default';
+    case 'delivered':
+      return 'default';
+    case 'completed':
+      return 'default';
+    case 'canceled':
+      return 'destructive';
+    default:
+      return 'outline';
+  }
 };
 
 const formatCurrency = (value: number) =>
   value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+
+const formatDate = (date: string | Date) => {
+  return new Date(date).toLocaleString('vi-VN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
 
 export default function HarvestBatchDetailPage() {
   const router = useRouter();
@@ -179,8 +163,45 @@ export default function HarvestBatchDetailPage() {
   const [details, setDetails] = useState<DetailRow[]>([]);
   const [phases, setPhases] = useState<HarvestPhase[]>([]);
   const [loading, setLoading] = useState(false);
+  const [phasesLoading, setPhasesLoading] = useState(true);
   const [activeDeliveryId, setActiveDeliveryId] = useState<string>('');
-  const [activeTab, setActiveTab] = useState('overview');
+
+  const getStatusLabel = (status: HarvestScheduleStatus) => {
+    switch (status) {
+      case 'pending':
+        return t('statuses.pending');
+      case 'rejected':
+        return t('statuses.rejected');
+      case 'approved':
+        return t('statuses.approved');
+      case 'processing':
+        return t('statuses.inProgress');
+      case 'completed':
+        return t('statuses.completed');
+      case 'canceled':
+        return t('statuses.cancelled');
+      default:
+        return status || t('statuses.unknown');
+    }
+  };
+
+  const getPhaseStatusLabel = (status?: HarvestPhaseStatus | null) => {
+    if (!status) return t('phaseStatuses.preparing');
+    switch (status) {
+      case 'preparing':
+        return t('phaseStatuses.preparing');
+      case 'delivering':
+        return t('phaseStatuses.delivering');
+      case 'delivered':
+        return t('phaseStatuses.delivered');
+      case 'completed':
+        return t('phaseStatuses.completed');
+      case 'canceled':
+        return t('phaseStatuses.canceled');
+      default:
+        return status || t('statuses.unknown');
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -200,6 +221,7 @@ export default function HarvestBatchDetailPage() {
           return {
             id: detail.id,
             productName: String(productName),
+            productImage: detail.product?.image as string | undefined,
             quantity,
             unit: String(detail.unit ?? 'kg'),
             unitPrice,
@@ -228,10 +250,14 @@ export default function HarvestBatchDetailPage() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scheduleId]); // không để toast trong deps để tránh loop
+  }, [scheduleId]);
+
   useEffect(() => {
     const sid = String(schedule?.id ?? '').trim();
     if (!sid) return;
+
+    setPhasesLoading(true);
+
     fetchDeliveriesByHarvestSchedule({
       harvestScheduleId: sid,
       page: 1,
@@ -283,13 +309,14 @@ export default function HarvestBatchDetailPage() {
       })
       .catch(() => {
         setPhases([]);
+      })
+      .finally(() => {
+        setPhasesLoading(false);
       });
   }, [schedule?.id]);
 
-  // Realtime: keep delivery events but refresh harvest schedule status when any event arrives
   const handleCancelBatch = () => {
     if (scheduleId) {
-      // call API để hủy batch
       updateHarvestScheduleStatus(scheduleId, 'canceled')
         .then(() => {
           if (schedule) {
@@ -312,24 +339,6 @@ export default function HarvestBatchDetailPage() {
     }
   };
 
-  const statusConfig = getStatusConfig(schedule?.status);
-  const statusNormalized = String(schedule?.status ?? 'pending').toLowerCase();
-  const statusKeyMap: Record<string, string> = {
-    pending: 'pending',
-    rejected: 'rejected',
-    approved: 'approved',
-    processing: 'inProgress',
-    completed: 'completed',
-    canceled: 'cancelled'
-  };
-  const statusLabel = t(
-    `statuses.${statusKeyMap[statusNormalized] ?? 'unknown'}`
-  );
-  const statusConfigI18n = { ...statusConfig, label: statusLabel };
-  const showMap = phases.some((p) =>
-    ['delivering', 'delivered'].includes(String(p.status ?? '').toLowerCase())
-  );
-
   const totalQuantity = useMemo(
     () => details.reduce((sum, d) => sum + d.quantity, 0),
     [details]
@@ -339,35 +348,53 @@ export default function HarvestBatchDetailPage() {
     [details]
   );
 
-  const harvestDate = schedule?.harvestDate
-    ? new Date(schedule.harvestDate as unknown as string).toLocaleString(
-        'vi-VN',
-        {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit'
-        }
-      )
-    : '-';
+  // Status stepper steps
+  const getStatusSteps = () => {
+    const steps = [
+      {
+        key: 'pending',
+        label: t('detail.statusSteps.pending'),
+        icon: IconClock
+      },
+      {
+        key: 'approved',
+        label: t('detail.statusSteps.approved'),
+        icon: IconCheck
+      },
+      {
+        key: 'processing',
+        label: t('detail.statusSteps.processing'),
+        icon: IconTruck
+      },
+      {
+        key: 'completed',
+        label: t('detail.statusSteps.completed'),
+        icon: IconCheck
+      }
+    ];
 
-  const createdDate = schedule?.createdAt
-    ? new Date(schedule.createdAt as unknown as string).toLocaleString('vi-VN')
-    : '-';
+    const currentStatus = (schedule?.status?.toLowerCase() ||
+      'pending') as HarvestScheduleStatus;
+    let currentStepIndex = 0;
 
-  const updatedDate = schedule?.updatedAt
-    ? new Date(schedule.updatedAt as unknown as string).toLocaleString('vi-VN')
-    : '-';
+    if (currentStatus === 'pending') currentStepIndex = 0;
+    else if (currentStatus === 'approved') currentStepIndex = 1;
+    else if (currentStatus === 'processing') currentStepIndex = 2;
+    else if (currentStatus === 'completed') currentStepIndex = 3;
+    else if (currentStatus === 'rejected' || currentStatus === 'canceled')
+      currentStepIndex = -1; // Special case
+
+    return { steps, currentStepIndex };
+  };
+
+  const { steps, currentStepIndex } = getStatusSteps();
 
   if (loading) {
     return (
       <PageContainer>
-        <div className='flex h-[50vh] w-full items-center justify-center'>
-          <div className='flex flex-col items-center gap-2'>
-            <div className='border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
-            <p className='text-muted-foreground'>{t('detail.loading')}</p>
-          </div>
+        <div className='flex flex-1 flex-col items-center justify-center py-12'>
+          <div className='border-primary mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
+          <p className='text-muted-foreground'>{t('detail.loading')}</p>
         </div>
       </PageContainer>
     );
@@ -376,43 +403,50 @@ export default function HarvestBatchDetailPage() {
   if (!schedule) {
     return (
       <PageContainer>
-        <div className='flex h-[50vh] w-full items-center justify-center'>
-          <div className='text-center'>
-            <IconAlertCircle className='text-muted-foreground mx-auto mb-4 h-12 w-12' />
-            <h3 className='mb-2 text-lg font-semibold'>
-              {t('detail.notFound.title')}
-            </h3>
-            <p className='text-muted-foreground mb-4'>
-              {t('detail.notFound.description')}
-            </p>
-            <Button onClick={() => router.push('/supplier/harvest-batches')}>
-              {t('detail.notFound.backButton')}
-            </Button>
-          </div>
+        <div className='flex flex-1 flex-col items-center justify-center py-12'>
+          <IconPackage className='text-muted-foreground mb-4 h-16 w-16' />
+          <p className='text-muted-foreground'>{t('detail.notFound.title')}</p>
+          <Button
+            variant='outline'
+            onClick={() => router.push('/supplier/harvest-batches')}
+            className='mt-4'
+          >
+            <IconArrowLeft className='mr-2 h-4 w-4' />
+            {t('detail.notFound.backButton')}
+          </Button>
         </div>
       </PageContainer>
     );
   }
 
+  const currentStatus = (schedule.status?.toLowerCase() ||
+    'pending') as HarvestScheduleStatus;
+
   return (
     <PageContainer>
-      <div className='w-full space-y-6'>
+      <div className='w-full flex-1 space-y-6'>
         {/* Header */}
         <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <Button variant='ghost' size='icon' onClick={() => router.back()}>
-              <IconArrowLeft className='h-5 w-5' />
-            </Button>
-            <div>
-              <h2 className='text-3xl font-bold tracking-tight'>
-                {t('detail.title')}
-              </h2>
-              <p className='text-muted-foreground'>
-                {t('detail.id')}: {scheduleId}
-              </p>
+          <div>
+            <div className='flex items-center gap-4'>
+              <Button
+                variant='ghost'
+                size='icon'
+                onClick={() => router.push('/supplier/harvest-batches')}
+              >
+                <IconArrowLeft className='h-5 w-5' />
+              </Button>
+              <div>
+                <h2 className='text-3xl font-bold tracking-tight'>
+                  {t('detail.title')}
+                </h2>
+                <p className='text-muted-foreground'>
+                  {t('detail.id')}: {scheduleId}
+                </p>
+              </div>
             </div>
           </div>
-          <div className='flex gap-2'>
+          <div className='flex items-center gap-2'>
             {schedule.status?.toLowerCase() === 'pending' && (
               <>
                 <Link href={`/supplier/harvest-batches/${scheduleId}/edit`}>
@@ -448,502 +482,573 @@ export default function HarvestBatchDetailPage() {
           </div>
         </div>
 
-        <Separator />
-
-        {/* Status Banner */}
-        <Card className={statusConfigI18n.bgColor}>
+        {/* Status Stepper */}
+        <Card>
           <CardContent>
-            <div className='flex items-center justify-between'>
-              <div className='flex items-center gap-3'>
-                <div
-                  className={`rounded-full p-2 ${statusConfigI18n.textColor} bg-white`}
+            {currentStatus === 'rejected' || currentStatus === 'canceled' ? (
+              <div className='flex items-center justify-center gap-3 p-4'>
+                <Badge
+                  variant='destructive'
+                  className='flex items-center gap-2 px-4 py-2 text-base'
                 >
-                  {statusConfigI18n.icon}
-                </div>
-                <div>
-                  <h3
-                    className={`text-lg font-semibold ${statusConfigI18n.textColor}`}
-                  >
-                    {statusConfigI18n.label}
-                  </h3>
-                  <p className='text-sm text-gray-600'>
-                    {t('detail.statusBanner.lastUpdated', {
-                      date: updatedDate
-                    })}
+                  {getStatusIcon(currentStatus)}
+                  {getStatusLabel(currentStatus)}
+                </Badge>
+                {schedule.reason && (
+                  <p className='text-muted-foreground text-sm'>
+                    - {schedule.reason}
                   </p>
-                </div>
+                )}
               </div>
-              <Badge variant={statusConfigI18n.variant} className='px-4 py-2'>
-                {statusConfigI18n.label}
-              </Badge>
-            </div>
-            {schedule.status?.toUpperCase() === 'REJECTED' &&
-              schedule.reason && (
-                <div className='mt-4 flex items-start gap-2 rounded-md border border-red-200 bg-white p-3'>
-                  <IconInfoCircle className='mt-0.5 h-5 w-5 flex-shrink-0 text-red-600' />
-                  <div>
-                    <p className='text-sm font-medium text-red-900'>
-                      {t('reason.title')}
-                    </p>
-                    <p className='text-sm text-red-700'>{schedule.reason}</p>
-                  </div>
-                </div>
-              )}
+            ) : (
+              <div className='flex items-center justify-between'>
+                {steps.map((step, index) => {
+                  const StepIcon = step.icon;
+                  const isCompleted = index < currentStepIndex;
+                  const isCurrent = index === currentStepIndex;
+                  const isLast = index === steps.length - 1;
+
+                  return (
+                    <div key={step.key} className='flex flex-1 items-center'>
+                      <div className='flex flex-col items-center'>
+                        <div
+                          className={`flex h-12 w-12 items-center justify-center rounded-full border-2 transition-colors ${
+                            isCompleted || isCurrent
+                              ? 'border-primary bg-primary text-white'
+                              : 'border-muted-foreground/30 bg-muted text-muted-foreground'
+                          }`}
+                        >
+                          <StepIcon className='h-6 w-6' />
+                        </div>
+                        <p
+                          className={`mt-2 text-sm font-medium ${
+                            isCompleted || isCurrent
+                              ? 'text-foreground'
+                              : 'text-muted-foreground'
+                          }`}
+                        >
+                          {step.label}
+                        </p>
+                      </div>
+                      {!isLast && (
+                        <div
+                          className={`mx-2 h-[2px] flex-1 transition-colors ${
+                            isCompleted
+                              ? 'bg-primary'
+                              : 'bg-muted-foreground/30'
+                          }`}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        <div className='grid gap-6 lg:grid-cols-3'>
-          {/* Main Content */}
-          <div className='space-y-6 lg:col-span-2'>
-            <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList className='grid w-full grid-cols-3'>
-                <TabsTrigger value='overview'>
-                  {t('detail.tabs.overview')}
-                </TabsTrigger>
-                <TabsTrigger value='phases'>
-                  {t('detail.tabs.phases', { count: phases.length })}
-                </TabsTrigger>
-                <TabsTrigger value='products'>
-                  {t('detail.tabs.products')}
-                </TabsTrigger>
-              </TabsList>
+        {/* Main Tabs */}
+        <Tabs defaultValue='overview' className='w-full'>
+          <TabsList className='gap-1'>
+            <TabsTrigger
+              value='overview'
+              className='hover:border-primary flex cursor-pointer items-center gap-2 hover:bg-transparent'
+            >
+              <IconPackage className='h-4 w-4' />
+              {t('detail.tabs.overview')}
+            </TabsTrigger>
+            <TabsTrigger
+              value='phases'
+              className='hover:border-primary flex cursor-pointer items-center gap-2 hover:bg-transparent'
+            >
+              <IconTruck className='h-4 w-4' />
+              {t('detail.tabs.phases')}
+              {phases.length > 0 && (
+                <Badge variant='secondary' className='ml-1'>
+                  {phases.length}
+                </Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
 
-              <TabsContent value='overview' className='space-y-6'>
-                {/* Harvest Schedule Info */}
+          {/* Overview Tab */}
+          <TabsContent value='overview' className='mt-6'>
+            <div className='grid grid-cols-1 gap-6'>
+              {/* Information Card */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className='flex items-center gap-2'>
+                    <IconPackage className='h-5 w-5' />
+                    {t('detail.overview.title')}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-6'>
+                  {/* Harvest Schedule Information Section */}
+                  <div>
+                    <h3 className='mb-3 flex items-center gap-2 text-sm font-semibold'>
+                      <IconCalendar className='h-4 w-4' />
+                      {t('detail.overview.harvestDetails')}
+                    </h3>
+                    <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+                      <div>
+                        <p className='text-muted-foreground mb-1 text-xs'>
+                          {t('detail.id')}
+                        </p>
+                        <p className='font-medium'>{scheduleId}</p>
+                      </div>
+                      <div>
+                        <p className='text-muted-foreground mb-1 text-xs'>
+                          {t('detail.products.totalQuantity')}
+                        </p>
+                        <p className='font-medium'>{totalQuantity} kg</p>
+                      </div>
+                      <div>
+                        <p className='text-muted-foreground mb-1 text-xs'>
+                          {t('detail.overview.harvestDate')}
+                        </p>
+                        <p className='text-sm font-medium'>
+                          {schedule.harvestDate
+                            ? formatDate(
+                                schedule.harvestDate as unknown as string
+                              )
+                            : '-'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className='text-muted-foreground mb-1 text-xs'>
+                          {t('detail.extra.createdAt')}
+                        </p>
+                        <p className='text-sm font-medium'>
+                          {schedule.createdAt
+                            ? formatDate(
+                                schedule.createdAt as unknown as string
+                              )
+                            : '-'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Supplier Information Section */}
+                  <div>
+                    <h3 className='mb-3 flex items-center gap-2 text-sm font-semibold'>
+                      <IconBuilding className='h-4 w-4' />
+                      {t('detail.extra.supplier')}
+                    </h3>
+                    <div className='grid grid-cols-2 gap-4 md:grid-cols-3'>
+                      <div>
+                        <p className='text-muted-foreground mb-1 text-xs'>
+                          {t('detail.overview.location')}
+                        </p>
+                        <p className='font-medium'>
+                          {schedule.supplier?.gardenName || '-'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className='text-muted-foreground mb-1 text-xs'>
+                          {t('detail.overview.harvestAddress')}
+                        </p>
+                        <p className='font-medium'>{schedule.address || '-'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  {/* Delivery Information Section */}
+                  <div>
+                    <h3 className='mb-3 flex items-center gap-2 text-sm font-semibold'>
+                      <IconTruck className='h-4 w-4' />
+                      {t('detail.overview.deliveryInformation')}
+                    </h3>
+                    <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+                      <div>
+                        <p className='text-muted-foreground mb-1 flex items-center gap-1 text-xs'>
+                          <IconCalendar className='h-3 w-3' />
+                          {t('detail.overview.harvestDate')}
+                        </p>
+                        <p className='font-medium'>
+                          {schedule.harvestDate
+                            ? formatDate(
+                                schedule.harvestDate as unknown as string
+                              )
+                            : t('detail.overview.notSpecified')}
+                        </p>
+                      </div>
+                      <div>
+                        <p className='text-muted-foreground mb-1 flex items-center gap-1 text-xs'>
+                          <IconMapPin className='h-3 w-3' />
+                          {t('detail.overview.harvestAddress')}
+                        </p>
+                        <p className='text-sm font-medium'>
+                          {schedule.address ||
+                            t('detail.overview.notSpecified')}
+                        </p>
+                      </div>
+                    </div>
+                    {schedule.description && (
+                      <div className='mt-3'>
+                        <p className='text-muted-foreground mb-1 text-xs'>
+                          {t('detail.overview.notes')}
+                        </p>
+                        <p className='bg-muted/50 rounded-md border p-3 text-sm'>
+                          {schedule.description}
+                        </p>
+                      </div>
+                    )}
+                    {schedule.reason && currentStatus === 'rejected' && (
+                      <div className='mt-3'>
+                        <p className='text-destructive mb-1 text-xs font-semibold'>
+                          {t('reason.title')}
+                        </p>
+                        <p className='border-destructive bg-destructive/10 rounded-md border p-3 text-sm'>
+                          {schedule.reason}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Product Details */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('detail.products.title')}</CardTitle>
+                  <CardDescription>
+                    {details.length} {t('detail.products.itemsInHarvest')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className='space-y-4'>
+                    {details.map((product) => (
+                      <div
+                        key={product.id}
+                        className='flex items-center gap-4 rounded-lg border p-4'
+                      >
+                        <div className='relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border bg-gray-100'>
+                          {product.productImage ? (
+                            <Image
+                              src={product.productImage}
+                              alt={product.productName}
+                              fill
+                              className='object-cover'
+                            />
+                          ) : (
+                            <div className='flex h-full w-full items-center justify-center'>
+                              <IconPackage className='text-muted-foreground h-8 w-8' />
+                            </div>
+                          )}
+                        </div>
+                        <div className='flex-1'>
+                          <h4 className='font-semibold'>
+                            {product.productName}
+                          </h4>
+                          <div className='mt-2 flex items-center gap-4 text-sm'>
+                            <span>
+                              {t('detail.products.table.quantity')}:{' '}
+                              <strong>{product.quantity}</strong> {product.unit}
+                            </span>
+                            <span>
+                              {t('detail.products.table.unitPrice')}:{' '}
+                              <strong>
+                                {formatCurrency(product.unitPrice)}
+                              </strong>
+                            </span>
+                          </div>
+                        </div>
+                        <div className='text-right'>
+                          <p className='text-muted-foreground text-sm'>
+                            {t('detail.products.amount')}
+                          </p>
+                          <p className='text-lg font-bold'>
+                            {formatCurrency(product.totalPrice)}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Separator className='my-4' />
+
+                  <div className='flex justify-end'>
+                    <div className='space-y-2'>
+                      <div className='flex justify-between gap-8'>
+                        <span className='text-muted-foreground'>
+                          {t('detail.products.subtotal')}:
+                        </span>
+                        <span className='font-medium'>
+                          {formatCurrency(totalPrice)}
+                        </span>
+                      </div>
+                      <div className='flex justify-between gap-8'>
+                        <span className='text-lg font-bold'>
+                          {t('detail.products.total')}:
+                        </span>
+                        <span className='text-lg font-bold'>
+                          {formatCurrency(totalPrice)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Phases Tab */}
+          <TabsContent value='phases' className='mt-6'>
+            <div className='space-y-6'>
+              {phasesLoading ? (
                 <Card>
-                  <CardHeader>
-                    <CardTitle className='flex items-center gap-2'>
-                      <IconCalendar className='h-5 w-5' />
-                      {t('detail.overview.title')}
-                    </CardTitle>
-                    <CardDescription>
-                      {t('detail.overview.description')}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className='space-y-4'>
-                    <div className='grid gap-4'>
-                      <div className='flex items-start gap-3 rounded-lg border p-3'>
-                        <IconCalendar className='text-primary mt-0.5 h-5 w-5' />
-                        <div className='flex-1'>
-                          <p className='text-muted-foreground text-sm'>
-                            {t('detail.overview.harvestDate')}
-                          </p>
-                          <p className='font-medium'>{harvestDate}</p>
-                        </div>
-                      </div>
-                      <div className='flex items-start gap-3 rounded-lg border p-3'>
-                        <IconMapPin className='text-primary mt-0.5 h-5 w-5' />
-                        <div className='flex-1'>
-                          <p className='text-muted-foreground text-sm'>
-                            {t('detail.overview.location')}
-                          </p>
-                          <p className='font-medium'>
-                            {schedule?.supplier?.gardenName || '-'}
-                          </p>
-                        </div>
-                      </div>
-                      <div className='flex items-start gap-3 rounded-lg border p-3'>
-                        <IconMapPin className='text-primary mt-0.5 h-5 w-5' />
-                        <div className='flex-1'>
-                          <p className='text-muted-foreground text-sm'>
-                            {t('detail.overview.harvestAddress')}
-                          </p>
-                          <p className='font-medium'>
-                            {schedule?.address || '—'}
-                          </p>
-                        </div>
-                      </div>
+                  <CardContent className='py-12'>
+                    <div className='flex flex-col items-center justify-center'>
+                      <div className='border-primary mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
+                      <p className='text-muted-foreground'>
+                        {t('detail.phases.loading')}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>
-
-                {schedule.description && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>{t('detail.overview.notes')}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p className='text-sm text-gray-700'>
-                        {schedule.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-
-              <TabsContent value='phases' className='space-y-6'>
-                {phases.length > 0 ? (
-                  <div className='space-y-3'>
-                    {phases.map((phase) => {
-                      const phaseConfigBase = getPhaseStatusConfig(
-                        phase.status
-                      );
-                      const phaseStatusNormalized = String(
-                        phase.status ?? ''
-                      ).toLowerCase();
-                      const phaseKeyMap: Record<string, string> = {
-                        preparing: 'preparing',
-                        delivering: 'delivering',
-                        delivered: 'delivered',
-                        completed: 'completed',
-                        canceled: 'canceled'
-                      };
-                      const phaseLabel = t(
-                        `phaseStatuses.${phaseKeyMap[phaseStatusNormalized] ?? 'preparing'}`
-                      );
-                      const phaseConfig = {
-                        ...phaseConfigBase,
-                        label: phaseLabel
-                      };
-                      const totalPhaseQuantity =
-                        phase.harvestInvoiceDetails?.reduce(
-                          (sum, detail) => sum + (detail.quantity ?? 0),
-                          0
-                        ) ?? 0;
-                      const totalPhaseAmount =
-                        phase.harvestInvoice?.totalPayment ?? 0;
-
-                      return (
-                        <Card key={phase.id}>
-                          <CardContent className='pt-6'>
-                            <div className='flex items-start justify-between gap-3'>
-                              <div className='flex-1'>
-                                <div className='mb-2 flex items-center gap-2'>
-                                  <h4 className='text-lg font-semibold'>
-                                    {t('detail.phases.phaseLabel', {
-                                      number: phase.phaseNumber ?? '?'
-                                    })}
-                                  </h4>
-                                  <Badge
-                                    variant={phaseConfig.variant}
-                                    className='text-xs'
-                                  >
-                                    <span className='mr-1'>
-                                      {phaseConfig.icon}
-                                    </span>
-                                    {phaseConfig.label}
-                                  </Badge>
-                                </div>
-                                {['delivering', 'delivered'].includes(
-                                  String(phase.status ?? '').toLowerCase()
-                                ) && (
-                                  <Card>
-                                    <CardHeader>
-                                      <CardTitle className='flex items-center gap-2'>
-                                        <IconMapPin className='h-5 w-5' />
-                                        {t('detail.phases.trackingTitle')}
-                                      </CardTitle>
-                                    </CardHeader>
-                                    <CardContent>
-                                      <HarvestRouteSim
-                                        cargo={t('detail.phases.cargo', {
-                                          quantity: totalPhaseQuantity
-                                        })}
-                                        startAddress={t(
-                                          'detail.phases.startAddressDefault'
-                                        )}
-                                        endAddress={String(
-                                          schedule.address ?? ''
-                                        )}
-                                        harvestScheduleId={String(
-                                          schedule.id ?? ''
-                                        )}
-                                        deliveryId={activeDeliveryId}
-                                        productName={(
-                                          phase.harvestInvoiceDetails || []
-                                        )
-                                          .map((d) => d.product?.name)
-                                          .filter(Boolean)
-                                          .join(', ')}
-                                      />
-                                    </CardContent>
-                                  </Card>
-                                )}
-                                {phase.description && (
-                                  <p className='text-muted-foreground mb-3 text-sm'>
-                                    {phase.description}
-                                  </p>
-                                )}
-
-                                <div className='mb-3 grid grid-cols-2 gap-3'>
-                                  <div className='rounded-lg border bg-gray-50 p-3'>
-                                    <p className='text-muted-foreground text-xs'>
-                                      {t('detail.phases.quantity')}
-                                    </p>
-                                    <p className='text-lg font-semibold'>
-                                      {totalPhaseQuantity} kg
-                                    </p>
-                                  </div>
-                                  <div className='rounded-lg border bg-gray-50 p-3'>
-                                    <p className='text-muted-foreground text-xs'>
-                                      {t('detail.phases.amount')}
-                                    </p>
-                                    <p className='text-lg font-semibold'>
-                                      {formatCurrency(totalPhaseAmount)}
-                                    </p>
-                                  </div>
-                                </div>
-
-                                {phase.harvestInvoiceDetails &&
-                                  phase.harvestInvoiceDetails.length > 0 && (
-                                    <div className='rounded-md border bg-white p-3'>
-                                      <p className='text-muted-foreground mb-2 text-sm font-medium'>
-                                        {t('detail.phases.productsLabel')}
-                                      </p>
-                                      <div className='space-y-2'>
-                                        {phase.harvestInvoiceDetails.map(
-                                          (detail) => (
-                                            <div
-                                              key={detail.id}
-                                              className='flex items-center justify-between text-sm'
-                                            >
-                                              <span className='font-medium'>
-                                                {detail.product?.name ||
-                                                  t(
-                                                    'detail.products.unknownProduct'
-                                                  )}
-                                              </span>
-                                              <span className='text-muted-foreground'>
-                                                {detail.quantity} {detail.unit}{' '}
-                                                x{' '}
-                                                {formatCurrency(
-                                                  detail.unitPrice ?? 0
-                                                )}
-                                              </span>
-                                            </div>
-                                          )
-                                        )}
-                                        {phase.harvestInvoice?.taxRate !=
-                                          null && (
-                                          <>
-                                            <div className='border-t pt-2'>
-                                              <div className='flex items-center justify-between text-sm'>
-                                                <span className='text-muted-foreground'>
-                                                  {t(
-                                                    'detail.phases.taxWithRate',
-                                                    {
-                                                      rate: phase.harvestInvoice
-                                                        .taxRate
-                                                    }
-                                                  )}
-                                                </span>
-                                                <span className='text-muted-foreground'>
-                                                  {formatCurrency(
-                                                    (phase.harvestInvoiceDetails?.reduce(
-                                                      (sum, d) =>
-                                                        sum +
-                                                        (d.quantity ?? 0) *
-                                                          (d.unitPrice ?? 0),
-                                                      0
-                                                    ) ?? 0) *
-                                                      (phase.harvestInvoice
-                                                        .taxRate /
-                                                        100)
-                                                  )}
-                                                </span>
-                                              </div>
-                                            </div>
-                                          </>
-                                        )}
-                                      </div>
-                                    </div>
-                                  )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <Card>
-                    <CardContent className='py-12 text-center'>
-                      <IconClock className='text-muted-foreground mx-auto mb-3 h-12 w-12' />
-                      <h3 className='mb-2 text-lg font-semibold'>
+              ) : phases.length === 0 ? (
+                <Card>
+                  <CardContent className='py-12'>
+                    <div className='flex flex-col items-center justify-center'>
+                      <IconPackage className='text-muted-foreground mb-4 h-16 w-16' />
+                      <p className='text-muted-foreground text-lg font-medium'>
                         {t('detail.phases.emptyTitle')}
-                      </h3>
+                      </p>
                       <p className='text-muted-foreground text-sm'>
                         {t('detail.phases.emptyDescription')}
                       </p>
-                    </CardContent>
-                  </Card>
-                )}
-              </TabsContent>
-
-              <TabsContent value='products' className='space-y-6'>
-                {/* Product Information */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className='flex items-center gap-2'>
-                      <IconPackage className='h-5 w-5' />
-                      {t('detail.products.title')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className='space-y-4'>
-                    <div className='grid grid-cols-2 gap-4'>
-                      <div>
-                        <p className='text-muted-foreground text-sm'>
-                          {t('detail.products.totalQuantity')}
-                        </p>
-                        <p className='font-medium'>
-                          {loading ? '...' : totalQuantity}
-                        </p>
-                      </div>
-                      <div>
-                        <p className='text-muted-foreground text-sm'>
-                          {t('detail.products.totalPrice')}
-                        </p>
-                        <p className='text-lg font-bold'>
-                          {loading ? '...' : formatCurrency(totalPrice)}
-                        </p>
-                      </div>
                     </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                phases.map((phase) => {
+                  const phaseStatus = (phase.status?.toLowerCase() ||
+                    'preparing') as HarvestPhaseStatus;
+                  const totalPhaseQuantity =
+                    phase.harvestInvoiceDetails?.reduce(
+                      (sum, detail) => sum + (detail.quantity ?? 0),
+                      0
+                    ) ?? 0;
+                  const totalPhaseAmount =
+                    phase.harvestInvoice?.totalPayment ?? 0;
 
-                    {details.length > 0 && (
-                      <div className='border-t pt-4'>
-                        <p className='text-muted-foreground mb-3 text-sm'>
-                          {t('detail.products.listLabel')}
-                        </p>
-                        <div className='rounded-md border text-sm'>
-                          <div className='bg-muted text-muted-foreground grid grid-cols-5 gap-2 border-b px-3 py-2 text-xs font-medium tracking-wide uppercase'>
-                            <span className='col-span-2'>
-                              {t('detail.products.table.product')}
-                            </span>
-                            <span>{t('detail.products.table.quantity')}</span>
-                            <span>{t('detail.products.table.unit')}</span>
-                            <span>{t('detail.products.table.unitPrice')}</span>
-                          </div>
-                          {details.map((product) => (
-                            <div
-                              key={product.id}
-                              className='grid grid-cols-5 gap-2 border-b px-3 py-2 last:border-b-0'
-                            >
-                              <div className='col-span-2'>
-                                <p className='font-medium'>
-                                  {product.productName}
+                  return (
+                    <Card key={phase.id}>
+                      <CardHeader>
+                        <div className='flex items-center justify-between'>
+                          <CardTitle className='flex items-center gap-2'>
+                            {getPhaseStatusIcon(phaseStatus)}
+                            {t('detail.phases.phaseLabel', {
+                              number: phase.phaseNumber ?? '?'
+                            })}
+                          </CardTitle>
+                          <Badge
+                            variant={getPhaseStatusVariant(phaseStatus)}
+                            className='flex items-center gap-1'
+                          >
+                            {getPhaseStatusIcon(phaseStatus)}
+                            {getPhaseStatusLabel(phaseStatus)}
+                          </Badge>
+                        </div>
+                        {phase.description && (
+                          <CardDescription>{phase.description}</CardDescription>
+                        )}
+                      </CardHeader>
+                      <CardContent className='space-y-6'>
+                        {/* Delivery Tracking Map */}
+                        {['delivering', 'delivered'].includes(phaseStatus) && (
+                          <Card>
+                            <CardHeader>
+                              <CardTitle className='flex items-center gap-2'>
+                                <IconTruck className='h-5 w-5' />
+                                {t('detail.phases.trackingTitle')}
+                              </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                              <HarvestRouteSim
+                                cargo={t('detail.phases.cargo', {
+                                  quantity: totalPhaseQuantity
+                                })}
+                                startAddress={t(
+                                  'detail.phases.startAddressDefault'
+                                )}
+                                endAddress={String(schedule.address ?? '')}
+                                harvestScheduleId={String(schedule.id ?? '')}
+                                deliveryId={activeDeliveryId}
+                                productName={(phase.harvestInvoiceDetails || [])
+                                  .map((d) => d.product?.name)
+                                  .filter(Boolean)
+                                  .join(', ')}
+                              />
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        {/* Invoice Details (Products) */}
+                        {phase.harvestInvoiceDetails &&
+                          phase.harvestInvoiceDetails.length > 0 && (
+                            <div className='space-y-3'>
+                              <h5 className='flex items-center gap-2 font-semibold'>
+                                <IconPackage className='h-4 w-4' />
+                                {t('detail.phases.productsLabel')}
+                              </h5>
+                              <div className='grid gap-3'>
+                                {phase.harvestInvoiceDetails.map((detail) => (
+                                  <div
+                                    key={detail.id}
+                                    className='bg-card flex items-center gap-4 rounded-lg border p-4'
+                                  >
+                                    <div className='relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border bg-gray-100'>
+                                      {detail.product?.image &&
+                                      typeof detail.product.image ===
+                                        'string' ? (
+                                        <Image
+                                          src={detail.product.image}
+                                          alt={
+                                            detail.product?.name || 'Product'
+                                          }
+                                          fill
+                                          className='object-cover'
+                                        />
+                                      ) : (
+                                        <div className='flex h-full w-full items-center justify-center'>
+                                          <IconPackage className='text-muted-foreground h-8 w-8' />
+                                        </div>
+                                      )}
+                                    </div>
+                                    <div className='min-w-0 flex-1'>
+                                      <h6 className='text-base font-semibold'>
+                                        {detail.product?.name ||
+                                          t('detail.products.unknownProduct')}
+                                      </h6>
+                                      <div className='mt-2 flex items-center gap-4 text-sm'>
+                                        <span className='text-muted-foreground'>
+                                          {t('detail.products.table.quantity')}:{' '}
+                                          <strong className='text-foreground'>
+                                            {detail.quantity}
+                                          </strong>{' '}
+                                          {detail.unit}
+                                        </span>
+                                        <span className='text-muted-foreground'>
+                                          ×
+                                        </span>
+                                        <span className='text-muted-foreground'>
+                                          {t('detail.products.table.unitPrice')}
+                                          :{' '}
+                                          <strong className='text-foreground'>
+                                            {formatCurrency(
+                                              detail.unitPrice ?? 0
+                                            )}
+                                          </strong>
+                                        </span>
+                                      </div>
+                                    </div>
+                                    <div className='text-right'>
+                                      <p className='text-muted-foreground mb-1 text-xs'>
+                                        {t('detail.products.amount')}
+                                      </p>
+                                      <p className='text-xl font-bold'>
+                                        {formatCurrency(
+                                          (detail.quantity ?? 0) *
+                                            (detail.unitPrice ?? 0)
+                                        )}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                        {/* Invoice Information - Highlighted */}
+                        {phase.harvestInvoice && (
+                          <div className='border-primary/30 from-primary/5 to-primary/10 space-y-4 rounded-lg border-2 bg-gradient-to-br p-6 shadow-md'>
+                            <div className='flex items-center justify-between'>
+                              <div className='flex items-center gap-2 text-lg font-bold'>
+                                <IconFileInvoice className='text-primary h-6 w-6' />
+                                <span className='text-primary'>
+                                  {t('detail.phases.invoiceInformation')}
+                                </span>
+                              </div>
+                            </div>
+                            <Separator className='bg-primary/20' />
+                            <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+                              <div>
+                                <p className='text-muted-foreground mb-1 text-xs'>
+                                  {t('detail.phases.totalAmount')}
+                                </p>
+                                <p className='text-base font-semibold'>
+                                  {formatCurrency(
+                                    phase.harvestInvoice.totalAmount || 0
+                                  )}
                                 </p>
                               </div>
                               <div>
-                                <p className='font-medium'>
-                                  {product.quantity}
+                                <p className='text-muted-foreground mb-1 text-xs'>
+                                  {t('detail.phases.vat')} (
+                                  {phase.harvestInvoice.taxRate || 0}%)
+                                </p>
+                                <p className='text-base font-semibold'>
+                                  {formatCurrency(
+                                    (phase.harvestInvoiceDetails?.reduce(
+                                      (sum, d) =>
+                                        sum +
+                                        (d.quantity ?? 0) * (d.unitPrice ?? 0),
+                                      0
+                                    ) ?? 0) *
+                                      ((phase.harvestInvoice.taxRate ?? 0) /
+                                        100)
+                                  )}
+                                </p>
+                              </div>
+                              <div className='col-span-2 md:col-span-1'>
+                                <p className='text-muted-foreground mb-1 text-xs'>
+                                  {t('detail.phases.totalPayment')}
+                                </p>
+                                <p className='text-primary text-2xl font-bold'>
+                                  {formatCurrency(totalPhaseAmount)}
                                 </p>
                               </div>
                               <div>
-                                <p className='font-medium'>{product.unit}</p>
-                              </div>
-                              <div>
-                                <p className='font-medium'>
-                                  {formatCurrency(product.unitPrice)}
+                                <p className='text-muted-foreground mb-1 text-xs'>
+                                  {t('detail.phases.quantity')}
+                                </p>
+                                <p className='text-base font-semibold'>
+                                  {totalPhaseQuantity} kg
                                 </p>
                               </div>
                             </div>
-                          ))}
+                          </div>
+                        )}
+
+                        {/* Phase Dates */}
+                        <div className='text-muted-foreground flex items-center justify-between border-t pt-4 text-sm'>
+                          <div>
+                            <span>{t('detail.phases.created')}: </span>
+                            <span className='text-foreground font-medium'>
+                              {formatDate(phase.createdAt as unknown as string)}
+                            </span>
+                          </div>
+                          <div>
+                            <span>{t('detail.phases.updated')}: </span>
+                            <span className='text-foreground font-medium'>
+                              {formatDate(phase.updatedAt as unknown as string)}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
-
-          {/* Sidebar */}
-          <div className='space-y-6'>
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('detail.sidebar.overviewTitle')}</CardTitle>
-                <CardDescription>
-                  {t('detail.sidebar.overviewDescription')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='rounded-lg border p-3'>
-                  <p className='text-muted-foreground mb-1 text-sm'>
-                    {t('detail.sidebar.totalQuantity')}
-                  </p>
-                  <p className='text-2xl font-bold'>{totalQuantity} kg</p>
-                </div>
-                <div className='rounded-lg border p-3'>
-                  <p className='text-muted-foreground mb-1 text-sm'>
-                    {t('detail.sidebar.totalPriceBeforeTax')}
-                  </p>
-                  <p className='text-2xl font-bold'>
-                    {formatCurrency(totalPrice)}
-                  </p>
-                </div>
-                <div className='rounded-lg border p-3'>
-                  <p className='text-muted-foreground mb-1 text-sm'>
-                    {t('detail.sidebar.productsCount')}
-                  </p>
-                  <p className='text-2xl font-bold'>{details.length}</p>
-                </div>
-                <div className='rounded-lg border p-3'>
-                  <p className='text-muted-foreground mb-1 text-sm'>
-                    {t('detail.sidebar.phasesCount')}
-                  </p>
-                  <p className='text-2xl font-bold'>{phases.length}</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('detail.extra.title')}</CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-3 text-sm'>
-                <div>
-                  <p className='text-muted-foreground'>
-                    {t('detail.extra.createdAt')}
-                  </p>
-                  <p className='font-medium'>{createdDate}</p>
-                </div>
-                <Separator />
-                <div>
-                  <p className='text-muted-foreground'>
-                    {t('detail.extra.updatedAt')}
-                  </p>
-                  <p className='font-medium'>{updatedDate}</p>
-                </div>
-                {schedule.supplier && (
-                  <>
-                    <Separator />
-                    <div>
-                      <p className='text-muted-foreground'>
-                        {t('detail.extra.supplier')}
-                      </p>
-                      <p className='font-medium'>
-                        {schedule.supplier.gardenName || 'N/A'}
-                      </p>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('detail.quickActions.title')}</CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-2'>
-                <Link href='/supplier/harvest-batches' className='block w-full'>
-                  <Button variant='outline' className='w-full justify-start'>
-                    <IconPackage className='mr-2 h-4 w-4' />
-                    {t('detail.quickActions.viewAllBatches')}
-                  </Button>
-                </Link>
-                <Link
-                  href='/supplier/harvest-batches/new'
-                  className='block w-full'
-                >
-                  <Button variant='outline' className='w-full justify-start'>
-                    <IconPackage className='mr-2 h-4 w-4' />
-                    {t('detail.quickActions.createNewBatch')}
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })
+              )}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </PageContainer>
   );

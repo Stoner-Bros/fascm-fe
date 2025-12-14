@@ -1,4 +1,5 @@
 import AuthInitializer from '@/components/auth/auth-initializer';
+import BodyOverflowHandler from '@/components/layout/body-overflow-handler';
 import Providers from '@/components/layout/providers';
 import ThemeProvider from '@/components/layout/ThemeToggle/theme-provider';
 import { Toaster } from '@/components/ui/sonner';
@@ -62,7 +63,7 @@ export default async function RootLayout({
       {/* scrollable body */}
       <body
         className={cn(
-          'bg-background font-inter min-h-screen overflow-x-hidden antialiased',
+          'bg-background font-inter min-h-screen antialiased',
           activeThemeValue ? `theme-${activeThemeValue}` : '',
           isScaled ? 'theme-scaled' : '',
           fontVariables
@@ -79,6 +80,7 @@ export default async function RootLayout({
               enableColorScheme
             >
               <Providers activeThemeValue={activeThemeValue as string}>
+                <BodyOverflowHandler />
                 <AuthInitializer />
                 <Toaster />
                 {children}
