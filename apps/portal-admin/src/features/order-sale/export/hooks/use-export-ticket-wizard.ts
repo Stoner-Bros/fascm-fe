@@ -2,7 +2,6 @@
 
 import { useToast } from '@/components/ui/use-toast';
 import { fetchAreas } from '@/services/area.service';
-import { fetchBatchesGroupedByWeight } from '@/services/batch.service';
 import {
   createExportTicket,
   CreateExportTicketDto
@@ -21,6 +20,8 @@ import {
   initialWizardState,
   OrderInvoiceDetail
 } from '../types';
+import { fetchBatches } from '@/services/batch.service';
+import { Batch } from '@/types';
 
 // Reducer function
 function wizardReducer(
@@ -161,7 +162,7 @@ function wizardReducer(
 
 // Cache types
 type PhasesCache = Map<string, OrderPhase[]>;
-type BatchesCache = Map<string, BatchGroupedByWeight[]>;
+type BatchesCache = Map<string, Batch[]>;
 
 export function useExportTicketWizard() {
   const { toast } = useToast();
@@ -271,13 +272,13 @@ export function useExportTicketWizard() {
 
       dispatch({ type: 'SET_BATCHES_LOADING', loading: true });
       try {
-        const response = await fetchBatchesGroupedByWeight({
+        const response = await fetchBatches({
           areaId,
           productId
         });
         // Save to cache
-        batchesCacheRef.current.set(cacheKey, response);
-        dispatch({ type: 'SET_BATCHES', batches: response });
+        batchesCacheRef.current.set(cacheKey, response.data);
+        dispatch({ type: 'SET_BATCHES', batches: response.data });
       } catch (error) {
         console.error('Failed to fetch batches:', error);
         dispatch({

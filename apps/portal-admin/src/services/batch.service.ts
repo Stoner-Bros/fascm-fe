@@ -18,11 +18,11 @@ export async function createBatch(body: CreateBatchDto) {
 
 export async function fetchBatches({
   page = 1,
-  limit = 10,
+  limit = 50,
   importTicketId,
   productId,
   areaId
-}: FindAllBatchesDto = {}) {
+}: FindAllBatchesDto = {}): Promise<InfinityPaginationResponse<Batch>> {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit)

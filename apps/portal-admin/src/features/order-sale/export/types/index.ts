@@ -1,20 +1,6 @@
 import { Area } from '@/types/area';
+import { Batch } from '@/types/batch';
 import { OrderPhase, OrderSchedule } from '@/types/order';
-
-// Batch response from API (grouped by weight)
-export interface BatchGroupedByWeight {
-  importTicketId: string;
-  batchCode: string;
-  batch: Record<string, number>; // e.g., { "10kg": 1, "20kg": 2 }
-  expiredAt?: string | null;
-  importDate?: string | null;
-  product?: {
-    id: string;
-    name?: string;
-    image?: string;
-  };
-  prices?: Record<string, number>; // e.g., { "1kg": 20000, "100kg": 18000 }
-}
 
 // Export ticket wizard steps
 export type ExportTicketStep =
@@ -71,7 +57,7 @@ export interface ExportTicketWizardState {
   schedules: OrderSchedule[];
   phases: OrderPhase[];
   areas: Area[];
-  batches: BatchGroupedByWeight[];
+  batches: Batch[];
   // Loading states
   loadingSchedules: boolean;
   loadingPhases: boolean;
@@ -107,7 +93,7 @@ export type ExportTicketWizardAction =
   | { type: 'SET_AREAS_ERROR'; error: string | null }
   | { type: 'SELECT_AREA'; area: Area | null }
   | { type: 'SET_BATCHES_LOADING'; loading: boolean }
-  | { type: 'SET_BATCHES'; batches: BatchGroupedByWeight[] }
+  | { type: 'SET_BATCHES'; batches: Batch[] }
   | { type: 'SET_BATCHES_ERROR'; error: string | null }
   | { type: 'TOGGLE_BATCH'; batchId: string }
   | { type: 'SET_SELECTED_BATCHES'; batchIds: string[] }

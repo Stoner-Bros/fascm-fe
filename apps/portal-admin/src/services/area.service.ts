@@ -17,11 +17,11 @@ export async function createArea(body: CreateAreaDto) {
 }
 
 export async function fetchAreas({
-  page,
-  limit,
+  page = 1,
+  limit = 50,
   search,
   warehouseId
-}: FindAllAreasDto = {}) {
+}: FindAllAreasDto = {}): Promise<InfinityPaginationResponse<Area>> {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit)

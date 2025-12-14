@@ -23,7 +23,7 @@ export async function fetchOrderSchedules({
 export async function fetchOrderSchedulesByConsignee({
   consigneeId,
   page = 1,
-  limit = 10,
+  limit = 50,
   status,
   sort
 }: FindAllOrderSchedulesDto & { consigneeId: string }) {
