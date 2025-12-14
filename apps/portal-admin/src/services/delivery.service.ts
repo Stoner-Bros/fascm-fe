@@ -41,6 +41,22 @@ export async function fetchDeliveryById(id: string) {
   return fetchJSON<Delivery>(`/deliveries/${id}`);
 }
 
+export async function fetchDeliveriesWithHarvestPhase({
+  page,
+  limit
+}: {
+  page?: number;
+  limit?: number;
+}) {
+  const params = new URLSearchParams({
+    page: String(page),
+    limit: String(limit)
+  });
+  return fetchJSON<InfinityPaginationResponse<Delivery>>(
+    `/deliveries/with-harvest-phase?${params.toString()}`
+  );
+}
+
 export async function createDelivery(data: CreateDeliveryDto) {
   return fetchJSON<Delivery>('/deliveries', {
     method: 'POST',

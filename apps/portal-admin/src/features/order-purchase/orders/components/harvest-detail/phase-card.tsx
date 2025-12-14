@@ -11,6 +11,8 @@ import type { HarvestPhase } from '@/types/harvest-phase';
 import { useTranslations } from 'next-intl';
 import { formatCurrency } from '../../utils/formatting';
 import { getPhaseStatusBadge } from '../../utils/status-badges';
+import { Button } from '@/components/ui/button';
+import { usePhaseActions } from '../../hooks/harvest-detail/use-harvest-detail';
 
 interface PhaseCardProps {
   phase: HarvestPhase;
@@ -18,6 +20,9 @@ interface PhaseCardProps {
 
 export function PhaseCard({ phase }: PhaseCardProps) {
   const t = useTranslations('HarvestOrders.detail.phases');
+  const { confirmDelivery, updatingPhaseId } = usePhaseActions(() => {
+    phase.status = 'completed';
+  });
   const subtotal =
     phase.harvestInvoiceDetails?.reduce(
       (sum, d) => sum + (d.quantity || 0) * (d.unitPrice || 0),
@@ -42,6 +47,18 @@ export function PhaseCard({ phase }: PhaseCardProps) {
           <div className='flex items-center gap-2'>
             {getPhaseStatusBadge(phase.status, (key) =>
               t(`statuses.${key}` as any)
+            )}
+            {phase.status === 'delivered' && (
+              <Button
+                variant='default'
+                onClick={() => {
+                  confirmDelivery(phase.id);
+                }}
+                disabled={updatingPhaseId === phase.id}
+                className='h-7 text-xs'
+              >
+                Xác nhận đã nhận hàng
+              </Button>
             )}
           </div>
         </div>
