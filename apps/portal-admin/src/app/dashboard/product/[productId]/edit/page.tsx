@@ -31,12 +31,14 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { FileUploader } from '@/components/file-uploader';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 export default function EditProductPage() {
   const router = useRouter();
   const params = useParams();
   const productId = params.productId as string;
   const { toast } = useToast();
+  const t = useTranslations('Product');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -70,8 +72,8 @@ export default function EditProductPage() {
         }
       } catch (err: any) {
         toast({
-          title: 'Error',
-          description: err?.message ?? 'Failed to load data',
+          title: t('toast.error'),
+          description: err?.message ?? t('toast.loadError'),
           variant: 'destructive'
         });
       } finally {
@@ -90,13 +92,13 @@ export default function EditProductPage() {
       const imageUrl = uploadedFile.path;
       setUploadedImageUrl(imageUrl);
       toast({
-        title: 'Success',
-        description: 'Image uploaded successfully'
+        title: t('toast.success'),
+        description: t('toast.uploadSuccess')
       });
     } catch (err: any) {
       toast({
-        title: 'Error',
-        description: err?.message ?? 'Failed to upload image',
+        title: t('toast.error'),
+        description: err?.message ?? t('toast.uploadError'),
         variant: 'destructive'
       });
       throw err;
@@ -110,8 +112,8 @@ export default function EditProductPage() {
 
     if (!formData.name) {
       toast({
-        title: 'Validation Error',
-        description: 'Product name is required',
+        title: t('toast.validationError'),
+        description: t('edit.validation.nameRequired'),
         variant: 'destructive'
       });
       return;
@@ -127,15 +129,15 @@ export default function EditProductPage() {
       });
 
       toast({
-        title: 'Success',
-        description: 'Product updated successfully'
+        title: t('toast.success'),
+        description: t('toast.updateSuccess')
       });
 
       router.push(`/dashboard/product/${productId}`);
     } catch (err: any) {
       toast({
-        title: 'Error',
-        description: err?.message ?? 'Failed to update product',
+        title: t('toast.error'),
+        description: err?.message ?? t('toast.updateError'),
         variant: 'destructive'
       });
     } finally {
@@ -164,11 +166,9 @@ export default function EditProductPage() {
             </Button>
             <div>
               <h2 className='text-3xl font-bold tracking-tight'>
-                Edit Product
+                {t('edit.title')}
               </h2>
-              <p className='text-muted-foreground'>
-                Update product information
-              </p>
+              <p className='text-muted-foreground'>{t('edit.subtitle')}</p>
             </div>
           </div>
         </div>
@@ -176,21 +176,24 @@ export default function EditProductPage() {
         <form onSubmit={handleSubmit}>
           <Card>
             <CardHeader>
-              <CardTitle>Product Information</CardTitle>
-              <CardDescription>Edit the details of the product</CardDescription>
+              <CardTitle>{t('edit.card.title')}</CardTitle>
+              <CardDescription>{t('edit.card.description')}</CardDescription>
             </CardHeader>
             <CardContent className='space-y-6'>
               {/* Basic Information */}
               <div className='space-y-4'>
-                <h3 className='text-lg font-semibold'>Basic Information</h3>
+                <h3 className='text-lg font-semibold'>
+                  {t('edit.form.basicTitle')}
+                </h3>
                 <div className='grid gap-4 md:grid-cols-2'>
                   <div className='space-y-2'>
                     <Label htmlFor='name'>
-                      Product Name <span className='text-red-500'>*</span>
+                      {t('edit.form.nameLabel')}{' '}
+                      <span className='text-red-500'>*</span>
                     </Label>
                     <Input
                       id='name'
-                      placeholder='e.g., Organic Tomatoes'
+                      placeholder={t('edit.form.namePlaceholder')}
                       value={formData.name}
                       onChange={(e) =>
                         setFormData({ ...formData, name: e.target.value })
@@ -200,7 +203,9 @@ export default function EditProductPage() {
                   </div>
 
                   <div className='space-y-2'>
-                    <Label htmlFor='category'>Category</Label>
+                    <Label htmlFor='category'>
+                      {t('edit.form.categoryLabel')}
+                    </Label>
                     <Select
                       value={
                         formData.categoryId === ''
@@ -212,7 +217,9 @@ export default function EditProductPage() {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder='Select a category' />
+                        <SelectValue
+                          placeholder={t('edit.form.categoryPlaceholder')}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         {categories
@@ -222,7 +229,7 @@ export default function EditProductPage() {
                           )
                           .map((category) => (
                             <SelectItem key={category.id} value={category.id}>
-                              {category.name || 'Unnamed Category'}
+                              {category.name || t('common.unnamedCategory')}
                             </SelectItem>
                           ))}
                       </SelectContent>
@@ -231,10 +238,12 @@ export default function EditProductPage() {
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='description'>Description</Label>
+                  <Label htmlFor='description'>
+                    {t('edit.form.descriptionLabel')}
+                  </Label>
                   <Textarea
                     id='description'
-                    placeholder='Enter product description...'
+                    placeholder={t('edit.form.descriptionPlaceholder')}
                     rows={4}
                     value={formData.description}
                     onChange={(e) =>
@@ -246,14 +255,16 @@ export default function EditProductPage() {
 
               {/* Product Image */}
               <div className='space-y-4'>
-                <h3 className='text-lg font-semibold'>Product Image</h3>
+                <h3 className='text-lg font-semibold'>
+                  {t('edit.image.title')}
+                </h3>
                 <div className='space-y-2'>
                   {uploadedImageUrl ? (
                     <div className='space-y-4'>
                       <div className='relative aspect-video w-full overflow-hidden rounded-lg border'>
                         <Image
                           src={uploadedImageUrl}
-                          alt='Product preview'
+                          alt={t('edit.image.previewAlt')}
                           fill
                           className='object-cover'
                         />
@@ -263,7 +274,7 @@ export default function EditProductPage() {
                         variant='outline'
                         onClick={() => setUploadedImageUrl('')}
                       >
-                        Change Image
+                        {t('edit.image.change')}
                       </Button>
                     </div>
                   ) : (
@@ -283,12 +294,12 @@ export default function EditProductPage() {
               <div className='flex justify-end gap-4'>
                 <Link href={`/dashboard/product/${productId}`}>
                   <Button type='button' variant='outline'>
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                 </Link>
                 <Button type='submit' disabled={saving || uploading}>
                   <IconDeviceFloppy className='mr-2 h-4 w-4' />
-                  {saving ? 'Saving...' : 'Save Changes'}
+                  {saving ? t('edit.form.saving') : t('edit.form.save')}
                 </Button>
               </div>
             </CardContent>

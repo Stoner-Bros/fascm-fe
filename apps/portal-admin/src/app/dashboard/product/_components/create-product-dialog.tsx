@@ -30,6 +30,7 @@ import { IconDeviceFloppy, IconPlus } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { FileUploader } from '@/components/file-uploader';
 import Image from 'next/image';
+import { useTranslations } from 'next-intl';
 
 interface CreateProductDialogProps {
   onSuccess?: () => void;
@@ -37,6 +38,7 @@ interface CreateProductDialogProps {
 
 export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
   const { toast } = useToast();
+  const t = useTranslations('Product');
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -62,8 +64,8 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
       setCategories(response.data);
     } catch (err: any) {
       toast({
-        title: 'Error',
-        description: 'Failed to load categories',
+        title: t('toast.error'),
+        description: t('createDialog.toast.loadCategoriesError'),
         variant: 'destructive'
       });
     }
@@ -78,13 +80,13 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
       const imageUrl = uploadedFile.path;
       setUploadedImageUrl(imageUrl);
       toast({
-        title: 'Success',
-        description: 'Image uploaded successfully'
+        title: t('toast.success'),
+        description: t('toast.uploadSuccess')
       });
     } catch (err: any) {
       toast({
-        title: 'Error',
-        description: err?.message ?? 'Failed to upload image',
+        title: t('toast.error'),
+        description: err?.message ?? t('toast.uploadError'),
         variant: 'destructive'
       });
       throw err;
@@ -108,8 +110,8 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
 
     if (!formData.name) {
       toast({
-        title: 'Validation Error',
-        description: 'Product name is required',
+        title: t('toast.validationError'),
+        description: t('createDialog.validation.nameRequired'),
         variant: 'destructive'
       });
       return;
@@ -125,8 +127,8 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
       });
 
       toast({
-        title: 'Success',
-        description: 'Product created successfully'
+        title: t('toast.success'),
+        description: t('toast.createSuccess')
       });
 
       resetForm();
@@ -134,8 +136,8 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
       onSuccess?.();
     } catch (err: any) {
       toast({
-        title: 'Error',
-        description: err?.message ?? 'Failed to create product',
+        title: t('toast.error'),
+        description: err?.message ?? t('toast.createError'),
         variant: 'destructive'
       });
     } finally {
@@ -148,29 +150,30 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
       <DialogTrigger asChild>
         <Button>
           <IconPlus className='mr-2 h-4 w-4' />
-          Add New Product
+          {t('createDialog.trigger')}
         </Button>
       </DialogTrigger>
       <DialogContent className='max-h-[90vh] max-w-3xl'>
         <DialogHeader>
-          <DialogTitle>Create New Product</DialogTitle>
-          <DialogDescription>
-            Add a new product to your inventory
-          </DialogDescription>
+          <DialogTitle>{t('createDialog.title')}</DialogTitle>
+          <DialogDescription>{t('createDialog.description')}</DialogDescription>
         </DialogHeader>
         <ScrollArea className='max-h-[calc(90vh-180px)] pr-4'>
           <form onSubmit={handleSubmit} className='space-y-6'>
             {/* Basic Information */}
             <div className='space-y-4'>
-              <h3 className='text-base font-semibold'>Basic Information</h3>
+              <h3 className='text-base font-semibold'>
+                {t('createDialog.basicTitle')}
+              </h3>
               <div className='grid gap-4 md:grid-cols-3'>
                 <div className='space-y-2'>
                   <Label htmlFor='name'>
-                    Product Name <span className='text-red-500'>*</span>
+                    {t('createDialog.nameLabel')}{' '}
+                    <span className='text-red-500'>*</span>
                   </Label>
                   <Input
                     id='name'
-                    placeholder='e.g., Organic Tomatoes'
+                    placeholder={t('createDialog.namePlaceholder')}
                     value={formData.name}
                     onChange={(e) =>
                       setFormData({ ...formData, name: e.target.value })
@@ -180,7 +183,9 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='category'>Category</Label>
+                  <Label htmlFor='category'>
+                    {t('createDialog.categoryLabel')}
+                  </Label>
                   <Select
                     value={
                       formData.categoryId === ''
@@ -192,7 +197,9 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder='Select a category' />
+                      <SelectValue
+                        placeholder={t('createDialog.categoryPlaceholder')}
+                      />
                     </SelectTrigger>
                     <SelectContent>
                       {categories
@@ -202,7 +209,7 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
                         )
                         .map((category) => (
                           <SelectItem key={category.id} value={category.id}>
-                            {category.name || 'Unnamed Category'}
+                            {category.name || t('common.unnamedCategory')}
                           </SelectItem>
                         ))}
                     </SelectContent>
@@ -211,10 +218,12 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
               </div>
 
               <div className='space-y-2'>
-                <Label htmlFor='description'>Description</Label>
+                <Label htmlFor='description'>
+                  {t('createDialog.descriptionLabel')}
+                </Label>
                 <Textarea
                   id='description'
-                  placeholder='Enter product description...'
+                  placeholder={t('createDialog.descriptionPlaceholder')}
                   rows={3}
                   value={formData.description}
                   onChange={(e) =>
@@ -226,14 +235,16 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
 
             {/* Product Image */}
             <div className='space-y-4'>
-              <h3 className='text-base font-semibold'>Product Image</h3>
+              <h3 className='text-base font-semibold'>
+                {t('createDialog.image.title')}
+              </h3>
               <div className='space-y-2'>
                 {uploadedImageUrl ? (
                   <div className='space-y-4'>
                     <div className='relative aspect-video w-full overflow-hidden rounded-lg border'>
                       <Image
                         src={uploadedImageUrl}
-                        alt='Product preview'
+                        alt={t('createDialog.image.previewAlt')}
                         fill
                         className='object-cover'
                       />
@@ -244,7 +255,7 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
                       size='sm'
                       onClick={() => setUploadedImageUrl('')}
                     >
-                      Change Image
+                      {t('createDialog.image.change')}
                     </Button>
                   </div>
                 ) : (
@@ -272,7 +283,7 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
             }}
             disabled={loading}
           >
-            Cancel
+            {t('common.cancel')}
           </Button>
           <Button
             type='submit'
@@ -280,7 +291,9 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
             onClick={handleSubmit}
           >
             <IconDeviceFloppy className='mr-2 h-4 w-4' />
-            {loading ? 'Creating...' : 'Create Product'}
+            {loading
+              ? t('createDialog.footer.creating')
+              : t('createDialog.footer.submit')}
           </Button>
         </DialogFooter>
       </DialogContent>

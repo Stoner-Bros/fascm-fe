@@ -36,6 +36,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
+import { useTranslations } from 'next-intl';
 import {
   createManager,
   deleteManager,
@@ -89,6 +90,7 @@ const formatDateTime = (value?: string) => {
 };
 
 export default function ManagersAccount() {
+  const t = useTranslations('Accounts.Managers');
   const { toast } = useToast();
   const toastRef = useRef(toast);
   const isFetchingRef = useRef(false);
@@ -121,8 +123,9 @@ export default function ManagersAccount() {
     } catch (error) {
       toastRef.current?.({
         variant: 'destructive',
-        title: 'Không thể tải dữ liệu manager',
-        description: error instanceof Error ? error.message : 'Vui lòng thử lại'
+        title: t('toast.loadError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
       });
     } finally {
       isFetchingRef.current = false;
@@ -150,7 +153,7 @@ export default function ManagersAccount() {
     if (!form.firstName || !form.lastName || !form.email || !form.password) {
       toast({
         variant: 'destructive',
-        title: 'Vui lòng điền đầy đủ thông tin'
+        title: t('form.fillRequired')
       });
       return;
     }
@@ -168,7 +171,7 @@ export default function ManagersAccount() {
           }
         });
         toast({
-          title: 'Đã cập nhật manager'
+          title: t('toast.updateSuccess')
         });
       } else {
         await createManager({
@@ -181,7 +184,7 @@ export default function ManagersAccount() {
           }
         });
         toast({
-          title: 'Đã tạo manager thành công'
+          title: t('toast.createSuccess')
         });
       }
       resetForm();
@@ -191,8 +194,9 @@ export default function ManagersAccount() {
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Không thể tạo manager',
-        description: error instanceof Error ? error.message : 'Vui lòng thử lại'
+        title: editingManager ? t('toast.updateError') : t('toast.createError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
       });
     } finally {
       setIsSubmitting(false);
@@ -201,18 +205,18 @@ export default function ManagersAccount() {
 
   const handleDelete = useCallback(
     async (id: string) => {
-      const confirm = window.confirm('Bạn có chắc chắn muốn xóa manager này?');
+      const confirm = window.confirm(t('actions.confirmDelete'));
       if (!confirm) return;
       try {
         await deleteManager(id);
-        toastRef.current?.({ title: 'Đã xóa manager' });
+        toastRef.current?.({ title: t('toast.deleteSuccess') });
         await loadData();
       } catch (error) {
         toastRef.current?.({
           variant: 'destructive',
-          title: 'Không thể xóa manager',
+          title: t('toast.deleteError'),
           description:
-            error instanceof Error ? error.message : 'Vui lòng thử lại'
+            error instanceof Error ? error.message : t('toast.tryAgain')
         });
       }
     },
@@ -271,34 +275,31 @@ export default function ManagersAccount() {
       <header className='flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
         <div className='space-y-2'>
           <h1 className='text-3xl font-bold tracking-tight'>
-            Quản lý tài khoản Managers
+            {t('header.title')}
           </h1>
-          <p className='text-muted-foreground'>
-            Danh sách hiển thị trước, thao tác tạo manager bật qua hộp thoại
-            riêng.
-          </p>
+          <p className='text-muted-foreground'>{t('header.description')}</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
           <DialogTrigger asChild>
-            <Button size='lg'>+ Tạo manager</Button>
+            <Button size='lg'>{t('actions.createManager')}</Button>
           </DialogTrigger>
           <DialogContent className='max-h-[95vh] overflow-y-auto sm:max-w-2xl'>
             <DialogHeader>
               <DialogTitle>
                 {editingManager
-                  ? 'Cập nhật tài khoản manager'
-                  : 'Tạo tài khoản manager'}
+                  ? t('dialog.editTitle')
+                  : t('dialog.createTitle')}
               </DialogTitle>
               <DialogDescription>
                 {editingManager
-                  ? 'Điều chỉnh thông tin manager đã chọn.'
-                  : 'Nhập thông tin người dùng và gán warehouse tùy chọn.'}
+                  ? t('dialog.editDescription')
+                  : t('dialog.createDescription')}
               </DialogDescription>
             </DialogHeader>
             <div className='space-y-4'>
               <div className='grid gap-4 md:grid-cols-2'>
                 <div className='space-y-2'>
-                  <Label>Họ</Label>
+                  <Label>{t('form.firstName')}</Label>
                   <Input
                     value={form.firstName}
                     onChange={(e) =>
@@ -307,44 +308,44 @@ export default function ManagersAccount() {
                         firstName: e.target.value
                       }))
                     }
-                    placeholder='Nguyễn'
+                    placeholder={t('placeholders.firstName')}
                   />
                 </div>
                 <div className='space-y-2'>
-                  <Label>Tên</Label>
+                  <Label>{t('form.lastName')}</Label>
                   <Input
                     value={form.lastName}
                     onChange={(e) =>
                       setForm((prev) => ({ ...prev, lastName: e.target.value }))
                     }
-                    placeholder='Văn A'
+                    placeholder={t('placeholders.lastName')}
                   />
                 </div>
                 <div className='space-y-2'>
-                  <Label>Email</Label>
+                  <Label>{t('form.email')}</Label>
                   <Input
                     type='email'
                     value={form.email}
                     onChange={(e) =>
                       setForm((prev) => ({ ...prev, email: e.target.value }))
                     }
-                    placeholder='manager@example.com'
+                    placeholder={t('placeholders.emailManager')}
                   />
                 </div>
                 <div className='space-y-2'>
-                  <Label>Mật khẩu</Label>
+                  <Label>{t('form.password')}</Label>
                   <Input
                     type='password'
                     value={form.password}
                     onChange={(e) =>
                       setForm((prev) => ({ ...prev, password: e.target.value }))
                     }
-                    placeholder='••••••••'
+                    placeholder={t('placeholders.password')}
                   />
                 </div>
               </div>
               <div className='space-y-2'>
-                <Label>Warehouse (tùy chọn)</Label>
+                <Label>{t('form.warehouseOptional')}</Label>
                 <Select
                   value={form.warehouseId || NONE_VALUE}
                   onValueChange={(value) =>
@@ -355,11 +356,13 @@ export default function ManagersAccount() {
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder='Chọn warehouse' />
+                    <SelectValue
+                      placeholder={t('placeholders.selectWarehouse')}
+                    />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value={NONE_VALUE}>
-                      Không gán warehouse
+                      {t('placeholders.noWarehouse')}
                     </SelectItem>
                     {warehouses.map((warehouse) => (
                       <SelectItem key={warehouse.id} value={warehouse.id}>
@@ -369,7 +372,7 @@ export default function ManagersAccount() {
                   </SelectContent>
                 </Select>
                 <p className='text-muted-foreground text-xs'>
-                  Nếu không chọn, giá trị sẽ được truyền là null.
+                  {t('form.warehouseHelper')}
                 </p>
               </div>
             </div>
@@ -379,16 +382,16 @@ export default function ManagersAccount() {
                 onClick={resetForm}
                 disabled={isSubmitting}
               >
-                Xóa dữ liệu
+                {t('actions.clearForm')}
               </Button>
               <Button onClick={handleSubmit} disabled={isSubmitting}>
                 {isSubmitting
                   ? editingManager
-                    ? 'Đang cập nhật...'
-                    : 'Đang xử lý...'
+                    ? t('actions.saving')
+                    : t('actions.creating')
                   : editingManager
-                    ? 'Cập nhật manager'
-                    : 'Tạo manager'}
+                    ? t('actions.saveChanges')
+                    : t('actions.createManager')}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -399,18 +402,16 @@ export default function ManagersAccount() {
         <CardHeader className='flex flex-col gap-4'>
           <div className='flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
             <div>
-              <CardTitle>Danh sách manager</CardTitle>
-              <CardDescription>
-                Quản lý và theo dõi thông tin tài khoản manager.
-              </CardDescription>
+              <CardTitle>{t('table.title')}</CardTitle>
+              <CardDescription>{t('table.description')}</CardDescription>
             </div>
             <Button variant='outline' onClick={loadData} disabled={isLoading}>
-              {isLoading ? 'Đang tải...' : 'Làm mới'}
+              {isLoading ? t('table.loading') : t('actions.refresh')}
             </Button>
           </div>
           <div className='flex flex-col gap-2 md:flex-row md:items-center'>
             <Input
-              placeholder='Tìm kiếm theo tên, email, mã tài khoản...'
+              placeholder={t('filters.searchPlaceholder')}
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
               className='flex-1'
@@ -420,10 +421,12 @@ export default function ManagersAccount() {
               onValueChange={(value) => setWarehouseFilter(value)}
             >
               <SelectTrigger className='md:w-[220px]'>
-                <SelectValue placeholder='Lọc theo kho' />
+                <SelectValue placeholder={t('filters.warehousePlaceholder')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='ALL'>Tất cả kho</SelectItem>
+                <SelectItem value='ALL'>
+                  {t('filters.allWarehouses')}
+                </SelectItem>
                 {warehouses.map((warehouse) => (
                   <SelectItem key={warehouse.id} value={warehouse.id}>
                     {warehouse.name}
@@ -438,26 +441,28 @@ export default function ManagersAccount() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>STT</TableHead>
-                  <TableHead>Họ</TableHead>
-                  <TableHead>Tên</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Warehouse</TableHead>
-                  <TableHead>Địa chỉ</TableHead>
-                  <TableHead className='text-right'>Thao tác</TableHead>
+                  <TableHead>{t('table.columns.index')}</TableHead>
+                  <TableHead>{t('table.columns.firstName')}</TableHead>
+                  <TableHead>{t('table.columns.lastName')}</TableHead>
+                  <TableHead>{t('table.columns.email')}</TableHead>
+                  <TableHead>{t('table.columns.warehouse')}</TableHead>
+                  <TableHead>{t('table.columns.address')}</TableHead>
+                  <TableHead className='text-right'>
+                    {t('table.columns.actions')}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
                     <TableCell colSpan={7} className='text-center'>
-                      Đang tải dữ liệu...
+                      {t('table.loading')}
                     </TableCell>
                   </TableRow>
                 ) : filteredManagers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7} className='text-center'>
-                      Không có manager phù hợp với tiêu chí lọc
+                      {t('table.empty')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -486,14 +491,14 @@ export default function ManagersAccount() {
                             size='sm'
                             onClick={() => handleEdit(manager)}
                           >
-                            Sửa
+                            {t('actions.edit')}
                           </Button>
                           <Button
                             variant='destructive'
                             size='sm'
                             onClick={() => handleDelete(manager.id)}
                           >
-                            Xóa
+                            {t('actions.delete')}
                           </Button>
                         </div>
                       </TableCell>

@@ -43,6 +43,7 @@ import {
 } from '@tabler/icons-react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 type UIIoTDevice = {
   truckId: string;
@@ -140,6 +141,7 @@ const getStatusBadge = (status: string) => {
 };
 
 export function IoTDeviceManagement() {
+  const t = useTranslations('IoTDevices');
   const [devices, setDevices] = useState<UIIoTDevice[]>([]);
   const socketRef = useRef<any>(null);
   const subscribedRef = useRef<Set<string>>(new Set());
@@ -301,10 +303,10 @@ export function IoTDeviceManagement() {
       <div className='flex items-center justify-between'>
         <div>
           <h2 className='text-3xl font-bold tracking-tight'>
-            Quản lý thiết bị IoT
+            {t('header.title')}
           </h2>
           <p className='text-muted-foreground mt-1'>
-            Giám sát và điều khiển các thiết bị IoT trong kho
+            {t('header.description')}
           </p>
         </div>
         <div className='flex gap-2'>
@@ -312,19 +314,19 @@ export function IoTDeviceManagement() {
             <DialogTrigger asChild>
               <Button>
                 <IconPlus className='mr-2 h-4 w-4' />
-                Thêm thiết bị
+                {t('actions.add')}
               </Button>
             </DialogTrigger>
             <DialogContent className='max-w-md'>
               <DialogHeader>
-                <DialogTitle>Thêm thiết bị IoT</DialogTitle>
+                <DialogTitle>{t('dialog.addTitle')}</DialogTitle>
               </DialogHeader>
               <div className='space-y-4 py-4'>
                 <div className='space-y-2'>
-                  <Label htmlFor='area-id'>Area ID</Label>
+                  <Label htmlFor='area-id'>{t('edit.areaId')}</Label>
                   <Input
                     id='area-id'
-                    placeholder='Ví dụ: AREA_0001'
+                    placeholder={t('edit.areaPlaceholder')}
                     value={areaIdInput}
                     onChange={(e) => {
                       setAreaIdInput(e.target.value);
@@ -333,10 +335,10 @@ export function IoTDeviceManagement() {
                   />
                 </div>
                 <div className='space-y-2'>
-                  <Label htmlFor='truck-id'>Truck ID</Label>
+                  <Label htmlFor='truck-id'>{t('edit.truckId')}</Label>
                   <Input
                     id='truck-id'
-                    placeholder='Ví dụ: TRUCK_0001'
+                    placeholder={t('edit.truckPlaceholder')}
                     value={truckIdInput}
                     onChange={(e) => {
                       setTruckIdInput(e.target.value);
@@ -361,7 +363,7 @@ export function IoTDeviceManagement() {
                   }}
                   disabled={creating}
                 >
-                  Hủy
+                  {t('actions.cancel')}
                 </Button>
                 <Button
                   disabled={creating}
@@ -370,11 +372,11 @@ export function IoTDeviceManagement() {
                     const hasArea = areaIdInput.trim().length > 0;
                     const hasTruck = truckIdInput.trim().length > 0;
                     if (!hasArea && !hasTruck) {
-                      setCreateError('Cần nhập Area ID hoặc Truck ID');
+                      setCreateError(t('errors.createNeedAreaOrTruck'));
                       return;
                     }
                     if (hasArea && hasTruck) {
-                      setCreateError('Chỉ được chọn một trong Area hoặc Truck');
+                      setCreateError(t('errors.createOnlyOne'));
                       return;
                     }
                     setCreating(true);
@@ -391,13 +393,13 @@ export function IoTDeviceManagement() {
                       setAreaIdInput('');
                       setTruckIdInput('');
                     } catch (e) {
-                      setCreateError('Tạo thiết bị thất bại');
+                      setCreateError(t('errors.createFailed'));
                     } finally {
                       setCreating(false);
                     }
                   }}
                 >
-                  {creating ? 'Đang tạo...' : 'Tạo thiết bị'}
+                  {creating ? t('actions.creating') : t('actions.create')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -406,7 +408,7 @@ export function IoTDeviceManagement() {
             <IconRefresh
               className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
             />
-            Làm mới
+            {t('actions.refresh')}
           </Button>
         </div>
       </div>
@@ -418,7 +420,7 @@ export function IoTDeviceManagement() {
         <Card className='border-2 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10'>
           <CardHeader className='pb-3'>
             <CardDescription className='text-blue-700 dark:text-blue-400'>
-              Tổng thiết bị
+              {t('stats.totalDevices')}
             </CardDescription>
             <CardTitle className='text-3xl font-bold text-blue-900 dark:text-blue-100'>
               {isLoading ? (
@@ -433,7 +435,7 @@ export function IoTDeviceManagement() {
         <Card className='border-2 bg-gradient-to-br from-green-50 to-emerald-100/50 dark:from-green-950/20 dark:to-emerald-900/10'>
           <CardHeader className='pb-3'>
             <CardDescription className='text-green-700 dark:text-green-400'>
-              Đang hoạt động
+              {t('stats.online')}
             </CardDescription>
             <CardTitle className='text-3xl font-bold text-green-900 dark:text-green-100'>
               {isLoading ? (
@@ -448,7 +450,7 @@ export function IoTDeviceManagement() {
         <Card className='border-2 bg-gradient-to-br from-gray-50 to-slate-100/50 dark:from-gray-950/20 dark:to-slate-900/10'>
           <CardHeader className='pb-3'>
             <CardDescription className='text-gray-700 dark:text-gray-400'>
-              Offline
+              {t('stats.offline')}
             </CardDescription>
             <CardTitle className='text-3xl font-bold text-gray-900 dark:text-gray-100'>
               {isLoading ? (
@@ -463,7 +465,7 @@ export function IoTDeviceManagement() {
         <Card className='border-2 bg-gradient-to-br from-yellow-50 to-amber-100/50 dark:from-yellow-950/20 dark:to-amber-900/10'>
           <CardHeader className='pb-3'>
             <CardDescription className='text-yellow-700 dark:text-yellow-400'>
-              Cảnh báo
+              {t('stats.warning')}
             </CardDescription>
             <CardTitle className='text-3xl font-bold text-yellow-900 dark:text-yellow-100'>
               {isLoading ? (
@@ -484,7 +486,7 @@ export function IoTDeviceManagement() {
               <div className='relative flex-1'>
                 <IconSearch className='text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4' />
                 <Input
-                  placeholder='Tìm kiếm theo ID, loại, Area hoặc Truck...'
+                  placeholder={t('filters.searchPlaceholder')}
                   className='pl-8'
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
@@ -492,13 +494,13 @@ export function IoTDeviceManagement() {
               </div>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className='w-[180px]'>
-                  <SelectValue placeholder='Lọc theo trạng thái' />
+                  <SelectValue placeholder={t('filters.statusPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='all'>Tất cả trạng thái</SelectItem>
-                  <SelectItem value='online'>Đang hoạt động</SelectItem>
-                  <SelectItem value='offline'>Offline</SelectItem>
-                  <SelectItem value='warning'>Cảnh báo</SelectItem>
+                  <SelectItem value='all'>{t('filters.allStatus')}</SelectItem>
+                  <SelectItem value='online'>{t('status.online')}</SelectItem>
+                  <SelectItem value='offline'>{t('status.offline')}</SelectItem>
+                  <SelectItem value='warning'>{t('status.warning')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -511,18 +513,16 @@ export function IoTDeviceManagement() {
         <Card>
           <CardContent className='flex flex-col items-center justify-center py-12'>
             <div className='border-primary mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
-            <p className='text-muted-foreground'>Đang tải thiết bị IoT...</p>
+            <p className='text-muted-foreground'>{t('stats.loading')}</p>
           </CardContent>
         </Card>
       ) : filteredDevices.length === 0 ? (
         <Card>
           <CardContent className='flex flex-col items-center justify-center py-12'>
             <IconSearch className='text-muted-foreground mb-4 h-12 w-12' />
-            <h3 className='mb-2 text-lg font-semibold'>
-              Không tìm thấy thiết bị
-            </h3>
+            <h3 className='mb-2 text-lg font-semibold'>{t('empty.title')}</h3>
             <p className='text-muted-foreground mb-4'>
-              Thử điều chỉnh bộ lọc hoặc tìm kiếm của bạn
+              {t('empty.description')}
             </p>
           </CardContent>
         </Card>
@@ -564,7 +564,35 @@ export function IoTDeviceManagement() {
                         </div>
                       </div>
                     </div>
-                    {getStatusBadge(device.status)}
+                    {(() => {
+                      const s = device.status;
+                      switch (s) {
+                        case 'online':
+                          return (
+                            <Badge className='bg-green-100 text-green-800'>
+                              {t('status.online')}
+                            </Badge>
+                          );
+                        case 'warning':
+                          return (
+                            <Badge className='bg-yellow-100 text-yellow-800'>
+                              {t('status.warning')}
+                            </Badge>
+                          );
+                        case 'offline':
+                          return (
+                            <Badge className='bg-gray-100 text-gray-800'>
+                              {t('status.offline')}
+                            </Badge>
+                          );
+                        default:
+                          return (
+                            <Badge className='bg-gray-100 text-gray-800'>
+                              {t('status.unknown')}
+                            </Badge>
+                          );
+                      }
+                    })()}
                   </div>
                 </CardHeader>
 
@@ -579,7 +607,7 @@ export function IoTDeviceManagement() {
                               <IconTemperature className='h-4 w-4 text-blue-600 dark:text-blue-400' />
                             </div>
                             <div className='text-muted-foreground mb-1 text-xs'>
-                              Nhiệt độ
+                              {t('labels.temperature')}
                             </div>
                             <div className='text-xl font-bold text-blue-700 dark:text-blue-300'>
                               {r.temperature != null
@@ -592,7 +620,7 @@ export function IoTDeviceManagement() {
                               <IconDroplet className='h-4 w-4 text-cyan-600 dark:text-cyan-400' />
                             </div>
                             <div className='text-muted-foreground mb-1 text-xs'>
-                              Độ ẩm
+                              {t('labels.humidity')}
                             </div>
                             <div className='text-xl font-bold text-cyan-700 dark:text-cyan-300'>
                               {r.humidity != null ? `${r.humidity}%` : '--'}
@@ -605,18 +633,18 @@ export function IoTDeviceManagement() {
                   <Separator />
                   <div className='space-y-2'>
                     <div className='text-muted-foreground flex items-center justify-between text-xs'>
-                      <span>Cập nhật:</span>
+                      <span>{t('labels.updated')}:</span>
                       <span className='font-medium'>
                         {formatLastUpdate(device.lastDataTime)}
                       </span>
                     </div>
                     <div className='text-muted-foreground flex items-center justify-between text-xs'>
-                      <span>Vị trí:</span>
+                      <span>{t('labels.location')}:</span>
                       <span className='font-medium'>
                         {device.truckId
-                          ? `Truck ${device.truckId.slice(0, 8)}...`
+                          ? `${t('labels.truckPrefix')} ${device.truckId.slice(0, 8)}...`
                           : device.areaId
-                            ? `Area ${device.areaId.slice(0, 8)}...`
+                            ? `${t('labels.areaPrefix')} ${device.areaId.slice(0, 8)}...`
                             : '—'}
                       </span>
                     </div>
@@ -631,7 +659,7 @@ export function IoTDeviceManagement() {
                       onClick={() => refreshDevice(device.id)}
                     >
                       <IconRefresh className='mr-1 h-3 w-3' />
-                      Làm mới
+                      {t('actions.refresh')}
                     </Button>
                     <Dialog>
                       <DialogTrigger asChild>
@@ -641,14 +669,16 @@ export function IoTDeviceManagement() {
                           onClick={() => setSelectedDevice(device)}
                         >
                           <IconEye className='mr-1 h-3 w-3' />
-                          Chi tiết
+                          {t('actions.details')}
                         </Button>
                       </DialogTrigger>
                       <DialogContent className='max-w-2xl'>
                         <DialogHeader>
                           <div>
                             <DialogTitle>
-                              Chi tiết thiết bị {selectedDevice?.id}
+                              {t('dialog.detailsTitle', {
+                                id: selectedDevice?.id ?? ''
+                              })}
                             </DialogTitle>
                           </div>
                         </DialogHeader>
@@ -658,18 +688,46 @@ export function IoTDeviceManagement() {
                             {/* Device Info */}
                             <div className='grid gap-4 md:grid-cols-2'>
                               <div className='space-y-2'>
-                                <Label>Trạng thái</Label>
-                                {getStatusBadge(selectedDevice.status)}
+                                <Label>{t('detail.status')}</Label>
+                                {(() => {
+                                  const s = selectedDevice.status;
+                                  switch (s) {
+                                    case 'online':
+                                      return (
+                                        <Badge className='bg-green-100 text-green-800'>
+                                          {t('status.online')}
+                                        </Badge>
+                                      );
+                                    case 'warning':
+                                      return (
+                                        <Badge className='bg-yellow-100 text-yellow-800'>
+                                          {t('status.warning')}
+                                        </Badge>
+                                      );
+                                    case 'offline':
+                                      return (
+                                        <Badge className='bg-gray-100 text-gray-800'>
+                                          {t('status.offline')}
+                                        </Badge>
+                                      );
+                                    default:
+                                      return (
+                                        <Badge className='bg-gray-100 text-gray-800'>
+                                          {t('status.unknown')}
+                                        </Badge>
+                                      );
+                                  }
+                                })()}
                               </div>
                               <div className='space-y-2'>
-                                <Label>Giá trị hiện tại</Label>
+                                <Label>{t('detail.currentValues')}</Label>
                                 {(() => {
                                   const r = parseDeviceData(selectedDevice);
                                   return (
                                     <div className='grid grid-cols-2 gap-3'>
                                       <div className='rounded-lg border p-3 text-center'>
                                         <div className='text-muted-foreground text-xs'>
-                                          Nhiệt độ
+                                          {t('labels.temperature')}
                                         </div>
                                         <div className='text-2xl font-bold'>
                                           {r.temperature != null
@@ -679,7 +737,7 @@ export function IoTDeviceManagement() {
                                       </div>
                                       <div className='rounded-lg border p-3 text-center'>
                                         <div className='text-muted-foreground text-xs'>
-                                          Độ ẩm
+                                          {t('labels.humidity')}
                                         </div>
                                         <div className='text-2xl font-bold'>
                                           {r.humidity != null
@@ -692,7 +750,7 @@ export function IoTDeviceManagement() {
                                 })()}
                               </div>
                               <div className='space-y-2'>
-                                <Label>Cập nhật lần cuối</Label>
+                                <Label>{t('detail.lastUpdate')}</Label>
                                 <p>
                                   {formatLastUpdate(
                                     selectedDevice.lastDataTime
@@ -705,9 +763,9 @@ export function IoTDeviceManagement() {
                             <div className='space-y-4'>
                               <div className='grid gap-4 md:grid-cols-2'>
                                 <div className='space-y-2'>
-                                  <Label>Area ID</Label>
+                                  <Label>{t('edit.areaId')}</Label>
                                   <Input
-                                    placeholder='VD: AREA_0001'
+                                    placeholder={t('edit.areaPlaceholder')}
                                     value={editAreaIdInput}
                                     onChange={(e) => {
                                       setEditAreaIdInput(e.target.value);
@@ -716,13 +774,13 @@ export function IoTDeviceManagement() {
                                     }}
                                   />
                                   <p className='text-muted-foreground text-xs'>
-                                    Để trống nếu muốn gán theo Truck
+                                    {t('edit.hintForTruck')}
                                   </p>
                                 </div>
                                 <div className='space-y-2'>
-                                  <Label>Truck ID</Label>
+                                  <Label>{t('edit.truckId')}</Label>
                                   <Input
-                                    placeholder='VD: TRUCK_0001'
+                                    placeholder={t('edit.truckPlaceholder')}
                                     value={editTruckIdInput}
                                     onChange={(e) => {
                                       setEditTruckIdInput(e.target.value);
@@ -731,7 +789,7 @@ export function IoTDeviceManagement() {
                                     }}
                                   />
                                   <p className='text-muted-foreground text-xs'>
-                                    Để trống nếu muốn gán theo Area
+                                    {t('edit.hintForArea')}
                                   </p>
                                 </div>
                               </div>
@@ -750,22 +808,18 @@ export function IoTDeviceManagement() {
                                   }}
                                   disabled={updating}
                                 >
-                                  Xóa nhập
+                                  {t('actions.clearInput')}
                                 </Button>
                                 <Button
                                   onClick={async () => {
                                     const hasArea = !!editAreaIdInput.trim();
                                     const hasTruck = !!editTruckIdInput.trim();
                                     if (hasArea && hasTruck) {
-                                      setUpdateError(
-                                        'Chỉ được chọn một trong Area hoặc Truck'
-                                      );
+                                      setUpdateError(t('errors.updateOnlyOne'));
                                       return;
                                     }
                                     if (!hasArea && !hasTruck) {
-                                      setUpdateError(
-                                        'Nhập Area ID hoặc Truck ID để cập nhật'
-                                      );
+                                      setUpdateError(t('errors.updateNeed'));
                                       return;
                                     }
                                     setUpdating(true);
@@ -816,7 +870,7 @@ export function IoTDeviceManagement() {
                                       setEditAreaIdInput('');
                                       setEditTruckIdInput('');
                                     } catch (e) {
-                                      setUpdateError('Cập nhật thất bại');
+                                      setUpdateError(t('errors.updateFailed'));
                                     } finally {
                                       setUpdating(false);
                                     }
@@ -824,8 +878,8 @@ export function IoTDeviceManagement() {
                                   disabled={updating}
                                 >
                                   {updating
-                                    ? 'Đang cập nhật...'
-                                    : 'Cập nhật vị trí'}
+                                    ? t('actions.updating')
+                                    : t('actions.updateLocation')}
                                 </Button>
                               </div>
                             </div>

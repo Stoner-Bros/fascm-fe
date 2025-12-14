@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { deleteCategory, fetchCategories } from '@/services/category.service';
 import type { Category } from '@/types/product';
+import { useTranslations } from 'next-intl';
 import {
   IconEdit,
   IconEye,
@@ -26,6 +27,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 export default function CategoriesPage() {
+  const t = useTranslations('Category');
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +49,7 @@ export default function CategoriesPage() {
         setHasNextPage(response.hasNextPage);
         setError(null);
       } catch (err: any) {
-        setError(err?.message ?? 'Failed to load categories');
+        setError(err?.message ?? t('toast.loadError'));
       } finally {
         setLoading(false);
       }
@@ -56,22 +58,22 @@ export default function CategoriesPage() {
   }, [page]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this category?')) {
+    if (!confirm(t('confirm.delete'))) {
       return;
     }
 
     try {
       await deleteCategory(id);
       toast({
-        title: 'Success',
-        description: 'Category deleted successfully'
+        title: t('toast.success'),
+        description: t('toast.deleteSuccess')
       });
       // Reload categories
       setCategories(categories.filter((c) => c.id !== id));
     } catch (err: any) {
       toast({
-        title: 'Error',
-        description: err?.message ?? 'Failed to delete category',
+        title: t('toast.error'),
+        description: err?.message ?? t('toast.deleteError'),
         variant: 'destructive'
       });
     }
@@ -89,13 +91,15 @@ export default function CategoriesPage() {
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
           <div>
-            <h2 className='text-3xl font-bold tracking-tight'>Categories</h2>
-            <p className='text-muted-foreground'>Manage product categories</p>
+            <h2 className='text-3xl font-bold tracking-tight'>
+              {t('list.title')}
+            </h2>
+            <p className='text-muted-foreground'>{t('list.subtitle')}</p>
           </div>
           <Link href='/dashboard/category/new'>
             <Button>
               <IconPlus className='mr-2 h-4 w-4' />
-              Add New Category
+              {t('list.new')}
             </Button>
           </Link>
         </div>
@@ -106,7 +110,7 @@ export default function CategoriesPage() {
               <div className='relative'>
                 <IconSearch className='text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4' />
                 <Input
-                  placeholder='Search categories by name or description...'
+                  placeholder={t('list.searchPlaceholder')}
                   className='pl-8'
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -137,7 +141,9 @@ export default function CategoriesPage() {
             <Card>
               <CardContent className='flex flex-col items-center justify-center py-12'>
                 <div className='rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200'>
-                  <p className='font-medium'>Error: {error}</p>
+                  <p className='font-medium'>
+                    {t('toast.error')}: {error}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -153,10 +159,10 @@ export default function CategoriesPage() {
                   <CardContent className='flex flex-col items-center justify-center py-12'>
                     <IconSearch className='text-muted-foreground mb-4 h-12 w-12' />
                     <h3 className='mb-2 text-lg font-semibold'>
-                      No Categories Found
+                      {t('list.empty.title')}
                     </h3>
                     <p className='text-muted-foreground mb-4'>
-                      Try adjusting your search
+                      {t('list.empty.description')}
                     </p>
                   </CardContent>
                 </Card>
@@ -171,7 +177,7 @@ export default function CategoriesPage() {
                               <div className='flex items-center gap-2'>
                                 <IconTag className='text-primary h-5 w-5' />
                                 <CardTitle className='text-lg'>
-                                  {category.name || 'Unnamed Category'}
+                                  {category.name || t('common.unnamed')}
                                 </CardTitle>
                               </div>
                               {category.description && (
@@ -185,7 +191,7 @@ export default function CategoriesPage() {
                         <CardContent className='space-y-4'>
                           {category.createdAt && (
                             <div className='text-muted-foreground text-xs'>
-                              Created:{' '}
+                              {t('common.created')}{' '}
                               {new Date(
                                 category.createdAt
                               ).toLocaleDateString()}
@@ -199,7 +205,7 @@ export default function CategoriesPage() {
                             >
                               <Button variant='outline' className='w-full'>
                                 <IconEye className='mr-2 h-4 w-4' />
-                                View
+                                {t('common.view')}
                               </Button>
                             </Link>
                             <Link href={`/dashboard/category/${category.id}`}>
@@ -227,17 +233,17 @@ export default function CategoriesPage() {
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={page === 1 || loading}
                       >
-                        Previous
+                        {t('pagination.previous')}
                       </Button>
                       <span className='text-muted-foreground text-sm'>
-                        Page {page}
+                        {t('pagination.page')} {page}
                       </span>
                       <Button
                         variant='outline'
                         onClick={() => setPage((p) => p + 1)}
                         disabled={!hasNextPage || loading}
                       >
-                        Next
+                        {t('pagination.next')}
                       </Button>
                     </div>
                   )}

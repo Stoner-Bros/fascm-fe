@@ -36,8 +36,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import { CreateProductDialog } from './_components/create-product-dialog';
+import { useTranslations } from 'next-intl';
 
 export default function ProductsPage() {
+  const t = useTranslations('Product');
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,7 +76,7 @@ export default function ProductsPage() {
       setHasNextPage(response.hasNextPage);
       setError(null);
     } catch (err: any) {
-      setError(err?.message ?? 'Failed to load products');
+      setError(err?.message ?? t('toast.loadError'));
     } finally {
       setLoading(false);
     }
@@ -86,22 +88,22 @@ export default function ProductsPage() {
   }, [page, categoryFilter]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) {
+    if (!confirm(t('confirm.delete'))) {
       return;
     }
 
     try {
       await deleteProduct(id);
       toast({
-        title: 'Success',
-        description: 'Product deleted successfully'
+        title: t('toast.success'),
+        description: t('toast.deleteSuccess')
       });
       // Reload products
       setProducts(products.filter((p) => p.id !== id));
     } catch (err: any) {
       toast({
-        title: 'Error',
-        description: err?.message ?? 'Failed to delete product',
+        title: t('toast.error'),
+        description: err?.message ?? t('toast.deleteError'),
         variant: 'destructive'
       });
     }
@@ -120,10 +122,10 @@ export default function ProductsPage() {
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
           <div>
-            <h2 className='text-3xl font-bold tracking-tight'>Products</h2>
-            <p className='text-muted-foreground'>
-              Manage and browse all products
-            </p>
+            <h2 className='text-3xl font-bold tracking-tight'>
+              {t('list.title')}
+            </h2>
+            <p className='text-muted-foreground'>{t('list.subtitle')}</p>
           </div>
           <CreateProductDialog onSuccess={loadProducts} />
         </div>
@@ -134,22 +136,26 @@ export default function ProductsPage() {
             <CardHeader>
               <CardTitle className='flex items-center gap-2'>
                 <IconFilter className='h-5 w-5' />
-                Filters
+                {t('list.filters.title')}
               </CardTitle>
             </CardHeader>
             <CardContent className='space-y-6'>
               <div className='space-y-2'>
-                <Label>Category</Label>
+                <Label>{t('list.filters.categoryLabel')}</Label>
                 <Select
                   value={categoryFilter === '' ? undefined : categoryFilter}
                   onValueChange={setCategoryFilter}
                   disabled={loading}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder='All Categories' />
+                    <SelectValue
+                      placeholder={t('list.filters.allCategories')}
+                    />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value='all'>All Categories</SelectItem>
+                    <SelectItem value='all'>
+                      {t('list.filters.allCategories')}
+                    </SelectItem>
                     {categories
                       .filter(
                         (category) =>
@@ -157,7 +163,7 @@ export default function ProductsPage() {
                       )
                       .map((category) => (
                         <SelectItem key={category.id} value={category.id}>
-                          {category.name || 'Unnamed Category'}
+                          {category.name || t('common.unnamedCategory')}
                         </SelectItem>
                       ))}
                   </SelectContent>
@@ -173,7 +179,7 @@ export default function ProductsPage() {
                   setPage(1);
                 }}
               >
-                Clear Filters
+                {t('list.filters.clear')}
               </Button>
             </CardContent>
           </Card>
@@ -185,7 +191,7 @@ export default function ProductsPage() {
                 <div className='relative'>
                   <IconSearch className='text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4' />
                   <Input
-                    placeholder='Search products by name, category, or description...'
+                    placeholder={t('list.searchPlaceholder')}
                     className='pl-8'
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -224,7 +230,7 @@ export default function ProductsPage() {
             ) : (
               <>
                 <div className='text-muted-foreground mb-4 text-sm'>
-                  Showing {filteredProducts.length} product(s)
+                  {t('list.showing')} {filteredProducts.length}
                 </div>
 
                 {filteredProducts.length === 0 ? (
@@ -232,10 +238,10 @@ export default function ProductsPage() {
                     <CardContent className='flex flex-col items-center justify-center py-12'>
                       <IconSearch className='text-muted-foreground mb-4 h-12 w-12' />
                       <h3 className='mb-2 text-lg font-semibold'>
-                        No Products Found
+                        {t('list.empty.title')}
                       </h3>
                       <p className='text-muted-foreground mb-4'>
-                        Try adjusting your search or filters
+                        {t('list.empty.description')}
                       </p>
                     </CardContent>
                   </Card>
@@ -248,7 +254,7 @@ export default function ProductsPage() {
                             <div className='bg-muted relative flex aspect-video items-center justify-center overflow-hidden'>
                               <Image
                                 src={product.image}
-                                alt={product.name || 'Product'}
+                                alt={product.name || t('common.product')}
                                 fill
                                 className='object-cover'
                               />
@@ -262,10 +268,11 @@ export default function ProductsPage() {
                             <div className='flex items-start justify-between'>
                               <div className='flex-1'>
                                 <CardTitle className='text-lg'>
-                                  {product.name || 'Unnamed Product'}
+                                  {product.name || t('common.unnamedProduct')}
                                 </CardTitle>
                                 <CardDescription>
-                                  {product.category?.name || 'No category'}
+                                  {product.category?.name ||
+                                    t('common.noCategory')}
                                 </CardDescription>
                               </div>
                               {product.status && (
@@ -279,8 +286,8 @@ export default function ProductsPage() {
                                 >
                                   {product.status === 'active' ||
                                   product.status === 'Active'
-                                    ? 'Đang kinh doanh'
-                                    : 'Ngừng kinh doanh'}
+                                    ? t('list.card.status.active')
+                                    : t('list.card.status.inactive')}
                                 </Badge>
                               )}
                             </div>
@@ -301,7 +308,7 @@ export default function ProductsPage() {
                               >
                                 <Button variant='outline' className='w-full'>
                                   <IconEye className='mr-2 h-4 w-4' />
-                                  View
+                                  {t('common.view')}
                                 </Button>
                               </Link>
                               <Link href={`/dashboard/product/${product.id}`}>
@@ -329,17 +336,17 @@ export default function ProductsPage() {
                           onClick={() => setPage((p) => Math.max(1, p - 1))}
                           disabled={page === 1 || loading}
                         >
-                          Previous
+                          {t('pagination.previous')}
                         </Button>
                         <span className='text-muted-foreground text-sm'>
-                          Page {page}
+                          {t('pagination.page')} {page}
                         </span>
                         <Button
                           variant='outline'
                           onClick={() => setPage((p) => p + 1)}
                           disabled={!hasNextPage || loading}
                         >
-                          Next
+                          {t('pagination.next')}
                         </Button>
                       </div>
                     )}

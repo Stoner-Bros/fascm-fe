@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/table';
 
 import { useToast } from '@/components/ui/use-toast';
+import { useTranslations } from 'next-intl';
 
 import {
   createConsignee,
@@ -92,6 +93,7 @@ const formatDateTime = (value?: string | Date) => {
 };
 
 export default function ConsigneesAccount() {
+  const t = useTranslations('Accounts.Consignees');
   const { toast } = useToast();
   const toastRef = useRef(toast);
   const isFetchingRef = useRef(false);
@@ -129,8 +131,9 @@ export default function ConsigneesAccount() {
     } catch (error) {
       toastRef.current?.({
         variant: 'destructive',
-        title: 'Không thể tải danh sách consignees',
-        description: error instanceof Error ? error.message : 'Vui lòng thử lại'
+        title: t('toast.loadError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
       });
     } finally {
       isFetchingRef.current = false;
@@ -164,7 +167,7 @@ export default function ConsigneesAccount() {
     ) {
       toast({
         variant: 'destructive',
-        title: 'Vui lòng điền đầy đủ thông tin bắt buộc'
+        title: t('form.fillRequired')
       });
       return;
     }
@@ -187,7 +190,7 @@ export default function ConsigneesAccount() {
             lastName: form.lastName
           }
         });
-        toast({ title: 'Đã cập nhật consignee' });
+        toast({ title: t('toast.updateSuccess') });
       } else {
         await createConsignee({
           contact: form.contact,
@@ -204,7 +207,7 @@ export default function ConsigneesAccount() {
             lastName: form.lastName
           }
         });
-        toast({ title: 'Đã tạo consignee thành công' });
+        toast({ title: t('toast.createSuccess') });
       }
 
       resetForm();
@@ -215,9 +218,10 @@ export default function ConsigneesAccount() {
       toast({
         variant: 'destructive',
         title: editingConsignee
-          ? 'Không thể cập nhật consignee'
-          : 'Không thể tạo consignee',
-        description: error instanceof Error ? error.message : 'Vui lòng thử lại'
+          ? t('toast.updateError')
+          : t('toast.createError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
       });
     } finally {
       setIsSubmitting(false);
@@ -225,16 +229,17 @@ export default function ConsigneesAccount() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa consignee này?')) return;
+    if (!window.confirm(t('actions.confirmDelete'))) return;
     try {
       await deleteConsignee(id);
-      toast({ title: 'Đã xóa consignee' });
+      toast({ title: t('toast.deleteSuccess') });
       await loadData();
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Không thể xóa consignee',
-        description: error instanceof Error ? error.message : 'Vui lòng thử lại'
+        title: t('toast.deleteError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
       });
     }
   };
@@ -307,37 +312,36 @@ export default function ConsigneesAccount() {
         <header className='flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
           <div className='space-y-2'>
             <h1 className='text-3xl font-bold tracking-tight'>
-              Quản lý tài khoản Consignees
+              {t('header.title')}
             </h1>
-            <p className='text-muted-foreground'>
-              Danh sách hiển thị trước, thao tác tạo/chỉnh sửa nằm trong hộp
-              thoại riêng.
-            </p>
+            <p className='text-muted-foreground'>{t('header.description')}</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
             <DialogTrigger asChild>
               <Button size='lg'>
-                + {editingConsignee ? 'Chỉnh sửa' : 'Tạo'} consignee
+                {editingConsignee
+                  ? t('actions.editConsignee')
+                  : t('actions.createConsignee')}
               </Button>
             </DialogTrigger>
             <DialogContent className='max-h-[95vh] overflow-y-auto sm:max-w-3xl'>
               <DialogHeader>
                 <DialogTitle>
                   {editingConsignee
-                    ? 'Cập nhật tài khoản consignee'
-                    : 'Tạo tài khoản consignee'}
+                    ? t('dialog.editTitle')
+                    : t('dialog.createTitle')}
                 </DialogTitle>
                 <DialogDescription>
                   {editingConsignee
-                    ? 'Điều chỉnh thông tin doanh nghiệp đã chọn.'
-                    : 'Nhập thông tin doanh nghiệp và tài khoản đăng nhập.'}
+                    ? t('dialog.editDescription')
+                    : t('dialog.createDescription')}
                 </DialogDescription>
               </DialogHeader>
 
               <div className='space-y-4'>
                 <div className='grid gap-4 md:grid-cols-2'>
                   <div className='space-y-2'>
-                    <Label>Tên tổ chức *</Label>
+                    <Label>{t('form.organizationName')}</Label>
                     <Input
                       value={form.organizationName}
                       onChange={(e) =>
@@ -346,11 +350,11 @@ export default function ConsigneesAccount() {
                           organizationName: e.target.value
                         }))
                       }
-                      placeholder='Công ty ABC'
+                      placeholder={t('placeholders.organizationName')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Người đại diện *</Label>
+                    <Label>{t('form.representativeName')}</Label>
                     <Input
                       value={form.representativeName}
                       onChange={(e) =>
@@ -359,11 +363,11 @@ export default function ConsigneesAccount() {
                           representativeName: e.target.value
                         }))
                       }
-                      placeholder='Nguyễn Văn A'
+                      placeholder={t('placeholders.representativeName')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Số liên hệ *</Label>
+                    <Label>{t('form.contact')}</Label>
                     <Input
                       value={form.contact}
                       onChange={(e) =>
@@ -372,11 +376,11 @@ export default function ConsigneesAccount() {
                           contact: e.target.value
                         }))
                       }
-                      placeholder='0123456789'
+                      placeholder={t('placeholders.contact')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Mã số thuế *</Label>
+                    <Label>{t('form.taxCode')}</Label>
                     <Input
                       value={form.taxCode}
                       onChange={(e) =>
@@ -385,11 +389,11 @@ export default function ConsigneesAccount() {
                           taxCode: e.target.value
                         }))
                       }
-                      placeholder='0123456789'
+                      placeholder={t('placeholders.taxCode')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Địa chỉ *</Label>
+                    <Label>{t('form.address')}</Label>
                     <Input
                       value={form.address}
                       onChange={(e) =>
@@ -398,11 +402,11 @@ export default function ConsigneesAccount() {
                           address: e.target.value
                         }))
                       }
-                      placeholder='Số 123, Quận 1, TP.HCM'
+                      placeholder={t('placeholders.address')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Giấy chứng nhận</Label>
+                    <Label>{t('form.certificate')}</Label>
                     <Input
                       value={form.certificate}
                       onChange={(e) =>
@@ -411,34 +415,35 @@ export default function ConsigneesAccount() {
                           certificate: e.target.value
                         }))
                       }
-                      placeholder='ISO 22000...'
+                      placeholder={t('placeholders.certificate')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>QR Code</Label>
+                    <Label>{t('form.qrCode')}</Label>
                     <Input
                       value={form.qrCode}
                       onChange={(e) =>
                         setForm((prev) => ({ ...prev, qrCode: e.target.value }))
                       }
-                      placeholder='URL hoặc mã'
+                      placeholder={t('placeholders.qrCode')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Email *</Label>
+                    <Label>{t('form.email')}</Label>
                     <Input
                       type='email'
                       value={form.email}
                       onChange={(e) =>
                         setForm((prev) => ({ ...prev, email: e.target.value }))
                       }
-                      placeholder='consignee@example.com'
+                      placeholder={t('placeholders.emailConsignee')}
                     />
                   </div>
                   <div className='space-y-2'>
                     <Label>
-                      Mật khẩu{' '}
-                      {editingConsignee ? '(để trống nếu giữ nguyên)' : '*'}
+                      {editingConsignee
+                        ? t('form.passwordOptional')
+                        : t('form.password')}
                     </Label>
                     <Input
                       type='password'
@@ -449,11 +454,11 @@ export default function ConsigneesAccount() {
                           password: e.target.value
                         }))
                       }
-                      placeholder='••••••••'
+                      placeholder={t('placeholders.password')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Họ *</Label>
+                    <Label>{t('form.firstName')}</Label>
                     <Input
                       value={form.firstName}
                       onChange={(e) =>
@@ -462,11 +467,11 @@ export default function ConsigneesAccount() {
                           firstName: e.target.value
                         }))
                       }
-                      placeholder='Nguyễn'
+                      placeholder={t('placeholders.firstName')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Tên *</Label>
+                    <Label>{t('form.lastName')}</Label>
                     <Input
                       value={form.lastName}
                       onChange={(e) =>
@@ -475,7 +480,7 @@ export default function ConsigneesAccount() {
                           lastName: e.target.value
                         }))
                       }
-                      placeholder='Văn A'
+                      placeholder={t('placeholders.lastName')}
                     />
                   </div>
                 </div>
@@ -488,7 +493,7 @@ export default function ConsigneesAccount() {
                   onClick={() => handleDialogChange(false)}
                   disabled={isSubmitting}
                 >
-                  Hủy
+                  {t('actions.cancel')}
                 </Button>
                 <Button
                   type='button'
@@ -497,11 +502,11 @@ export default function ConsigneesAccount() {
                 >
                   {isSubmitting
                     ? editingConsignee
-                      ? 'Đang lưu...'
-                      : 'Đang tạo...'
+                      ? t('actions.saving')
+                      : t('actions.creating')
                     : editingConsignee
-                      ? 'Lưu thay đổi'
-                      : 'Tạo mới'}
+                      ? t('actions.saveChanges')
+                      : t('actions.create')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -511,20 +516,18 @@ export default function ConsigneesAccount() {
         <Card className='flex flex-1 flex-col'>
           <CardHeader className='flex flex-col gap-4 md:flex-row md:items-center md:justify-between'>
             <div className='space-y-1'>
-              <CardTitle>Danh sách consignee</CardTitle>
-              <CardDescription>
-                Xem và chỉnh sửa các tài khoản consignee.
-              </CardDescription>
+              <CardTitle>{t('table.title')}</CardTitle>
+              <CardDescription>{t('table.description')}</CardDescription>
             </div>
             <Button variant='outline' onClick={loadData} disabled={isLoading}>
-              {isLoading ? 'Đang tải...' : 'Làm mới'}
+              {isLoading ? t('table.loading') : t('actions.refresh')}
             </Button>
           </CardHeader>
 
           <CardContent className='flex-1'>
             <div className='flex flex-col gap-2 md:flex-row md:items-center'>
               <Input
-                placeholder='Tìm kiếm theo tổ chức, đại diện, email...'
+                placeholder={t('filters.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className='flex-1'
@@ -536,10 +539,14 @@ export default function ConsigneesAccount() {
                 }
               >
                 <SelectTrigger className='md:w-[220px]'>
-                  <SelectValue placeholder='Lọc tổ chức' />
+                  <SelectValue
+                    placeholder={t('filters.organizationPlaceholder')}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='ALL'>Tất cả tổ chức</SelectItem>
+                  <SelectItem value='ALL'>
+                    {t('filters.allOrganizations')}
+                  </SelectItem>
                   {organizationOptions.map((option) => (
                     <SelectItem key={option} value={option}>
                       {option}
@@ -554,25 +561,27 @@ export default function ConsigneesAccount() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>STT</TableHead>
-                      <TableHead>Tổ chức</TableHead>
-                      <TableHead>Đại diện</TableHead>
-                      <TableHead>Liên hệ</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead className='text-right'>Thao tác</TableHead>
+                      <TableHead>{t('table.columns.index')}</TableHead>
+                      <TableHead>{t('table.columns.organization')}</TableHead>
+                      <TableHead>{t('table.columns.representative')}</TableHead>
+                      <TableHead>{t('table.columns.contact')}</TableHead>
+                      <TableHead>{t('table.columns.email')}</TableHead>
+                      <TableHead className='text-right'>
+                        {t('table.columns.actions')}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
                       <TableRow>
                         <TableCell colSpan={7} className='text-center'>
-                          Đang tải dữ liệu...
+                          {t('table.loading')}
                         </TableCell>
                       </TableRow>
                     ) : filteredConsignees.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={7} className='text-center'>
-                          Không có consignee nào phù hợp
+                          {t('table.empty')}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -600,14 +609,14 @@ export default function ConsigneesAccount() {
                                 size='sm'
                                 onClick={() => handleEdit(consignee)}
                               >
-                                Sửa
+                                {t('actions.edit')}
                               </Button>
                               <Button
                                 variant='destructive'
                                 size='sm'
                                 onClick={() => handleDelete(consignee.id)}
                               >
-                                Xóa
+                                {t('actions.delete')}
                               </Button>
                             </div>
                           </TableCell>

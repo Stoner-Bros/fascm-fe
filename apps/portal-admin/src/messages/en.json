@@ -22,6 +22,267 @@
       "logout": "Log out"
     }
   },
+  "Category": {
+    "list": {
+      "title": "Categories",
+      "subtitle": "Manage product categories",
+      "new": "Add New Category",
+      "searchPlaceholder": "Search categories by name or description...",
+      "empty": {
+        "title": "No Categories Found",
+        "description": "Try adjusting your search"
+      }
+    },
+    "tablePage": {
+      "description": "Manage product categories with advanced filtering and sorting"
+    },
+    "toast": {
+      "loadError": "Failed to load categories",
+      "success": "Success",
+      "deleteSuccess": "Category deleted successfully",
+      "error": "Error",
+      "deleteError": "Failed to delete category",
+      "validationError": "Validation Error",
+      "updateSuccess": "Category updated successfully",
+      "updateError": "Failed to update category"
+    },
+    "confirm": {
+      "delete": "Are you sure you want to delete this category?"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "page": "Page",
+      "next": "Next"
+    },
+    "common": {
+      "unnamed": "Unnamed Category",
+      "created": "Created:",
+      "view": "View",
+      "cancel": "Cancel"
+    },
+    "new": {
+      "title": "Create New Category",
+      "subtitle": "Add a new category for products",
+      "card": {
+        "title": "Category Information",
+        "description": "Enter the details of the new category"
+      },
+      "form": {
+        "englishLabel": "English Name",
+        "englishPlaceholder": "e.g., Vegetables",
+        "vietnameseLabel": "Vietnamese Name",
+        "vietnamesePlaceholder": "e.g., Rau củ",
+        "creating": "Creating...",
+        "submit": "Create Category"
+      },
+      "validation": {
+        "atLeastOneName": "At least one name (English or Vietnamese) is required"
+      }
+    },
+    "detail": {
+      "notFound": "Category not found",
+      "back": "Back to Categories",
+      "title": "Category Details",
+      "idLabel": "Category ID",
+      "edit": "Edit Category",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "form": {
+        "title": "Edit Category",
+        "description": "Update category information",
+        "nameLabel": "Category Name",
+        "namePlaceholder": "e.g., Vegetables",
+        "cancel": "Cancel",
+        "saving": "Saving...",
+        "save": "Save Changes"
+      },
+      "info": {
+        "title": "Details",
+        "nameLabel": "Category Name",
+        "notSet": "Not set"
+      },
+      "timestamps": {
+        "title": "Timestamps",
+        "created": "Created",
+        "updated": "Last Updated"
+      },
+      "sidebar": {
+        "quickActions": "Quick Actions",
+        "edit": "Edit Category",
+        "delete": "Delete Category",
+        "back": "Back to Categories"
+      }
+    }
+  },
+  "Product": {
+    "list": {
+      "title": "Products",
+      "subtitle": "Manage and browse all products",
+      "searchPlaceholder": "Search products by name, category, or description...",
+      "filters": {
+        "title": "Filters",
+        "categoryLabel": "Category",
+        "allCategories": "All Categories",
+        "clear": "Clear Filters"
+      },
+      "showing": "Showing",
+      "empty": {
+        "title": "No Products Found",
+        "description": "Try adjusting your search or filters"
+      },
+      "card": {
+        "status": {
+          "active": "Active",
+          "inactive": "Inactive"
+        }
+      }
+    },
+    "toast": {
+      "loadError": "Failed to load products",
+      "success": "Success",
+      "deleteSuccess": "Product deleted successfully",
+      "error": "Error",
+      "deleteError": "Failed to delete product",
+      "uploadSuccess": "Image uploaded successfully",
+      "uploadError": "Failed to upload image",
+      "createSuccess": "Product created successfully",
+      "createError": "Failed to create product",
+      "updateSuccess": "Product updated successfully",
+      "updateError": "Failed to update product",
+      "validationError": "Validation Error"
+    },
+    "confirm": {
+      "delete": "Are you sure you want to delete this product?"
+    },
+    "pagination": {
+      "previous": "Previous",
+      "page": "Page",
+      "next": "Next"
+    },
+    "common": {
+      "view": "View",
+      "product": "Product",
+      "unnamedProduct": "Unnamed Product",
+      "noCategory": "No category",
+      "unnamedCategory": "Unnamed Category",
+      "cancel": "Cancel"
+    },
+    "detail": {
+      "notFound": "Product not found",
+      "back": "Back to Products",
+      "title": "Product Details",
+      "idLabel": "Product ID",
+      "edit": "Edit Product",
+      "delete": "Delete",
+      "description": {
+        "title": "Description"
+      },
+      "price": {
+        "title": "Price Tiers",
+        "add": "Add Price",
+        "noTiers": "No price tiers defined"
+      },
+      "meta": {
+        "title": "Product Information",
+        "created": "Created",
+        "updated": "Last Updated"
+      },
+      "categoryInfo": {
+        "title": "Category Information"
+      },
+      "sidebar": {
+        "quickActions": "Quick Actions"
+      }
+    },
+    "edit": {
+      "title": "Edit Product",
+      "subtitle": "Update product information",
+      "card": {
+        "title": "Product Information",
+        "description": "Edit the details of the product"
+      },
+      "form": {
+        "basicTitle": "Basic Information",
+        "nameLabel": "Product Name",
+        "namePlaceholder": "e.g., Organic Tomatoes",
+        "categoryLabel": "Category",
+        "categoryPlaceholder": "Select a category",
+        "descriptionLabel": "Description",
+        "descriptionPlaceholder": "Enter product description...",
+        "saving": "Saving...",
+        "save": "Save Changes"
+      },
+      "image": {
+        "title": "Product Image",
+        "previewAlt": "Product preview",
+        "change": "Change Image"
+      },
+      "validation": {
+        "nameRequired": "Product name is required"
+      }
+    },
+    "createDialog": {
+      "trigger": "Add New Product",
+      "title": "Create New Product",
+      "description": "Add a new product to your inventory",
+      "basicTitle": "Basic Information",
+      "nameLabel": "Product Name",
+      "namePlaceholder": "e.g., Organic Tomatoes",
+      "categoryLabel": "Category",
+      "categoryPlaceholder": "Select a category",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Enter product description...",
+      "image": {
+        "title": "Product Image",
+        "previewAlt": "Product preview",
+        "change": "Change Image"
+      },
+      "footer": {
+        "creating": "Creating...",
+        "submit": "Create Product"
+      },
+      "validation": {
+        "nameRequired": "Product name is required"
+      },
+      "toast": {
+        "loadCategoriesError": "Failed to load categories"
+      }
+    },
+    "priceDialog": {
+      "confirmDelete": "Are you sure you want to delete this price tier?",
+      "toast": {
+        "deleteSuccess": "Price tier deleted successfully",
+        "deleteError": "Failed to delete price tier",
+        "updateSuccess": "Price tier updated successfully",
+        "createSuccess": "Price tier created successfully",
+        "updateError": "Failed to update price tier",
+        "createError": "Failed to create price tier"
+      },
+      "validation": {
+        "required": "Price and quantity are required"
+      },
+      "title": {
+        "edit": "Edit Price Tier",
+        "add": "Add Price Tier"
+      },
+      "description": {
+        "edit": "Update the price tier details",
+        "add": "Add a new price tier for this product"
+      },
+      "form": {
+        "quantity": "Quantity",
+        "quantityPlaceholder": "e.g., 100",
+        "price": "Price (VND)",
+        "pricePlaceholder": "e.g., 25000",
+        "unit": "Unit",
+        "unitPlaceholder": "e.g., kg, lb, box",
+        "updating": "Updating...",
+        "creating": "Creating...",
+        "update": "Update Price",
+        "add": "Add Price"
+      }
+    }
+  },
   "Delivery": {
     "title": "Delivery Management",
     "description": "Overview and management of deliveries with smart truck system",
@@ -443,5 +704,711 @@
     "orderScheduleHasBeenCanceled": "Order schedule {orderScheduleId} has been canceled",
     "orderScheduleRejected": "Order Rejected",
     "orderScheduleHasBeenRejected": "Order schedule {orderScheduleId} has been rejected"
+  },
+  "WarehouseDetail": {
+    "loading": "Loading...",
+    "toast": {
+      "loadWarehouseError": "Unable to load warehouse information",
+      "loadAreasError": "Unable to load areas"
+    },
+    "area": {
+      "noDescription": "No description",
+      "alert": "Alert",
+      "normal": "Normal",
+      "temperature": "Temperature",
+      "humidity": "Humidity"
+    },
+    "actions": {
+      "details": "Details"
+    }
+  },
+  "WarehouseActivities": {
+    "title": "Recent warehouse activities",
+    "description": "Track all inbound/outbound activities in the system",
+    "actions": {
+      "refresh": "Refresh",
+      "viewDetails": "View details"
+    },
+    "searchPlaceholder": "Search by product, ticket code, performer...",
+    "filters": {
+      "label": "Filters",
+      "activityType": "Activity type",
+      "warehouse": "Warehouse",
+      "allStatuses": "All statuses",
+      "warehouseOptions": {
+        "all": "All",
+        "main": "Main warehouse",
+        "retail": "Retail warehouse",
+        "cold": "Cold storage",
+        "fresh": "Fresh produce warehouse",
+        "confectionery": "Confectionery warehouse"
+      },
+      "activityTypeOptions": {
+        "all": "All",
+        "export": "Outbound",
+        "import": "Inbound"
+      }
+    },
+    "badges": {
+      "import": "Inbound",
+      "export": "Outbound"
+    },
+    "status": {
+      "pendingAssignment": "Pending assignment",
+      "assigned": "Assigned",
+      "delivering": "Delivering",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "summary": "Showing {count} results from total {total} activities",
+    "table": {
+      "date": "Date",
+      "code": "Ticket code",
+      "activityType": "Activity type",
+      "product": "Product",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "noResults": "No activities match the filters",
+    "detail": {
+      "title": "Details",
+      "importTicket": "Import Ticket",
+      "exportTicket": "Export Ticket",
+      "close": "Close",
+      "loading": "Loading...",
+      "empty": "No detail data",
+      "fields": {
+        "id": "ID",
+        "importDate": "Import date",
+        "exportDate": "Export date",
+        "batchCount": "Batch count",
+        "product": "Product",
+        "actualQuantity": "Actual quantity",
+        "quantity": "Quantity",
+        "unit": "Unit",
+        "area": "Area",
+        "consignee": "Consignee"
+      }
+    }
+  },
+  "AreaDetail": {
+    "loading": "Loading...",
+    "common": {
+      "warehouse": "Warehouse"
+    },
+    "header": {
+      "loading": "loading...",
+      "lastUpdated": "Last updated"
+    },
+    "actions": {
+      "refresh": "Refresh",
+      "settings": "Settings"
+    },
+    "status": {
+      "normal": "Normal",
+      "warning": "Warning",
+      "critical": "Critical",
+      "unknown": "Unknown",
+      "temperature": "Temperature",
+      "humidity": "Humidity"
+    },
+    "threshold": "Threshold",
+    "alerts": {
+      "title": "Alerts",
+      "active": "Active alert",
+      "typeDefault": "Alert",
+      "none": "No alerts",
+      "header": "Alerts & notifications",
+      "settings": "Notification settings",
+      "description": "Area environment alert",
+      "empty": "No alert data for this area."
+    },
+    "tabs": {
+      "overview": "Overview",
+      "products": "Products",
+      "alerts": "Alerts",
+      "history": "History",
+      "settings": "Settings",
+      "iot": "IoT Devices"
+    },
+    "overview": {
+      "title": "Area Information",
+      "name": "Area name",
+      "description": "Description",
+      "status": "Status",
+      "otherProduct": "Other product",
+      "noData": "No data"
+    },
+    "products": {
+      "title": "Products in area",
+      "manageImports": "Manage imports",
+      "loading": "Loading product list...",
+      "empty": "No products in this area yet. Please create an Import Ticket and assign batches to the area to display here.",
+      "group": {
+        "title": "Imported batches grouped by Import Ticket",
+        "description": "Grouped by Import Ticket within the area",
+        "loading": "Loading grouped batches...",
+        "empty": "No grouped batch data for Import Tickets.",
+        "columns": {
+          "importTicket": "Import Ticket",
+          "product": "Product",
+          "batchCode": "Batch code",
+          "importDate": "Import date",
+          "expiredAt": "Expiration date",
+          "spec": "Specification",
+          "priceBySpec": "Price by spec"
+        }
+      },
+      "list": {
+        "title": "Product list",
+        "columns": {
+          "product": "Product",
+          "batchCount": "Batch count",
+          "totalQuantity": "Total quantity"
+        }
+      },
+      "batches": {
+        "title": "Batches in area",
+        "selectPrompt": "Select a product to view batches",
+        "empty": "No batches found for this product in the area.",
+        "columns": {
+          "batchCode": "Batch code",
+          "quantity": "Quantity",
+          "unit": "Unit",
+          "createdAt": "Batch created at",
+          "id": "ID"
+        }
+      }
+    },
+    "history": {
+      "title": "Activity history",
+      "description": "Track all inbound/outbound activities in the area",
+      "exportReport": "Export report",
+      "loading": "Loading activity history...",
+      "searchPlaceholder": "Search products...",
+      "filters": {
+        "label": "Filters",
+        "activityType": "Activity type",
+        "all": "All",
+        "product": "Product",
+        "allProducts": "All products",
+        "allStatuses": "All statuses"
+      },
+      "import": "Inbound",
+      "export": "Outbound",
+      "status": {
+        "pendingAssignment": "Pending assignment",
+        "assigned": "Assigned",
+        "delivering": "Delivering",
+        "completed": "Completed",
+        "cancelled": "Cancelled",
+        "unknown": "Unknown",
+        "processing": "Processing"
+      },
+      "summary": "Showing {count} results from a total of {total} activities",
+      "noResults": "No activities match the filters",
+      "columns": {
+        "datetime": "Date & time",
+        "activityType": "Activity type",
+        "product": "Product",
+        "quantity": "Quantity",
+        "status": "Status"
+      }
+    },
+    "settings": {
+      "title": "Area settings",
+      "saving": "Saving...",
+      "save": "Save changes",
+      "threshold": {
+        "title": "Alert thresholds",
+        "tempDescription": "Minimum/maximum temperature from area-settings configuration",
+        "humidityDescription": "Minimum/maximum humidity from area-settings configuration"
+      },
+      "fields": {
+        "minTemperature": "Minimum temperature (°C)",
+        "maxTemperature": "Maximum temperature (°C)",
+        "minCapacity": "Minimum capacity (kg)",
+        "minCapacityPlaceholder": "e.g., 100",
+        "minHumidity": "Minimum humidity (%)",
+        "maxHumidity": "Maximum humidity (%)"
+      }
+    },
+    "iot": {
+      "title": "IoT Devices",
+      "loading": "Loading IoT devices...",
+      "areaLabel": "Area",
+      "empty": "No IoT devices"
+    }
+  }
+  ,
+  "IoTDevices": {
+    "metadata": {
+      "title": "Dashboard: IoT Device Management"
+    },
+    "header": {
+      "title": "IoT Devices Management",
+      "description": "Monitor and control IoT devices in the warehouse"
+    },
+    "actions": {
+      "add": "Add device",
+      "refresh": "Refresh",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "create": "Create device",
+      "details": "Details",
+      "clearInput": "Clear input",
+      "updating": "Updating...",
+      "updateLocation": "Update location"
+    },
+    "dialog": {
+      "addTitle": "Add IoT Device",
+      "detailsTitle": "Device details {id}"
+    },
+    "stats": {
+      "totalDevices": "Total devices",
+      "online": "Online",
+      "offline": "Offline",
+      "warning": "Warning",
+      "loading": "Loading IoT devices..."
+    },
+    "filters": {
+      "searchPlaceholder": "Search by ID, type, Area or Truck...",
+      "statusPlaceholder": "Filter by status",
+      "allStatus": "All status"
+    },
+    "status": {
+      "online": "Online",
+      "offline": "Offline",
+      "warning": "Warning",
+      "unknown": "Unknown"
+    },
+    "empty": {
+      "title": "No devices found",
+      "description": "Try adjusting your filters or search"
+    },
+    "labels": {
+      "temperature": "Temperature",
+      "humidity": "Humidity",
+      "updated": "Updated",
+      "location": "Location",
+      "truckPrefix": "Truck",
+      "areaPrefix": "Area"
+    },
+    "detail": {
+      "status": "Status",
+      "currentValues": "Current values",
+      "lastUpdate": "Last update"
+    },
+    "edit": {
+      "areaId": "Area ID",
+      "areaPlaceholder": "e.g., AREA_0001",
+      "truckId": "Truck ID",
+      "truckPlaceholder": "e.g., TRUCK_0001",
+      "hintForTruck": "Leave empty to assign by Truck",
+      "hintForArea": "Leave empty to assign by Area"
+    },
+    "errors": {
+      "createNeedAreaOrTruck": "Enter either Area ID or Truck ID",
+      "createOnlyOne": "Select only one: Area or Truck",
+      "createFailed": "Failed to create device",
+      "updateOnlyOne": "Select only one: Area or Truck",
+      "updateNeed": "Enter Area ID or Truck ID to update",
+      "updateFailed": "Update failed"
+    }
+  },
+  "Accounts": {
+    "Managers": {
+      "header": {
+        "title": "Manager Accounts",
+        "description": "Manage manager accounts and details"
+      },
+      "actions": {
+        "createManager": "Create Manager",
+        "edit": "Edit",
+        "delete": "Delete",
+        "clearForm": "Clear form",
+        "refresh": "Refresh",
+        "saving": "Saving...",
+        "creating": "Creating...",
+        "saveChanges": "Save Changes"
+      },
+      "dialog": {
+        "editTitle": "Update manager account",
+        "createTitle": "Create manager account",
+        "editDescription": "Adjust personal info, optional warehouse and login account.",
+        "createDescription": "Enter personal info, optional warehouse and login account."
+      },
+      "form": {
+        "firstName": "First Name *",
+        "lastName": "Last Name *",
+        "email": "Email *",
+        "password": "Password *",
+        "warehouseOptional": "Warehouse (optional)",
+        "warehouseHelper": "Leave empty if not assigning to a warehouse"
+      },
+      "placeholders": {
+        "firstName": "John",
+        "lastName": "Doe",
+        "emailManager": "manager@example.com",
+        "password": "••••••••",
+        "selectWarehouse": "Select warehouse",
+        "noWarehouse": "No warehouse"
+      },
+      "filters": {
+        "searchPlaceholder": "Search by name, email, account ID...",
+        "warehousePlaceholder": "Filter by warehouse",
+        "allWarehouses": "All warehouses"
+      },
+      "table": {
+        "title": "Managers",
+        "description": "Track and edit manager accounts.",
+        "loading": "Loading data...",
+        "empty": "No matching managers",
+        "columns": {
+          "index": "No.",
+          "firstName": "First Name",
+          "lastName": "Last Name",
+          "email": "Email",
+          "warehouse": "Warehouse",
+          "address": "Address",
+          "actions": "Actions"
+        }
+      },
+      "toast": {
+        "loadError": "Failed to load managers",
+        "tryAgain": "Please try again",
+        "updateSuccess": "Manager updated",
+        "createSuccess": "Manager created",
+        "updateError": "Failed to update manager",
+        "createError": "Failed to create manager",
+        "deleteSuccess": "Manager deleted",
+        "deleteError": "Failed to delete manager"
+      }
+    },
+    "Consignees": {
+      "header": {
+        "title": "Consignee Accounts",
+        "description": "Manage consignee accounts and details"
+      },
+      "actions": {
+        "editConsignee": "Edit Consignee",
+        "createConsignee": "Create Consignee",
+        "edit": "Edit",
+        "delete": "Delete",
+        "cancel": "Cancel",
+        "refresh": "Refresh",
+        "saving": "Saving...",
+        "creating": "Creating...",
+        "saveChanges": "Save Changes",
+        "create": "Create",
+        "confirmDelete": "Are you sure you want to delete this consignee?"
+      },
+      "dialog": {
+        "editTitle": "Update consignee account",
+        "createTitle": "Create consignee account",
+        "editDescription": "Adjust organization info and login account.",
+        "createDescription": "Enter organization info and login account."
+      },
+      "form": {
+        "organizationName": "Organization Name *",
+        "representativeName": "Representative *",
+        "contact": "Contact *",
+        "taxCode": "Tax Code *",
+        "address": "Address *",
+        "certificate": "Certificate",
+        "qrCode": "QR Code",
+        "email": "Email *",
+        "password": "Password *",
+        "passwordOptional": "Password (optional)",
+        "firstName": "First Name *",
+        "lastName": "Last Name *"
+      },
+      "placeholders": {
+        "organizationName": "Company ABC",
+        "representativeName": "John Doe",
+        "contact": "0123456789",
+        "taxCode": "0123456789",
+        "address": "456, District C, Province D",
+        "certificate": "VietGAP...",
+        "qrCode": "URL or code",
+        "emailConsignee": "consignee@example.com",
+        "password": "••••••••",
+        "firstName": "John",
+        "lastName": "Doe"
+      },
+      "filters": {
+        "searchPlaceholder": "Search by organization, representative, email...",
+        "organizationPlaceholder": "Filter by organization",
+        "allOrganizations": "All organizations"
+      },
+      "table": {
+        "title": "Consignees",
+        "description": "Track and edit consignee accounts.",
+        "loading": "Loading data...",
+        "empty": "No matching consignees",
+        "columns": {
+          "index": "No.",
+          "organization": "Organization",
+          "representative": "Representative",
+          "contact": "Contact",
+          "email": "Email",
+          "actions": "Actions"
+        }
+      },
+      "toast": {
+        "loadError": "Failed to load consignees",
+        "tryAgain": "Please try again",
+        "updateSuccess": "Consignee updated",
+        "createSuccess": "Consignee created",
+        "updateError": "Failed to update consignee",
+        "createError": "Failed to create consignee",
+        "deleteSuccess": "Consignee deleted",
+        "deleteError": "Failed to delete consignee"
+      }
+    },
+    "Suppliers": {
+      "header": {
+        "title": "Supplier Accounts",
+        "description": "Manage supplier accounts and details"
+      },
+      "actions": {
+        "editSupplier": "Edit Supplier",
+        "createSupplier": "Create Supplier",
+        "edit": "Edit",
+        "delete": "Delete",
+        "clear": "Clear",
+        "refresh": "Refresh",
+        "saving": "Saving...",
+        "creating": "Creating...",
+        "saveChanges": "Save Changes",
+        "create": "Create",
+        "confirmDelete": "Are you sure you want to delete this supplier?"
+      },
+      "dialog": {
+        "editTitle": "Update supplier account",
+        "createTitle": "Create supplier account",
+        "editDescription": "Adjust business info, warehouse, and login account.",
+        "createDescription": "Enter business info, optional warehouse, and login account."
+      },
+      "form": {
+        "fillRequired": "Please fill in all required fields",
+        "gardenName": "Garden Name *",
+        "representativeName": "Representative *",
+        "contact": "Contact *",
+        "taxCode": "Tax Code *",
+        "address": "Address *",
+        "certificate": "Certificate",
+        "qrCode": "QR Code",
+        "email": "Email *",
+        "password": "Password *",
+        "passwordOptional": "Password (optional)",
+        "firstName": "First Name *",
+        "lastName": "Last Name *",
+        "warehouseOptional": "Warehouse (optional)",
+        "unassignedWarehouse": "Unassigned warehouse"
+      },
+      "placeholders": {
+        "gardenName": "Orange Garden X",
+        "representativeName": "John Doe",
+        "contact": "0123456789",
+        "taxCode": "0123456789",
+        "address": "456, District C, Province D",
+        "certificate": "VietGAP...",
+        "qrCode": "URL or code",
+        "emailSupplier": "supplier@example.com",
+        "password": "••••••••",
+        "firstName": "Tran",
+        "lastName": "Van C",
+        "warehouse": "Select warehouse"
+      },
+      "filters": {
+        "searchPlaceholder": "Search by garden, representative, email...",
+        "warehousePlaceholder": "Filter by warehouse",
+        "allWarehouses": "All warehouses"
+      },
+      "labels": {
+        "unassigned": "Unassigned"
+      },
+      "table": {
+        "title": "Suppliers",
+        "description": "Track and edit supplier accounts.",
+        "loading": "Loading data...",
+        "empty": "No matching suppliers",
+        "columns": {
+          "index": "No.",
+          "garden": "Garden",
+          "representative": "Representative",
+          "email": "Email",
+          "warehouse": "Warehouse",
+          "address": "Address",
+          "actions": "Actions"
+        }
+      },
+      "toast": {
+        "loadError": "Failed to load suppliers",
+        "tryAgain": "Please try again",
+        "updateSuccess": "Supplier updated",
+        "createSuccess": "Supplier created",
+        "updateError": "Failed to update supplier",
+        "createError": "Failed to create supplier",
+        "deleteSuccess": "Supplier deleted",
+        "deleteError": "Failed to delete supplier"
+      }
+    },
+    "DeliveryStaffs": {
+      "header": {
+        "title": "Delivery Staff Accounts",
+        "description": "Manage driver accounts, license and assignments"
+      },
+      "actions": {
+        "editDeliveryStaff": "Edit Delivery Staff",
+        "createDeliveryStaff": "Create Delivery Staff",
+        "edit": "Edit",
+        "delete": "Delete",
+        "clearForm": "Clear form",
+        "refresh": "Refresh",
+        "saving": "Saving...",
+        "creating": "Creating...",
+        "saveChanges": "Save Changes",
+        "create": "Create",
+        "confirmDelete": "Are you sure you want to delete this delivery staff?"
+      },
+      "dialog": {
+        "editTitle": "Update delivery staff account",
+        "createTitle": "Create delivery staff account",
+        "editDescription": "Adjust license info, optional warehouse/truck, and login account.",
+        "createDescription": "Enter license info, optional warehouse/truck, and login account."
+      },
+      "form": {
+        "warehouseOptional": "Warehouse (optional)",
+        "truckOptional": "Truck (optional)",
+        "licenseNumber": "License Number *",
+        "licensePhoto": "License Photo",
+        "licenseExpiredAt": "License Expired At *",
+        "firstName": "First Name *",
+        "lastName": "Last Name *",
+        "email": "Email *",
+        "password": "Password *",
+        "passwordOptional": "Password (optional)"
+      },
+      "placeholders": {
+        "selectWarehouse": "Select warehouse",
+        "noWarehouse": "No warehouse",
+        "selectTruck": "Select truck",
+        "noTruck": "No truck",
+        "licenseNumber": "e.g., 0123456789",
+        "licensePhoto": "https://...",
+        "firstName": "John",
+        "lastName": "Doe",
+        "emailDriver": "driver@example.com",
+        "password": "••••••••"
+      },
+      "filters": {
+        "searchPlaceholder": "Search by name, email, truck, license...",
+        "warehousePlaceholder": "Filter by warehouse",
+        "allWarehouses": "All warehouses"
+      },
+      "table": {
+        "title": "Delivery Staff",
+        "description": "Track and edit delivery staff accounts.",
+        "loading": "Loading data...",
+        "empty": "No matching delivery staff",
+        "columns": {
+          "index": "No.",
+          "firstName": "First Name",
+          "lastName": "Last Name",
+          "email": "Email",
+          "warehouse": "Warehouse",
+          "truck": "Truck",
+          "licenseExpired": "License Expired",
+          "actions": "Actions"
+        }
+      },
+      "toast": {
+        "loadError": "Failed to load delivery staff",
+        "tryAgain": "Please try again",
+        "updateSuccess": "Delivery staff updated",
+        "createSuccess": "Delivery staff created",
+        "updateError": "Failed to update delivery staff",
+        "createError": "Failed to create delivery staff",
+        "deleteSuccess": "Delivery staff deleted",
+        "deleteError": "Failed to delete delivery staff"
+      }
+    },
+    "Staffs": {
+      "header": {
+        "title": "Staff Accounts",
+        "description": "Manage internal staff accounts and details"
+      },
+      "actions": {
+        "editStaff": "Edit Staff",
+        "createStaff": "Create Staff",
+        "edit": "Edit",
+        "delete": "Delete",
+        "clearForm": "Clear form",
+        "refresh": "Refresh",
+        "saving": "Saving...",
+        "creating": "Creating...",
+        "saveChanges": "Save Changes",
+        "create": "Create",
+        "confirmDelete": "Are you sure you want to delete this staff?"
+      },
+      "dialog": {
+        "editTitle": "Update staff account",
+        "createTitle": "Create staff account",
+        "editDescription": "Adjust position, optional warehouse, and login account.",
+        "createDescription": "Enter position, optional warehouse, and login account."
+      },
+      "form": {
+        "position": "Position *",
+        "warehouseOptional": "Warehouse (optional)",
+        "firstName": "First Name *",
+        "lastName": "Last Name *",
+        "email": "Email *",
+        "password": "Password *"
+      },
+      "placeholders": {
+        "position": "e.g., Supervisor",
+        "selectWarehouse": "Select warehouse",
+        "noWarehouse": "No warehouse",
+        "firstName": "John",
+        "lastName": "Doe",
+        "emailStaff": "staff@example.com",
+        "password": "••••••••"
+      },
+      "filters": {
+        "searchPlaceholder": "Search by name, email, position...",
+        "warehousePlaceholder": "Filter by warehouse",
+        "allWarehouses": "All warehouses"
+      },
+      "table": {
+        "title": "Staff",
+        "description": "Track and edit staff accounts.",
+        "loading": "Loading data...",
+        "empty": "No matching staff",
+        "columns": {
+          "index": "No.",
+          "firstName": "First Name",
+          "lastName": "Last Name",
+          "email": "Email",
+          "position": "Position",
+          "warehouse": "Warehouse",
+          "createdAt": "Created At",
+          "actions": "Actions"
+        }
+      },
+      "toast": {
+        "loadError": "Failed to load staff",
+        "tryAgain": "Please try again",
+        "updateSuccess": "Staff updated",
+        "createSuccess": "Staff created",
+        "updateError": "Failed to update staff",
+        "createError": "Failed to create staff",
+        "deleteSuccess": "Staff deleted",
+        "deleteError": "Failed to delete staff"
+      }
+    }
   }
 }

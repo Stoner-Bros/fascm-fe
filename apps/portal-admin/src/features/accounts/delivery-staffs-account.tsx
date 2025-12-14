@@ -36,6 +36,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
+import { useTranslations } from 'next-intl';
 import {
   createDeliveryStaff,
   deleteDeliveryStaff,
@@ -82,6 +83,7 @@ const toInputDateTime = (value?: string) => {
 };
 
 export default function DeliveryStaffsAccount() {
+  const t = useTranslations('Accounts.DeliveryStaffs');
   const { toast } = useToast();
   const toastRef = useRef(toast);
   const [form, setForm] = useState(DEFAULT_FORM);
@@ -117,8 +119,9 @@ export default function DeliveryStaffsAccount() {
     } catch (error) {
       toastRef.current?.({
         variant: 'destructive',
-        title: 'Không thể tải danh sách delivery staff',
-        description: error instanceof Error ? error.message : 'Vui lòng thử lại'
+        title: t('toast.loadError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
       });
     } finally {
       isFetchingRef.current = false;
@@ -153,7 +156,7 @@ export default function DeliveryStaffsAccount() {
     ) {
       toast({
         variant: 'destructive',
-        title: 'Vui lòng điền đầy đủ thông tin bắt buộc'
+        title: t('form.fillRequired')
       });
       return;
     }
@@ -176,10 +179,10 @@ export default function DeliveryStaffsAccount() {
 
       if (editingStaff) {
         await updateDeliveryStaff(editingStaff.id, payload);
-        toast({ title: 'Đã cập nhật delivery staff' });
+        toast({ title: t('toast.updateSuccess') });
       } else {
         await createDeliveryStaff(payload);
-        toast({ title: 'Đã tạo delivery staff thành công' });
+        toast({ title: t('toast.createSuccess') });
       }
 
       resetForm();
@@ -189,10 +192,9 @@ export default function DeliveryStaffsAccount() {
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: editingStaff
-          ? 'Không thể cập nhật delivery staff'
-          : 'Không thể tạo delivery staff',
-        description: error instanceof Error ? error.message : 'Vui lòng thử lại'
+        title: editingStaff ? t('toast.updateError') : t('toast.createError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
       });
     } finally {
       setIsSubmitting(false);
@@ -200,17 +202,17 @@ export default function DeliveryStaffsAccount() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa delivery staff này?'))
-      return;
+    if (!window.confirm(t('actions.confirmDelete'))) return;
     try {
       await deleteDeliveryStaff(id);
-      toast({ title: 'Đã xóa delivery staff' });
+      toast({ title: t('toast.deleteSuccess') });
       await loadData();
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Không thể xóa delivery staff',
-        description: error instanceof Error ? error.message : 'Vui lòng thử lại'
+        title: t('toast.deleteError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
       });
     }
   };
@@ -275,36 +277,35 @@ export default function DeliveryStaffsAccount() {
         <header className='flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
           <div className='space-y-2'>
             <h1 className='text-3xl font-bold tracking-tight'>
-              Quản lý tài khoản Delivery Staffs
+              {t('header.title')}
             </h1>
-            <p className='text-muted-foreground'>
-              Danh sách tài xế luôn hiện trước, tạo hoặc chỉnh sửa nằm trong hộp
-              thoại riêng.
-            </p>
+            <p className='text-muted-foreground'>{t('header.description')}</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
             <DialogTrigger asChild>
               <Button size='lg'>
-                + {editingStaff ? 'Chỉnh sửa' : 'Tạo'} delivery staff
+                {editingStaff
+                  ? t('actions.editDeliveryStaff')
+                  : t('actions.createDeliveryStaff')}
               </Button>
             </DialogTrigger>
             <DialogContent className='max-h-[95vh] overflow-y-auto sm:max-w-3xl'>
               <DialogHeader>
                 <DialogTitle>
                   {editingStaff
-                    ? 'Cập nhật tài khoản delivery staff'
-                    : 'Tạo tài khoản delivery staff'}
+                    ? t('dialog.editTitle')
+                    : t('dialog.createTitle')}
                 </DialogTitle>
                 <DialogDescription>
                   {editingStaff
-                    ? 'Chỉnh sửa thông tin giấy phép và tài khoản.'
-                    : 'Nhập thông tin giấy phép và tài khoản người dùng.'}
+                    ? t('dialog.editDescription')
+                    : t('dialog.createDescription')}
                 </DialogDescription>
               </DialogHeader>
               <div className='space-y-4'>
                 <div className='grid gap-4 md:grid-cols-2'>
                   <div className='space-y-2'>
-                    <Label>Warehouse (tùy chọn)</Label>
+                    <Label>{t('form.warehouseOptional')}</Label>
                     <Select
                       value={form.warehouseId || NONE_VALUE}
                       onValueChange={(value) =>
@@ -315,11 +316,13 @@ export default function DeliveryStaffsAccount() {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder='Chọn warehouse' />
+                        <SelectValue
+                          placeholder={t('placeholders.selectWarehouse')}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value={NONE_VALUE}>
-                          Không gán warehouse
+                          {t('placeholders.noWarehouse')}
                         </SelectItem>
                         {warehouses.map((warehouse) => (
                           <SelectItem key={warehouse.id} value={warehouse.id}>
@@ -330,7 +333,7 @@ export default function DeliveryStaffsAccount() {
                     </Select>
                   </div>
                   <div className='space-y-2'>
-                    <Label>Truck (tùy chọn)</Label>
+                    <Label>{t('form.truckOptional')}</Label>
                     <Select
                       value={form.truckId || NONE_VALUE}
                       onValueChange={(value) =>
@@ -341,11 +344,13 @@ export default function DeliveryStaffsAccount() {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder='Chọn truck' />
+                        <SelectValue
+                          placeholder={t('placeholders.selectTruck')}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value={NONE_VALUE}>
-                          Không gán truck
+                          {t('placeholders.noTruck')}
                         </SelectItem>
                         {trucks.map((truck) => (
                           <SelectItem key={truck.id} value={truck.id}>
@@ -356,7 +361,7 @@ export default function DeliveryStaffsAccount() {
                     </Select>
                   </div>
                   <div className='space-y-2'>
-                    <Label>Số giấy phép *</Label>
+                    <Label>{t('form.licenseNumber')}</Label>
                     <Input
                       value={form.licenseNumber}
                       onChange={(e) =>
@@ -365,11 +370,11 @@ export default function DeliveryStaffsAccount() {
                           licenseNumber: e.target.value
                         }))
                       }
-                      placeholder='123456789'
+                      placeholder={t('placeholders.licenseNumber')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Ảnh giấy phép</Label>
+                    <Label>{t('form.licensePhoto')}</Label>
                     <Input
                       value={form.licensePhoto}
                       onChange={(e) =>
@@ -378,11 +383,11 @@ export default function DeliveryStaffsAccount() {
                           licensePhoto: e.target.value
                         }))
                       }
-                      placeholder='URL ảnh'
+                      placeholder={t('placeholders.licensePhoto')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Ngày hết hạn giấy phép *</Label>
+                    <Label>{t('form.licenseExpiredAt')}</Label>
                     <Input
                       type='datetime-local'
                       value={form.licenseExpiredAt}
@@ -395,7 +400,7 @@ export default function DeliveryStaffsAccount() {
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Họ *</Label>
+                    <Label>{t('form.firstName')}</Label>
                     <Input
                       value={form.firstName}
                       onChange={(e) =>
@@ -404,11 +409,11 @@ export default function DeliveryStaffsAccount() {
                           firstName: e.target.value
                         }))
                       }
-                      placeholder='Đỗ'
+                      placeholder={t('placeholders.firstName')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Tên *</Label>
+                    <Label>{t('form.lastName')}</Label>
                     <Input
                       value={form.lastName}
                       onChange={(e) =>
@@ -417,24 +422,25 @@ export default function DeliveryStaffsAccount() {
                           lastName: e.target.value
                         }))
                       }
-                      placeholder='Văn E'
+                      placeholder={t('placeholders.lastName')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Email *</Label>
+                    <Label>{t('form.email')}</Label>
                     <Input
                       type='email'
                       value={form.email}
                       onChange={(e) =>
                         setForm((prev) => ({ ...prev, email: e.target.value }))
                       }
-                      placeholder='driver@example.com'
+                      placeholder={t('placeholders.emailDriver')}
                     />
                   </div>
                   <div className='space-y-2'>
                     <Label>
-                      Mật khẩu{' '}
-                      {editingStaff ? '(để trống nếu giữ nguyên)' : '*'}{' '}
+                      {editingStaff
+                        ? t('form.passwordOptional')
+                        : t('form.password')}
                     </Label>
                     <Input
                       type='password'
@@ -445,7 +451,7 @@ export default function DeliveryStaffsAccount() {
                           password: e.target.value
                         }))
                       }
-                      placeholder='••••••••'
+                      placeholder={t('placeholders.password')}
                     />
                   </div>
                 </div>
@@ -456,16 +462,16 @@ export default function DeliveryStaffsAccount() {
                   onClick={resetForm}
                   disabled={isSubmitting}
                 >
-                  Xóa dữ liệu
+                  {t('actions.clearForm')}
                 </Button>
                 <Button onClick={handleSubmit} disabled={isSubmitting}>
                   {isSubmitting
                     ? editingStaff
-                      ? 'Đang cập nhật...'
-                      : 'Đang xử lý...'
+                      ? t('actions.saving')
+                      : t('actions.creating')
                     : editingStaff
-                      ? 'Cập nhật delivery staff'
-                      : 'Tạo delivery staff'}
+                      ? t('actions.saveChanges')
+                      : t('actions.createDeliveryStaff')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -476,18 +482,16 @@ export default function DeliveryStaffsAccount() {
           <CardHeader className='flex flex-col gap-4'>
             <div className='flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
               <div>
-                <CardTitle>Danh sách delivery staff</CardTitle>
-                <CardDescription>
-                  Theo dõi và chỉnh sửa tài khoản tài xế.
-                </CardDescription>
+                <CardTitle>{t('table.title')}</CardTitle>
+                <CardDescription>{t('table.description')}</CardDescription>
               </div>
               <Button variant='outline' onClick={loadData} disabled={isLoading}>
-                {isLoading ? 'Đang tải...' : 'Làm mới'}
+                {isLoading ? t('table.loading') : t('actions.refresh')}
               </Button>
             </div>
             <div className='flex flex-col gap-2 md:flex-row md:items-center'>
               <Input
-                placeholder='Tìm theo tên, email, biển số, giấy phép...'
+                placeholder={t('filters.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className='flex-1'
@@ -497,10 +501,14 @@ export default function DeliveryStaffsAccount() {
                 onValueChange={(value) => setWarehouseFilter(value)}
               >
                 <SelectTrigger className='md:w-[220px]'>
-                  <SelectValue placeholder='Lọc theo warehouse' />
+                  <SelectValue
+                    placeholder={t('filters.warehousePlaceholder')}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='ALL'>Tất cả warehouse</SelectItem>
+                  <SelectItem value='ALL'>
+                    {t('filters.allWarehouses')}
+                  </SelectItem>
                   {warehouses.map((warehouse) => (
                     <SelectItem key={warehouse.id} value={warehouse.id}>
                       {warehouse.name}
@@ -516,27 +524,29 @@ export default function DeliveryStaffsAccount() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>STT</TableHead>
-                      <TableHead>Họ</TableHead>
-                      <TableHead>Tên</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Warehouse</TableHead>
-                      <TableHead>Truck</TableHead>
-                      <TableHead>Hết hạn GPLX</TableHead>
-                      <TableHead className='text-right'>Thao tác</TableHead>
+                      <TableHead>{t('table.columns.index')}</TableHead>
+                      <TableHead>{t('table.columns.firstName')}</TableHead>
+                      <TableHead>{t('table.columns.lastName')}</TableHead>
+                      <TableHead>{t('table.columns.email')}</TableHead>
+                      <TableHead>{t('table.columns.warehouse')}</TableHead>
+                      <TableHead>{t('table.columns.truck')}</TableHead>
+                      <TableHead>{t('table.columns.licenseExpired')}</TableHead>
+                      <TableHead className='text-right'>
+                        {t('table.columns.actions')}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
                       <TableRow>
                         <TableCell colSpan={8} className='text-center'>
-                          Đang tải dữ liệu...
+                          {t('table.loading')}
                         </TableCell>
                       </TableRow>
                     ) : filteredStaffs.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={8} className='text-center'>
-                          Không có delivery staff nào phù hợp
+                          {t('table.empty')}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -570,14 +580,14 @@ export default function DeliveryStaffsAccount() {
                                 size='sm'
                                 onClick={() => handleEdit(staff)}
                               >
-                                Sửa
+                                {t('actions.edit')}
                               </Button>
                               <Button
                                 variant='destructive'
                                 size='sm'
                                 onClick={() => handleDelete(staff.id)}
                               >
-                                Xóa
+                                {t('actions.delete')}
                               </Button>
                             </div>
                           </TableCell>

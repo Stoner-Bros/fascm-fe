@@ -34,6 +34,7 @@ import {
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { WarehouseActivitiesTable } from './warehouse-activities-table';
+import { useTranslations } from 'next-intl';
 
 type EnvironmentReadings = {
   temperature?: number | null;
@@ -92,6 +93,7 @@ export default function WarehouseDetailPage({
   warehouseId
 }: WarehouseDetailPageProps) {
   const { toast } = useToast();
+  const t = useTranslations('WarehouseDetail');
 
   const [apiWarehouse, setApiWarehouse] = useState<Warehouse | null>(null);
   const [apiAreas, setApiAreas] = useState<Area[]>([]);
@@ -131,7 +133,7 @@ export default function WarehouseDetailPage({
       console.error('Unable to load warehouse', error);
       toast({
         variant: 'destructive',
-        title: 'Không thể tải thông tin kho',
+        title: t('toast.loadWarehouseError'),
         description: error instanceof Error ? error.message : undefined
       });
     } finally {
@@ -231,7 +233,7 @@ export default function WarehouseDetailPage({
       console.error('Unable to load areas', error);
       toast({
         variant: 'destructive',
-        title: 'Không thể tải danh sách khu vực',
+        title: t('toast.loadAreasError'),
         description: error instanceof Error ? error.message : undefined
       });
     } finally {
@@ -415,7 +417,7 @@ export default function WarehouseDetailPage({
                         {area.name}
                       </CardTitle>
                       <CardDescription className='mt-0.5 truncate text-xs'>
-                        {area.description || 'Không có mô tả'}
+                        {area.description || t('area.noDescription')}
                       </CardDescription>
                     </div>
                   </div>
@@ -431,32 +433,34 @@ export default function WarehouseDetailPage({
                     )}
                   >
                     <span className='truncate'>
-                      {area.hasAlert ? 'Cảnh báo' : 'Bình thường'}
+                      {area.hasAlert ? t('area.alert') : t('area.normal')}
                     </span>
                   </Badge>
                   {/* Environmental Stats */}
-                  <div className='grid grid-cols-3 gap-1 text-center'>
+                  <div className='grid grid-cols-2 gap-2 text-center md:gap-3'>
                     <div className='min-w-0 space-y-0.5'>
-                      <div className='flex flex-wrap items-center justify-center'>
-                        <IconTemperature className='mr-0.5 h-3 w-3 shrink-0 text-blue-500' />
-                        <span className='text-muted-foreground truncate text-xs'>
-                          Nhiệt độ
+                      <div className='flex items-center justify-center gap-1'>
+                        <IconTemperature className='h-5 w-5 shrink-0 text-blue-500' />
+
+                        <span className='text-muted-foreground max-w-[120px] truncate text-center text-sm font-medium md:text-base'>
+                          {t('area.temperature')}
                         </span>
                       </div>
-                      <p className='truncate text-xs font-bold text-blue-600'>
+
+                      <p className='truncate text-lg font-extrabold text-blue-600 md:text-2xl'>
                         {area.temperature != null
                           ? `${area.temperature}°C`
                           : '—'}
                       </p>
                     </div>
-                    <div className='ml-3 min-w-0 space-y-0.5'>
+                    <div className='min-w-0 space-y-0.5'>
                       <div className='flex flex-wrap items-center justify-center'>
-                        <IconDroplet className='mr-0.5 h-3 w-3 shrink-0 text-cyan-500' />
-                        <span className='text-muted-foreground truncate text-xs'>
-                          Độ ẩm
+                        <IconDroplet className='mr-1 h-5 w-5 shrink-0 text-cyan-500' />
+                        <span className='text-muted-foreground flex-shrink-0 truncate text-sm font-medium md:text-base'>
+                          {t('area.humidity')}
                         </span>
                       </div>
-                      <p className='truncate text-xs font-bold text-cyan-600'>
+                      <p className='truncate text-lg font-extrabold text-cyan-600 md:text-2xl'>
                         {area.humidity != null ? `${area.humidity}%` : '—'}
                       </p>
                     </div>
@@ -472,7 +476,7 @@ export default function WarehouseDetailPage({
                       )}
                     >
                       <IconEye className='mr-1 h-3 w-3 shrink-0' />
-                      <span className='truncate'>Chi tiết</span>
+                      <span className='truncate'>{t('actions.details')}</span>
                     </Link>
                   </div>
                 </CardContent>
@@ -487,7 +491,7 @@ export default function WarehouseDetailPage({
     </PageContainer>
   ) : (
     <PageContainer>
-      <div className='w-full py-10 text-center'>Loading...</div>
+      <div className='w-full py-10 text-center'>{t('loading')}</div>
     </PageContainer>
   );
 }

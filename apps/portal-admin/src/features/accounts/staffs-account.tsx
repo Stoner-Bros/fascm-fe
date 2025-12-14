@@ -36,6 +36,7 @@ import {
   TableRow
 } from '@/components/ui/table';
 import { useToast } from '@/components/ui/use-toast';
+import { useTranslations } from 'next-intl';
 import {
   createStaff,
   deleteStaff,
@@ -69,6 +70,7 @@ const formatDateTime = (value?: string) => {
 };
 
 export default function StaffsAccount() {
+  const t = useTranslations('Accounts.Staffs');
   const { toast } = useToast();
   const toastRef = useRef(toast);
   const [form, setForm] = useState(DEFAULT_FORM);
@@ -101,8 +103,9 @@ export default function StaffsAccount() {
     } catch (error) {
       toastRef.current?.({
         variant: 'destructive',
-        title: 'Không thể tải danh sách staff',
-        description: error instanceof Error ? error.message : 'Vui lòng thử lại'
+        title: t('toast.loadError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
       });
     } finally {
       isFetchingRef.current = false;
@@ -136,7 +139,7 @@ export default function StaffsAccount() {
     ) {
       toast({
         variant: 'destructive',
-        title: 'Vui lòng điền đầy đủ thông tin bắt buộc'
+        title: t('form.fillRequired')
       });
       return;
     }
@@ -156,10 +159,10 @@ export default function StaffsAccount() {
 
       if (editingStaff) {
         await updateStaff(editingStaff.id, payload);
-        toast({ title: 'Đã cập nhật staff' });
+        toast({ title: t('toast.updateSuccess') });
       } else {
         await createStaff(payload);
-        toast({ title: 'Đã tạo staff thành công' });
+        toast({ title: t('toast.createSuccess') });
       }
 
       resetForm();
@@ -169,10 +172,9 @@ export default function StaffsAccount() {
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: editingStaff
-          ? 'Không thể cập nhật staff'
-          : 'Không thể tạo staff',
-        description: error instanceof Error ? error.message : 'Vui lòng thử lại'
+        title: editingStaff ? t('toast.updateError') : t('toast.createError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
       });
     } finally {
       setIsSubmitting(false);
@@ -180,16 +182,17 @@ export default function StaffsAccount() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Bạn có chắc chắn muốn xóa staff này?')) return;
+    if (!window.confirm(t('actions.confirmDelete'))) return;
     try {
       await deleteStaff(id);
-      toast({ title: 'Đã xóa staff' });
+      toast({ title: t('toast.deleteSuccess') });
       await loadData();
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Không thể xóa staff',
-        description: error instanceof Error ? error.message : 'Vui lòng thử lại'
+        title: t('toast.deleteError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
       });
     }
   };
@@ -244,36 +247,35 @@ export default function StaffsAccount() {
         <header className='flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between'>
           <div className='space-y-2'>
             <h1 className='text-3xl font-bold tracking-tight'>
-              Quản lý tài khoản Staffs
+              {t('header.title')}
             </h1>
-            <p className='text-muted-foreground'>
-              Danh sách nhân sự hiển thị phía trước, tạo/chỉnh sửa thông qua hộp
-              thoại.
-            </p>
+            <p className='text-muted-foreground'>{t('header.description')}</p>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
             <DialogTrigger asChild>
               <Button size='lg'>
-                + {editingStaff ? 'Chỉnh sửa' : 'Tạo'} staff
+                {editingStaff
+                  ? t('actions.editStaff')
+                  : t('actions.createStaff')}
               </Button>
             </DialogTrigger>
             <DialogContent className='max-h-[95vh] overflow-y-auto sm:max-w-2xl'>
               <DialogHeader>
                 <DialogTitle>
                   {editingStaff
-                    ? 'Cập nhật tài khoản staff'
-                    : 'Tạo tài khoản staff'}
+                    ? t('dialog.editTitle')
+                    : t('dialog.createTitle')}
                 </DialogTitle>
                 <DialogDescription>
                   {editingStaff
-                    ? 'Điều chỉnh thông tin vị trí và tài khoản.'
-                    : 'Nhập thông tin vị trí và tài khoản người dùng.'}
+                    ? t('dialog.editDescription')
+                    : t('dialog.createDescription')}
                 </DialogDescription>
               </DialogHeader>
               <div className='space-y-4'>
                 <div className='grid gap-4 md:grid-cols-2'>
                   <div className='space-y-2'>
-                    <Label>Vị trí *</Label>
+                    <Label>{t('form.position')}</Label>
                     <Input
                       value={form.position}
                       onChange={(e) =>
@@ -282,11 +284,11 @@ export default function StaffsAccount() {
                           position: e.target.value
                         }))
                       }
-                      placeholder='Warehouse Staff'
+                      placeholder={t('placeholders.position')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Warehouse (tùy chọn)</Label>
+                    <Label>{t('form.warehouseOptional')}</Label>
                     <Select
                       value={form.warehouseId || NONE_VALUE}
                       onValueChange={(value) =>
@@ -297,11 +299,13 @@ export default function StaffsAccount() {
                       }
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder='Chọn warehouse' />
+                        <SelectValue
+                          placeholder={t('placeholders.selectWarehouse')}
+                        />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value={NONE_VALUE}>
-                          Không gán warehouse
+                          {t('placeholders.noWarehouse')}
                         </SelectItem>
                         {warehouses.map((warehouse) => (
                           <SelectItem key={warehouse.id} value={warehouse.id}>
@@ -312,7 +316,7 @@ export default function StaffsAccount() {
                     </Select>
                   </div>
                   <div className='space-y-2'>
-                    <Label>Họ *</Label>
+                    <Label>{t('form.firstName')}</Label>
                     <Input
                       value={form.firstName}
                       onChange={(e) =>
@@ -321,11 +325,11 @@ export default function StaffsAccount() {
                           firstName: e.target.value
                         }))
                       }
-                      placeholder='Phạm'
+                      placeholder={t('placeholders.firstName')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Tên *</Label>
+                    <Label>{t('form.lastName')}</Label>
                     <Input
                       value={form.lastName}
                       onChange={(e) =>
@@ -334,22 +338,22 @@ export default function StaffsAccount() {
                           lastName: e.target.value
                         }))
                       }
-                      placeholder='Thị D'
+                      placeholder={t('placeholders.lastName')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Email *</Label>
+                    <Label>{t('form.email')}</Label>
                     <Input
                       type='email'
                       value={form.email}
                       onChange={(e) =>
                         setForm((prev) => ({ ...prev, email: e.target.value }))
                       }
-                      placeholder='staff@example.com'
+                      placeholder={t('placeholders.emailStaff')}
                     />
                   </div>
                   <div className='space-y-2'>
-                    <Label>Mật khẩu *</Label>
+                    <Label>{t('form.password')}</Label>
                     <Input
                       type='password'
                       value={form.password}
@@ -359,7 +363,7 @@ export default function StaffsAccount() {
                           password: e.target.value
                         }))
                       }
-                      placeholder='••••••••'
+                      placeholder={t('placeholders.password')}
                     />
                   </div>
                 </div>
@@ -370,16 +374,16 @@ export default function StaffsAccount() {
                   onClick={resetForm}
                   disabled={isSubmitting}
                 >
-                  Xóa dữ liệu
+                  {t('actions.clearForm')}
                 </Button>
                 <Button onClick={handleSubmit} disabled={isSubmitting}>
                   {isSubmitting
                     ? editingStaff
-                      ? 'Đang cập nhật...'
-                      : 'Đang xử lý...'
+                      ? t('actions.saving')
+                      : t('actions.creating')
                     : editingStaff
-                      ? 'Cập nhật staff'
-                      : 'Tạo staff'}
+                      ? t('actions.saveChanges')
+                      : t('actions.createStaff')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -390,18 +394,16 @@ export default function StaffsAccount() {
           <CardHeader className='flex flex-col gap-4'>
             <div className='flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
               <div>
-                <CardTitle>Danh sách staff</CardTitle>
-                <CardDescription>
-                  Theo dõi và chỉnh sửa tài khoản staff.
-                </CardDescription>
+                <CardTitle>{t('table.title')}</CardTitle>
+                <CardDescription>{t('table.description')}</CardDescription>
               </div>
               <Button variant='outline' onClick={loadData} disabled={isLoading}>
-                {isLoading ? 'Đang tải...' : 'Làm mới'}
+                {isLoading ? t('table.loading') : t('actions.refresh')}
               </Button>
             </div>
             <div className='flex flex-col gap-2 md:flex-row md:items-center'>
               <Input
-                placeholder='Tìm theo tên, email, vị trí...'
+                placeholder={t('filters.searchPlaceholder')}
                 value={searchQuery}
                 onChange={(event) => setSearchQuery(event.target.value)}
                 className='flex-1'
@@ -411,10 +413,14 @@ export default function StaffsAccount() {
                 onValueChange={(value) => setWarehouseFilter(value)}
               >
                 <SelectTrigger className='md:w-[220px]'>
-                  <SelectValue placeholder='Lọc theo warehouse' />
+                  <SelectValue
+                    placeholder={t('filters.warehousePlaceholder')}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value='ALL'>Tất cả warehouse</SelectItem>
+                  <SelectItem value='ALL'>
+                    {t('filters.allWarehouses')}
+                  </SelectItem>
                   {warehouses.map((warehouse) => (
                     <SelectItem key={warehouse.id} value={warehouse.id}>
                       {warehouse.name}
@@ -430,27 +436,29 @@ export default function StaffsAccount() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>STT</TableHead>
-                      <TableHead>Họ</TableHead>
-                      <TableHead>Tên</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Vị trí</TableHead>
-                      <TableHead>Warehouse</TableHead>
-                      <TableHead>Ngày tạo</TableHead>
-                      <TableHead className='text-right'>Thao tác</TableHead>
+                      <TableHead>{t('table.columns.index')}</TableHead>
+                      <TableHead>{t('table.columns.firstName')}</TableHead>
+                      <TableHead>{t('table.columns.lastName')}</TableHead>
+                      <TableHead>{t('table.columns.email')}</TableHead>
+                      <TableHead>{t('table.columns.position')}</TableHead>
+                      <TableHead>{t('table.columns.warehouse')}</TableHead>
+                      <TableHead>{t('table.columns.createdAt')}</TableHead>
+                      <TableHead className='text-right'>
+                        {t('table.columns.actions')}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
                       <TableRow>
                         <TableCell colSpan={8} className='text-center'>
-                          Đang tải dữ liệu...
+                          {t('table.loading')}
                         </TableCell>
                       </TableRow>
                     ) : filteredStaffs.length === 0 ? (
                       <TableRow>
                         <TableCell colSpan={8} className='text-center'>
-                          Không có staff nào phù hợp
+                          {t('table.empty')}
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -484,14 +492,14 @@ export default function StaffsAccount() {
                                 size='sm'
                                 onClick={() => handleEdit(staff)}
                               >
-                                Sửa
+                                {t('actions.edit')}
                               </Button>
                               <Button
                                 variant='destructive'
                                 size='sm'
                                 onClick={() => handleDelete(staff.id)}
                               >
-                                Xóa
+                                {t('actions.delete')}
                               </Button>
                             </div>
                           </TableCell>
