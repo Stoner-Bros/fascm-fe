@@ -775,6 +775,72 @@
       "close": "Đóng"
     }
   },
+  "Profile": {
+    "title": "Hồ sơ",
+    "subtitle": "Quản lý thông tin tài khoản và chi tiết tổ chức của bạn",
+    "buttons": {
+      "settleInvoice": "Tất toán hóa đơn",
+      "editProfile": "Chỉnh sửa hồ sơ",
+      "cancel": "Hủy",
+      "saveChanges": "Lưu thay đổi",
+      "saving": "Đang lưu..."
+    },
+    "personalInformation": {
+      "title": "Thông tin cá nhân",
+      "description": "Thông tin tài khoản cơ bản và ảnh đại diện của bạn",
+      "profilePicture": "Ảnh đại diện",
+      "organizationQrCode": "Mã QR tổ chức",
+      "noQrCode": "Không có mã QR",
+      "firstName": "Tên",
+      "lastName": "Họ",
+      "email": "Email",
+      "emailCannotChange": "Email không thể thay đổi tại đây. Liên hệ hỗ trợ nếu cần.",
+      "oldPassword": "Mật khẩu cũ",
+      "newPassword": "Mật khẩu mới",
+      "passwordOptional": "Để trống nếu bạn không muốn thay đổi mật khẩu",
+      "oldPasswordPlaceholder": "Nhập mật khẩu cũ (tùy chọn)",
+      "newPasswordPlaceholder": "Nhập mật khẩu mới (tùy chọn)",
+      "firstNamePlaceholder": "Nhập tên",
+      "lastNamePlaceholder": "Nhập họ",
+      "role": "Vai trò",
+      "accountStatus": "Trạng thái tài khoản",
+      "accountProvider": "Nhà cung cấp tài khoản",
+      "notSet": "Chưa đặt"
+    },
+    "organizationInformation": {
+      "title": "Thông tin tổ chức",
+      "description": "Chi tiết tổ chức và thông tin kinh doanh của bạn",
+      "organizationName": "Tên tổ chức",
+      "representativeName": "Tên người đại diện",
+      "contact": "Thông tin liên hệ",
+      "address": "Địa chỉ kinh doanh",
+      "taxCode": "Mã số thuế",
+      "organizationNamePlaceholder": "Nhập tên tổ chức",
+      "representativeNamePlaceholder": "Nhập tên người đại diện",
+      "contactPlaceholder": "Nhập số điện thoại hoặc thông tin liên hệ",
+      "addressPlaceholder": "Nhập địa chỉ kinh doanh đầy đủ",
+      "taxCodePlaceholder": "Nhập mã số thuế"
+    },
+    "businessCertificate": {
+      "title": "Giấy chứng nhận kinh doanh",
+      "description": "Tải lên hoặc quản lý giấy chứng nhận kinh doanh của bạn",
+      "label": "Giấy chứng nhận kinh doanh",
+      "currentCertificate": "Giấy chứng nhận hiện tại",
+      "view": "Xem",
+      "certificatePlaceholder": "Nhập thông tin hoặc URL giấy chứng nhận",
+      "uploadNewCertificate": "Hoặc tải lên giấy chứng nhận mới:"
+    },
+    "toast": {
+      "fileUploadFailed": "Tải tệp thất bại",
+      "fileUploadFailedDescription": "Không thể tải tệp {type}. Vui lòng thử lại.",
+      "error": "Lỗi",
+      "consigneeNotFound": "Không tìm thấy thông tin người nhận hàng.",
+      "profileUpdated": "Đã cập nhật hồ sơ",
+      "profileUpdatedDescription": "Hồ sơ của bạn đã được cập nhật thành công.",
+      "updateFailed": "Cập nhật thất bại",
+      "updateFailedDescription": "Không thể cập nhật hồ sơ. Vui lòng thử lại."
+    }
+  },
   "common": {
     "notSpecified": "-",
     "separator": "-",

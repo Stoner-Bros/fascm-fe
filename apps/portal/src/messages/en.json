@@ -764,6 +764,72 @@
       "close": "Close"
     }
   },
+  "Profile": {
+    "title": "Profile",
+    "subtitle": "Manage your account information and organization details",
+    "buttons": {
+      "settleInvoice": "Settle Invoice",
+      "editProfile": "Edit Profile",
+      "cancel": "Cancel",
+      "saveChanges": "Save Changes",
+      "saving": "Saving..."
+    },
+    "personalInformation": {
+      "title": "Personal Information",
+      "description": "Your basic account information and profile picture",
+      "profilePicture": "Profile Picture",
+      "organizationQrCode": "Organization QR Code",
+      "noQrCode": "No QR Code",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "emailCannotChange": "Email cannot be changed here. Contact support if needed.",
+      "oldPassword": "Old Password",
+      "newPassword": "New Password",
+      "passwordOptional": "Leave blank if you don't want to change password",
+      "oldPasswordPlaceholder": "Enter old password (optional)",
+      "newPasswordPlaceholder": "Enter new password (optional)",
+      "firstNamePlaceholder": "Enter first name",
+      "lastNamePlaceholder": "Enter last name",
+      "role": "Role",
+      "accountStatus": "Account Status",
+      "accountProvider": "Account Provider",
+      "notSet": "Not set"
+    },
+    "organizationInformation": {
+      "title": "Organization Information",
+      "description": "Your organization details and business information",
+      "organizationName": "Organization Name",
+      "representativeName": "Representative Name",
+      "contact": "Contact Information",
+      "address": "Business Address",
+      "taxCode": "Tax Identification Number",
+      "organizationNamePlaceholder": "Enter organization name",
+      "representativeNamePlaceholder": "Enter representative name",
+      "contactPlaceholder": "Enter phone number or contact info",
+      "addressPlaceholder": "Enter complete business address",
+      "taxCodePlaceholder": "Enter tax identification number"
+    },
+    "businessCertificate": {
+      "title": "Business Certificate",
+      "description": "Upload or manage your business certificate",
+      "label": "Business Certificate",
+      "currentCertificate": "Current Certificate",
+      "view": "View",
+      "certificatePlaceholder": "Enter certificate information or URL",
+      "uploadNewCertificate": "Or upload new certificate:"
+    },
+    "toast": {
+      "fileUploadFailed": "File Upload Failed",
+      "fileUploadFailedDescription": "Failed to upload {type} file. Please try again.",
+      "error": "Error",
+      "consigneeNotFound": "Consignee information not found.",
+      "profileUpdated": "Profile Updated",
+      "profileUpdatedDescription": "Your profile has been successfully updated.",
+      "updateFailed": "Update Failed",
+      "updateFailedDescription": "Failed to update profile. Please try again."
+    }
+  },
   "common": {
     "notSpecified": "-",
     "separator": "-",
