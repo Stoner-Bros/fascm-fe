@@ -29,6 +29,13 @@
 
 ## 1. Authentication Tests
 
+**Description:** This section covers all authentication-related test cases for the FASCM Frontend application. It focuses on testing the login functionality, which is the primary entry point for all users accessing the system. Tests include validating user credentials (email and password), role-based authentication and redirection (Supplier, Consignee, Admin), session management (persistence and logout), and various error scenarios such as invalid inputs, wrong credentials, and unauthorized access attempts. The authentication system uses JWT tokens stored in cookies and manages user state through Zustand store.
+
+**API Functions Covered:**
+- Function #1: Login (with email & password)
+
+**Total Test Cases:** 8 (TC_FE_AUTH_001 to TC_FE_AUTH_008)
+
 ### 1.1 Login Function Tests
 
 | Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
@@ -45,6 +52,14 @@
 ---
 
 ## 2. Category Management Tests (Feature1)
+
+**Description:** This section tests the product category management features available to Admin users. Categories are used to organize products into logical groups (e.g., "Rau củ" - vegetables, "Trái cây" - fruits, "Ngũ cốc" - grains). Test cases cover creating new categories with validation checks, viewing all existing categories, and searching/filtering categories. These features are essential for maintaining an organized product catalog and enabling efficient product browsing for all users. Admin users have exclusive permissions to create and manage categories, while other users can only view them.
+
+**API Functions Covered:**
+- Function #2: Create Category (Admin only)
+- Function #3: Get All Categories (All logged-in users)
+
+**Total Test Cases:** 5 (TC_FE_CAT_001 to TC_FE_CAT_005)
 
 ### 2.1 Create Category
 
@@ -64,6 +79,15 @@
 ---
 
 ## 3. Product Management Tests (Feature2)
+
+**Description:** This section validates the complete product management lifecycle, including creating new products, viewing product lists with pagination and filtering, searching products by name, and updating existing product information. Products are the core entities in the agricultural supply chain system and must include details such as name, category, price, unit of measurement, and optional product images. Admin users can perform all CRUD operations on products, while regular users can browse and search the product catalog. The tests ensure data integrity through validation of required fields, price constraints (must be positive), and proper handling of product images.
+
+**API Functions Covered:**
+- Function #4: Create Product (Admin only)
+- Function #5: Get All Products (All logged-in users)
+- Function #6: Update Product (Admin only)
+
+**Total Test Cases:** 8 (TC_FE_PROD_001 to TC_FE_PROD_008)
 
 ### 3.1 Create Product
 
@@ -91,6 +115,17 @@
 ---
 
 ## 4. Harvest Schedule Tests
+
+**Description:** This section tests the harvest schedule management functionality that allows Suppliers to plan and request approval for their agricultural harvest activities. A harvest schedule includes details about which products will be harvested, quantities, harvest dates, location (selected via interactive map), and supporting certificates. The workflow involves Suppliers creating schedules with "Pending" status, which then require Admin approval before proceeding to harvest phases. Tests cover the complete lifecycle: creation with various validation scenarios, viewing schedules (both all schedules for Admin and personal schedules for Suppliers), updating pending schedules, and managing schedule status transitions (Approve, Reject, Cancel). This is a critical feature for supply chain planning and traceability.
+
+**API Functions Covered:**
+- Function #7: Create Harvest Schedule (Supplier only)
+- Function #8: Get All Harvest Schedules (Admin/Staff view)
+- Function #9: Get My Harvest Schedules (Supplier view - own schedules only)
+- Function #10: Update Harvest Schedule (Supplier - pending schedules only)
+- Function #11: Update Schedule Status - Approve/Reject/Cancel (Admin/Supplier with appropriate permissions)
+
+**Total Test Cases:** 11 (TC_FE_HARV_001 to TC_FE_HARV_011)
 
 ### 4.1 Create Harvest Schedule
 
@@ -127,6 +162,17 @@
 
 ## 5. Order Schedule Tests
 
+**Description:** This section validates the order schedule (purchase order) management system used by Consignees to request products from approved harvest schedules. The order creation process involves selecting products from available inventory (approved harvest schedules), specifying quantities (with validation against available stock), providing delivery details including address and delivery date, and selecting delivery location via an interactive map with OSRM route planning. Tests cover the full order lifecycle: creation with multi-step validation, viewing orders (all orders for Admin/Staff, personal orders for Consignees), searching and filtering orders, updating pending orders, and managing order status (Approve, Reject, Cancel). The order status workflow ensures proper authorization and prevents unauthorized modifications to orders already in progress.
+
+**API Functions Covered:**
+- Function #12: Create Order Schedule (Consignee only)
+- Function #13: Get All Order Schedules (Admin/Staff view)
+- Function #14: Get My Order Schedules (Consignee view - own orders only)
+- Function #15: Update Order Schedule (Consignee - pending orders only)
+- Function #16: Update Order Schedule Status - Approve/Reject/Cancel (Admin/Staff/Consignee with appropriate permissions)
+
+**Total Test Cases:** 10 (TC_FE_ORD_001 to TC_FE_ORD_010)
+
 ### 5.1 Create Order Schedule
 
 | Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
@@ -156,6 +202,15 @@
 
 ## 6. Harvest Phase Tests
 
+**Description:** This section tests the harvest phase tracking system that breaks down the harvest process into distinct stages (e.g., "Chuẩn bị đất" - land preparation, "Gieo trồng" - planting, "Chăm sóc" - care/maintenance, "Thu hoạch" - harvesting). Phases can only be created for approved harvest schedules and follow a sequential workflow with status transitions (Pending → In Progress → Completed). Each phase includes start and completion dates, descriptions, and the ability to upload proof images documenting the work performed. Tests validate phase creation (single and multiple phases), status progression with proper transition rules (e.g., cannot complete without starting), and the upload of visual evidence with validation for file types and sizes. This feature provides transparency and traceability throughout the agricultural production process.
+
+**API Functions Covered:**
+- Function #17: Create one or Multiple Harvest Phase(s) (Supplier/Admin - for approved schedules)
+- Function #18: Update Harvest Phase Status (Supplier - valid status transitions only)
+- Function #19: Upload Harvest Phase Proof - Upload images (Supplier - JPG/PNG files)
+
+**Total Test Cases:** 8 (TC_FE_HPHASE_001 to TC_FE_HPHASE_008)
+
 ### 6.1 Create Harvest Phases
 
 | Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
@@ -183,6 +238,15 @@
 
 ## 7. Order Phase Tests
 
+**Description:** This section validates the order fulfillment phase tracking system that manages the journey of an order from approval to delivery. Order phases typically include stages like "Xử lý đơn hàng" (Order Processing), "Đóng gói" (Packing), "Vận chuyển" (Shipping), and "Giao hàng" (Delivery). Similar to harvest phases, order phases can only be created for approved orders and follow a sequential status progression. Staff members manage these phases, updating their status as work progresses, and upload proof images at each stage. Tests cover creating individual and multiple phases, managing status transitions with appropriate notifications to Consignees, uploading proof documentation, and the Consignee's ability to view uploaded proofs for transparency. The final delivery phase completion triggers the order status change to "Delivered."
+
+**API Functions Covered:**
+- Function #20: Create one or Multiple Order Phase(s) (Admin/Staff - for approved orders)
+- Function #21: Update Order Phase Status (Staff - valid status transitions)
+- Function #22: Upload Order Phase Proof - Upload images (Staff - with Consignee viewing access)
+
+**Total Test Cases:** 6 (TC_FE_OPHASE_001 to TC_FE_OPHASE_006)
+
 ### 7.1 Create Order Phases
 
 | Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
@@ -208,6 +272,14 @@
 
 ## 8. Delivery Management Tests
 
+**Description:** This section tests the delivery management and real-time tracking system for order fulfillment. Deliveries are created by Admin/Staff after the packing phase is complete and involve assigning a driver/vehicle, calculating optimized routes using OSRM (Open Source Routing Machine), and setting estimated delivery times. The system supports real-time GPS tracking via Socket.IO, allowing Consignees to monitor their delivery's current location, route, and estimated arrival time on an interactive map. Tests validate delivery creation with route planning, status updates (Pending Pickup → In Transit → Delivered), real-time tracking functionality, and the completion process including proof of delivery photo uploads and optional consignee signatures. This feature enhances transparency and customer satisfaction in the supply chain.
+
+**API Functions Covered:**
+- Function #23: Create Delivery (Admin/Staff - for orders with completed packing phase)
+- Function #24: Update Delivery Status (Driver/Staff - status transitions with real-time tracking)
+
+**Total Test Cases:** 5 (TC_FE_DEL_001 to TC_FE_DEL_005)
+
 ### 8.1 Create Delivery
 
 | Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
@@ -226,6 +298,14 @@
 ---
 
 ## 9. Payment Tests
+
+**Description:** This section validates the payment processing system integrated with two payment gateways: VNPay and PayOS. Consignees can pay for approved orders using either platform. The VNPay integration redirects users to the VNPay payment gateway, processes the payment with test sandbox credentials, and handles the callback with success/failure status updates. The PayOS integration generates QR codes for mobile payment scanning and provides real-time payment status checking. Tests cover the complete payment workflow: initiating payments through both gateways, handling successful payments with order status updates and notifications to Suppliers, managing payment cancellations, querying payment status via PayOS API, and viewing/downloading payment receipts. Payment security and proper transaction ID tracking are critical aspects validated in these tests.
+
+**API Functions Covered:**
+- Function #25: Create Payment (Consignee - via VNPay or PayOS gateways)
+- Function #26: Get PayOS Payment Info - Query payment status (Consignee - check payment status)
+
+**Total Test Cases:** 6 (TC_FE_PAY_001 to TC_FE_PAY_006)
 
 ### 9.1 Create Payment
 
@@ -247,6 +327,16 @@
 
 ## 10. Import/Export Ticket Tests
 
+**Description:** This section validates the warehouse inventory management system through import and export tickets. Import tickets are created by warehouse Staff when receiving products from approved harvest schedules, recording quantities received, assigning storage areas, conducting quality checks (Pass/Fail with photo documentation), and updating inventory levels. Export tickets are created when fulfilling orders, verifying available inventory, deducting products from stock, and progressing order status. Both ticket types support filtering by storage area for organized warehouse management. Tests cover ticket creation workflows, quality control processes, inventory validation (preventing exports when stock is insufficient), area-based filtering, and the integration between tickets and the harvest/order schedules. This feature ensures accurate inventory tracking and supports warehouse operations efficiency.
+
+**API Functions Covered:**
+- Function #27: Create Import Ticket (Staff - record incoming inventory with quality checks)
+- Function #28: Get Import Tickets By Area (Staff - filter import tickets by storage location)
+- Function #29: Create Export Ticket (Staff - fulfill orders and deduct inventory)
+- Function #30: Get Export Tickets By Area (Staff - filter export tickets by storage location)
+
+**Total Test Cases:** 6 (TC_FE_IMP_001 to TC_FE_IMP_003, TC_FE_EXP_001 to TC_FE_EXP_003)
+
 ### 10.1 Import Ticket Tests
 
 | Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
@@ -267,6 +357,13 @@
 
 ## 11. UI Components Tests
 
+**Description:** This section tests the common UI components and user experience features shared across the entire application. These include the theme switcher (light/dark mode toggle with persistence), language switcher (English/Vietnamese using next-intl), toast notifications (success/error/info messages using Sonner library), loading states (spinners and skeletons during data fetching), and error handling (404 pages, form validation displays). These components are critical for providing a consistent, accessible, and user-friendly interface throughout all features. Tests ensure that user preferences persist across sessions, notifications display correctly with appropriate auto-dismiss behavior, loading indicators prevent interaction during async operations, and the application handles edge cases gracefully.
+
+**API Functions Covered:**
+- N/A - These are client-side UI components not directly mapped to backend APIs
+
+**Total Test Cases:** 5 (TC_FE_UI_001 to TC_FE_UI_005)
+
 ### 11.1 Theme and Language
 
 | Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Test date | Tester | Round 2 | Test date | Tester | Round 3 | Test date | Tester | Note |
@@ -280,6 +377,13 @@
 ---
 
 ## 12. Responsive Design Tests
+
+**Description:** This section validates the responsive design implementation across different device sizes and screen resolutions using Tailwind CSS breakpoints. The application must provide optimal viewing and interaction experiences on mobile devices (<640px - smartphones), tablets (640-1024px - iPads), and desktop computers (>1024px - laptops and monitors). Tests verify that content adapts appropriately: stacking vertically on mobile with hamburger navigation menus, utilizing 2-column layouts on tablets with collapsible sidebars, and displaying full multi-column layouts with persistent sidebars on desktop. Specific attention is paid to touch-friendly button sizes on mobile, readable text without horizontal scrolling, proper table handling (scrolling or adapting), and consistent functionality across all viewport sizes. This ensures accessibility and usability for all users regardless of their device.
+
+**API Functions Covered:**
+- N/A - These are client-side responsive design validations not directly mapped to backend APIs
+
+**Total Test Cases:** 3 (TC_FE_RESP_001 to TC_FE_RESP_003)
 
 ### 12.1 Mobile, Tablet, Desktop Layouts
 
