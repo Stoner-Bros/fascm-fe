@@ -170,7 +170,7 @@ export function ProductSelectionStep({
                     <div className='flex flex-wrap items-center gap-3'>
                       <div className='flex items-center gap-2'>
                         <Label className='text-sm'>
-                          {t('new.products.quantity')}:
+                          {t('new.products.expectedQuantity')}:
                         </Label>
                         <Input
                           type='text'
@@ -200,7 +200,7 @@ export function ProductSelectionStep({
 
                       <div className='flex items-center gap-2'>
                         <Label className='text-sm'>
-                          {t('new.products.unitPrice')}:
+                          {t('new.products.expectedUnitPrice')}:
                         </Label>
                         <div className='relative'>
                           <Input
@@ -225,7 +225,7 @@ export function ProductSelectionStep({
                             className='w-32 pr-12'
                           />
                           <span className='text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-sm'>
-                            VND
+                            VND/kg
                           </span>
                         </div>
                       </div>

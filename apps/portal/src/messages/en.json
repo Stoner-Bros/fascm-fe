@@ -355,7 +355,9 @@
         "enterDetails": "Enter Details",
         "enterDetailsDescription": "Adjust quantity and price for each product",
         "quantity": "Quantity",
+        "expectedQuantity": "Expected Quantity",
         "unitPrice": "Unit Price",
+        "expectedUnitPrice": "Expected Unit Price",
         "total": "Total"
       },
       "schedule": {
@@ -452,9 +454,11 @@
         "listLabel": "Products",
         "table": {
           "product": "Product",
+          "expectedQuantity": "Expected Quantity",
           "quantity": "Quantity",
           "unit": "Unit",
-          "unitPrice": "Unit Price"
+          "unitPrice": "Unit Price",
+          "currentUnitPrice": "Current Unit Price"
         },
         "unknownProduct": "Unknown",
         "itemsInHarvest": "item(s) in this harvest batch",
@@ -491,6 +495,21 @@
         "errorTitle": "Error",
         "errorLoadDetails": "Failed to load harvest batch details",
         "cancelErrorDescription": "Failed to cancel harvest batch {id}."
+      }
+    },
+    "negotiation": {
+      "title": "Price Negotiation",
+      "negotiatedPrice": "Negotiated Price",
+      "expectedPrice": "Expected Price",
+      "acceptPrice": "Accept Price",
+      "rejectPrice": "Reject Price",
+      "accepting": "Accepting...",
+      "rejecting": "Rejecting...",
+      "toast": {
+        "acceptSuccess": "Price accepted successfully",
+        "acceptError": "Failed to accept price",
+        "rejectSuccess": "Price rejected successfully",
+        "rejectError": "Failed to reject price"
       }
     }
   },
