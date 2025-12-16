@@ -30,15 +30,14 @@ export function PaymentModal({
   const [errors, setErrors] = useState<{ amount?: string }>({});
   const [qrCodeDataURL, setQrCodeDataURL] = useState<string | null>(null);
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
-  const { payment, isCreating, isSubscribed, createPaymentWithQR, reset } =
-    usePayment({
-      onPaymentSuccess: () => {
-        onSuccess?.();
-        setTimeout(() => {
-          handleClose();
-        }, 2000);
-      }
-    });
+  const { payment, isCreating, createPaymentWithQR, reset } = usePayment({
+    onPaymentSuccess: () => {
+      onSuccess?.();
+      setTimeout(() => {
+        handleClose();
+      }, 2000);
+    }
+  });
 
   const maxAmount = debt.remainingAmount ?? 0;
 
