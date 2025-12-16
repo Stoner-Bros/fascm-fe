@@ -1,33 +1,41 @@
 // Payment Types
+import type { Debt } from './debt';
+
 export type PaymentStatus = 'pending' | 'paid';
+export type PaymentMethod = 'bank_transfer' | 'cash';
+export type PaymentType = 'in' | 'out';
 
 export type Payment = {
   id: string;
   paymentCode?: string | null;
   status?: PaymentStatus | null;
   amount?: number | null;
-  paymentMethod?: string | null;
+  paymentMethod?: PaymentMethod | null;
   checkoutUrl?: string | null;
   qrCode?: string | null; // QR code string data (from PayOS)
+  paymentType?: PaymentType | null;
   createdAt: Date;
   updatedAt: Date;
+  debt?: Debt | null;
 };
 
 export type CreatePaymentDto = {
-  orderInvoiceId: string;
-  paymentMethod: string; // 'transfer', 'cash', etc.
+  amount: number;
+  paymentMethod: PaymentMethod;
+  supplierId?: string | null;
+  consigneeId?: string | null;
 };
 
 export type UpdatePaymentDto = {
   amount?: number;
-  paymentMethod?: string;
+  paymentMethod?: PaymentMethod;
 };
 
 export type PaymentUpdateEvent = {
   paymentCode: string;
   status: PaymentStatus;
   amount: number;
-  paymentMethod: string;
+  paymentMethod: PaymentMethod;
   timestamp: Date;
 };
 

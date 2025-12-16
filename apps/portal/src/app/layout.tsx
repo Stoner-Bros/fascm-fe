@@ -68,6 +68,7 @@ export default async function RootLayout({
           isScaled ? 'theme-scaled' : '',
           fontVariables
         )}
+        suppressHydrationWarning
       >
         <NextIntlClientProvider messages={messages}>
           <NextTopLoader showSpinner={false} />

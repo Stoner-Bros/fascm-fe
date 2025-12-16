@@ -18,6 +18,14 @@ export const supplierNavItems: NavItem[] = [
     items: []
   },
   {
+    title: 'payments',
+    url: '/supplier/payments',
+    icon: 'payment',
+    shortcut: ['s', 'p'],
+    isActive: false,
+    items: []
+  },
+  {
     title: 'profile',
     url: '/supplier/profile',
     icon: 'userPen',
@@ -41,6 +49,14 @@ export const consigneeNavItems: NavItem[] = [
     url: '/consignee/orders',
     icon: 'shoppingCart',
     shortcut: ['o', 'r'],
+    isActive: false,
+    items: []
+  },
+  {
+    title: 'payments',
+    url: '/consignee/payments',
+    icon: 'payment',
+    shortcut: ['p', 'p'],
     isActive: false,
     items: []
   },

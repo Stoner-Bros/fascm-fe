@@ -1,4 +1,4 @@
-import { DebtPage } from '@/features/consignee/debt';
+import { DebtPage } from '@/features/consignee/payment';
 
 export default function DebtPageRoute() {
   return <DebtPage />;

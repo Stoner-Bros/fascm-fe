@@ -122,11 +122,12 @@ export function subscribeToPaymentStatus(
 /**
  * Create a new payment
  *
- * @param body - Payment creation data (orderInvoiceId and paymentMethod)
- * @returns Created payment with QR code string (for transfer payments)
+ * @param body - Payment creation data (amount, paymentMethod, partner linkage)
+ * @returns Created payment with optional checkout/QR info for bank transfers
  *
- * Note: The amount is automatically calculated from the order invoice.
- * The backend returns a qrCode string that can be used to generate a QR image.
+ * Note: The backend now expects the caller to provide amount and partner
+ * identifiers (supplierId or consigneeId). It returns PayOS checkout/QR data
+ * when paymentMethod is bank_transfer.
  */
 export async function createPayment(body: CreatePaymentDto): Promise<Payment> {
   return fetchJSON<Payment>('/payments', {
@@ -239,8 +240,6 @@ export function getPaymentStatusLabel(status?: string | null): string {
   switch (status) {
     case 'paid':
       return 'Paid';
-    case 'canceled':
-      return 'Canceled';
     case 'pending':
     default:
       return 'Pending';
@@ -262,12 +261,6 @@ export function getPaymentStatusColor(status?: string | null): {
         bg: 'bg-green-50',
         border: 'border-green-200'
       };
-    case 'canceled':
-      return {
-        text: 'text-red-700',
-        bg: 'bg-red-50',
-        border: 'border-red-200'
-      };
     case 'pending':
     default:
       return {
@@ -283,7 +276,7 @@ export function getPaymentStatusColor(status?: string | null): {
  */
 export function getPaymentMethodLabel(method?: string | null): string {
   switch (method) {
-    case 'transfer':
+    case 'bank_transfer':
       return 'Bank Transfer (PayOS)';
     case 'cash':
       return 'Cash';

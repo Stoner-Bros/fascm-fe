@@ -40,7 +40,8 @@ import {
   IconHistory,
   IconMap,
   IconBuilding,
-  IconLogout
+  IconLogout,
+  IconCreditCardPay
 } from '@tabler/icons-react';
 
 export type Icon = React.ComponentType<IconProps>;
@@ -89,5 +90,6 @@ export const Icons = {
   blockChain: IconBrandStorj,
   history: IconHistory,
   map: IconMap,
-  building: IconBuilding
+  building: IconBuilding,
+  payment: IconCreditCardPay
 };
