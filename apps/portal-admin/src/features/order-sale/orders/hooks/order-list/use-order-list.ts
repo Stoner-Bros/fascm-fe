@@ -162,7 +162,7 @@ export function useOrderList() {
 
         const deliveryDate = formatDateTime(schedule.deliveryDate);
         const orderNumber =
-          (schedule.orders && schedule.orders[0]?.id) || schedule.id;
+          (schedule.order && schedule.order?.id) || schedule.id;
         const address = schedule.address || '-';
         const createdAt = formatDateTime(schedule.createdAt);
         const consigneeName = schedule.consignee?.organizationName || '-';
