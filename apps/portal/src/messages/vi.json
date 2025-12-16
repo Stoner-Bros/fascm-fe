@@ -786,6 +786,8 @@
     "defaultMessage": "",
     "harvestScheduleApproved": "Đã duyệt lịch thu hoạch",
     "harvestScheduleHasBeenApproved": "Lịch thu hoạch {harvestScheduleId} đã được duyệt",
+    "harvestScheduleCompleted": "Đã hoàn thành lịch thu hoạch",
+    "harvestScheduleHasBeenCompleted": "Lịch thu hoạch {harvestScheduleId} đã hoàn thành",
     "orderScheduleApproved": "Đã duyệt đơn",
     "orderScheduleHasBeenApproved": "Lịch đặt hàng {orderScheduleId} đã được duyệt",
     "orderScheduleCompleted": "Đã hoàn thành đơn",

@@ -949,6 +949,8 @@
     "harvestScheduleApproved": "Đã duyệt lịch thu hoạch",
     "orderScheduleHasBeenApproved": "Lịch đặt hàng {orderScheduleId} đã được duyệt",
     "harvestScheduleHasBeenApproved": "Lịch thu hoạch {harvestScheduleId} đã được duyệt",
+    "harvestScheduleCompleted": "Đã hoàn thành lịch thu hoạch",
+    "harvestScheduleHasBeenCompleted": "Lịch thu hoạch {harvestScheduleId} đã hoàn thành",
     "orderScheduleCompleted": "Đã hoàn thành đơn",
     "orderScheduleHasBeenCompleted": "Lịch đặt hàng {orderScheduleId} đã hoàn thành",
     "orderScheduleCanceled": "Đã hủy đơn",

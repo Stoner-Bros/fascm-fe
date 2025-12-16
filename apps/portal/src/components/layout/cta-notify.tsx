@@ -115,7 +115,8 @@ export default function CtaNotify() {
                           'order-completed': 'orderScheduleCompleted',
                           'order-canceled': 'orderScheduleCanceled',
                           'order-rejected': 'orderScheduleRejected',
-                          'harvest-approved': 'harvestScheduleApproved'
+                          'harvest-approved': 'harvestScheduleApproved',
+                          'harvest-completed': 'harvestScheduleCompleted'
                         };
                         const keyFromType = typeMap[String(n.type || '')];
                         if (keyFromType) {
@@ -172,7 +173,10 @@ export default function CtaNotify() {
                             'order-completed': 'orderScheduleHasBeenCompleted',
                             'order-canceled': 'orderScheduleHasBeenCanceled',
                             'order-rejected': 'orderScheduleHasBeenRejected',
-                            'harvest-approved': 'harvestScheduleHasBeenApproved'
+                            'harvest-approved':
+                              'harvestScheduleHasBeenApproved',
+                            'harvest-completed':
+                              'harvestScheduleHasBeenCompleted'
                           };
                           const keyFromType = msgMap[String(n.type || '')];
                           if (keyFromType) {
@@ -184,7 +188,9 @@ export default function CtaNotify() {
                                 'order-approved': 'orderScheduleApproved',
                                 'order-completed': 'orderScheduleCompleted',
                                 'order-canceled': 'orderScheduleCanceled',
-                                'order-rejected': 'orderScheduleRejected'
+                                'order-rejected': 'orderScheduleRejected',
+                                'harvest-approved': 'harvestScheduleApproved',
+                                'harvest-completed': 'harvestScheduleCompleted'
                               };
                               const tf = titleFallback[String(n.type || '')];
                               if (tf) {
@@ -216,7 +222,9 @@ export default function CtaNotify() {
                                 orderScheduleHasBeenRejected:
                                   'orderScheduleRejected',
                                 harvestScheduleHasBeenApproved:
-                                  'harvestScheduleApproved'
+                                  'harvestScheduleApproved',
+                                harvestScheduleHasBeenCompleted:
+                                  'harvestScheduleCompleted'
                               };
                               const raw = n.message || '';
                               const sanitized = raw.startsWith('Notifications.')

@@ -950,6 +950,8 @@
     "harvestScheduleApproved": "Harvest Approved",
     "orderScheduleHasBeenApproved": "Order schedule {orderScheduleId} has been approved",
     "harvestScheduleHasBeenApproved": "Harvest schedule {harvestScheduleId} has been approved",
+    "harvestScheduleCompleted": "Harvest Completed",
+    "harvestScheduleHasBeenCompleted": "Harvest schedule {harvestScheduleId} has been completed",
     "orderScheduleCompleted": "Order Completed",
     "orderScheduleHasBeenCompleted": "Order schedule {orderScheduleId} has been completed",
     "orderScheduleCanceled": "Order Canceled",
