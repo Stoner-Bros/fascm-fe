@@ -1125,14 +1125,52 @@
       },
       "batches": {
         "title": "Batches in area",
+        "description": "Showing {count} batch(es) in this area",
         "selectPrompt": "Select a product to view batches",
         "empty": "No batches found for this product in the area.",
+        "actions": {
+          "viewDetails": "View Details"
+        },
         "columns": {
-          "batchCode": "Batch code",
+          "batchCode": "Batch Code",
+          "product": "Product",
+          "quantity": "Quantity",
+          "currentQuantity": "Current Quantity",
+          "unit": "Unit",
+          "costPrice": "Cost Price",
+          "expiredAt": "Expiration Date",
+          "createdAt": "Created At",
+          "actions": "Actions",
+          "id": "ID"
+        }
+      },
+      "prices": {
+        "title": "Prices for Batch {batchCode}",
+        "description": "Manage prices for this batch",
+        "loading": "Loading prices...",
+        "empty": "No prices found for this batch.",
+        "addNew": "Add New Price",
+        "editTitle": "Edit Price",
+        "createTitle": "Create New Price",
+        "confirmDelete": "Are you sure you want to delete this price?",
+        "columns": {
+          "price": "Price",
           "quantity": "Quantity",
           "unit": "Unit",
-          "createdAt": "Batch created at",
-          "id": "ID"
+          "createdAt": "Created At",
+          "actions": "Actions"
+        },
+        "form": {
+          "price": "Price",
+          "pricePlaceholder": "Enter price",
+          "quantity": "Quantity",
+          "quantityPlaceholder": "Enter quantity",
+          "unit": "Unit",
+          "unitPlaceholder": "Enter unit (e.g., kg)",
+          "cancel": "Cancel",
+          "create": "Create",
+          "update": "Update",
+          "saving": "Saving..."
         }
       }
     },

@@ -37,6 +37,20 @@ export async function fetchBatches({
   );
 }
 
+export async function fetchBatchesByArea({
+  areaId,
+  productId,
+  page = 1,
+  limit = 50
+}: {
+  areaId: string;
+  productId?: string;
+  page?: number;
+  limit?: number;
+}) {
+  return fetchBatches({ areaId, productId, page, limit });
+}
+
 export async function fetchBatchesGroupedByWeight({
   importTicketId,
   productId,

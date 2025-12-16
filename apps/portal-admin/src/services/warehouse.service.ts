@@ -3,7 +3,8 @@ import type {
   Warehouse,
   CreateWarehouseDto,
   UpdateWarehouseDto,
-  FindAllWarehousesDto
+  FindAllWarehousesDto,
+  WarehouseTicketsResponse
 } from '@/types/warehouse';
 import type { InfinityPaginationResponse } from '@/types/common';
 
@@ -48,4 +49,10 @@ export async function deleteWarehouse(id: string) {
   return fetchJSON<void>(`${BASE_PATH}/${id}`, {
     method: 'DELETE'
   });
+}
+
+export async function fetchWarehouseTickets(warehouseId: string) {
+  return fetchJSON<WarehouseTicketsResponse>(
+    `/warehouses/${warehouseId}/activity-logs`
+  );
 }
