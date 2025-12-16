@@ -23,6 +23,7 @@ import {
   IconClock,
   IconRoute
 } from '@tabler/icons-react';
+import { HarvestPhaseStatus } from '@/types/harvest-phase';
 
 type LatLng = { lat: number; lng: number };
 
@@ -123,6 +124,7 @@ export default function HarvestRouteSim({
   startLng?: number;
   endLat?: number;
   endLng?: number;
+  status?: string;
 }) {
   const [from, setFrom] = useState<LatLng | undefined>(undefined);
   const [to, setTo] = useState<LatLng | undefined>(undefined);
@@ -199,9 +201,11 @@ export default function HarvestRouteSim({
     if (activeDeliveryId) return;
     if (typeof startLat === 'number' && typeof startLng === 'number') {
       setFrom({ lat: startLat, lng: startLng });
+      setStartPos({ lat: startLat, lng: startLng });
     }
     if (typeof endLat === 'number' && typeof endLng === 'number') {
       setTo({ lat: endLat, lng: endLng });
+      setEndPos({ lat: endLat, lng: endLng });
     }
   }, [startLat, startLng, endLat, endLng, activeDeliveryId]);
 
@@ -254,7 +258,12 @@ export default function HarvestRouteSim({
         setRouteOsrm(r.coords);
         setDistance(r.distance);
         setDuration(r.duration);
-        setIdx(0);
+        // If delivered/completed, jump to end immediately
+        if (status === 'delivered' || status === 'completed') {
+          setIdx(r.coords.length - 1);
+        } else {
+          setIdx(0);
+        }
       }
     });
     return () => {
@@ -263,52 +272,131 @@ export default function HarvestRouteSim({
   }, [from?.lat, from?.lng, to?.lat, to?.lng, activeDeliveryId]);
 
   useEffect(() => {
-    if (!running || route.length === 0 || activeDeliveryId) return;
+    if (
+      route.length > 0 &&
+      (status === 'delivered' || status === 'completed')
+    ) {
+      setIdx(route.length - 1);
+    }
+  }, [status, route.length]);
+
+  useEffect(() => {
+    if (!running || route.length === 0) return;
+
+    // Allow simulation if no active delivery (demo) OR if status is delivering or returning
+    const shouldSimulate =
+      !activeDeliveryId ||
+      (activeDeliveryId && (status === 'delivering' || status === 'returning'));
+
+    if (!shouldSimulate) return;
+
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setSubT((t) => {
-        const nt = Math.min(1, t + 0.25);
-        if (nt >= 1) {
-          setIdx((i) => Math.min(i + 1, route.length - 1));
-          return 0;
+        if (activeDeliveryId && status === 'returning') {
+          const nt = Math.max(0, t - 0.25);
+          if (nt <= 0) {
+            setIdx((i) => Math.max(i - 1, 0));
+            return 1;
+          }
+          return nt;
+        } else {
+          const nt = Math.min(1, t + 0.25);
+          if (nt >= 1) {
+            setIdx((i) => Math.min(i + 1, route.length - 1));
+            return 0;
+          }
+          return nt;
         }
-        return nt;
       });
     }, 120);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [running, route.length, activeDeliveryId]);
+  }, [running, route.length, activeDeliveryId, status]);
 
   useEffect(() => {
     if (!activeDeliveryId) return;
-    socket.on('connect', () => {});
-    socket.on('disconnect', () => {});
-    socket.emit('delivery:subscribe', { deliveryId: activeDeliveryId });
-    socket.on('delivery:subscribed', () => {});
+
+    const onConnect = () => {
+      console.log('Socket connected:', socket.id);
+      socket.emit('delivery:subscribe', { deliveryId: activeDeliveryId });
+    };
+
+    const onConnectError = (err: any) => {
+      console.error('Socket connection error:', err);
+    };
+
+    socket.on('connect', onConnect);
+    socket.on('connect_error', onConnectError);
+    socket.on('disconnect', () => {
+      console.log('Socket disconnected');
+    });
+
+    // Subscribe immediately if already connected
+    if (socket.connected) {
+      onConnect();
+    } else {
+      // Fallback emit just in case, though onConnect should handle it
+      socket.emit('delivery:subscribe', { deliveryId: activeDeliveryId });
+    }
+
+    socket.on('delivery:subscribed', () => {
+      console.log('Subscribed to delivery:', activeDeliveryId);
+    });
     socket.on(
       'delivery:start',
       (p: {
-        startLat: number;
-        startLng: number;
+        startLat: number | string;
+        startLng: number | string;
         startAddress?: string;
         route?: [number, number][];
       }) => {
-        setStartPos({ lat: p.startLat, lng: p.startLng });
-        setEndPos(undefined);
-        setPos({ lat: p.startLat, lng: p.startLng });
+        console.log('Received delivery:start', p);
+        const sLat = Number(p.startLat);
+        const sLng = Number(p.startLng);
+        if (Number.isFinite(sLat) && Number.isFinite(sLng)) {
+          setStartPos({ lat: sLat, lng: sLng });
+          setEndPos(undefined);
+          setPos({ lat: sLat, lng: sLng });
+        }
         if (p.startAddress) setStartAddr(normalizeAddress(p.startAddress));
         if (Array.isArray(p.route)) setRoute(p.route);
       }
     );
-    socket.on('delivery:update', (p: { lat: number; lng: number }) => {
-      setPos({ lat: p.lat, lng: p.lng });
+    socket.on('delivery:update', (p: any) => {
+      console.log('Received delivery:update', p);
+      const lat =
+        p.lat != null
+          ? Number(p.lat)
+          : p.currentLat != null
+            ? Number(p.currentLat)
+            : undefined;
+      const lng =
+        p.lng != null
+          ? Number(p.lng)
+          : p.currentLng != null
+            ? Number(p.currentLng)
+            : undefined;
+
+      if (Number.isFinite(lat) && Number.isFinite(lng)) {
+        setPos({ lat: lat as number, lng: lng as number });
+      }
     });
     socket.on(
       'delivery:end',
-      async (p: { endLat: number; endLng: number; endAddress?: string }) => {
-        setEndPos({ lat: p.endLat, lng: p.endLng });
-        setPos({ lat: p.endLat, lng: p.endLng });
+      async (p: {
+        endLat: number | string;
+        endLng: number | string;
+        endAddress?: string;
+      }) => {
+        console.log('Received delivery:end', p);
+        const eLat = Number(p.endLat);
+        const eLng = Number(p.endLng);
+        if (Number.isFinite(eLat) && Number.isFinite(eLng)) {
+          setEndPos({ lat: eLat, lng: eLng });
+          setPos({ lat: eLat, lng: eLng });
+        }
         if (p.endAddress) setEndAddr(normalizeAddress(p.endAddress));
         const id = activeDeliveryId.trim();
         if (id && harvestScheduleId) {
@@ -333,6 +421,7 @@ export default function HarvestRouteSim({
       socket.off('delivery:end');
       socket.off('delivery:subscribed');
       socket.off('connect');
+      socket.off('connect_error');
       socket.off('disconnect');
     };
   }, [socket, activeDeliveryId, harvestScheduleId]);
@@ -395,6 +484,7 @@ export default function HarvestRouteSim({
         setDistance(r.distance);
         setDuration(r.duration);
         setRouteOsrm(r.coords ?? []);
+        setRoute((prev) => (prev.length === 0 ? (r.coords ?? []) : prev));
       }
     });
   }, [

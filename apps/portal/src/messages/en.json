@@ -445,7 +445,14 @@
         "productsLabel": "Products:",
         "taxWithRate": "Tax ({rate}%):",
         "emptyTitle": "No harvest phases yet",
-        "emptyDescription": "Phases will appear after being created"
+        "emptyDescription": "Phases will appear after being created",
+        "loading": "Loading harvest phases...",
+        "invoiceInformation": "Invoice Information",
+        "totalAmount": "Total Amount",
+        "vat": "VAT",
+        "totalPayment": "Total Payment",
+        "created": "Created At",
+        "updated": "Last Updated"
       },
       "products": {
         "title": "Product Information",
@@ -779,6 +786,8 @@
     "defaultMessage": "",
     "harvestScheduleApproved": "Harvest Approved",
     "harvestScheduleHasBeenApproved": "Harvest schedule {harvestScheduleId} has been approved",
+    "harvestScheduleCompleted": "Harvest Completed",
+    "harvestScheduleHasBeenCompleted": "Harvest schedule {harvestScheduleId} has been completed",
     "orderScheduleApproved": "Order Approved",
     "orderScheduleHasBeenApproved": "Order schedule {orderScheduleId} has been approved",
     "orderScheduleCompleted": "Order Completed",

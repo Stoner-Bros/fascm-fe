@@ -48,7 +48,11 @@ const HarvestRouteSim = dynamic(
   { ssr: false }
 );
 
-import { fetchDeliveriesByHarvestSchedule } from '@/services/delivery.service';
+import {
+  fetchDeliveriesByHarvestSchedule,
+  Delivery
+} from '@/services/delivery.service';
+import { io } from 'socket.io-client';
 import { fetchHarvestPhasesBySchedule } from '@/services/harvest-phase.service';
 import { acceptPrice } from '@/services/harvest-detail.service';
 import type { HarvestPhase } from '@/types/harvest-phase';
@@ -157,7 +161,7 @@ export default function HarvestBatchDetailPage() {
   const router = useRouter();
   const params = useParams();
   const { toast } = useToast();
-  const scheduleId = String(params.id);
+  const scheduleId = String(params?.id ?? '');
   const t = useTranslations('SupplierHarvestBatches');
 
   const [schedule, setSchedule] = useState<HarvestSchedule | null>(null);
@@ -165,9 +169,17 @@ export default function HarvestBatchDetailPage() {
   const [phases, setPhases] = useState<HarvestPhase[]>([]);
   const [loading, setLoading] = useState(false);
   const [phasesLoading, setPhasesLoading] = useState(true);
+  const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [activeDeliveryId, setActiveDeliveryId] = useState<string>('');
+  const [activeDeliveryStatus, setActiveDeliveryStatus] =
+    useState<HarvestPhaseStatus>();
   const [acceptingPriceId, setAcceptingPriceId] = useState<string | null>(null);
   const [rejectingPriceId, setRejectingPriceId] = useState<string | null>(null);
+
+  const socket = useMemo(() => {
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    return io(base + '/deliveries', { transports: ['websocket'] });
+  }, []);
 
   const getStatusLabel = (status: HarvestScheduleStatus) => {
     switch (status) {
@@ -284,6 +296,7 @@ export default function HarvestBatchDetailPage() {
         const list = all.filter(
           (x) => String(x?.harvestSchedule?.id ?? '') === sid
         );
+        setDeliveries(list);
         const prefer =
           list.find(
             (x) => String(x.status ?? '').toLowerCase() === 'delivering'
@@ -307,6 +320,9 @@ export default function HarvestBatchDetailPage() {
             )[0];
         if (prefer?.id) {
           setActiveDeliveryId(String(prefer.id));
+          setActiveDeliveryStatus(
+            String(prefer.status ?? '').toLowerCase() as HarvestPhaseStatus
+          );
         }
       })
       .catch(() => {});
@@ -330,6 +346,59 @@ export default function HarvestBatchDetailPage() {
         setPhasesLoading(false);
       });
   }, [schedule?.id]);
+
+  useEffect(() => {
+    if (deliveries.length === 0) return;
+
+    deliveries.forEach((d) => {
+      socket.emit('delivery:subscribe', { deliveryId: d.id });
+    });
+
+    const onDeliveryStart = (data: any) => {
+      // Find if this delivery belongs to our list
+      const d = deliveries.find((x) => x.id === data.id);
+      if (d) {
+        setActiveDeliveryId(d.id);
+        setActiveDeliveryStatus('delivering');
+      }
+    };
+
+    const onDeliveryUpdate = (data: any) => {
+      // Update delivery status if it changes
+      if (
+        activeDeliveryId &&
+        (data.id === activeDeliveryId ||
+          data.deliveryId === activeDeliveryId) &&
+        data.status
+      ) {
+        setActiveDeliveryStatus(
+          String(data.status).toLowerCase() as HarvestPhaseStatus
+        );
+      }
+    };
+
+    const onDeliveryEnd = (data: any) => {
+      if (
+        activeDeliveryId &&
+        (data.id === activeDeliveryId || data.deliveryId === activeDeliveryId)
+      ) {
+        setActiveDeliveryStatus('completed');
+      }
+    };
+
+    socket.on('delivery:start', onDeliveryStart);
+    socket.on('delivery:update', onDeliveryUpdate);
+    socket.on('delivery:end', onDeliveryEnd);
+
+    return () => {
+      deliveries.forEach((d) => {
+        socket.emit('delivery:unsubscribe', { deliveryId: d.id });
+      });
+      socket.off('delivery:start', onDeliveryStart);
+      socket.off('delivery:update', onDeliveryUpdate);
+      socket.off('delivery:end', onDeliveryEnd);
+    };
+  }, [deliveries, socket, activeDeliveryId]);
 
   const handleCancelBatch = () => {
     if (scheduleId) {
@@ -1002,7 +1071,7 @@ export default function HarvestBatchDetailPage() {
                       </CardHeader>
                       <CardContent className='space-y-6'>
                         {/* Delivery Tracking Map */}
-                        {['delivering', 'delivered'].includes(phaseStatus) && (
+                        {['delivering'].includes(phaseStatus) && (
                           <Card>
                             <CardHeader>
                               <CardTitle className='flex items-center gap-2'>
@@ -1021,6 +1090,7 @@ export default function HarvestBatchDetailPage() {
                                 endAddress={String(schedule.address ?? '')}
                                 harvestScheduleId={String(schedule.id ?? '')}
                                 deliveryId={activeDeliveryId}
+                                status={activeDeliveryStatus}
                                 productName={(phase.harvestInvoiceDetails || [])
                                   .map((d) => d.product?.name)
                                   .filter(Boolean)

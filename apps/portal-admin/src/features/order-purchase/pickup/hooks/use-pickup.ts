@@ -24,6 +24,7 @@ import {
 } from '@/types/harvest-schedule';
 import { Truck } from '@/types/truck';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { io } from 'socket.io-client';
 
 // ============================================================================
 // Trucks Hook
@@ -440,7 +441,8 @@ export function usePickups() {
     getPickupByPhaseId,
     hasPickupForPhase,
     assignedPhaseIds,
-    uploadPhaseProof
+    uploadPhaseProof,
+    setPickups
   };
 }
 
@@ -515,6 +517,58 @@ export function usePickupPage() {
     if (!selectedScheduleId) return [];
     return phases.getPhases(selectedScheduleId);
   }, [selectedScheduleId, phases]);
+
+  const socket = useMemo(() => {
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    return io(base + '/deliveries', { transports: ['websocket'] });
+  }, []);
+
+  useEffect(() => {
+    if (!selectedScheduleId || selectedSchedulePhases.length === 0) return;
+
+    // Subscribe to all pickups in the selected schedule
+    const activePickups = pickups.pickups.filter((p) => {
+      return selectedSchedulePhases.some(
+        (phase) => phase.id === p.harvestPhase?.id
+      );
+    });
+
+    if (activePickups.length === 0) return;
+
+    activePickups.forEach((p) => {
+      socket.emit('delivery:subscribe', { deliveryId: p.id });
+    });
+
+    const onDeliveryStart = (data: any) => {
+      pickups.loadPickupsWithHarvestPhase();
+    };
+
+    const onDeliveryEnd = (data: any) => {
+      pickups.loadPickupsWithHarvestPhase();
+      schedules.loadSchedules();
+    };
+
+    const onDeliveryUpdate = (data: any) => {
+      if (data && data.id) {
+        pickups.setPickups((prev) =>
+          prev.map((p) => (p.id === data.id ? { ...p, ...data } : p))
+        );
+      }
+    };
+
+    socket.on('delivery:start', onDeliveryStart);
+    socket.on('delivery:end', onDeliveryEnd);
+    socket.on('delivery:update', onDeliveryUpdate);
+
+    return () => {
+      activePickups.forEach((p) => {
+        socket.emit('delivery:unsubscribe', { deliveryId: p.id });
+      });
+      socket.off('delivery:start', onDeliveryStart);
+      socket.off('delivery:end', onDeliveryEnd);
+      socket.off('delivery:update', onDeliveryUpdate);
+    };
+  }, [selectedScheduleId, selectedSchedulePhases, pickups.pickups, socket]);
 
   return {
     // State
