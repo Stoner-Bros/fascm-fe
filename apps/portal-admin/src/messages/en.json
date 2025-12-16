@@ -810,6 +810,14 @@
         "subtitle": "Overview of received / total quantities",
         "product": "Product",
         "quantity": "Quantity",
+        "currentUnitPrice": "Current Unit Price",
+        "expectedQuantity": "Expected Quantity",
+        "negotiatedPrice": "Negotiated Price",
+        "makeNegotiation": "Make Negotiation",
+        "makeNegotiationAgain": "Make Negotiation Again",
+        "negotiated": "Negotiated",
+        "waitingNegotiation": "Waiting for negotiation",
+        "negotiationRejected": "Negotiation rejected",
         "unit": "Unit",
         "unitPrice": "Unit Price",
         "amount": "Amount",
@@ -902,6 +910,28 @@
       "empty": {
         "title": "Harvest schedule not found",
         "back": "Go Back"
+      }
+    },
+    "negotiationDialog": {
+      "title": "Negotiate Price",
+      "description": "Enter the negotiated price for this product",
+      "expectedPrice": "Expected Price",
+      "negotiatedPrice": "Negotiated Price",
+      "negotiatedPriceCurrent": "Negotiated Price (Current)",
+      "negotiatedPricePlaceholder": "Enter negotiated price",
+      "product": "Product",
+      "quantity": "Quantity",
+      "unit": "Unit",
+      "cancel": "Cancel",
+      "submit": "Submit Price",
+      "submitting": "Submitting...",
+      "validation": {
+        "priceRequired": "Negotiated price is required",
+        "pricePositive": "Price must be greater than 0"
+      },
+      "toast": {
+        "success": "Negotiated Price successfully",
+        "error": "Failed to negotiate price"
       }
     }
   },

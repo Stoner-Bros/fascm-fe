@@ -23,7 +23,9 @@ export type HarvestSchedule = {
   harvestDetails?: Array<{
     id: string;
     quantity?: number;
-    unitPrice?: number;
+    expectedUnitPrice?: number;
+    finalUnitPrice?: number | null;
+    finalUnitPriceAccepted?: boolean | null;
     unit?: string;
     product?: {
       id: string;
@@ -67,4 +69,12 @@ export type FindAllHarvestSchedulesDto = {
   status?: HarvestScheduleStatus;
   supplierId?: string;
   sort?: 'asc' | 'desc';
+};
+
+export type AcceptPriceDto = {
+  finalUnitPriceAccepted: boolean;
+};
+
+export type UpdateFinalPriceDto = {
+  finalUnitPrice: number;
 };

@@ -46,7 +46,9 @@ export default function HarvestDetail({ scheduleId }: { scheduleId: string }) {
     schedule?.harvestDetails?.map((detail) => ({
       product: { id: detail.product!.id },
       quantity: 0,
-      unitPrice: detail.unitPrice || 0,
+      unitPrice: detail.finalUnitPriceAccepted
+        ? detail.finalUnitPrice || 0
+        : detail.expectedUnitPrice || 0,
       unit: detail.unit || ''
     })) || [];
 
@@ -73,7 +75,9 @@ export default function HarvestDetail({ scheduleId }: { scheduleId: string }) {
         schedule.harvestDetails.map((detail) => ({
           product: { id: detail.product!.id },
           quantity: 0,
-          unitPrice: detail.unitPrice || 0,
+          unitPrice: detail.finalUnitPriceAccepted
+            ? detail.finalUnitPrice || 0
+            : detail.expectedUnitPrice || 0,
           unit: detail.unit || ''
         }));
       reset(newDetails, phases.length + 1);
