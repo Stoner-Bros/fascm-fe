@@ -19,10 +19,8 @@ interface PhaseCardProps {
 export function PhaseCard({ phase }: PhaseCardProps) {
   const t = useTranslations('Orders.detail.phases');
   const subtotal =
-    phase.orderInvoiceDetails?.reduce(
-      (sum, d) => sum + (d.quantity || 0) * (d.unitPrice || 0),
-      0
-    ) || 0;
+    phase.orderInvoiceDetails?.reduce((sum, d) => sum + (d.amount || 0), 0) ||
+    0;
 
   const taxAmount =
     phase.orderInvoice?.taxRate != null
@@ -59,7 +57,6 @@ export function PhaseCard({ phase }: PhaseCardProps) {
                 <TableHead>{t('product')}</TableHead>
                 <TableHead>{t('quantity')}</TableHead>
                 <TableHead>{t('unit')}</TableHead>
-                <TableHead>{t('unitPrice')}</TableHead>
                 <TableHead>{t('amount')}</TableHead>
               </TableRow>
             </TableHeader>
@@ -69,8 +66,7 @@ export function PhaseCard({ phase }: PhaseCardProps) {
                 <>
                   {phase.orderInvoiceDetails.map((detail) => {
                     const quantity = detail.quantity || 0;
-                    const unitPrice = detail.unitPrice || 0;
-                    const amount = quantity * unitPrice;
+                    const amount = detail.amount || 0;
 
                     return (
                       <TableRow key={detail.id}>
@@ -79,7 +75,6 @@ export function PhaseCard({ phase }: PhaseCardProps) {
                         </TableCell>
                         <TableCell>{quantity}</TableCell>
                         <TableCell>{detail.unit || '-'}</TableCell>
-                        <TableCell>{formatCurrency(unitPrice)}</TableCell>
                         <TableCell className='font-medium'>
                           {formatCurrency(amount)}
                         </TableCell>
@@ -89,7 +84,7 @@ export function PhaseCard({ phase }: PhaseCardProps) {
                   {phase.orderInvoice?.taxRate != null && (
                     <TableRow>
                       <TableCell
-                        colSpan={4}
+                        colSpan={3}
                         className='text-muted-foreground text-right text-sm'
                       >
                         {t('tax')} ({phase.orderInvoice.taxRate}%):
@@ -100,7 +95,7 @@ export function PhaseCard({ phase }: PhaseCardProps) {
                     </TableRow>
                   )}
                   <TableRow>
-                    <TableCell colSpan={4} className='text-right font-semibold'>
+                    <TableCell colSpan={3} className='text-right font-semibold'>
                       {t('total')}:
                     </TableCell>
                     <TableCell className='text-lg font-semibold'>

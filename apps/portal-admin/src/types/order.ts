@@ -1,3 +1,4 @@
+import { OrderDetail } from './order-detail';
 import { Product } from './product';
 
 export type Consignee = {
@@ -31,30 +32,21 @@ export type OrderSchedule = {
   status?: OrderScheduleStatus | null;
   description?: string | null;
   deliveryDate?: string | Date | null;
-  consignee?: Consignee | null;
-  createdAt: string;
-  updatedAt: string;
   address?: string | null;
   reason?: string | null;
-  orders?: Array<{
+  createdAt: string;
+  updatedAt: string;
+  consignee?: Consignee | null;
+  order?: {
     id: string;
-    totalAmount?: number;
-    orderDate?: string;
-    orderUrl?: string;
-    [key: string]: unknown;
-  }>;
-  orderDetails?: Array<{
-    id: string;
-    quantity?: number;
-    unitPrice?: number;
-    unit?: string;
-    product?: {
-      id: string;
-      name?: string;
-      [key: string]: unknown;
-    };
-    [key: string]: unknown;
-  }>;
+    unit?: string | null;
+    quantity?: number | null;
+    orderNumber?: string | null;
+    orderUrl?: string | null;
+    createdAt?: string | Date | null;
+    updatedAt?: string | Date | null;
+  } | null;
+  orderDetails?: Array<OrderDetail> | null;
 };
 
 export type OrderBE = {
@@ -140,6 +132,7 @@ export interface OrderPhase {
       name?: string;
       [key: string]: unknown;
     };
+    amount?: number | null;
     [key: string]: unknown;
   }>;
   imageProof?: Array<{
@@ -154,12 +147,12 @@ export interface OrderPhase {
 }
 
 export interface CreateOrderInvoiceDetailDto {
-  unitPrice?: number | null;
-  quantity?: number | null;
+  quantity: number | null;
   unit?: string | null;
   product: {
-    id: string;
+    id: string | null;
   };
+  selectionIds?: string[] | null;
 }
 
 export interface CreateOrderInvoiceDto {
@@ -175,7 +168,7 @@ export interface CreateOrderPhaseDto {
     id: string;
   };
   orderInvoice?: CreateOrderInvoiceDto | null;
-  orderInvoiceDetails: CreateOrderInvoiceDetailDto[];
+  orderInvoiceDetails: CreateOrderInvoiceDetailDto[] | null;
 }
 
 export interface CreateMultipleOrderPhaseDto {

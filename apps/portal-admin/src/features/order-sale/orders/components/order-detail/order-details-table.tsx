@@ -40,7 +40,6 @@ export function OrderDetailsTable({
                 <TableHead>{t('product')}</TableHead>
                 <TableHead>{t('quantity')}</TableHead>
                 <TableHead>{t('unit')}</TableHead>
-                <TableHead>{t('unitPrice')}</TableHead>
                 <TableHead>{t('amount')}</TableHead>
                 {totals && <TableHead>{t('delivered')}</TableHead>}
               </TableRow>
@@ -51,8 +50,7 @@ export function OrderDetailsTable({
                   const productId = detail.product?.id || '';
                   const productTotals = totals?.[productId];
                   const quantity = detail.quantity || 0;
-                  const unitPrice = detail.unitPrice || 0;
-                  const amount = quantity * unitPrice;
+                  const amount = detail.amount || 0;
 
                   return (
                     <TableRow key={detail.id}>
@@ -61,7 +59,6 @@ export function OrderDetailsTable({
                       </TableCell>
                       <TableCell>{quantity}</TableCell>
                       <TableCell>{detail.unit || '-'}</TableCell>
-                      <TableCell>{formatCurrency(unitPrice)}</TableCell>
                       <TableCell className='font-medium'>
                         {formatCurrency(amount)}
                       </TableCell>
@@ -86,7 +83,7 @@ export function OrderDetailsTable({
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={totals ? 6 : 5}
+                    colSpan={totals ? 5 : 4}
                     className='text-muted-foreground py-8 text-center'
                   >
                     {t('empty')}

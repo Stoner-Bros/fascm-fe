@@ -1,19 +1,13 @@
 import { Modal } from '@/components/modal';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import type { OrderSchedule } from '@/types/order';
-import { Minus, Plus } from 'lucide-react';
+import type { OrderDetail } from '@/types/order-detail';
+import { Calendar, Package } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo } from 'react';
 import type { PhaseFormData } from '../../hooks/order-detail/use-phase-form';
@@ -28,6 +22,11 @@ interface CreatePhaseDialogProps {
   phaseNumber: number;
   onPhaseDataChange: (updates: Partial<PhaseFormData>) => void;
   onQuantityChange: (productId: string, quantity: number) => void;
+  onToggleSelection: (
+    productId: string,
+    selectionId: string,
+    orderDetail: OrderDetail
+  ) => void;
   onCreate: () => void;
   loading: boolean;
 }
@@ -41,6 +40,7 @@ export function CreatePhaseDialog({
   phaseNumber,
   onPhaseDataChange,
   onQuantityChange,
+  onToggleSelection,
   onCreate,
   loading
 }: CreatePhaseDialogProps) {
@@ -56,15 +56,28 @@ export function CreatePhaseDialog({
     }
   }, [nextPhaseNumber, phaseData.phaseNumber, onPhaseDataChange]);
 
-  // Calculate totals in real-time
+  // Calculate totals in real-time from selected selections
   const calculatedTotals = useMemo(() => {
-    const validDetails = phaseData.invoiceDetails.filter(
-      (d) => d.quantity && d.quantity > 0
-    );
+    let subtotal = 0;
+    let itemCount = 0;
 
-    const subtotal = validDetails.reduce((sum, detail) => {
-      return sum + (detail.quantity || 0) * (detail.unitPrice || 0);
-    }, 0);
+    schedule.orderDetails?.forEach((orderDetail) => {
+      const detail = phaseData.invoiceDetails.find(
+        (d) => d.product.id === orderDetail.product?.id
+      );
+      if (detail && detail.selectionIds && detail.selectionIds.length > 0) {
+        const selectedSelections =
+          orderDetail.orderDetailSelections?.filter((sel) =>
+            detail.selectionIds!.includes(sel.id)
+          ) || [];
+        selectedSelections.forEach((sel) => {
+          subtotal += (sel.quantity || 0) * (sel.unitPrice || 0);
+        });
+        if (selectedSelections.length > 0) {
+          itemCount++;
+        }
+      }
+    });
 
     const taxAmount = subtotal * (phaseData.taxRate / 100);
     const totalAmount = subtotal + taxAmount;
@@ -73,19 +86,9 @@ export function CreatePhaseDialog({
       subtotal,
       taxAmount,
       totalAmount,
-      itemCount: validDetails.length
+      itemCount
     };
-  }, [phaseData.invoiceDetails, phaseData.taxRate]);
-
-  const handleQuantityChange = (
-    productId: string,
-    currentQuantity: number,
-    delta: number,
-    max: number
-  ) => {
-    const newQuantity = Math.max(0, Math.min(max, currentQuantity + delta));
-    onQuantityChange(productId, newQuantity);
-  };
+  }, [phaseData.invoiceDetails, phaseData.taxRate, schedule.orderDetails]);
 
   const hasValidItems = calculatedTotals.itemCount > 0;
   const t = useTranslations('Orders.detail.createPhase');
@@ -173,152 +176,172 @@ export function CreatePhaseDialog({
         />
       </div>
 
-      {/* Products Table */}
-      <div>
+      {/* Products and Selections Cards */}
+      <div className='space-y-4'>
         <div className='mb-4 flex items-center justify-between'>
           <Label className='text-base font-semibold'>
             {t('productsTitle')}
           </Label>
           <p className='text-muted-foreground text-sm'>{t('productsHelper')}</p>
         </div>
-        <div className='w-full rounded-lg border'>
-          <Table className='w-full'>
-            <TableHeader>
-              <TableRow>
-                <TableHead className='w-[250px]'>{t('product')}</TableHead>
-                <TableHead className='text-center'>{t('remaining')}</TableHead>
-                <TableHead className='w-[180px] text-center'>
-                  {t('deliveryQuantity')}
-                </TableHead>
-                <TableHead className='text-center'>{t('unit')}</TableHead>
-                <TableHead className='text-right'>{t('unitPrice')}</TableHead>
-                <TableHead className='text-right'>{t('amount')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {phaseData.invoiceDetails.map((detail, index) => {
-                const product = schedule.orderDetails?.find(
-                  (d) => d.product?.id === detail.product.id
-                );
-                const productId = detail.product.id;
-                const productTotals = totals[productId];
-                const remaining = productTotals
-                  ? productTotals.total - productTotals.used
-                  : 0;
-                const quantity = detail.quantity ?? 0;
-                const unitPrice = detail.unitPrice ?? 0;
-                const amount = quantity * unitPrice;
-                const hasRemaining = remaining > 0;
+        <div className='space-y-4'>
+          {schedule.orderDetails?.map((orderDetail) => {
+            const productId = orderDetail.product?.id;
+            if (!productId) return null;
 
-                return (
-                  <TableRow
-                    key={index}
-                    className={
-                      !hasRemaining
-                        ? 'bg-muted/30 opacity-60'
-                        : quantity > 0
-                          ? 'bg-primary/5'
-                          : ''
-                    }
-                  >
-                    <TableCell className='font-medium'>
-                      <div>
-                        <div>{product?.product?.name || '-'}</div>
-                        {product?.product?.id && (
-                          <div className='text-muted-foreground text-xs'>
-                            ID: {product.product.id.slice(0, 8)}
-                          </div>
+            const detail = phaseData.invoiceDetails.find(
+              (d) => d.product.id === productId
+            );
+            const selectedSelectionIds =
+              phaseData.selectedSelections[productId] || [];
+            const productTotals = totals[productId] || {
+              name: orderDetail.product?.name || '',
+              total: 0,
+              used: 0
+            };
+            const remaining = productTotals.total - productTotals.used;
+
+            // Calculate total quantity and amount for this product
+            const selectedSelections =
+              orderDetail.orderDetailSelections?.filter((sel) =>
+                selectedSelectionIds.includes(sel.id)
+              ) || [];
+            const totalQuantity = selectedSelections.reduce(
+              (sum, sel) => sum + (sel.quantity || 0),
+              0
+            );
+            const totalAmount = selectedSelections.reduce(
+              (sum, sel) => sum + (sel.quantity || 0) * (sel.unitPrice || 0),
+              0
+            );
+
+            return (
+              <Card
+                key={`product-${productId}`}
+                className='overflow-hidden transition-shadow hover:shadow-md'
+              >
+                <CardHeader className='bg-muted/30 border-b pb-3'>
+                  <div className='flex items-start gap-4'>
+                    {orderDetail.product?.image && (
+                      <img
+                        src={orderDetail.product.image}
+                        alt={orderDetail.product.name || ''}
+                        className='h-12 w-12 rounded-lg object-cover'
+                      />
+                    )}
+                    <div className='flex-1'>
+                      <CardTitle className='text-lg'>
+                        {orderDetail.product?.name || '-'}
+                      </CardTitle>
+                      <div className='text-muted-foreground mt-1 flex flex-wrap items-center gap-4 text-sm'>
+                        <span className='flex items-center gap-1'>
+                          <Package className='h-3.5 w-3.5' />
+                          Selected:{' '}
+                          <strong className='text-foreground'>
+                            {totalQuantity}
+                          </strong>{' '}
+                          {detail?.unit || orderDetail.unit || ''}
+                        </span>
+                        <span>
+                          Remaining:{' '}
+                          <strong className='text-foreground'>
+                            {remaining}
+                          </strong>
+                        </span>
+                        {totalAmount > 0 && (
+                          <span className='text-primary ml-auto font-semibold'>
+                            {formatCurrency(totalAmount)}
+                          </span>
                         )}
                       </div>
-                    </TableCell>
-                    <TableCell className='text-center'>
-                      <span
-                        className={`font-medium ${
-                          hasRemaining
-                            ? 'text-green-600'
-                            : 'text-muted-foreground'
-                        }`}
-                      >
-                        {remaining}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <div className='flex items-center justify-center gap-1'>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          size='icon'
-                          className='h-8 w-8'
-                          onClick={() =>
-                            handleQuantityChange(
-                              detail.product.id,
-                              quantity,
-                              -1,
-                              remaining
-                            )
-                          }
-                          disabled={!hasRemaining || quantity <= 0}
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className='p-4'>
+                  <div className='space-y-2'>
+                    {orderDetail.orderDetailSelections?.map((selection) => {
+                      const isSelected = selectedSelectionIds.includes(
+                        selection.id
+                      );
+                      const selectionAmount =
+                        (selection.quantity || 0) * (selection.unitPrice || 0);
+
+                      return (
+                        <div
+                          key={selection.id}
+                          className={`group flex items-center gap-4 rounded-lg border p-4 transition-all ${
+                            isSelected
+                              ? 'border-primary bg-primary/5 shadow-sm'
+                              : 'border-border hover:border-primary/50 hover:bg-muted/30'
+                          }`}
                         >
-                          <Minus className='h-4 w-4' />
-                        </Button>
-                        <Input
-                          type='number'
-                          min={0}
-                          max={remaining}
-                          value={quantity}
-                          onChange={(e) =>
-                            onQuantityChange(
-                              detail.product.id,
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
-                          className='h-8 w-20 text-center'
-                          disabled={!hasRemaining}
-                        />
-                        <Button
-                          type='button'
-                          variant='outline'
-                          size='icon'
-                          className='h-8 w-8'
-                          onClick={() =>
-                            handleQuantityChange(
-                              detail.product.id,
-                              quantity,
-                              1,
-                              remaining
-                            )
-                          }
-                          disabled={!hasRemaining || quantity >= remaining}
-                        >
-                          <Plus className='h-4 w-4' />
-                        </Button>
+                          <Checkbox
+                            checked={isSelected}
+                            onCheckedChange={() =>
+                              onToggleSelection(
+                                productId,
+                                selection.id,
+                                orderDetail
+                              )
+                            }
+                            className='h-5 w-5'
+                          />
+                          <div className='flex flex-1 items-center justify-between gap-4'>
+                            <div className='flex-1 space-y-1'>
+                              <div className='flex items-center gap-2'>
+                                <span className='font-medium'>
+                                  {selection.batch?.batchCode || '-'}
+                                </span>
+                                {selection.batch?.expiredAt && (
+                                  <span className='text-muted-foreground flex items-center gap-1 text-xs'>
+                                    <Calendar className='h-3 w-3' />
+                                    {new Date(
+                                      selection.batch.expiredAt
+                                    ).toLocaleDateString()}
+                                  </span>
+                                )}
+                              </div>
+                              <div className='text-muted-foreground flex items-center gap-4 text-sm'>
+                                <span>
+                                  Quantity:{' '}
+                                  <strong className='text-foreground'>
+                                    {selection.quantity || 0}
+                                  </strong>
+                                </span>
+                                <span>
+                                  Unit:{' '}
+                                  <strong className='text-foreground'>
+                                    {selection.unit || orderDetail.unit || '-'}
+                                  </strong>
+                                </span>
+                                <span>
+                                  Unit Price:{' '}
+                                  <strong className='text-foreground'>
+                                    {formatCurrency(selection.unitPrice || 0)}
+                                  </strong>
+                                </span>
+                              </div>
+                            </div>
+                            <div className='text-right'>
+                              <div className='text-primary text-lg font-semibold'>
+                                {formatCurrency(selectionAmount)}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                    {(!orderDetail.orderDetailSelections ||
+                      orderDetail.orderDetailSelections.length === 0) && (
+                      <div className='text-muted-foreground py-4 text-center text-sm'>
+                        No selections available for this product
                       </div>
-                      {quantity > remaining && (
-                        <p className='text-destructive mt-1 text-xs'>
-                          {t('exceedsRemaining')}
-                        </p>
-                      )}
-                    </TableCell>
-                    <TableCell className='text-center'>
-                      {detail.unit || '-'}
-                    </TableCell>
-                    <TableCell className='text-right font-medium'>
-                      {formatCurrency(unitPrice)}
-                    </TableCell>
-                    <TableCell className='text-right font-semibold'>
-                      {quantity > 0 ? (
-                        <span className='text-primary'>
-                          {formatCurrency(amount)}
-                        </span>
-                      ) : (
-                        <span className='text-muted-foreground'>-</span>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
 

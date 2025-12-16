@@ -5,6 +5,7 @@ import type {
   OrderPhase,
   OrderSchedule
 } from '@/types/order';
+import type { OrderDetail } from '@/types/order-detail';
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 
@@ -13,6 +14,7 @@ export interface PhaseFormData {
   taxRate: number;
   phaseNumber: number;
   invoiceDetails: CreateOrderInvoiceDetailDto[];
+  selectedSelections: Record<string, string[]>; // productId -> selectionIds[]
 }
 
 export function usePhaseForm(
@@ -29,7 +31,8 @@ export function usePhaseForm(
     description: '',
     taxRate: 5,
     phaseNumber: nextPhaseNumber,
-    invoiceDetails: initialDetails
+    invoiceDetails: initialDetails,
+    selectedSelections: {}
   });
   const [loading, setLoading] = useState(false);
 
@@ -37,7 +40,62 @@ export function usePhaseForm(
     setPhaseData((prev) => ({ ...prev, ...updates }));
   };
 
+  const toggleSelection = (
+    productId: string,
+    selectionId: string,
+    orderDetail: OrderDetail
+  ) => {
+    setPhaseData((prev) => {
+      const currentSelections = prev.selectedSelections[productId] || [];
+      const isSelected = currentSelections.includes(selectionId);
+
+      let newSelections: string[];
+      if (isSelected) {
+        newSelections = currentSelections.filter((id) => id !== selectionId);
+      } else {
+        newSelections = [...currentSelections, selectionId];
+      }
+
+      // Calculate quantity as sum of selected selections
+      const selectedSelections =
+        orderDetail.orderDetailSelections?.filter((sel) =>
+          newSelections.includes(sel.id)
+        ) || [];
+      const totalQuantity = selectedSelections.reduce(
+        (sum, sel) => sum + (sel.quantity || 0),
+        0
+      );
+
+      // Get unit from first selected selection or orderDetail
+      const unit = selectedSelections[0]?.unit || orderDetail.unit || null;
+
+      // Update invoice details
+      const updatedDetails = prev.invoiceDetails.map((detail) => {
+        if (detail.product.id === productId) {
+          return {
+            ...detail,
+            quantity: totalQuantity,
+            selectionIds: newSelections.length > 0 ? newSelections : null,
+            unit: unit || detail.unit
+          };
+        }
+        return detail;
+      });
+
+      return {
+        ...prev,
+        selectedSelections: {
+          ...prev.selectedSelections,
+          [productId]: newSelections
+        },
+        invoiceDetails: updatedDetails
+      };
+    });
+  };
+
   const updateQuantity = (productId: string, quantity: number) => {
+    // This method is kept for backward compatibility but may not be used
+    // when using selection-based approach
     setPhaseData((prev) => ({
       ...prev,
       invoiceDetails: prev.invoiceDetails.map((detail) =>
@@ -54,7 +112,8 @@ export function usePhaseForm(
       description: '',
       taxRate: 5,
       phaseNumber: newPhaseNumber,
-      invoiceDetails: newDetails
+      invoiceDetails: newDetails,
+      selectedSelections: {}
     });
   };
 
@@ -74,10 +133,22 @@ export function usePhaseForm(
       return;
     }
 
-    // Calculate total amount with tax
-    const subtotal = validDetails.reduce((sum, detail) => {
-      return sum + detail.quantity! * (detail.unitPrice || 0);
-    }, 0);
+    // Calculate total amount with tax from selected selections
+    let subtotal = 0;
+    schedule.orderDetails?.forEach((orderDetail) => {
+      const detail = validDetails.find(
+        (d) => d.product.id === orderDetail.product?.id
+      );
+      if (detail && detail.selectionIds && detail.selectionIds.length > 0) {
+        const selectedSelections =
+          orderDetail.orderDetailSelections?.filter((sel) =>
+            detail.selectionIds!.includes(sel.id)
+          ) || [];
+        selectedSelections.forEach((sel) => {
+          subtotal += (sel.quantity || 0) * (sel.unitPrice || 0);
+        });
+      }
+    });
     const totalAmount = subtotal * (1 + phaseData.taxRate / 100);
 
     try {
@@ -99,10 +170,10 @@ export function usePhaseForm(
       // Reset phase form
       const newDetails: CreateOrderInvoiceDetailDto[] =
         schedule.orderDetails!.map((detail) => ({
-          product: { id: detail.product!.id },
+          product: { id: detail.product!.id || null },
           quantity: 0,
-          unitPrice: detail.unitPrice || 0,
-          unit: detail.unit || ''
+          unit: detail.unit || null,
+          selectionIds: null
         }));
       reset(newDetails, phases.length + 2);
 
@@ -126,6 +197,7 @@ export function usePhaseForm(
     phaseData,
     updatePhaseData,
     updateQuantity,
+    toggleSelection,
     reset,
     handleCreatePhase,
     loading

@@ -43,17 +43,20 @@ export default function OrderDetail({ scheduleId }: { scheduleId: string }) {
 
   // Initialize phase form
   const initialDetails: CreateOrderInvoiceDetailDto[] =
-    schedule?.orderDetails?.map((detail) => ({
-      product: { id: detail.product!.id },
-      quantity: 0,
-      unitPrice: detail.unitPrice || 0,
-      unit: detail.unit || ''
-    })) || [];
+    schedule?.orderDetails
+      ?.filter((detail) => detail.product?.id)
+      .map((detail) => ({
+        product: { id: detail.product!.id || null },
+        quantity: 0,
+        unit: detail.unit || 'kg',
+        selectionIds: null
+      })) || [];
 
   const {
     phaseData,
     updatePhaseData,
     updateQuantity,
+    toggleSelection,
     reset,
     handleCreatePhase,
     loading: createPhaseLoading
@@ -69,12 +72,13 @@ export default function OrderDetail({ scheduleId }: { scheduleId: string }) {
   // Reset phase form when schedule changes
   useEffect(() => {
     if (schedule?.orderDetails && phaseData.invoiceDetails.length === 0) {
-      const newDetails: CreateOrderInvoiceDetailDto[] =
-        schedule.orderDetails.map((detail) => ({
-          product: { id: detail.product!.id },
+      const newDetails: CreateOrderInvoiceDetailDto[] = schedule.orderDetails
+        .filter((detail) => detail.product?.id)
+        .map((detail) => ({
+          product: { id: detail.product!.id || null },
           quantity: 0,
-          unitPrice: detail.unitPrice || 0,
-          unit: detail.unit || ''
+          unit: detail.unit || null,
+          selectionIds: null
         }));
       reset(newDetails, phases.length + 1);
     }
@@ -172,6 +176,7 @@ export default function OrderDetail({ scheduleId }: { scheduleId: string }) {
           phaseNumber={phases.length + 1}
           onPhaseDataChange={updatePhaseData}
           onQuantityChange={updateQuantity}
+          onToggleSelection={toggleSelection}
           onCreate={handleCreatePhase}
           loading={createPhaseLoading}
         />
