@@ -1,9 +1,21 @@
+export type BatchPrice = {
+  price: number;
+  quantity: number;
+  unit: string;
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Batch = {
   id: string;
   batchCode: string;
   quantity: number;
+  currentQuantity?: number;
   unit: string;
   volume: number;
+  expiredAt?: string;
+  price?: BatchPrice[];
   area?: {
     id: string;
     name?: string;
@@ -18,6 +30,8 @@ export type Batch = {
   orderDetail?: {
     id: string;
   };
+  gardenName?: string;
+  harvestDate?: string;
   createdAt?: string;
   updatedAt?: string;
 };

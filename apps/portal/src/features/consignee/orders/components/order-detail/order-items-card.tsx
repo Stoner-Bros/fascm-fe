@@ -71,7 +71,11 @@ export function OrderItemsCard({
                   </span>
                   <span>
                     {t('detail.overview.unitPrice')}:{' '}
-                    <strong>{formatCurrency(detail.unitPrice || 0)}</strong>
+                    <strong>
+                      {formatCurrency(
+                        detail.orderDetailSelections?.[0]?.unitPrice || 0
+                      )}
+                    </strong>
                   </span>
                 </div>
               </div>

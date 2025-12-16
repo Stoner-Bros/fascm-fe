@@ -1,5 +1,6 @@
 import { OrderScheduleStatus } from '@/types/order';
 import type { Product } from '@/types/product';
+import type { Batch } from '@/types/batch';
 
 // Order List Types
 export type OrderScheduleRow = {
@@ -48,6 +49,8 @@ export type OrderLine = {
   quantity: number;
   unit: string;
   unitPrice: number;
+  batchId?: string;
+  batchCode?: string;
 };
 
 export type Step = 'products' | 'delivery' | 'review';
@@ -55,6 +58,7 @@ export type Step = 'products' | 'delivery' | 'review';
 export type NewOrderState = {
   currentStep: Step;
   products: Product[];
+  productBatches: Record<string, Batch[]>;
   orderLines: OrderLine[];
   selectedProducts: Set<string>;
   deliveryDate: string;
@@ -69,6 +73,10 @@ export type NewOrderState = {
 export type NewOrderAction =
   | { type: 'SET_STEP'; payload: Step }
   | { type: 'SET_PRODUCTS'; payload: Product[] }
+  | {
+      type: 'SET_PRODUCT_BATCHES';
+      payload: { productId: string; batches: Batch[] };
+    }
   | { type: 'SET_ORDER_LINES'; payload: OrderLine[] }
   | { type: 'ADD_ORDER_LINE'; payload: OrderLine }
   | {

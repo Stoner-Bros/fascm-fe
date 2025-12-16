@@ -1,6 +1,7 @@
 import { Consignee } from './consignee';
 import { Product } from './product';
 import { Payment } from './payment';
+import { Batch } from './batch';
 
 // ============================================================================
 // ORDER SCHEDULE
@@ -80,15 +81,34 @@ export type OrderDetail = {
   quantity?: number | null;
   unit?: string | null;
   product?: Product | null;
+  batch?: { id: string; batchCode?: string } | null;
+  createdAt: Date | string;
+  updatedAt: Date | string;
+  orderDetailSelections?: OrderDetailSelection[] | null;
+};
+
+export type OrderDetailSelection = {
+  id: string;
+  quantity?: number | null;
+  unitPrice?: number | null;
+  unit?: string | null;
+  batch?: Batch | null;
   createdAt: Date | string;
   updatedAt: Date | string;
 };
 
+export type BatchInfoDto = {
+  batchId: string;
+  quantity: number;
+  unit: string;
+  unitPrice: number;
+};
+
 export type CreateOrderDetailDto = {
-  unitPrice?: number | null;
   quantity?: number | null;
   unit?: string | null;
   product?: { id: string } | null;
+  batchInfo?: BatchInfoDto[] | null;
 };
 
 // ============================================================================
