@@ -1,9 +1,22 @@
+export type BatchPrice = {
+  price: number;
+  quantity: number;
+  unit: string;
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type Batch = {
   id: string;
   batchCode: string;
   quantity: number;
+  currentQuantity?: number;
   unit: string;
-  volume: number;
+  volume?: number;
+  costPrice?: number;
+  expiredAt?: string | null;
+  price?: BatchPrice[];
   area?: {
     id: string;
     name?: string;
@@ -11,6 +24,7 @@ export type Batch = {
   product?: {
     id: string;
     name?: string;
+    image?: string | null;
   };
   importTicket?: {
     id: string;

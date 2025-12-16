@@ -498,7 +498,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
                 </CardHeader>
                 <CardContent className='flex flex-1 flex-col space-y-4'>
                   {/* Thống kê kho */}
-                  <div className='grid grid-cols-2 gap-4 text-sm'>
+                  {/* <div className='grid grid-cols-2 gap-4 text-sm'>
                     <div className='space-y-1'>
                       <p className='text-muted-foreground'>Nhập hôm nay</p>
                       <p className='font-semibold text-green-600'>
@@ -511,7 +511,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
                         -{warehouse.todayExport}
                       </p>
                     </div>
-                  </div>
+                  </div> */}
 
                   {/* Cảnh báo */}
                   {(warehouse.lowStockItems > 0 ||

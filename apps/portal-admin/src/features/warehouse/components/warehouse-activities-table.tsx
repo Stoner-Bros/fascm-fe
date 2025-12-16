@@ -30,6 +30,7 @@ import {
   fetchExportTickets
 } from '@/services/export-ticket.service';
 import { fetchImportTickets } from '@/services/import-ticket.service';
+import { fetchWarehouseTickets } from '@/services/warehouse.service';
 import {
   IconArrowDown,
   IconArrowUp,
@@ -72,7 +73,13 @@ export interface WarehouseActivity {
   completedAt?: string;
 }
 
-export function WarehouseActivitiesTable() {
+interface WarehouseActivitiesTableProps {
+  warehouseId?: string;
+}
+
+export function WarehouseActivitiesTable({
+  warehouseId
+}: WarehouseActivitiesTableProps = {}) {
   const t = useTranslations('WarehouseActivities');
   const locale = useLocale();
   const [activities, setActivities] = useState<WarehouseActivity[]>([]);
@@ -119,70 +126,124 @@ export function WarehouseActivitiesTable() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [importsRes, exportsRes] = await Promise.all([
-          fetchImportTickets({ page: 1, limit: 50 }),
-          fetchExportTickets({ page: 1, limit: 50 })
-        ]);
+        if (warehouseId) {
+          // Use new service to fetch tickets by warehouse ID
+          const ticketsRes = await fetchWarehouseTickets(warehouseId);
 
-        const importActivities: any[] = (importsRes.data ?? []).map((it) => ({
-          id: String(it.id),
-          date: String(
-            it.importDate ?? it.createdAt ?? new Date().toISOString()
-          ),
-          code: String(it.id),
-          type: 'import',
-          productName: String(it?.productName ?? '-'),
-          quantity: Number(it.quantity ?? it.percent ?? 0),
-          unit: String(it?.unit ?? it?.unit ?? ''),
-          warehouseArea: it.areaName ?? undefined,
-          notes: undefined,
-          status: 'completed',
-          batchNumber:
-            it.numberOfBatch !== undefined && it.numberOfBatch !== null
-              ? String(it.numberOfBatch)
-              : undefined
-        }));
+          const importActivities: WarehouseActivity[] = (
+            ticketsRes.importTickets ?? []
+          ).map((it) => ({
+            id: String(it.id),
+            date: String(
+              it.importDate ?? it.createdAt ?? new Date().toISOString()
+            ),
+            code: String(it.id),
+            type: 'import',
+            productName: String(it?.productName ?? '-'),
+            productCode: '-',
+            quantity: Number(it.quantity ?? it.percent ?? 0),
+            unit: String(it?.unit ?? ''),
+            warehouse: '-',
+            warehouseArea: it.areaName ?? undefined,
+            user: '-',
+            notes: undefined,
+            status: 'completed',
+            batchNumber:
+              it.numberOfBatch !== undefined && it.numberOfBatch !== null
+                ? String(it.numberOfBatch)
+                : undefined
+          }));
 
-        const exportActivities: WarehouseActivity[] = (
-          exportsRes.data ?? []
-        ).map((et) => ({
-          id: String((et as any).id ?? ''),
-          date: String(
-            (et as any).ExportDate ??
-              (et as any).createdAt ??
-              new Date().toISOString()
-          ),
-          code: String(
-            (et as any).orderDetail?.order?.id ?? (et as any).id ?? ''
-          ),
-          type: 'export',
-          productName: String((et as any).productName ?? '-'),
-          productCode: String((et as any).orderDetail?.product?.id ?? '-'),
-          quantity: Number((et as any).quantity ?? 0),
-          unit: String((et as any).unit ?? ''),
-          warehouse: '-',
-          warehouseArea: undefined,
-          user: String(
-            (et as any).orderDetail?.order?.orderSchedule?.consignee
-              ?.representativeName ?? '-'
-          ),
-          notes: undefined,
-          status: 'completed',
-          batchNumber:
-            (et as any).numberOfBatch !== undefined &&
-            (et as any).numberOfBatch !== null
-              ? String((et as any).numberOfBatch)
-              : undefined,
-          customer:
-            (et as any).orderDetail?.order?.orderSchedule?.consignee
-              ?.organizationName ?? undefined
-        }));
+          const exportActivities: WarehouseActivity[] = (
+            ticketsRes.exportTickets ?? []
+          ).map((et) => ({
+            id: String(et.id ?? ''),
+            date: String(
+              et.exportDate ?? et.createdAt ?? new Date().toISOString()
+            ),
+            code: String(et.id ?? ''),
+            type: 'export',
+            productName: String(et.productName ?? '-'),
+            productCode: '-',
+            quantity: Number(et.quantity ?? 0),
+            unit: String(et.unit ?? ''),
+            warehouse: '-',
+            warehouseArea: et.areaName ?? undefined,
+            user: '-',
+            notes: undefined,
+            status: 'completed',
+            batchNumber: undefined,
+            customer: undefined
+          }));
 
-        setActivities([...importActivities, ...exportActivities]);
+          setActivities([...importActivities, ...exportActivities]);
+        } else {
+          // Fallback to old behavior when no warehouseId is provided
+          const [importsRes, exportsRes] = await Promise.all([
+            fetchImportTickets({ page: 1, limit: 50 }),
+            fetchExportTickets({ page: 1, limit: 50 })
+          ]);
+
+          const importActivities: any[] = (importsRes.data ?? []).map((it) => ({
+            id: String(it.id),
+            date: String(
+              it.importDate ?? it.createdAt ?? new Date().toISOString()
+            ),
+            code: String(it.id),
+            type: 'import',
+            productName: String(it?.productName ?? '-'),
+            quantity: Number(it.quantity ?? it.percent ?? 0),
+            unit: String(it?.unit ?? it?.unit ?? ''),
+            warehouseArea: it.areaName ?? undefined,
+            notes: undefined,
+            status: 'completed',
+            batchNumber:
+              it.numberOfBatch !== undefined && it.numberOfBatch !== null
+                ? String(it.numberOfBatch)
+                : undefined
+          }));
+
+          const exportActivities: WarehouseActivity[] = (
+            exportsRes.data ?? []
+          ).map((et) => ({
+            id: String((et as any).id ?? ''),
+            date: String(
+              (et as any).ExportDate ??
+                (et as any).createdAt ??
+                new Date().toISOString()
+            ),
+            code: String(
+              (et as any).orderDetail?.order?.id ?? (et as any).id ?? ''
+            ),
+            type: 'export',
+            productName: String((et as any).productName ?? '-'),
+            productCode: String((et as any).orderDetail?.product?.id ?? '-'),
+            quantity: Number((et as any).quantity ?? 0),
+            unit: String((et as any).unit ?? ''),
+            warehouse: '-',
+            warehouseArea: undefined,
+            user: String(
+              (et as any).orderDetail?.order?.orderSchedule?.consignee
+                ?.representativeName ?? '-'
+            ),
+            notes: undefined,
+            status: 'completed',
+            batchNumber:
+              (et as any).numberOfBatch !== undefined &&
+              (et as any).numberOfBatch !== null
+                ? String((et as any).numberOfBatch)
+                : undefined,
+            customer:
+              (et as any).orderDetail?.order?.orderSchedule?.consignee
+                ?.organizationName ?? undefined
+          }));
+
+          setActivities([...importActivities, ...exportActivities]);
+        }
       } catch {}
     };
     load();
-  }, []);
+  }, [warehouseId]);
 
   // Filter and search logic
   const filteredActivities = useMemo(() => {
@@ -463,9 +524,9 @@ export function WarehouseActivitiesTable() {
                   <TableHead className='font-semibold'>
                     {t('table.status')}
                   </TableHead>
-                  <TableHead className='text-right font-semibold'>
+                  {/* <TableHead className='text-right font-semibold'>
                     {t('table.actions')}
-                  </TableHead>
+                  </TableHead> */}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -545,7 +606,7 @@ export function WarehouseActivitiesTable() {
                         )}
                       </TableCell> */}
                       <TableCell>{getStatusBadge(activity.status)}</TableCell>
-                      <TableCell className='text-right'>
+                      {/* <TableCell className='text-right'>
                         <Button
                           size='sm'
                           variant='outline'
@@ -553,7 +614,7 @@ export function WarehouseActivitiesTable() {
                         >
                           {t('actions.viewDetails')}
                         </Button>
-                      </TableCell>
+                      </TableCell> */}
                     </TableRow>
                   ))
                 )}
