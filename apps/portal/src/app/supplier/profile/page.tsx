@@ -36,10 +36,12 @@ import {
 } from '@tabler/icons-react';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+import { useTranslations } from 'next-intl';
 
 export default function SupplierProfilePage() {
   const { user, fullInfo } = useAuth();
   const { toast } = useToast();
+  const t = useTranslations('Profile');
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [certificateFiles, setCertificateFiles] = useState<File[]>([]);
@@ -107,8 +109,8 @@ export default function SupplierProfilePage() {
       console.error(`Failed to upload ${type}:`, error);
       toast({
         variant: 'destructive',
-        title: 'File Upload Failed',
-        description: `Failed to upload ${type} file. Please try again.`
+        title: t('toast.fileUploadFailed'),
+        description: t('toast.fileUploadFailedDescription', { type })
       });
       return null;
     }
@@ -120,8 +122,8 @@ export default function SupplierProfilePage() {
     if (!supplierInfo?.id) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Supplier information not found.'
+        title: t('toast.error'),
+        description: t('toast.supplierNotFound')
       });
       return;
     }
@@ -189,8 +191,8 @@ export default function SupplierProfilePage() {
       setUserPhotoFiles([]);
 
       toast({
-        title: 'Profile Updated',
-        description: 'Your profile has been successfully updated.'
+        title: t('toast.profileUpdated'),
+        description: t('toast.profileUpdatedDescription')
       });
 
       setIsEditing(false);
@@ -201,8 +203,8 @@ export default function SupplierProfilePage() {
       console.error('Failed to update profile:', error);
       toast({
         variant: 'destructive',
-        title: 'Update Failed',
-        description: 'Failed to update profile. Please try again.'
+        title: t('toast.updateFailed'),
+        description: t('toast.updateFailedDescription')
       });
     } finally {
       setIsSubmitting(false);
@@ -237,15 +239,13 @@ export default function SupplierProfilePage() {
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
           <div>
-            <h2 className='text-3xl font-bold tracking-tight'>Profile</h2>
-            <p className='text-muted-foreground'>
-              Manage your account information and farm details
-            </p>
+            <h2 className='text-3xl font-bold tracking-tight'>{t('title')}</h2>
+            <p className='text-muted-foreground'>{t('subtitle')}</p>
           </div>
           {!isEditing && (
             <Button onClick={() => setIsEditing(true)}>
               <IconEdit className='mr-2 h-4 w-4' />
-              Edit Profile
+              {t('buttons.editProfile')}
             </Button>
           )}
           {isEditing && (
@@ -257,18 +257,18 @@ export default function SupplierProfilePage() {
                 disabled={isSubmitting}
               >
                 <IconX className='mr-2 h-4 w-4' />
-                Cancel
+                {t('buttons.cancel')}
               </Button>
               <Button onClick={handleSubmit} disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <div className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
-                    Saving...
+                    {t('buttons.saving')}
                   </>
                 ) : (
                   <>
                     <IconCheck className='mr-2 h-4 w-4' />
-                    Save Changes
+                    {t('buttons.saveChanges')}
                   </>
                 )}
               </Button>
@@ -282,9 +282,9 @@ export default function SupplierProfilePage() {
           <div className='grid gap-6'>
             <Card>
               <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
+                <CardTitle>{t('personalInformation.title')}</CardTitle>
                 <CardDescription>
-                  Your basic account information and profile picture
+                  {t('personalInformation.description')}
                 </CardDescription>
               </CardHeader>
               <CardContent className='space-y-6'>
@@ -295,9 +295,9 @@ export default function SupplierProfilePage() {
                     <div className='relative'>
                       {user?.photo?.path ? (
                         <Image
-                          priority={true}
+                          priority
                           src={user.photo.path}
-                          alt='Profile Picture'
+                          alt={t('personalInformation.profilePicture')}
                           width={200}
                           height={200}
                           className='aspect-square rounded-full border-4 border-gray-200 object-cover object-center'
@@ -332,8 +332,8 @@ export default function SupplierProfilePage() {
                         <div className='rounded-lg border-2 border-dashed border-gray-300 p-4'>
                           <Image
                             src={formData.qrCode}
-                            priority={true}
-                            alt='Farm QR Code'
+                            priority
+                            alt={t('personalInformation.organizationQrCode')}
                             height={200}
                             width={200}
                             className='aspect-square rounded-md object-cover object-center'
@@ -347,7 +347,9 @@ export default function SupplierProfilePage() {
                         <div className='flex h-[200px] w-[200px] items-center justify-center rounded-lg border-2 border-dashed border-gray-300 bg-gray-50'>
                           <div className='text-center'>
                             <IconFileText className='mx-auto mb-2 h-8 w-8 text-gray-400' />
-                            <p className='text-xs text-gray-500'>No QR Code</p>
+                            <p className='text-xs text-gray-500'>
+                              {t('personalInformation.noQrCode')}
+                            </p>
                           </div>
                         </div>
                       )}
@@ -371,116 +373,145 @@ export default function SupplierProfilePage() {
                 </div>
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                   <div className='space-y-2'>
-                    <Label htmlFor='firstName'>First Name</Label>
+                    <Label htmlFor='firstName'>
+                      {t('personalInformation.firstName')}
+                    </Label>
                     {isEditing ? (
                       <Input
                         id='firstName'
                         name='firstName'
                         value={formData.firstName}
                         onChange={handleInputChange}
-                        placeholder='Enter first name'
+                        placeholder={t(
+                          'personalInformation.firstNamePlaceholder'
+                        )}
                         className='h-[42px] !text-base'
                         required
                       />
                     ) : (
                       <div className='flex items-center space-x-2 rounded-md border p-2'>
                         <IconUser className='text-muted-foreground h-4 w-4' />
-                        <span>{formData.firstName || 'Not set'}</span>
+                        <span>
+                          {formData.firstName ||
+                            t('personalInformation.notSet')}
+                        </span>
                       </div>
                     )}
                   </div>
 
                   <div className='space-y-2'>
-                    <Label htmlFor='lastName'>Last Name</Label>
+                    <Label htmlFor='lastName'>
+                      {t('personalInformation.lastName')}
+                    </Label>
                     {isEditing ? (
                       <Input
                         id='lastName'
                         name='lastName'
                         value={formData.lastName}
                         onChange={handleInputChange}
-                        placeholder='Enter last name'
+                        placeholder={t(
+                          'personalInformation.lastNamePlaceholder'
+                        )}
                         className='h-[42px] !text-base'
                         required
                       />
                     ) : (
                       <div className='flex items-center space-x-2 rounded-md border p-2'>
                         <IconUser className='text-muted-foreground h-4 w-4' />
-                        <span>{formData.lastName || 'Not set'}</span>
+                        <span>
+                          {formData.lastName || t('personalInformation.notSet')}
+                        </span>
                       </div>
                     )}
                   </div>
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='email'>Email</Label>
+                  <Label htmlFor='email'>
+                    {t('personalInformation.email')}
+                  </Label>
                   <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
                     <IconMail className='text-muted-foreground h-4 w-4' />
                     <span>{formData.email}</span>
                   </div>
                   <p className='text-muted-foreground text-xs'>
-                    Email cannot be changed here. Contact support if needed.
+                    {t('personalInformation.emailCannotChange')}
                   </p>
                 </div>
 
                 {isEditing && (
                   <div className='space-y-2'>
-                    <Label htmlFor='oldPassword'>Old Password</Label>
+                    <Label htmlFor='oldPassword'>
+                      {t('personalInformation.oldPassword')}
+                    </Label>
                     <Input
                       id='oldPassword'
                       name='oldPassword'
                       type='password'
                       value={formData.oldPassword}
                       onChange={handleInputChange}
-                      placeholder='Enter old password (optional)'
+                      placeholder={t(
+                        'personalInformation.oldPasswordPlaceholder'
+                      )}
                       className='h-[42px] !text-base'
                     />
                     <p className='text-muted-foreground text-xs'>
-                      Leave blank if you don&apos;t want to change password
+                      {t('personalInformation.passwordOptional')}
                     </p>
                   </div>
                 )}
 
                 {isEditing && (
                   <div className='space-y-2'>
-                    <Label htmlFor='password'>New Password</Label>
+                    <Label htmlFor='password'>
+                      {t('personalInformation.newPassword')}
+                    </Label>
                     <Input
                       id='password'
                       name='password'
                       type='password'
                       value={formData.password}
                       onChange={handleInputChange}
-                      placeholder='Enter new password (optional)'
+                      placeholder={t(
+                        'personalInformation.newPasswordPlaceholder'
+                      )}
                       className='h-[42px] !text-base'
                     />
                     <p className='text-muted-foreground text-xs'>
-                      Leave blank if you don&apos;t want to change password
+                      {t('personalInformation.passwordOptional')}
                     </p>
                   </div>
                 )}
 
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
                   <div className='space-y-2'>
-                    <Label htmlFor='role'>Role</Label>
+                    <Label htmlFor='role'>
+                      {t('personalInformation.role')}
+                    </Label>
                     <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
                       <IconShield className='text-muted-foreground h-4 w-4' />
                       <span className='capitalize'>
-                        {user?.role?.name || 'Not set'}
+                        {user?.role?.name || t('personalInformation.notSet')}
                       </span>
                     </div>
                   </div>
 
                   <div className='space-y-2'>
-                    <Label htmlFor='status'>Account Status</Label>
+                    <Label htmlFor='status'>
+                      {t('personalInformation.accountStatus')}
+                    </Label>
                     <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
                       <IconCheck className='text-muted-foreground h-4 w-4' />
                       <span className='capitalize'>
-                        {user?.status?.name || 'Not set'}
+                        {user?.status?.name || t('personalInformation.notSet')}
                       </span>
                     </div>
                   </div>
 
                   <div className='space-y-2'>
-                    <Label htmlFor='provider'>Account Provider</Label>
+                    <Label htmlFor='provider'>
+                      {t('personalInformation.accountProvider')}
+                    </Label>
                     <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
                       <IconShield className='text-muted-foreground h-4 w-4' />
                       <span className='capitalize'>
@@ -494,36 +525,45 @@ export default function SupplierProfilePage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Farm Information</CardTitle>
+                <CardTitle>{t('organizationInformation.title')}</CardTitle>
                 <CardDescription>
-                  Your farm details and business information
+                  {t('organizationInformation.description')}
                 </CardDescription>
               </CardHeader>
               <CardContent className='space-y-4'>
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                   <div className='space-y-2'>
-                    <Label htmlFor='gardenName'>Garden/Farm Name</Label>
+                    <Label htmlFor='gardenName'>
+                      {t('organizationInformation.organizationName')}
+                    </Label>
                     {isEditing ? (
                       <Input
                         id='gardenName'
                         name='gardenName'
                         value={formData.gardenName}
                         onChange={handleInputChange}
-                        placeholder='Enter garden/farm name'
+                        placeholder={t(
+                          'organizationInformation.organizationNamePlaceholder'
+                        )}
                         className='h-[42px] !text-base'
                         required
                       />
                     ) : (
                       <div className='flex items-center space-x-2 rounded-md border p-2'>
                         <IconPlant className='text-muted-foreground h-4 w-4' />
-                        <span>{formData.gardenName || 'Not set'}</span>
+                        <span>
+                          {formData.gardenName ||
+                            t(
+                              'organizationInformation.organizationNamePlaceholder'
+                            )}
+                        </span>
                       </div>
                     )}
                   </div>
 
                   <div className='space-y-2'>
                     <Label htmlFor='representativeName'>
-                      Representative Name
+                      {t('organizationInformation.representativeName')}
                     </Label>
                     {isEditing ? (
                       <Input
@@ -531,75 +571,103 @@ export default function SupplierProfilePage() {
                         name='representativeName'
                         value={formData.representativeName}
                         onChange={handleInputChange}
-                        placeholder='Enter representative name'
+                        placeholder={t(
+                          'organizationInformation.representativeNamePlaceholder'
+                        )}
                         className='h-[42px] !text-base'
                         required
                       />
                     ) : (
                       <div className='flex items-center space-x-2 rounded-md border p-2'>
                         <IconUser className='text-muted-foreground h-4 w-4' />
-                        <span>{formData.representativeName || 'Not set'}</span>
+                        <span>
+                          {formData.representativeName ||
+                            t(
+                              'organizationInformation.representativeNamePlaceholder'
+                            )}
+                        </span>
                       </div>
                     )}
                   </div>
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='contact'>Contact Information</Label>
+                  <Label htmlFor='contact'>
+                    {t('organizationInformation.contact')}
+                  </Label>
                   {isEditing ? (
                     <Input
                       id='contact'
                       name='contact'
                       value={formData.contact}
                       onChange={handleInputChange}
-                      placeholder='Enter phone number or contact info'
+                      placeholder={t(
+                        'organizationInformation.contactPlaceholder'
+                      )}
                       className='h-[42px] !text-base'
                       required
                     />
                   ) : (
                     <div className='flex items-center space-x-2 rounded-md border p-2'>
                       <IconPhone className='text-muted-foreground h-4 w-4' />
-                      <span>{formData.contact || 'Not set'}</span>
+                      <span>
+                        {formData.contact ||
+                          t('organizationInformation.contactPlaceholder')}
+                      </span>
                     </div>
                   )}
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='address'>Farm Address</Label>
+                  <Label htmlFor='address'>
+                    {t('organizationInformation.address')}
+                  </Label>
                   {isEditing ? (
                     <Input
                       id='address'
                       name='address'
                       value={formData.address}
                       onChange={handleInputChange}
-                      placeholder='Enter complete farm address'
+                      placeholder={t(
+                        'organizationInformation.addressPlaceholder'
+                      )}
                       className='h-[42px] !text-base'
                       required
                     />
                   ) : (
                     <div className='flex items-center space-x-2 rounded-md border p-2'>
                       <IconMapPin className='text-muted-foreground h-4 w-4' />
-                      <span>{formData.address || 'Not set'}</span>
+                      <span>
+                        {formData.address ||
+                          t('organizationInformation.addressPlaceholder')}
+                      </span>
                     </div>
                   )}
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='taxCode'>Tax Identification Number</Label>
+                  <Label htmlFor='taxCode'>
+                    {t('organizationInformation.taxCode')}
+                  </Label>
                   {isEditing ? (
                     <Input
                       id='taxCode'
                       name='taxCode'
                       value={formData.taxCode}
                       onChange={handleInputChange}
-                      placeholder='Enter tax identification number'
+                      placeholder={t(
+                        'organizationInformation.taxCodePlaceholder'
+                      )}
                       className='h-[42px] !text-base'
                       required
                     />
                   ) : (
                     <div className='flex items-center space-x-2 rounded-md border p-2'>
                       <IconId className='text-muted-foreground h-4 w-4' />
-                      <span>{formData.taxCode || 'Not set'}</span>
+                      <span>
+                        {formData.taxCode ||
+                          t('organizationInformation.taxCodePlaceholder')}
+                      </span>
                     </div>
                   )}
                 </div>
@@ -609,20 +677,20 @@ export default function SupplierProfilePage() {
             {/* Certificates & Documents */}
             <Card>
               <CardHeader>
-                <CardTitle>Farm Certificate</CardTitle>
+                <CardTitle>{t('businessCertificate.title')}</CardTitle>
                 <CardDescription>
-                  Upload or manage your farm certificate
+                  {t('businessCertificate.description')}
                 </CardDescription>
               </CardHeader>
               <CardContent className='space-y-4'>
                 <div className='space-y-2'>
-                  <Label>Farm Certificate</Label>
+                  <Label>{t('businessCertificate.label')}</Label>
                   {!isEditing && formData.certificate && (
                     <div className='flex items-center space-x-2 rounded-md border p-3'>
                       <IconFileText className='text-muted-foreground h-5 w-5' />
                       <div className='flex-1'>
                         <p className='text-sm font-medium'>
-                          Current Certificate
+                          {t('businessCertificate.currentCertificate')}
                         </p>
                         <p className='text-muted-foreground text-xs'>
                           {formData.certificate}
@@ -636,7 +704,7 @@ export default function SupplierProfilePage() {
                             window.open(formData.certificate, '_blank')
                           }
                         >
-                          View
+                          {t('businessCertificate.view')}
                         </Button>
                       )}
                     </div>
@@ -649,11 +717,13 @@ export default function SupplierProfilePage() {
                         name='certificate'
                         value={formData.certificate}
                         onChange={handleInputChange}
-                        placeholder='Enter certificate information or URL'
+                        placeholder={t(
+                          'businessCertificate.certificatePlaceholder'
+                        )}
                       />
                       <div>
                         <Label className='text-muted-foreground text-sm'>
-                          Or upload new certificate:
+                          {t('businessCertificate.uploadNewCertificate')}
                         </Label>
                         <FileUploader
                           value={certificateFiles}
@@ -678,26 +748,34 @@ export default function SupplierProfilePage() {
 
             <Card>
               <CardHeader>
-                <CardTitle>Warehouse Information</CardTitle>
-                <CardDescription>Associated warehouse details</CardDescription>
+                <CardTitle>{t('warehouseInformation.title')}</CardTitle>
+                <CardDescription>
+                  {t('warehouseInformation.description')}
+                </CardDescription>
               </CardHeader>
               <CardContent className='space-y-4'>
                 <div className='space-y-2'>
-                  <Label htmlFor='warehouseName'>Warehouse Name</Label>
+                  <Label htmlFor='warehouseName'>
+                    {t('warehouseInformation.warehouseName')}
+                  </Label>
                   <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
                     <IconBuilding className='text-muted-foreground h-4 w-4' />
                     <span>
-                      {formData.warehouseName || 'No warehouse assigned'}
+                      {formData.warehouseName ||
+                        t('warehouseInformation.noWarehouseAssigned')}
                     </span>
                   </div>
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='warehouseAddress'>Warehouse Address</Label>
+                  <Label htmlFor='warehouseAddress'>
+                    {t('warehouseInformation.warehouseAddress')}
+                  </Label>
                   <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
                     <IconMapPin className='text-muted-foreground h-4 w-4' />
                     <span>
-                      {formData.warehouseAddress || 'No warehouse address'}
+                      {formData.warehouseAddress ||
+                        t('warehouseInformation.noWarehouseAddress')}
                     </span>
                   </div>
                 </div>

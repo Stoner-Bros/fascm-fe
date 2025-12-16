@@ -718,7 +718,9 @@
         "unit": "Đơn vị",
         "quantity": "Số lượng",
         "total": "Tổng",
-        "remove": "Xóa"
+        "remove": "Xóa",
+        "enterQuantityTitle": "Nhập số lượng",
+        "enterQuantityDescription": "Điều chỉnh số lượng cho từng sản phẩm"
       },
       "delivery": {
         "title": "Thông tin giao hàng",
@@ -727,7 +729,10 @@
         "deliveryAddress": "Địa chỉ giao hàng",
         "selectOnMap": "Chọn trên bản đồ",
         "orderDescription": "Mô tả đơn hàng (Tùy chọn)",
-        "descriptionPlaceholder": "Nhập bất kỳ ghi chú hoặc yêu cầu bổ sung..."
+        "descriptionPlaceholder": "Nhập bất kỳ ghi chú hoặc yêu cầu bổ sung...",
+        "receiverInfoTitle": "Thông tin người nhận",
+        "organizationLabel": "Tổ chức",
+        "representativeLabel": "Người đại diện"
       },
       "review": {
         "title": "Xác nhận đơn hàng",
@@ -736,7 +741,11 @@
         "deliverySummary": "Tóm tắt giao hàng",
         "totalAmount": "Tổng tiền",
         "submit": "Gửi đơn hàng",
-        "submitting": "Đang gửi..."
+        "submitting": "Đang gửi...",
+        "selectedProductsTitle": "Sản phẩm đã chọn",
+        "deliveryInfoTitle": "Thông tin giao hàng",
+        "deliveryTimeLabel": "Thời gian giao hàng",
+        "notesLabel": "Ghi chú"
       },
       "buttons": {
         "next": "Tiếp theo",
@@ -830,11 +839,20 @@
       "certificatePlaceholder": "Nhập thông tin hoặc URL giấy chứng nhận",
       "uploadNewCertificate": "Hoặc tải lên giấy chứng nhận mới:"
     },
+    "warehouseInformation": {
+      "title": "Thông tin kho hàng",
+      "description": "Chi tiết kho hàng liên kết",
+      "warehouseName": "Tên kho hàng",
+      "warehouseAddress": "Địa chỉ kho hàng",
+      "noWarehouseAssigned": "Chưa gán kho hàng",
+      "noWarehouseAddress": "Chưa có địa chỉ kho hàng"
+    },
     "toast": {
       "fileUploadFailed": "Tải tệp thất bại",
       "fileUploadFailedDescription": "Không thể tải tệp {type}. Vui lòng thử lại.",
       "error": "Lỗi",
       "consigneeNotFound": "Không tìm thấy thông tin người nhận hàng.",
+      "supplierNotFound": "Không tìm thấy thông tin nhà cung cấp.",
       "profileUpdated": "Đã cập nhật hồ sơ",
       "profileUpdatedDescription": "Hồ sơ của bạn đã được cập nhật thành công.",
       "updateFailed": "Cập nhật thất bại",
