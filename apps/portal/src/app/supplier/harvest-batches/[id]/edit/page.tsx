@@ -148,7 +148,8 @@ export default function EditHarvestBatchPage() {
     0
   );
   const totalPrice = (schedule.harvestDetails ?? []).reduce(
-    (sum, d) => sum + (d.quantity || 0) * (d.unitPrice || 0),
+    (sum, d) =>
+      sum + (Number(d.quantity) || 0) * (Number(d.expectedUnitPrice) || 0),
     0
   );
 
@@ -259,7 +260,9 @@ export default function EditHarvestBatchPage() {
                           <div>{detail.quantity}</div>
                           <div>{detail.unit}</div>
                           <div className='text-right font-medium'>
-                            {(detail.unitPrice || 0).toLocaleString('vi-VN')}{' '}
+                            {(detail.expectedUnitPrice || 0).toLocaleString(
+                              'vi-VN'
+                            )}{' '}
                             VND
                           </div>
                         </div>
