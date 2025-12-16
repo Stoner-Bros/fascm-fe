@@ -108,6 +108,7 @@ export default function DeliveryRouteSim({
   productName,
   deliveryId,
   orderScheduleId,
+  phaseId,
   startLat,
   startLng,
   endLat,
@@ -119,6 +120,7 @@ export default function DeliveryRouteSim({
   productName?: string;
   deliveryId?: string;
   orderScheduleId?: string;
+  phaseId?: string;
   startLat?: number;
   startLng?: number;
   endLat?: number;
@@ -432,9 +434,14 @@ export default function DeliveryRouteSim({
     })
       .then((res) => {
         const all = Array.isArray(res?.data) ? res.data : [];
-        const list = all.filter(
+        let list = all.filter(
           (x) => String(x?.orderSchedule?.id ?? '') === sid
         );
+        if (phaseId) {
+          list = list.filter(
+            (x) => String(x?.orderPhase?.id ?? '') === phaseId
+          );
+        }
         const prefer =
           list.find(
             (x) => String(x.status ?? '').toLowerCase() === 'delivering'
@@ -459,7 +466,7 @@ export default function DeliveryRouteSim({
         if (prefer?.id) setAutoDeliveryId(String(prefer.id));
       })
       .catch(() => {});
-  }, [orderScheduleId, activeDeliveryId]);
+  }, [orderScheduleId, activeDeliveryId, phaseId]);
 
   const progress =
     route.length > 1 ? Math.round((idx / (route.length - 1)) * 100) : 0;

@@ -1,5 +1,29 @@
 'use client';
 
+import 'leaflet/dist/leaflet.css';
+import dynamic from 'next/dynamic';
+const MapContainer = dynamic(
+  () => import('react-leaflet').then((m) => m.MapContainer),
+  { ssr: false }
+);
+const TileLayer = dynamic(
+  () => import('react-leaflet').then((m) => m.TileLayer),
+  { ssr: false }
+);
+const Marker = dynamic(() => import('react-leaflet').then((m) => m.Marker), {
+  ssr: false
+});
+const Tooltip = dynamic(() => import('react-leaflet').then((m) => m.Tooltip), {
+  ssr: false
+});
+const Polyline = dynamic(
+  () => import('react-leaflet').then((m) => m.Polyline),
+  { ssr: false }
+);
+import type { Icon, Map as LeafletMap } from 'leaflet';
+import { io } from 'socket.io-client';
+import { fetchDeliveryById } from '@/services/delivery.service';
+
 import {
   Accordion,
   AccordionContent,
@@ -37,7 +61,7 @@ import {
   Plus,
   Truck as TruckIcon
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { CreateDeliveryDialog } from './create-delivery-dialog';
 import {
   DeliveryStatusBadge,
@@ -61,6 +85,400 @@ interface PhaseDetailPaneProps {
   ) => Promise<Delivery | null>;
   isCreating: boolean;
   loadingUpdateStatusId: string | null;
+}
+
+type LatLng = { lat: number; lng: number };
+
+function distanceSq(a: [number, number], b: LatLng) {
+  const dx = a[0] - b.lat;
+  const dy = a[1] - b.lng;
+  return dx * dx + dy * dy;
+}
+
+async function fetchRouteOSRM(origin: LatLng, destination: LatLng) {
+  const base = (
+    process.env.NEXT_PUBLIC_OSRM_URL || 'https://router.project-osrm.org'
+  ).replace(/\/$/, '');
+  const path = `/route/v1/driving/${origin.lng},${origin.lat};${destination.lng},${destination.lat}?overview=simplified&geometries=geojson`;
+  const ctrl = new AbortController();
+  const to = setTimeout(() => ctrl.abort(), 8000);
+  try {
+    const res = await fetch(base + path, { signal: ctrl.signal });
+    if (!res.ok) throw new Error(String(res.status));
+    const json = await res.json();
+    const raw = json?.routes?.[0] ?? {};
+    const coords: [number, number][] = raw?.geometry?.coordinates ?? [];
+    const positions = coords.map(([lng, lat]) => [lat, lng]) as [
+      number,
+      number
+    ][];
+    const distanceKm =
+      typeof raw?.distance === 'number' ? raw.distance / 1000 : 0;
+    const durationMin =
+      typeof raw?.duration === 'number' ? Math.round(raw.duration / 60) : 0;
+    return { positions, distanceKm, durationMin };
+  } catch (e) {
+    const positions: [number, number][] = [
+      [origin.lat, origin.lng],
+      [destination.lat, destination.lng]
+    ];
+    return { positions, distanceKm: 0, durationMin: 0 };
+  } finally {
+    clearTimeout(to);
+  }
+}
+
+function RealtimeMap({
+  deliveryId,
+  initialStart,
+  initialEnd,
+  status
+}: {
+  deliveryId: string;
+  initialStart?: LatLng;
+  initialEnd?: LatLng;
+  status?: DeliveryStatusEnum;
+}) {
+  const [start, setStart] = useState<LatLng | undefined>(undefined);
+  const [end, setEnd] = useState<LatLng | undefined>(undefined);
+  const [route, setRoute] = useState<[number, number][]>([]);
+  const [pos, setPos] = useState<LatLng | undefined>(undefined);
+  const [returning, setReturning] = useState<boolean>(false);
+  const [currentIndex, setCurrentIndex] = useState<number>(0);
+  const mapRef = useRef<LeafletMap | null>(null);
+  const socket = useMemo(() => {
+    const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    return io(base + '/deliveries', { transports: ['websocket'] });
+  }, []);
+  const [carIcon, setCarIcon] = useState<Icon | undefined>(undefined);
+  const [startIcon, setStartIcon] = useState<Icon | undefined>(undefined);
+  const [endIcon, setEndIcon] = useState<Icon | undefined>(undefined);
+
+  useEffect(() => {
+    if (route.length === 0) return;
+
+    if (status === 'delivered' || status === 'completed') {
+      const idx = route.length - 1;
+      setCurrentIndex(idx);
+      setPos({ lat: route[idx][0], lng: route[idx][1] });
+      return;
+    }
+
+    if (status === 'returning') {
+      setCurrentIndex((prev) => {
+        if (prev === 0) {
+          setTimeout(() => {
+            const [lat, lng] = route[route.length - 1];
+            setPos({ lat, lng });
+          }, 0);
+          return route.length - 1;
+        }
+        return prev;
+      });
+    }
+
+    if (status !== 'delivering' && status !== 'returning') return;
+
+    const timer = setInterval(() => {
+      setCurrentIndex((prev) => {
+        if (status === 'delivering') {
+          const next = prev + 1;
+          if (next >= route.length) return prev;
+          const [lat, lng] = route[next];
+          setPos({ lat, lng });
+          socket.emit('delivery:update', {
+            deliveryId,
+            lat,
+            lng,
+            currentLat: lat,
+            currentLng: lng,
+            status: 'delivering'
+          });
+          return next;
+        } else {
+          const next = prev - 1;
+          if (next < 0) return 0;
+          const [lat, lng] = route[next];
+          setPos({ lat, lng });
+          socket.emit('delivery:update', {
+            deliveryId,
+            lat,
+            lng,
+            currentLat: lat,
+            currentLng: lng,
+            status: 'returning'
+          });
+          return next;
+        }
+      });
+    }, 500);
+    return () => clearInterval(timer);
+  }, [status, route, socket, deliveryId]);
+
+  useEffect(() => {
+    let mounted = true;
+    import('leaflet').then(({ default: L }) => {
+      if (!mounted) return;
+      const url = '/images/longCar.png';
+      const warehouseUrl = '/images/warehouse.png';
+      setCarIcon(
+        L.icon({
+          iconUrl: url,
+          shadowUrl:
+            'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+          iconSize: [40, 40],
+          iconAnchor: [20, 35],
+          popupAnchor: [0, -35]
+        })
+      );
+      setStartIcon(
+        L.icon({
+          iconUrl: warehouseUrl,
+          shadowUrl:
+            'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41]
+        })
+      );
+      setEndIcon(
+        L.icon({
+          iconUrl:
+            'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-red.png',
+          shadowUrl:
+            'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+          iconSize: [25, 41],
+          iconAnchor: [12, 41]
+        })
+      );
+    });
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (initialStart && (!start || !pos)) {
+      setStart(initialStart);
+      setPos(initialStart);
+    }
+    if (initialEnd && !end) {
+      setEnd(initialEnd);
+    }
+  }, [initialStart?.lat, initialStart?.lng, initialEnd?.lat, initialEnd?.lng]);
+
+  useEffect(() => {
+    const id = String(deliveryId || '').trim();
+    if (!id) return;
+    fetchDeliveryById(id)
+      .then((d) => {
+        const sLat = d.startLat ?? undefined;
+        const sLng = d.startLng ?? undefined;
+        const eLat = d.endLat ?? undefined;
+        const eLng = d.endLng ?? undefined;
+        if (typeof sLat === 'number' && typeof sLng === 'number') {
+          setStart({ lat: sLat, lng: sLng });
+          setPos({ lat: sLat, lng: sLng });
+          setCurrentIndex(0);
+        }
+        if (typeof eLat === 'number' && typeof eLng === 'number') {
+          setEnd({ lat: eLat, lng: eLng });
+        }
+      })
+      .catch(() => {});
+  }, [deliveryId]);
+
+  useEffect(() => {
+    if (start && end) {
+      fetchRouteOSRM(start, end).then((r) => {
+        setRoute(r.positions);
+        setCurrentIndex(0);
+      });
+    } else {
+      setRoute([]);
+      setCurrentIndex(0);
+    }
+  }, [start?.lat, start?.lng, end?.lat, end?.lng]);
+
+  useEffect(() => {
+    const id = String(deliveryId || '').trim();
+    if (!id) return;
+    socket.emit('delivery:subscribe', { deliveryId: id });
+    const onSub = (p: any) => {};
+    const onStart = (p: any) => {
+      setStart({ lat: p.startLat, lng: p.startLng });
+      setPos({ lat: p.startLat, lng: p.startLng });
+      if (Array.isArray(p.route)) setRoute(p.route as [number, number][]);
+      setCurrentIndex(0);
+    };
+    const onUpdate = (p: any) => {
+      setPos({ lat: p.lat, lng: p.lng });
+      const idx = route.length
+        ? route.reduce(
+            (best, cur, i) => {
+              const d = distanceSq(cur, { lat: p.lat, lng: p.lng });
+              return d < best.d ? { i, d } : best;
+            },
+            { i: 0, d: Number.POSITIVE_INFINITY }
+          ).i
+        : 0;
+      setCurrentIndex(idx);
+    };
+    const onEnd = (p: any) => {
+      setEnd({ lat: p.endLat, lng: p.endLng });
+      setPos({ lat: p.endLat, lng: p.endLng });
+      setCurrentIndex(Math.max(route.length - 1, 0));
+    };
+    socket.on('delivery:subscribed', onSub);
+    socket.on('delivery:start', onStart);
+    socket.on('delivery:update', onUpdate);
+    socket.on('delivery:end', onEnd);
+    return () => {
+      socket.off('delivery:subscribed', onSub);
+      socket.off('delivery:start', onStart);
+      socket.off('delivery:update', onUpdate);
+      socket.off('delivery:end', onEnd);
+    };
+  }, [socket, deliveryId, route.length]);
+
+  useEffect(() => {
+    if (!mapRef.current) return;
+    const pts: [number, number][] = [];
+    if (start) pts.push([start.lat, start.lng]);
+    if (end) pts.push([end.lat, end.lng]);
+    if (route && route.length >= 2) {
+      pts.push(route[0], route[route.length - 1]);
+    }
+    if (pts.length >= 2) {
+      mapRef.current.fitBounds(pts as any, { padding: [30, 30], maxZoom: 14 });
+    }
+  }, [start?.lat, start?.lng, end?.lat, end?.lng, route.length]);
+
+  return (
+    <>
+      {(start || end) && (
+        <MapContainer
+          center={[
+            pos?.lat ?? start?.lat ?? end?.lat ?? 21.0278,
+            pos?.lng ?? start?.lng ?? end?.lng ?? 105.8342
+          ]}
+          zoom={13}
+          style={{ height: 320, width: '100%' }}
+          scrollWheelZoom
+          ref={(m: LeafletMap | null) => {
+            mapRef.current = m;
+            if (m) {
+              const pb = m.createPane('pane-blue');
+              const pg = m.createPane('pane-gray');
+              if (pb) pb.style.zIndex = '390';
+              if (pg) pg.style.zIndex = '391';
+            }
+          }}
+        >
+          <TileLayer url='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png' />
+          {start &&
+            (startIcon ? (
+              <Marker position={[start.lat, start.lng]} icon={startIcon}>
+                <Tooltip direction='top' offset={[0, -12]}>
+                  Xuất phát
+                </Tooltip>
+              </Marker>
+            ) : (
+              <Marker position={[start.lat, start.lng]}>
+                <Tooltip direction='top' offset={[0, -12]}>
+                  Xuất phát
+                </Tooltip>
+              </Marker>
+            ))}
+          {end &&
+            (endIcon ? (
+              <Marker position={[end.lat, end.lng]} icon={endIcon}>
+                <Tooltip direction='top' offset={[0, -12]}>
+                  Điểm đến
+                </Tooltip>
+              </Marker>
+            ) : (
+              <Marker position={[end.lat, end.lng]}>
+                <Tooltip direction='top' offset={[0, -12]}>
+                  Điểm đến
+                </Tooltip>
+              </Marker>
+            ))}
+          {pos &&
+            (carIcon ? (
+              <Marker position={[pos.lat, pos.lng]} icon={carIcon}>
+                <Tooltip direction='top' offset={[0, -20]}>
+                  Xe vận tải
+                </Tooltip>
+              </Marker>
+            ) : (
+              <Marker position={[pos.lat, pos.lng]}>
+                <Tooltip direction='top' offset={[0, -20]}>
+                  Xe vận tải
+                </Tooltip>
+              </Marker>
+            ))}
+          {route.length > 0 &&
+            (returning ? (
+              <>
+                {route.length - currentIndex >= 2 && (
+                  <Polyline
+                    positions={route.slice(Math.max(currentIndex, 0))}
+                    pathOptions={{
+                      pane: 'pane-gray',
+                      color: '#9ca3af',
+                      weight: 6,
+                      opacity: 0.95
+                    }}
+                  />
+                )}
+                {route.length > 1 && currentIndex > 0 && (
+                  <Polyline
+                    positions={route.slice(
+                      0,
+                      Math.min(currentIndex + 1, route.length)
+                    )}
+                    pathOptions={{
+                      pane: 'pane-blue',
+                      color: '#2563eb',
+                      weight: 5,
+                      opacity: 0.95
+                    }}
+                  />
+                )}
+              </>
+            ) : (
+              <>
+                {route.length > 1 && currentIndex > 0 && (
+                  <Polyline
+                    positions={route.slice(
+                      0,
+                      Math.min(currentIndex + 1, route.length)
+                    )}
+                    pathOptions={{
+                      pane: 'pane-gray',
+                      color: '#9ca3af',
+                      weight: 6,
+                      opacity: 0.95
+                    }}
+                  />
+                )}
+                {route.length - currentIndex >= 2 && (
+                  <Polyline
+                    positions={route.slice(Math.max(currentIndex, 0))}
+                    pathOptions={{
+                      pane: 'pane-blue',
+                      color: '#2563eb',
+                      weight: 5,
+                      opacity: 0.95
+                    }}
+                  />
+                )}
+              </>
+            ))}
+        </MapContainer>
+      )}
+    </>
+  );
 }
 
 const phaseStatusConfig: Record<
@@ -392,7 +810,29 @@ export function PhaseDetailPane({
                                 )}
                               </div>
                             </div>
-
+                            {/* Map */}
+                            {delivery && (
+                              <RealtimeMap
+                                deliveryId={delivery.id}
+                                initialStart={
+                                  delivery.startLat && delivery.startLng
+                                    ? {
+                                        lat: delivery.startLat,
+                                        lng: delivery.startLng
+                                      }
+                                    : undefined
+                                }
+                                initialEnd={
+                                  delivery.endLat && delivery.endLng
+                                    ? {
+                                        lat: delivery.endLat,
+                                        lng: delivery.endLng
+                                      }
+                                    : undefined
+                                }
+                                status={delivery.status ?? undefined}
+                              />
+                            )}
                             {/* Status stepper */}
                             <div className='rounded-md border p-2'>
                               <h5 className='mb-2 flex items-center gap-1 text-xs font-medium'>
