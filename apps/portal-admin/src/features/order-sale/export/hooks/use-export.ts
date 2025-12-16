@@ -1,6 +1,4 @@
 import { useToast } from '@/components/ui/use-toast';
-import { fetchAreas } from '@/services/area.service';
-import { fetchBatchesGroupedByWeight } from '@/services/batch.service';
 import {
   createExportTicket,
   CreateExportTicketDto,
@@ -10,8 +8,6 @@ import {
 } from '@/services/export-ticket.service';
 import { fetchOrderPhasesBySchedule } from '@/services/order-phase.service';
 import { fetchOrderSchedules } from '@/services/order-schedule.service';
-import { Area } from '@/types';
-import { Batch } from '@/types/batch';
 import { OrderPhase, OrderSchedule } from '@/types/order';
 import { useTranslations } from 'next-intl';
 import { useEffect, useState } from 'react';
@@ -178,80 +174,5 @@ export function useExportTickets() {
     loadETickets,
     createETicket,
     deleteETicket
-  };
-}
-
-export function useAreas() {
-  const { toast } = useToast();
-  const [areas, setAreas] = useState<Area[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [hasNextPage, setHasNextPage] = useState(false);
-
-  const loadAreas = async () => {
-    setLoading(true);
-    try {
-      const response = await fetchAreas();
-      setAreas(response.data);
-      setHasNextPage(response.hasNextPage);
-    } catch (error) {
-      console.error('Failed to fetch areas:', error);
-      toast({
-        title: 'Lỗi',
-        description: 'Không thể tải danh sách kho',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadAreas();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return {
-    areas,
-    loading,
-    hasNextPage,
-    loadAreas
-  };
-}
-
-export function useBatchesGroupedByWeight(areaId: string, productId: string) {
-  const { toast } = useToast();
-
-  const [batches, setBatches] = useState<Batch[]>([]);
-  const [loading, setLoading] = useState(false);
-
-  const loadBatches = async () => {
-    setLoading(true);
-    try {
-      const response = await fetchBatchesGroupedByWeight({
-        areaId,
-        productId
-      });
-      setBatches(response);
-    } catch (error) {
-      console.error('Failed to fetch batches:', error);
-      toast({
-        title: 'Lỗi',
-        description: 'Không thể tải danh sách lô hàng',
-        variant: 'destructive'
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadBatches();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [areaId, productId]);
-
-  return {
-    batches,
-    loading,
-    loadBatches
   };
 }

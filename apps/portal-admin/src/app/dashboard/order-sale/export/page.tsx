@@ -66,12 +66,12 @@ export default function ExportTicketsPage() {
               />
               Tải lại
             </Button>
-            <Link href='/dashboard/order-sale/export/create'>
+            {/* <Link href='/dashboard/order-sale/export/create'>
               <Button>
                 <Plus className='mr-2 h-4 w-4' />
                 Tạo phiếu xuất
               </Button>
-            </Link>
+            </Link> */}
           </div>
         </div>
 
