@@ -526,6 +526,7 @@
       "dashboard": "Bảng điều khiển",
       "products": "Sản phẩm",
       "orders": "Đơn hàng",
+      "payments": "Thanh toán",
       "profile": "Hồ sơ",
       "harvestBatches": "Đề nghị mua hàng"
     },
@@ -595,13 +596,13 @@
       "rejectionReasonTitle": "Lý do từ chối",
       "rejectionReasonDefault": "Không có lý do được cung cấp."
     },
-      "toast": {
-        "errorTitle": "Lỗi",
-        "errorDescription": "Không thể tải lịch đặt hàng",
-        "cancelTitle": "Đã hủy đơn hàng",
-        "cancelDescription": "Lịch đặt hàng {id} đã được hủy.",
-        "errorLoadDetails": "Không thể tải chi tiết đơn hàng"
-      },
+    "toast": {
+      "errorTitle": "Lỗi",
+      "errorDescription": "Không thể tải lịch đặt hàng",
+      "cancelTitle": "Đã hủy đơn hàng",
+      "cancelDescription": "Lịch đặt hàng {id} đã được hủy.",
+      "errorLoadDetails": "Không thể tải chi tiết đơn hàng"
+    },
     "detail": {
       "title": "Chi tiết đơn hàng",
       "orderId": "Mã đơn hàng",
@@ -889,6 +890,125 @@
       "profileUpdatedDescription": "Hồ sơ của bạn đã được cập nhật thành công.",
       "updateFailed": "Cập nhật thất bại",
       "updateFailedDescription": "Không thể cập nhật hồ sơ. Vui lòng thử lại."
+    }
+  },
+  "Debt": {
+    "title": "Tất toán hóa đơn",
+    "subtitle": "Vui lòng tất toán hóa đơn trước ngày đến hạn",
+    "noDebt": "Không có thông tin nợ nào",
+    "status": {
+      "paid": "Đã thanh toán",
+      "partiallyPaid": "Thanh toán một phần",
+      "overdue": "Quá hạn",
+      "unpaid": "Chưa thanh toán"
+    },
+    "debtType": {
+      "receivable": "Phải thu",
+      "payable": "Phải trả"
+    },
+    "card": {
+      "invoiceToSettle": "Hóa đơn cần tất toán",
+      "invoiceCode": "Mã hóa đơn",
+      "amountToSettle": "Số tiền cần tất toán",
+      "totalInvoiceValue": "Tổng giá trị hóa đơn",
+      "settleInvoice": "Tất toán hóa đơn",
+      "daysUntilDue": "Còn {days} ngày đến hạn",
+      "debtOverview": "Tổng quan nợ",
+      "originalAmount": "Số tiền gốc",
+      "paid": "Đã thanh toán",
+      "remaining": "Còn lại",
+      "creditLimit": "Hạn mức tín dụng",
+      "limit": "Hạn mức",
+      "used": "Đã sử dụng",
+      "available": "Còn lại",
+      "usageRate": "Tỷ lệ sử dụng",
+      "creditLimitWarning": "Cảnh báo: Hạn mức tín dụng gần hết",
+      "paymentInformation": "Thông tin thanh toán",
+      "dueDate": "Ngày đến hạn tất toán",
+      "dueSoon": "Sắp đến hạn",
+      "overdueBy": "Đã quá hạn {days} ngày",
+      "daysUntilDueText": "Còn {days} ngày đến hạn",
+      "invoiceStatus": "Trạng thái hóa đơn",
+      "settled": "Đã tất toán",
+      "partiallyPaid": "Đã thanh toán một phần",
+      "overdueSettleNow": "Quá hạn - Cần tất toán ngay",
+      "notSettled": "Chưa tất toán",
+      "pleaseSettleBeforeDue": "Vui lòng tất toán trước ngày đến hạn"
+    },
+    "alertBanner": {
+      "overdueTitle": "Hóa đơn đã quá hạn thanh toán",
+      "overdueMessage": "Hóa đơn đã quá hạn {days} ngày. Vui lòng tất toán ngay để tránh ảnh hưởng đến hạn mức tín dụng.",
+      "dueSoonTitle": "Hóa đơn sắp đến hạn",
+      "dueSoonMessage": "Còn {days} ngày đến hạn thanh toán. Vui lòng tất toán trước ngày {date}.",
+      "infoTitle": "Thông tin thanh toán",
+      "infoMessage": "Còn {days} ngày đến hạn thanh toán. Vui lòng tất toán trước ngày {date}."
+    },
+    "error": {
+      "title": "Không thể tải thông tin nợ",
+      "message": "Đã xảy ra lỗi khi tải dữ liệu",
+      "retry": "Thử lại"
+    },
+    "paymentModal": {
+      "title": "Thanh toán hóa đơn",
+      "description": "Nhập số tiền bạn muốn thanh toán và quét mã QR để hoàn tất giao dịch",
+      "amountLabel": "Số tiền thanh toán",
+      "maxAmount": "Tối đa",
+      "enterAmount": "Nhập số tiền",
+      "amountToPay": "Số tiền cần thanh toán",
+      "enteredAmount": "Số tiền nhập",
+      "remainingAfterPayment": "Còn lại sau thanh toán",
+      "cancel": "Hủy",
+      "creating": "Đang tạo giao dịch...",
+      "createQR": "Tạo mã QR thanh toán",
+      "partnerNotFound": "Không tìm thấy thông tin đối tác",
+      "transactionCreated": "Giao dịch đã được tạo thành công",
+      "scanQRToPay": "Vui lòng quét mã QR bên dưới để thanh toán",
+      "cannotGenerateQR": "Không thể tạo mã QR",
+      "qrCodeAlt": "QR Code thanh toán",
+      "scanQRWithBankingApp": "Quét mã QR bằng ứng dụng ngân hàng của bạn để thanh toán",
+      "openPayOSPage": "Mở trang thanh toán PayOS",
+      "transactionCode": "Mã giao dịch",
+      "amount": "Số tiền",
+      "status": "Trạng thái",
+      "paid": "Đã thanh toán",
+      "pending": "Đang chờ thanh toán",
+      "close": "Đóng"
+    }
+  },
+  "SupplierDashboard": {
+    "welcome": "Xin chào, Chào mừng trở lại 👋",
+    "subtitle": "Tổng quan về các lô thu hoạch và hoạt động của bạn",
+    "newHarvestBatch": "Yêu cầu thu mua mới",
+    "stats": {
+      "totalBatches": "Tổng số lô",
+      "totalBatchesDescription": "Tất cả các lô thu hoạch đã tạo",
+      "pendingApproval": "Chờ duyệt",
+      "pendingApprovalDescription": "Đang chờ phê duyệt",
+      "inTransit": "Đang vận chuyển",
+      "inTransitDescription": "Đang được chuẩn bị hoặc giao hàng",
+      "completed": "Hoàn thành",
+      "completedDescription": "Đã hoàn thành thành công"
+    },
+    "recentBatches": {
+      "title": "Lô thu hoạch gần đây",
+      "description": "Các lô thu hoạch mới nhất của bạn",
+      "viewAll": "Xem tất cả",
+      "noBatches": "Chưa có lô thu hoạch nào",
+      "harvestDate": "Ngày thu hoạch",
+      "viewAllBatches": "Xem tất cả lô"
+    },
+    "quickActions": {
+      "title": "Thao tác nhanh",
+      "description": "Các thao tác thường dùng",
+      "createNewBatch": "Tạo lô mới",
+      "viewProfile": "Xem hồ sơ"
+    },
+    "status": {
+      "pending": "Chờ duyệt",
+      "approved": "Đã duyệt",
+      "inTransit": "Đang vận chuyển",
+      "completed": "Hoàn thành",
+      "rejected": "Bị từ chối"
     }
   },
   "common": {
