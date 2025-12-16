@@ -739,7 +739,15 @@
         "total": "Tổng",
         "remove": "Xóa",
         "enterQuantityTitle": "Nhập số lượng",
-        "enterQuantityDescription": "Điều chỉnh số lượng cho từng sản phẩm"
+        "enterQuantityDescription": "Điều chỉnh số lượng cho từng sản phẩm",
+        "batchInfo": "Thông tin lô",
+        "supplierInfo": "Thông tin NCC",
+        "batchCode": "Mã lô",
+        "expiryDate": "Hạn sử dụng",
+        "gardenName": "Tên vườn",
+        "harvestDate": "Ngày thu hoạch",
+        "createdAt": "Tạo lúc",
+        "updatedAt": "Cập nhật"
       },
       "delivery": {
         "title": "Thông tin giao hàng",
@@ -778,6 +786,9 @@
         "successDescription": "Đơn hàng của bạn đã được tạo thành công.",
         "errorCreateTitle": "Lỗi",
         "errorCreateDescription": "Không thể tạo đơn hàng. Vui lòng thử lại."
+      },
+      "common": {
+        "notSpecified": "Chưa xác định"
       }
     }
   },

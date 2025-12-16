@@ -43,14 +43,17 @@ import {
 import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { cn } from '@/lib/utils';
 
 // Services
 import { createOrderSchedule } from '@/services/order-schedule.service';
 import { fetchProducts } from '@/services/product.service';
+import { fetchBatches } from '@/services/batch.service';
 
 // Types
 import type { Product, ProductPrice } from '@/types/product';
+import type { Batch } from '@/types/batch';
 import type {
   CreateOrderScheduleDto,
   CreateOrderDto,
@@ -71,6 +74,7 @@ const getInitialState = (): NewOrderState => {
   return {
     currentStep: 'products',
     products: [],
+    productBatches: {},
     orderLines: [],
     selectedProducts: new Set<string>(),
     deliveryDate: `${yyyy}-${mm}-${dd}T09:00`,
@@ -94,6 +98,15 @@ const newOrderReducer = (
 
     case 'SET_PRODUCTS':
       return { ...state, products: action.payload, loading: false };
+
+    case 'SET_PRODUCT_BATCHES':
+      return {
+        ...state,
+        productBatches: {
+          ...state.productBatches,
+          [action.payload.productId]: action.payload.batches
+        }
+      };
 
     case 'SET_ORDER_LINES':
       return { ...state, orderLines: action.payload };
@@ -300,6 +313,43 @@ export default function NewOrderPage() {
     );
   };
 
+  const calculateBatchPrice = (
+    batch: Batch,
+    quantity: number
+  ): { unitPrice: number; unit: string } => {
+    if (
+      !batch.price ||
+      !Array.isArray(batch.price) ||
+      batch.price.length === 0
+    ) {
+      return { unitPrice: 0, unit: batch.unit };
+    }
+
+    // Sort price tiers by quantity in descending order
+    const sortedPrices = [...batch.price].sort(
+      (a, b) => (b.quantity || 0) - (a.quantity || 0)
+    );
+
+    // Find the appropriate price tier based on quantity
+    const applicableTier = sortedPrices.find(
+      (tier) => quantity >= (tier.quantity || 0)
+    );
+
+    if (applicableTier) {
+      return {
+        unitPrice: applicableTier.price || 0,
+        unit: applicableTier.unit || batch.unit
+      };
+    }
+
+    // If no tier matches, use the lowest tier (last in sorted array)
+    const lowestTier = sortedPrices[sortedPrices.length - 1];
+    return {
+      unitPrice: lowestTier.price || 0,
+      unit: lowestTier.unit || batch.unit
+    };
+  };
+
   // Fetch initial data
   useEffect(() => {
     if (didFetchRef.current) return;
@@ -333,8 +383,66 @@ export default function NewOrderPage() {
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
+  // Handle batch change
+  const handleBatchChange = (
+    productId: string,
+    batchId: string,
+    providedBatches?: Batch[]
+  ) => {
+    const batches = providedBatches || state.productBatches[productId] || [];
+    const batch = batches.find((b) => b.id === batchId);
+
+    if (batch) {
+      const currentLine = state.orderLines.find(
+        (l) => l.productId === productId
+      );
+      const quantity = currentLine?.quantity || 1;
+
+      const { unitPrice, unit } = calculateBatchPrice(batch, quantity);
+
+      dispatch({
+        type: 'UPDATE_ORDER_LINE',
+        payload: { productId, field: 'batchId', value: batch.id }
+      });
+      dispatch({
+        type: 'UPDATE_ORDER_LINE',
+        payload: { productId, field: 'batchCode', value: batch.batchCode }
+      });
+      dispatch({
+        type: 'UPDATE_ORDER_LINE',
+        payload: { productId, field: 'unitPrice', value: unitPrice }
+      });
+      dispatch({
+        type: 'UPDATE_ORDER_LINE',
+        payload: { productId, field: 'unit', value: unit }
+      });
+    }
+  };
+
   // Product selection handlers
   const toggleProduct = (product: Product) => {
+    const isSelected = state.selectedProducts.has(product.id);
+
+    if (!isSelected) {
+      // Fetch batches
+      fetchBatches({ productId: product.id, limit: 100 })
+        .then((res) => {
+          const batches = res?.data || [];
+          dispatch({
+            type: 'SET_PRODUCT_BATCHES',
+            payload: { productId: product.id, batches }
+          });
+
+          // Auto-select first batch if available
+          if (batches.length > 0) {
+            handleBatchChange(product.id, batches[0].id, batches);
+          }
+        })
+        .catch((err) => {
+          console.error('Failed to fetch batches', err);
+        });
+    }
+
     const { unitPrice, unit } = calculatePriceForQuantity(product, 1);
     const orderLine: OrderLine = {
       productId: product.id,
@@ -355,8 +463,30 @@ export default function NewOrderPage() {
     // If quantity is being updated, recalculate the price
     if (field === 'quantity') {
       const product = state.products.find((p) => p.id === productId);
+      const currentLine = state.orderLines.find(
+        (l) => l.productId === productId
+      );
+
       if (product) {
-        const { unitPrice } = calculatePriceForQuantity(product, value);
+        let unitPrice = 0;
+        let unit = 'kg';
+
+        // Check if batch is selected
+        const batchId = currentLine?.batchId;
+        if (batchId) {
+          const batches = state.productBatches[productId];
+          const batch = batches?.find((b) => b.id === batchId);
+          if (batch) {
+            const res = calculateBatchPrice(batch, value);
+            unitPrice = res.unitPrice;
+            unit = res.unit;
+          }
+        } else {
+          const res = calculatePriceForQuantity(product, value);
+          unitPrice = res.unitPrice;
+          unit = res.unit;
+        }
+
         // Update both quantity and unitPrice
         dispatch({
           type: 'UPDATE_ORDER_LINE',
@@ -365,6 +495,10 @@ export default function NewOrderPage() {
         dispatch({
           type: 'UPDATE_ORDER_LINE',
           payload: { productId, field: 'unitPrice', value: unitPrice }
+        });
+        dispatch({
+          type: 'UPDATE_ORDER_LINE',
+          payload: { productId, field: 'unit', value: unit }
         });
         return;
       }
@@ -405,14 +539,42 @@ export default function NewOrderPage() {
         orderUrl: null
       };
 
-      const orderDetails: CreateOrderDetailDto[] = state.orderLines.map(
-        (line) => ({
-          unitPrice: line.unitPrice,
-          quantity: line.quantity,
-          unit: line.unit,
-          product: line.productId ? { id: line.productId } : null
-        })
+      const groupedLines = state.orderLines.reduce(
+        (acc, line) => {
+          if (!line.productId) return acc;
+
+          if (!acc[line.productId]) {
+            acc[line.productId] = {
+              quantity: 0,
+              unit: line.unit,
+              product: { id: line.productId },
+              batchInfo: []
+            };
+          }
+
+          // Add to total quantity
+          acc[line.productId].quantity =
+            (acc[line.productId].quantity || 0) + line.quantity;
+
+          // Add batch info if available
+          if (line.batchId) {
+            if (!acc[line.productId].batchInfo) {
+              acc[line.productId].batchInfo = [];
+            }
+            acc[line.productId].batchInfo!.push({
+              batchId: line.batchId,
+              quantity: line.quantity,
+              unit: line.unit,
+              unitPrice: line.unitPrice
+            });
+          }
+
+          return acc;
+        },
+        {} as Record<string, CreateOrderDetailDto>
       );
+
+      const orderDetails: CreateOrderDetailDto[] = Object.values(groupedLines);
 
       const payload: CreateOrderScheduleDto = {
         description: state.orderDescription || null,
@@ -684,6 +846,182 @@ export default function NewOrderPage() {
                                   </p>
                                 )}
                               </div>
+                              {state.productBatches[product.id] &&
+                                state.productBatches[product.id].length > 0 && (
+                                  <div className='mt-2'>
+                                    <Select
+                                      value={line.batchId}
+                                      onValueChange={(val) =>
+                                        handleBatchChange(product.id, val)
+                                      }
+                                    >
+                                      <SelectTrigger className='h-8 w-full max-w-[400px] text-xs'>
+                                        <SelectValue placeholder='Select batch' />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {state.productBatches[product.id].map(
+                                          (batch) => (
+                                            <SelectItem
+                                              key={batch.id}
+                                              value={batch.id}
+                                              className='text-xs'
+                                            >
+                                              {batch.batchCode}
+                                              {batch.expiredAt &&
+                                                ` - Exp: ${new Date(
+                                                  batch.expiredAt
+                                                ).toLocaleDateString('vi-VN')}`}
+                                              {batch.currentQuantity !==
+                                                undefined &&
+                                                ` - Qty: ${batch.currentQuantity}`}
+                                            </SelectItem>
+                                          )
+                                        )}
+                                      </SelectContent>
+                                    </Select>
+
+                                    {(() => {
+                                      const selectedBatch =
+                                        state.productBatches[product.id]?.find(
+                                          (b) => b.id === line.batchId
+                                        );
+
+                                      if (!selectedBatch) return null;
+
+                                      return (
+                                        <div className='mt-2 max-w-[400px]'>
+                                          <Tabs
+                                            defaultValue='batch'
+                                            className='w-full'
+                                          >
+                                            <TabsList className='grid h-8 w-full grid-cols-2'>
+                                              <TabsTrigger
+                                                value='batch'
+                                                className='h-6 text-xs'
+                                              >
+                                                {t(
+                                                  'newOrder.products.batchInfo'
+                                                )}
+                                              </TabsTrigger>
+                                              <TabsTrigger
+                                                value='supplier'
+                                                className='h-6 text-xs'
+                                              >
+                                                {t(
+                                                  'newOrder.products.supplierInfo'
+                                                )}
+                                              </TabsTrigger>
+                                            </TabsList>
+                                            <TabsContent
+                                              value='batch'
+                                              className='bg-muted/30 mt-2 h-[400px] space-y-1 rounded-md p-2 text-xs'
+                                            >
+                                              <div className='flex justify-between'>
+                                                <span className='text-muted-foreground'>
+                                                  {t(
+                                                    'newOrder.products.createdAt'
+                                                  )}
+                                                  :
+                                                </span>
+                                                <span className='font-medium'>
+                                                  {selectedBatch.createdAt
+                                                    ? new Date(
+                                                        selectedBatch.createdAt
+                                                      ).toLocaleDateString(
+                                                        'vi-VN'
+                                                      )
+                                                    : t('common.notSpecified')}
+                                                </span>
+                                              </div>
+                                              <div className='flex justify-between'>
+                                                <span className='text-muted-foreground'>
+                                                  {t(
+                                                    'newOrder.products.expiryDate'
+                                                  )}
+                                                  :
+                                                </span>
+                                                <span className='font-medium'>
+                                                  {selectedBatch.expiredAt
+                                                    ? new Date(
+                                                        selectedBatch.expiredAt
+                                                      ).toLocaleDateString(
+                                                        'vi-VN'
+                                                      )
+                                                    : 'N/A'}
+                                                </span>
+                                              </div>
+                                              <div className='flex justify-between'>
+                                                <span className='text-muted-foreground'>
+                                                  {t(
+                                                    'newOrder.products.quantity'
+                                                  )}
+                                                  :
+                                                </span>
+                                                <span className='font-medium'>
+                                                  {
+                                                    selectedBatch.currentQuantity
+                                                  }{' '}
+                                                  {selectedBatch.unit}
+                                                </span>
+                                              </div>
+                                            </TabsContent>
+                                            <TabsContent
+                                              value='supplier'
+                                              className='bg-muted/30 mt-2 h-[400px] space-y-1 rounded-md p-2 text-xs'
+                                            >
+                                              <div className='flex justify-between'>
+                                                <span className='text-muted-foreground'>
+                                                  {t(
+                                                    'newOrder.products.gardenName'
+                                                  )}
+                                                  :
+                                                </span>
+                                                <span className='font-medium'>
+                                                  {selectedBatch.gardenName ||
+                                                    'N/A'}
+                                                </span>
+                                              </div>
+                                              <div className='flex justify-between'>
+                                                <span className='text-muted-foreground'>
+                                                  {t(
+                                                    'newOrder.products.harvestDate'
+                                                  )}
+                                                  :
+                                                </span>
+                                                <span className='font-medium'>
+                                                  {selectedBatch.harvestDate
+                                                    ? new Date(
+                                                        selectedBatch.harvestDate
+                                                      ).toLocaleDateString(
+                                                        'vi-VN'
+                                                      )
+                                                    : 'N/A'}
+                                                </span>
+                                              </div>
+                                              <div className='flex justify-between'>
+                                                <span className='text-muted-foreground'>
+                                                  {t(
+                                                    'newOrder.products.updatedAt'
+                                                  )}
+                                                  :
+                                                </span>
+                                                <span className='font-medium'>
+                                                  {selectedBatch.updatedAt
+                                                    ? new Date(
+                                                        selectedBatch.updatedAt
+                                                      ).toLocaleDateString(
+                                                        'vi-VN'
+                                                      )
+                                                    : 'N/A'}
+                                                </span>
+                                              </div>
+                                            </TabsContent>
+                                          </Tabs>
+                                        </div>
+                                      );
+                                    })()}
+                                  </div>
+                                )}
                             </div>
                           </div>
 
@@ -965,6 +1303,11 @@ export default function NewOrderPage() {
                             )}
                             <div>
                               <p className='font-medium'>{product.name}</p>
+                              {line.batchCode && (
+                                <p className='text-muted-foreground text-xs'>
+                                  Batch: {line.batchCode}
+                                </p>
+                              )}
                               <p className='text-muted-foreground text-sm'>
                                 {line.quantity} {line.unit} ×{' '}
                                 {new Intl.NumberFormat('vi-VN', {

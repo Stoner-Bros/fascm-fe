@@ -739,7 +739,15 @@
         "total": "Total",
         "remove": "Remove",
         "enterQuantityTitle": "Enter quantity",
-        "enterQuantityDescription": "Adjust quantity for each product"
+        "enterQuantityDescription": "Adjust quantity for each product",
+        "batchInfo": "Batch Info",
+        "supplierInfo": "Supplier Info",
+        "batchCode": "Batch Code",
+        "expiryDate": "Expiry Date",
+        "gardenName": "Garden Name",
+        "harvestDate": "Harvest Date",
+        "createdAt": "Created At",
+        "updatedAt": "Updated At"
       },
       "delivery": {
         "title": "Delivery Information",
@@ -778,6 +786,9 @@
         "successDescription": "Your order has been created successfully.",
         "errorCreateTitle": "Error",
         "errorCreateDescription": "Failed to create order. Please try again."
+      },
+      "common": {
+        "notSpecified": "Not specified"
       }
     }
   },
