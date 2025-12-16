@@ -75,7 +75,7 @@ export default function DebtPage() {
         {Boolean(debt.remainingAmount) && <DebtAlertBanner debt={debt} />}
 
         {/* Main Debt Card */}
-        <DebtCard debt={debt} />
+        <DebtCard debt={debt} onPaymentSuccess={refetch} />
       </div>
     </PageContainer>
   );
