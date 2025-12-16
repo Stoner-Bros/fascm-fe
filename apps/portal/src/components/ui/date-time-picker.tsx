@@ -33,6 +33,9 @@ export function DateTimePicker({
   const [isOpen, setIsOpen] = React.useState(false);
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
       // preserve time part if already set
@@ -40,11 +43,24 @@ export function DateTimePicker({
         const merged = new Date(selectedDate);
         merged.setHours(date.getHours());
         merged.setMinutes(date.getMinutes());
+
+        // If selected date is today, ensure time is not in the past
+        if (merged.getTime() < now.getTime()) {
+          merged.setHours(now.getHours());
+          merged.setMinutes(now.getMinutes() + 5); // Add 5 minutes buffer
+        }
+
         setDate(merged);
         onChange?.(toLocalIsoMinutes(merged));
       } else {
-        setDate(selectedDate);
-        onChange?.(toLocalIsoMinutes(selectedDate));
+        // If selecting today, set time to current time + 5 minutes
+        const newDate = new Date(selectedDate);
+        if (newDate.getTime() < now.getTime()) {
+          newDate.setHours(now.getHours());
+          newDate.setMinutes(now.getMinutes() + 5);
+        }
+        setDate(newDate);
+        onChange?.(toLocalIsoMinutes(newDate));
       }
     }
   };
@@ -57,6 +73,12 @@ export function DateTimePicker({
       } else if (type === 'minute') {
         newDate.setMinutes(parseInt(value));
       }
+
+      // If selected date is today, prevent selecting past time
+      if (newDate.getTime() < now.getTime()) {
+        return; // Don't update if time is in the past
+      }
+
       setDate(newDate);
       onChange?.(toLocalIsoMinutes(newDate));
     }
@@ -108,43 +130,76 @@ export function DateTimePicker({
             selected={date}
             onSelect={handleDateSelect}
             initialFocus
+            disabled={(date) => date < todayStart}
           />
           <div className='flex flex-col divide-y sm:h-[300px] sm:flex-row sm:divide-x sm:divide-y-0'>
             <ScrollArea className='w-64 sm:w-auto'>
               <div className='flex p-2 sm:flex-col'>
-                {hours.reverse().map((hour) => (
-                  <Button
-                    key={hour}
-                    size='icon'
-                    variant={
-                      date && date.getHours() === hour ? 'default' : 'ghost'
-                    }
-                    className='aspect-square shrink-0 sm:w-full'
-                    onClick={() => handleTimeChange('hour', hour.toString())}
-                  >
-                    {hour}
-                  </Button>
-                ))}
+                {hours.reverse().map((hour) => {
+                  const isDisabled =
+                    date &&
+                    date.getDate() === now.getDate() &&
+                    date.getMonth() === now.getMonth() &&
+                    date.getFullYear() === now.getFullYear() &&
+                    hour < now.getHours();
+
+                  return (
+                    <Button
+                      key={hour}
+                      size='icon'
+                      variant={
+                        date && date.getHours() === hour ? 'default' : 'ghost'
+                      }
+                      className={cn(
+                        'aspect-square shrink-0 sm:w-full',
+                        isDisabled && 'cursor-not-allowed opacity-50'
+                      )}
+                      onClick={() =>
+                        !isDisabled && handleTimeChange('hour', hour.toString())
+                      }
+                      disabled={isDisabled}
+                    >
+                      {hour}
+                    </Button>
+                  );
+                })}
               </div>
               <ScrollBar orientation='horizontal' className='sm:hidden' />
             </ScrollArea>
             <ScrollArea className='w-64 sm:w-auto'>
               <div className='flex p-2 sm:flex-col'>
-                {Array.from({ length: 12 }, (_, i) => i * 5).map((minute) => (
-                  <Button
-                    key={minute}
-                    size='icon'
-                    variant={
-                      date && date.getMinutes() === minute ? 'default' : 'ghost'
-                    }
-                    className='aspect-square shrink-0 sm:w-full'
-                    onClick={() =>
-                      handleTimeChange('minute', minute.toString())
-                    }
-                  >
-                    {minute.toString().padStart(2, '0')}
-                  </Button>
-                ))}
+                {Array.from({ length: 12 }, (_, i) => i * 5).map((minute) => {
+                  const isDisabled =
+                    date &&
+                    date.getDate() === now.getDate() &&
+                    date.getMonth() === now.getMonth() &&
+                    date.getFullYear() === now.getFullYear() &&
+                    date.getHours() === now.getHours() &&
+                    minute < now.getMinutes();
+
+                  return (
+                    <Button
+                      key={minute}
+                      size='icon'
+                      variant={
+                        date && date.getMinutes() === minute
+                          ? 'default'
+                          : 'ghost'
+                      }
+                      className={cn(
+                        'aspect-square shrink-0 sm:w-full',
+                        isDisabled && 'cursor-not-allowed opacity-50'
+                      )}
+                      onClick={() =>
+                        !isDisabled &&
+                        handleTimeChange('minute', minute.toString())
+                      }
+                      disabled={isDisabled}
+                    >
+                      {minute.toString().padStart(2, '0')}
+                    </Button>
+                  );
+                })}
               </div>
               <ScrollBar orientation='horizontal' className='sm:hidden' />
             </ScrollArea>

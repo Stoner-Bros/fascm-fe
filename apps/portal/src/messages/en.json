@@ -456,7 +456,11 @@
           "unit": "Unit",
           "unitPrice": "Unit Price"
         },
-        "unknownProduct": "Unknown"
+        "unknownProduct": "Unknown",
+        "itemsInHarvest": "item(s) in this harvest batch",
+        "amount": "Amount",
+        "subtotal": "Subtotal",
+        "total": "Total"
       },
       "sidebar": {
         "overviewTitle": "Overview",

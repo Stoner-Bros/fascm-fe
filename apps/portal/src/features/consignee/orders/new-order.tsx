@@ -819,22 +819,31 @@ export default function NewOrderPage() {
               </div>
 
               <div className='space-y-2'>
-                <Label htmlFor='delivery-address'>
-                  {t('newOrder.delivery.deliveryAddress')}{' '}
-                  <span className='text-destructive'>*</span>
-                </Label>
+                <div className='flex items-center justify-between'>
+                  <Label htmlFor='delivery-address'>
+                    {t('newOrder.delivery.deliveryAddress')}{' '}
+                    <span className='text-destructive'>*</span>
+                  </Label>
+                  <span className='text-muted-foreground text-xs'>
+                    {state.deliveryAddress.length}/240
+                  </span>
+                </div>
                 <Textarea
                   id='delivery-address'
                   value={state.deliveryAddress}
-                  onChange={(e) =>
-                    dispatch({
-                      type: 'SET_DELIVERY_ADDRESS',
-                      payload: e.target.value
-                    })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 240) {
+                      dispatch({
+                        type: 'SET_DELIVERY_ADDRESS',
+                        payload: value
+                      });
+                    }
+                  }}
                   placeholder={t('newOrder.delivery.deliveryAddress')}
                   rows={3}
                   className='resize-none'
+                  maxLength={240}
                 />
               </div>
 
@@ -857,9 +866,12 @@ export default function NewOrderPage() {
                         address: state.deliveryAddress
                       }}
                       onChange={(v) => {
+                        const addr = v.address || '';
+                        const truncated =
+                          addr.length > 240 ? addr.slice(0, 240) : addr;
                         dispatch({
                           type: 'SET_DELIVERY_ADDRESS',
-                          payload: v.address
+                          payload: truncated
                         });
                         dispatch({
                           type: 'SET_DELIVERY_POS',
@@ -872,21 +884,30 @@ export default function NewOrderPage() {
               </div>
 
               <div className='space-y-2'>
-                <Label htmlFor='order-description'>
-                  {t('newOrder.delivery.orderDescription')}
-                </Label>
+                <div className='flex items-center justify-between'>
+                  <Label htmlFor='order-description'>
+                    {t('newOrder.delivery.orderDescription')}
+                  </Label>
+                  <span className='text-muted-foreground text-xs'>
+                    {state.orderDescription.length}/240
+                  </span>
+                </div>
                 <Textarea
                   id='order-description'
                   value={state.orderDescription}
-                  onChange={(e) =>
-                    dispatch({
-                      type: 'SET_ORDER_DESCRIPTION',
-                      payload: e.target.value
-                    })
-                  }
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value.length <= 240) {
+                      dispatch({
+                        type: 'SET_ORDER_DESCRIPTION',
+                        payload: value
+                      });
+                    }
+                  }}
                   placeholder={t('newOrder.delivery.descriptionPlaceholder')}
                   rows={3}
                   className='resize-none'
+                  maxLength={240}
                 />
               </div>
             </CardContent>

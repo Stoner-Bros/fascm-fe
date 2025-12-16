@@ -173,39 +173,29 @@ export function ProductSelectionStep({
                           {t('new.products.quantity')}:
                         </Label>
                         <Input
-                          type='number'
-                          min='1'
-                          step='1'
-                          value={detail.quantity ?? ''}
-                          onChange={(e) =>
+                          type='text'
+                          inputMode='decimal'
+                          value={
+                            detail.quantity && detail.quantity > 0
+                              ? detail.quantity
+                              : ''
+                          }
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            const numeric =
+                              raw === '' ? 0 : parseFloat(raw) || 0;
                             onUpdateHarvestDetail(
                               detail.productId,
                               'quantity',
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
+                              numeric
+                            );
+                          }}
                           className='w-24'
                         />
                       </div>
 
                       <div className='flex items-center gap-2'>
-                        <Select
-                          value={detail.unit || 'kg'}
-                          onValueChange={(value) =>
-                            onUpdateHarvestDetail(
-                              detail.productId,
-                              'unit',
-                              value
-                            )
-                          }
-                        >
-                          <SelectTrigger className='w-20'>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value='kg'>Kg</SelectItem>
-                          </SelectContent>
-                        </Select>
+                        <span className='text-sm font-medium'>Kg</span>
                       </div>
 
                       <div className='flex items-center gap-2'>
@@ -214,16 +204,24 @@ export function ProductSelectionStep({
                         </Label>
                         <div className='relative'>
                           <Input
-                            type='number'
-                            min='0'
-                            value={detail.expectedUnitPrice ?? ''}
-                            onChange={(e) =>
+                            type='text'
+                            inputMode='decimal'
+                            value={
+                              detail.expectedUnitPrice &&
+                              detail.expectedUnitPrice > 0
+                                ? detail.expectedUnitPrice
+                                : ''
+                            }
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              const numeric =
+                                raw === '' ? 0 : parseInt(raw) || 0;
                               onUpdateHarvestDetail(
                                 detail.productId,
                                 'expectedUnitPrice',
-                                parseInt(e.target.value) || 0
-                              )
-                            }
+                                numeric
+                              );
+                            }}
                             className='w-32 pr-12'
                           />
                           <span className='text-muted-foreground absolute top-1/2 right-3 -translate-y-1/2 text-sm'>

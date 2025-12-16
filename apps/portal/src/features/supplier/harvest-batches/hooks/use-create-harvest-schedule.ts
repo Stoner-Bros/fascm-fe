@@ -176,7 +176,7 @@ export function useCreateHarvestSchedule() {
   const toggleProduct = useCallback((product: Product) => {
     const harvestDetail: HarvestDetail = {
       productId: product.id,
-      quantity: 1,
+      quantity: 0,
       expectedUnitPrice: 0,
       unit: 'kg'
     };

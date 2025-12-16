@@ -220,12 +220,16 @@ export default function HarvestBatchDetailPage() {
             detail.product?.id ||
             t('detail.products.unknownProduct');
 
+          const unitRaw =
+            typeof detail.unit === 'string' ? detail.unit.trim() : '';
+          const unit = unitRaw || 'kg';
+
           return {
             id: detail.id,
             productName: String(productName),
             productImage: detail.product?.image as string | undefined,
             quantity,
-            unit: String(detail.unit ?? t('common.unit.kg')),
+            unit,
             unitPrice,
             totalPrice: quantity * unitPrice
           };
@@ -349,6 +353,12 @@ export default function HarvestBatchDetailPage() {
     () => details.reduce((sum, d) => sum + d.totalPrice, 0),
     [details]
   );
+
+  const unitLabel = useMemo(() => {
+    const firstUnit =
+      details.find((d) => d.unit && d.unit.trim() !== '')?.unit ?? '';
+    return firstUnit || 'kg';
+  }, [details]);
 
   // Status stepper steps
   const getStatusSteps = () => {
@@ -591,7 +601,7 @@ export default function HarvestBatchDetailPage() {
                       <IconCalendar className='h-4 w-4' />
                       {t('detail.overview.harvestDetails')}
                     </h3>
-                    <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+                    <div className='grid grid-cols-2 gap-4 md:grid-cols-5'>
                       <div>
                         <p className='text-muted-foreground mb-1 text-xs'>
                           {t('detail.id')}
@@ -602,10 +612,16 @@ export default function HarvestBatchDetailPage() {
                         <p className='text-muted-foreground mb-1 text-xs'>
                           {t('detail.products.totalQuantity')}
                         </p>
-                        <p className='font-medium'>
-                          {totalQuantity} {t('common.unit.kg')}
-                        </p>
+                        <p className='font-medium'>{totalQuantity}</p>
                       </div>
+                      {/* <div>
+                        <p className='text-muted-foreground mb-1 text-xs'>
+                          Unit
+                        </p>
+                        <p className='font-medium'>
+                          {unitLabel}
+                        </p>
+                      </div> */}
                       <div>
                         <p className='text-muted-foreground mb-1 text-xs'>
                           {t('detail.overview.harvestDate')}
@@ -633,10 +649,10 @@ export default function HarvestBatchDetailPage() {
                     </div>
                   </div>
 
-                  <Separator />
+                  {/* <Separator /> */}
 
                   {/* Supplier Information Section */}
-                  <div>
+                  {/* <div>
                     <h3 className='mb-3 flex items-center gap-2 text-sm font-semibold'>
                       <IconBuilding className='h-4 w-4' />
                       {t('detail.extra.supplier')}
@@ -660,7 +676,7 @@ export default function HarvestBatchDetailPage() {
                         </p>
                       </div>
                     </div>
-                  </div>
+                  </div> */}
 
                   <Separator />
 

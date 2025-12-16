@@ -69,17 +69,28 @@ export function ScheduleStep({
         </div>
 
         <div className='space-y-2'>
-          <Label htmlFor='harvest-address'>
-            {t('new.schedule.harvestAddress')}{' '}
-            <span className='text-destructive'>*</span>
-          </Label>
+          <div className='flex items-center justify-between'>
+            <Label htmlFor='harvest-address'>
+              {t('new.schedule.harvestAddress')}{' '}
+              <span className='text-destructive'>*</span>
+            </Label>
+            <span className='text-muted-foreground text-xs'>
+              {harvestAddress.length}/240
+            </span>
+          </div>
           <Textarea
             id='harvest-address'
             value={harvestAddress}
-            onChange={(e) => onSetHarvestAddress(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value.length <= 240) {
+                onSetHarvestAddress(value);
+              }
+            }}
             placeholder={t('new.schedule.harvestAddress')}
             rows={3}
             className='resize-none'
+            maxLength={240}
           />
         </div>
 
@@ -102,7 +113,11 @@ export function ScheduleStep({
                   address: harvestAddress
                 }}
                 onChange={(v) => {
-                  onSetHarvestAddress(v.address || '');
+                  const address = v.address || '';
+                  // Truncate to 240 characters if from map
+                  const truncatedAddress =
+                    address.length > 240 ? address.substring(0, 240) : address;
+                  onSetHarvestAddress(truncatedAddress);
                   onSetHarvestPos(v.position);
                 }}
               />
@@ -111,14 +126,25 @@ export function ScheduleStep({
         </div>
 
         <div className='space-y-2'>
-          <Label htmlFor='description'>{t('new.schedule.notes')}</Label>
+          <div className='flex items-center justify-between'>
+            <Label htmlFor='description'>{t('new.schedule.notes')}</Label>
+            <span className='text-muted-foreground text-xs'>
+              {description.length}/240
+            </span>
+          </div>
           <Textarea
             id='description'
             value={description}
-            onChange={(e) => onSetDescription(e.target.value)}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value.length <= 240) {
+                onSetDescription(value);
+              }
+            }}
             placeholder={t('new.schedule.notesPlaceholder')}
             rows={3}
             className='resize-none'
+            maxLength={240}
           />
         </div>
       </CardContent>
