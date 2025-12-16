@@ -11,13 +11,15 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/components/ui/select';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
 import {
   Table,
   TableBody,
@@ -35,12 +37,19 @@ import {
 } from '@/services/area-setting.service';
 import {
   fetchActiveAreaAlertByAreaId,
-  fetchAreaById
+  fetchAreaById,
+  fetchAreaTickets
 } from '@/services/area.service';
+import { fetchBatchesByArea } from '@/services/batch.service';
 import {
-  fetchBatches,
-  fetchBatchesGroupedByWeight
-} from '@/services/batch.service';
+  createPrice,
+  deletePrice,
+  fetchPricesByBatchId,
+  updatePrice,
+  type CreatePriceDto,
+  type Price,
+  type UpdatePriceDto
+} from '@/services/price.service';
 import { fetchExportTickets } from '@/services/export-ticket.service';
 import { fetchImportTickets } from '@/services/import-ticket.service';
 import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
@@ -57,17 +66,16 @@ import {
   IconArrowUp,
   IconBell,
   IconCalendar,
-  IconClock,
   IconDroplet,
-  IconFilter,
   IconHistory,
-  IconMapPin,
-  IconPackage,
+  IconEdit,
+  IconEye,
+  IconPlus,
   IconRefresh,
-  IconSearch,
   IconSettings,
   IconShield,
-  IconThermometer
+  IconThermometer,
+  IconTrash
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
@@ -109,25 +117,15 @@ export default function AreaDetailView({
     minCapacity: ''
   });
   const [areaBatches, setAreaBatches] = useState<Batch[]>([]);
-  const [isLoadingProducts, setIsLoadingProducts] = useState(false);
-  const [selectedProductId, setSelectedProductId] = useState<string | null>(
-    null
-  );
+  const [isLoadingBatches, setIsLoadingBatches] = useState(false);
+  const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
+  const [batchPrices, setBatchPrices] = useState<Price[]>([]);
+  const [isLoadingPrices, setIsLoadingPrices] = useState(false);
+  const [isPriceDialogOpen, setIsPriceDialogOpen] = useState(false);
+  const [editingPrice, setEditingPrice] = useState<Price | null | 'new'>(null);
   const [areaImportTickets, setAreaImportTickets] = useState<ImportTicket[]>(
     []
   );
-  const [isLoadingBatchGroups, setIsLoadingBatchGroups] = useState(false);
-  const [batchGroups, setBatchGroups] = useState<
-    {
-      importTicketId: string;
-      product?: { id?: string; name?: string };
-      batch?: Record<string, number>;
-      batchCode?: string;
-      expiredAt?: string | null;
-      importDate?: string | null;
-      prices?: Record<string, number>;
-    }[]
-  >([]);
   const [activeAlert, setActiveAlert] = useState<{
     id: string;
     status?: string | null;
@@ -139,19 +137,10 @@ export default function AreaDetailView({
   } | null>(null);
   const [areaExportTickets, setAreaExportTickets] = useState<any[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
-  const [historySearchTerm, setHistorySearchTerm] = useState('');
-  const [selectedActivityType, setSelectedActivityType] = useState('Tất cả');
-  const [selectedProduct, setSelectedProduct] = useState('Tất cả');
-  const [selectedStatus, setSelectedStatus] = useState('Tất cả');
-  const [overviewBatches, setOverviewBatches] = useState<Batch[]>([]);
-  const [isLoadingOverviewBatches, setIsLoadingOverviewBatches] =
-    useState(false);
   const [iotDevices, setIotDevices] = useState<any[]>([]);
   const [isLoadingIoT, setIsLoadingIoT] = useState(false);
-  const [allBatches, setAllBatches] = useState<Batch[]>([]);
   const [allImportTickets, setAllImportTickets] = useState<ImportTicket[]>([]);
   const [allExportTickets, setAllExportTickets] = useState<any[]>([]);
-  const [isLoadingData, setIsLoadingData] = useState(false);
 
   type EnvironmentReadings = {
     temperature?: number | null;
@@ -547,104 +536,154 @@ export default function AreaDetailView({
     };
   }, [areaId]);
 
-  // Fetch tất cả data một lần khi areaId thay đổi
+  // Fetch batches từ API khi areaId thay đổi
   useEffect(() => {
     if (!areaId) return;
 
-    const loadAllData = async () => {
-      setIsLoadingData(true);
-      setIsLoadingOverviewBatches(true);
-      setIsLoadingProducts(true);
-      setIsLoadingBatchGroups(true);
+    const loadBatches = async () => {
+      setIsLoadingBatches(true);
+      try {
+        const batchesRes = await fetchBatchesByArea({
+          areaId,
+          page: 1,
+          limit: 200
+        });
+        setAreaBatches(batchesRes.data || []);
+      } catch (error) {
+        console.error('Unable to load batches', error);
+        setAreaBatches([]);
+      } finally {
+        setIsLoadingBatches(false);
+      }
+    };
+
+    void loadBatches();
+  }, [areaId]);
+
+  // Fetch import và export tickets khi areaId thay đổi
+  useEffect(() => {
+    if (!areaId) return;
+
+    const loadTicketsData = async () => {
       setIsLoadingHistory(true);
       try {
-        const [batchesRes, ticketsRes, exportsRes, groupsRes] =
-          await Promise.all([
-            fetchBatches({
-              page: 1,
-              limit: 500 // Fetch nhiều batches để cover tất cả
-            }),
-            fetchImportTickets({
-              page: 1,
-              limit: 200
-            }),
-            fetchExportTickets({
-              page: 1,
-              limit: 200
-            }),
-            fetchBatchesGroupedByWeight({ areaId })
-          ]);
+        const [ticketsRes, exportsRes] = await Promise.all([
+          fetchImportTickets({
+            page: 1,
+            limit: 200
+          }),
+          fetchExportTickets({
+            page: 1,
+            limit: 200
+          })
+        ]);
 
-        // Filter batches theo areaId
-        const batchesInArea: Batch[] = (batchesRes.data || []).filter(
-          (b) => b.area?.id && b.area.id === areaId
-        );
-        setAllBatches(batchesInArea);
-
-        // Filter import tickets theo areaId hoặc importTicketId từ batches
-        const importIdsFromBatches = new Set(
-          batchesInArea
-            .map((b) => b.importTicket?.id)
-            .filter((id): id is string => !!id)
-        );
+        // Filter import tickets theo areaId
         const tickets: ImportTicket[] = (ticketsRes.data || []).filter(
-          (it) =>
-            (it.areaName && it.areaName === areaId) ||
-            importIdsFromBatches.has(it.id)
+          (it) => it.areaName && it.areaName === areaId
         );
         setAllImportTickets(tickets);
 
-        // Filter export tickets theo orderDetailId từ batches
-        const orderDetailIdsFromBatches = new Set(
-          batchesInArea
-            .map((b) => b.orderDetail?.id)
-            .filter((id): id is string => !!id)
-        );
-        const exportTickets = (exportsRes.data || []).filter((et: any) =>
-          orderDetailIdsFromBatches.has(et.orderDetail?.id)
-        );
+        // Filter export tickets - giữ nguyên logic hiện tại
+        const exportTickets = exportsRes.data || [];
         setAllExportTickets(exportTickets);
-
-        const groups = Array.isArray(groupsRes) ? groupsRes : [];
-        setBatchGroups(groups);
       } catch (error) {
-        console.error('Unable to load area data', error);
-        setAllBatches([]);
+        console.error('Unable to load tickets data', error);
         setAllImportTickets([]);
         setAllExportTickets([]);
-        setBatchGroups([]);
       } finally {
-        setIsLoadingData(false);
-        setIsLoadingOverviewBatches(false);
-        setIsLoadingProducts(false);
-        setIsLoadingBatchGroups(false);
         setIsLoadingHistory(false);
       }
     };
 
-    void loadAllData();
+    void loadTicketsData();
   }, [areaId]);
 
-  // Update overviewBatches và areaBatches từ allBatches khi cần
+  // Load prices khi mở dialog
   useEffect(() => {
-    setOverviewBatches(allBatches);
-  }, [allBatches]);
+    if (!selectedBatchId || !isPriceDialogOpen) return;
 
+    const loadPrices = async () => {
+      setIsLoadingPrices(true);
+      try {
+        const prices = await fetchPricesByBatchId(selectedBatchId);
+        setBatchPrices(Array.isArray(prices) ? prices : []);
+      } catch (error) {
+        console.error('Unable to load prices', error);
+        setBatchPrices([]);
+      } finally {
+        setIsLoadingPrices(false);
+      }
+    };
+
+    void loadPrices();
+  }, [selectedBatchId, isPriceDialogOpen]);
+
+  // Load history data từ API activity-logs theo area ID
   useEffect(() => {
-    setAreaBatches(allBatches);
-    if (allBatches.length > 0) {
-      // Chọn sẵn product đầu tiên
-      setSelectedProductId(allBatches[0].product?.id ?? null);
-    } else {
-      setSelectedProductId(null);
+    const loadHistoryData = async () => {
+      if (!areaId) return;
+      setIsLoadingHistory(true);
+      try {
+        const ticketsRes = await fetchAreaTickets(areaId);
+
+        // Map import tickets từ API response
+        const importTickets: ImportTicket[] = (
+          ticketsRes.importTickets || []
+        ).map((it) => ({
+          id: it.id,
+          unit: it.unit,
+          quantity: it.quantity,
+          percent: it.percent,
+          importDate: it.importDate,
+          expiredAt: it.expiredAt,
+          createdAt: it.createdAt,
+          updatedAt: it.updatedAt,
+          batchCode: it.batchCode,
+          productName: it.productName,
+          numberOfBatch: it.numberOfBatch,
+          areaName: it.areaName
+        }));
+
+        // Map export tickets từ API response
+        const exportTickets = (ticketsRes.exportTickets || []).map((et) => ({
+          id: et.id,
+          createdAt: et.createdAt,
+          updatedAt: et.updatedAt,
+          ExportDate: et.exportDate,
+          productName: et.productName,
+          quantity: et.quantity,
+          unit: et.unit,
+          areaName: et.areaName
+        }));
+
+        setAreaImportTickets(importTickets);
+        setAreaExportTickets(exportTickets);
+      } catch (error) {
+        console.error('Unable to load area history data', error);
+        setAreaImportTickets([]);
+        setAreaExportTickets([]);
+      } finally {
+        setIsLoadingHistory(false);
+      }
+    };
+
+    void loadHistoryData();
+  }, [areaId]);
+
+  // Update areaImportTickets và areaExportTickets từ all data (fallback)
+  useEffect(() => {
+    // Chỉ update nếu chưa có data từ history API
+    if (areaImportTickets.length === 0 && areaExportTickets.length === 0) {
+      setAreaImportTickets(allImportTickets);
+      setAreaExportTickets(allExportTickets);
     }
-  }, [allBatches]);
-
-  // Update areaImportTickets và areaExportTickets từ all data
-  useEffect(() => {
-    setAreaImportTickets(allImportTickets);
-    setAreaExportTickets(allExportTickets);
-  }, [allImportTickets, allExportTickets]);
+  }, [
+    allImportTickets,
+    allExportTickets,
+    areaImportTickets.length,
+    areaExportTickets.length
+  ]);
 
   // Tạo activities từ import và export tickets
   const historyActivities = useMemo(() => {
@@ -669,12 +708,16 @@ export default function AreaDetailView({
 
     const exportActivities = (areaExportTickets || []).map((et: any) => ({
       id: et.id ?? '',
-      date: et.ExportDate ?? et.createdAt ?? new Date().toISOString(),
+      date:
+        et.ExportDate ??
+        et.exportDate ??
+        et.createdAt ??
+        new Date().toISOString(),
       type: 'export' as const,
-      productName: et.orderDetail?.product?.name ?? '-',
+      productName: et.productName ?? et.orderDetail?.product?.name ?? '-',
       productId: et.orderDetail?.product?.id ?? '',
-      quantity: Number(et.orderDetail?.quantity ?? 0),
-      unit: et.orderDetail?.unit ?? 'kg',
+      quantity: Number(et.quantity ?? et.orderDetail?.quantity ?? 0),
+      unit: et.unit ?? et.orderDetail?.unit ?? 'kg',
       status: 'completed' as
         | 'completed'
         | 'pending_assignment'
@@ -685,36 +728,6 @@ export default function AreaDetailView({
 
     return [...importActivities, ...exportActivities];
   }, [areaImportTickets, areaExportTickets]);
-
-  // Filter activities
-  const filteredHistoryActivities = useMemo(() => {
-    return historyActivities.filter((activity) => {
-      const matchesSearch = activity.productName
-        .toLowerCase()
-        .includes(historySearchTerm.toLowerCase());
-
-      const matchesActivityType =
-        selectedActivityType === 'Tất cả' ||
-        (selectedActivityType === 'Nhập kho' && activity.type === 'import') ||
-        (selectedActivityType === 'Xuất kho' && activity.type === 'export');
-
-      const matchesStatus =
-        selectedStatus === 'Tất cả' ||
-        (selectedStatus === 'completed' && activity.status === 'completed') ||
-        (selectedStatus === 'Đang xử lý' &&
-          activity.status !== 'completed' &&
-          activity.status !== 'cancelled') ||
-        (selectedStatus === 'cancelled' && activity.status === 'cancelled');
-
-      return matchesSearch && matchesActivityType && matchesStatus;
-    });
-  }, [
-    historyActivities,
-    historySearchTerm,
-    selectedActivityType,
-    selectedProduct,
-    selectedStatus
-  ]);
 
   const getActivityTypeIcon = (type: 'import' | 'export') => {
     return type === 'import' ? (
@@ -773,66 +786,6 @@ export default function AreaDetailView({
       </span>
     );
   };
-
-  const productsInArea = useMemo(() => {
-    const map = new Map<
-      string,
-      { id: string; name?: string; totalQuantity: number; batchCount: number }
-    >();
-
-    for (const b of areaBatches) {
-      const id = b.product?.id;
-      if (!id) continue;
-      const name = b.product?.name;
-      const prev = map.get(id) ?? {
-        id,
-        name,
-        totalQuantity: 0,
-        batchCount: 0
-      };
-      prev.totalQuantity += b.quantity;
-      prev.batchCount += 1;
-      map.set(id, prev);
-    }
-
-    return Array.from(map.values());
-  }, [areaBatches]);
-
-  const palette = [
-    '#8884d8',
-    '#82ca9d',
-    '#ffc658',
-    '#ff7300',
-    '#00ff88',
-    '#0088FE',
-    '#FFBB28',
-    '#FF8042'
-  ];
-
-  const toNumber = (value: unknown) => {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : 0;
-  };
-
-  const productDistributionData = useMemo(() => {
-    const productMap = new Map<string, { name: string; value: number }>();
-    overviewBatches.forEach((batch) => {
-      const key = batch.product?.id || 'unknown';
-      const name = batch.product?.name || t('overview.otherProduct');
-      const quantity = toNumber(batch.quantity);
-      const prev = productMap.get(key);
-      productMap.set(key, { name, value: (prev?.value ?? 0) + quantity });
-    });
-
-    const distribution = Array.from(productMap.values()).map((item, idx) => ({
-      ...item,
-      color: palette[idx % palette.length]
-    }));
-
-    return distribution.length
-      ? distribution
-      : [{ name: t('overview.noData'), value: 1, color: palette[0] }];
-  }, [overviewBatches]);
 
   useEffect(() => {
     if (activeTab !== 'iot' || !areaId) return;
@@ -904,14 +857,6 @@ export default function AreaDetailView({
       unsubscribe();
     };
   }, [areaId, areaDeviceIds]);
-
-  const batchesOfSelectedProduct = useMemo(
-    () =>
-      selectedProductId
-        ? areaBatches.filter((b) => b.product?.id === selectedProductId)
-        : [],
-    [areaBatches, selectedProductId]
-  );
 
   const handleSaveSettings = async () => {
     if (
@@ -1149,8 +1094,7 @@ export default function AreaDetailView({
         onValueChange={setActiveTab}
         className='space-y-4'
       >
-        <TabsList className='grid w-full grid-cols-6'>
-          <TabsTrigger value='overview'>{t('tabs.overview')}</TabsTrigger>
+        <TabsList className='grid w-full grid-cols-5'>
           <TabsTrigger value='products'>{t('tabs.products')}</TabsTrigger>
           <TabsTrigger value='alerts'>{t('tabs.alerts')}</TabsTrigger>
           <TabsTrigger value='history'>{t('tabs.history')}</TabsTrigger>
@@ -1158,279 +1102,153 @@ export default function AreaDetailView({
           <TabsTrigger value='iot'>{t('tabs.iot')}</TabsTrigger>
         </TabsList>
 
-        {/* Overview Tab */}
-        <TabsContent value='overview' className='space-y-4'>
-          <div className='grid gap-4 md:grid-cols-2'>
-            {/* Area Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <IconMapPin className='h-5 w-5' />
-                  {t('overview.title')}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div>
-                    <p className='text-muted-foreground text-sm font-medium'>
-                      {t('overview.name')}
-                    </p>
-                    <p className='font-semibold'>{areaName}</p>
-                  </div>
-                  <div>
-                    <p className='text-muted-foreground text-sm font-medium'>
-                      {t('overview.description')}
-                    </p>
-                    <p className='font-semibold'>{areaDescription}</p>
-                  </div>
-                  <div>
-                    <p className='text-muted-foreground text-sm font-medium'>
-                      {t('overview.status')}
-                    </p>
-                    {getStatusBadge('normal')}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Charts Section */}
-          {/* <AreaCharts areaId={areaId} /> */}
-        </TabsContent>
-        <TabsContent value='products' className='space-y-4'>
-          <Card className='overflow-hidden'>
-            <CardHeader>
-              <CardTitle>{t('products.group.title')}</CardTitle>
-              <CardDescription>
-                {t('products.group.description')}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className='p-0'>
-              {isLoadingBatchGroups ? (
-                <div className='text-muted-foreground px-4 py-6 text-sm'>
-                  {t('products.group.loading')}
-                </div>
-              ) : batchGroups.length === 0 ? (
-                <div className='text-muted-foreground px-4 py-6 text-sm'>
-                  {t('products.group.empty')}
-                </div>
-              ) : (
-                <div className='w-full overflow-x-auto'>
-                  <table className='w-full text-sm'>
-                    <thead className='bg-muted'>
-                      <tr>
-                        <th className='px-4 py-2 text-left'>
-                          {t('products.group.columns.importTicket')}
-                        </th>
-                        <th className='px-4 py-2 text-left'>
-                          {t('products.group.columns.product')}
-                        </th>
-                        <th className='px-4 py-2 text-left'>
-                          {t('products.group.columns.batchCode')}
-                        </th>
-                        <th className='px-4 py-2 text-left'>
-                          {t('products.group.columns.importDate')}
-                        </th>
-                        <th className='px-4 py-2 text-left'>
-                          {t('products.group.columns.expiredAt')}
-                        </th>
-                        <th className='px-4 py-2 text-left'>
-                          {t('products.group.columns.spec')}
-                        </th>
-                        <th className='px-4 py-2 text-left'>
-                          {t('products.group.columns.priceBySpec')}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {batchGroups.map((g) => {
-                        const weights = g.batch
-                          ? Object.entries(g.batch)
-                              .map(([k, v]) => `${k}×${v}`)
-                              .join(', ')
-                          : '-';
-                        const prices = g.prices
-                          ? Object.entries(g.prices)
-                              .map(
-                                ([k, v]) => `${k}: ${v.toLocaleString('vi-VN')}`
-                              )
-                              .join(', ')
-                          : '-';
-                        return (
-                          <tr
-                            key={`${g.importTicketId}-${g.batchCode ?? ''}`}
-                            className='border-t'
-                          >
-                            <td className='px-4 py-2'>{g.importTicketId}</td>
-                            <td className='px-4 py-2'>
-                              {g.product?.name ?? '-'}
-                            </td>
-                            <td className='px-4 py-2'>{g.batchCode ?? '-'}</td>
-                            <td className='px-4 py-2 text-xs'>
-                              {g.importDate
-                                ? new Date(g.importDate).toLocaleString(locale)
-                                : '—'}
-                            </td>
-                            <td className='px-4 py-2 text-xs'>
-                              {g.expiredAt
-                                ? new Date(g.expiredAt).toLocaleDateString(
-                                    locale
-                                  )
-                                : '—'}
-                            </td>
-                            <td className='px-4 py-2'>{weights}</td>
-                            <td className='px-4 py-2'>{prices}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
         {/* Products Tab */}
         <TabsContent value='products' className='space-y-4'>
           <div className='flex items-center justify-between'>
             <h3 className='text-lg font-semibold'>{t('products.title')}</h3>
-            <Button
+            {/* <Button
               size='sm'
               variant='outline'
               onClick={() => router.push('/dashboard/warehouse/batches')}
             >
               <IconPackage className='mr-2 h-4 w-4' />
               {t('products.manageImports')}
-            </Button>
+            </Button> */}
           </div>
 
-          {isLoadingProducts ? (
+          {isLoadingBatches ? (
             <div className='text-muted-foreground text-sm'>
               {t('products.loading')}
             </div>
-          ) : productsInArea.length === 0 ? (
+          ) : areaBatches.length === 0 ? (
             <div className='text-muted-foreground text-sm'>
               {t('products.empty')}
             </div>
           ) : (
-            <div className='grid gap-4 lg:grid-cols-[2fr,3fr]'>
-              <Card className='overflow-hidden'>
-                <CardHeader>
-                  <CardTitle>{t('products.list.title')}</CardTitle>
-                </CardHeader>
-                <CardContent className='p-0'>
-                  <div className='w-full overflow-x-auto'>
-                    <table className='w-full text-sm'>
-                      <thead className='bg-muted'>
-                        <tr>
-                          <th className='px-4 py-2 text-left'>
-                            {t('products.list.columns.product')}
-                          </th>
-                          <th className='px-4 py-2 text-left'>
-                            {t('products.list.columns.batchCount')}
-                          </th>
-                          <th className='px-4 py-2 text-left'>
-                            {t('products.list.columns.totalQuantity')}
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {productsInArea.map((p) => (
-                          <tr
-                            key={p.id}
-                            className={`hover:bg-muted/50 cursor-pointer border-t ${
-                              selectedProductId === p.id
-                                ? 'bg-muted/80 font-semibold'
-                                : ''
-                            }`}
-                            onClick={() => setSelectedProductId(p.id)}
-                          >
-                            <td className='px-4 py-2'>
-                              <div className='font-medium'>
-                                {p.name || p.id}
+            <Card className='overflow-hidden'>
+              <CardHeader>
+                <CardTitle>{t('products.batches.title')}</CardTitle>
+                <CardDescription>
+                  {t('products.batches.description', {
+                    count: areaBatches.length
+                  })}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className='p-0'>
+                <div className='w-full overflow-x-auto'>
+                  <Table>
+                    <TableHeader>
+                      <TableRow className='bg-gray-50'>
+                        <TableHead className='font-semibold'>
+                          {t('products.batches.columns.batchCode')}
+                        </TableHead>
+                        <TableHead className='font-semibold'>
+                          {t('products.batches.columns.product')}
+                        </TableHead>
+                        <TableHead className='font-semibold'>
+                          {t('products.batches.columns.quantity')}
+                        </TableHead>
+                        {/* <TableHead className='font-semibold'>
+                          {t('products.batches.columns.currentQuantity')}
+                        </TableHead> */}
+                        <TableHead className='font-semibold'>
+                          {t('products.batches.columns.unit')}
+                        </TableHead>
+                        <TableHead className='font-semibold'>
+                          {t('products.batches.columns.costPrice')}
+                        </TableHead>
+                        <TableHead className='font-semibold'>
+                          {t('products.batches.columns.expiredAt')}
+                        </TableHead>
+                        <TableHead className='font-semibold'>
+                          {t('products.batches.columns.createdAt')}
+                        </TableHead>
+                        <TableHead className='text-right font-semibold'>
+                          {t('products.batches.columns.actions')}
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {areaBatches.map((batch) => (
+                        <TableRow key={batch.id} className='hover:bg-gray-50'>
+                          <TableCell>
+                            <div className='font-mono text-xs'>
+                              {batch.batchCode}
+                            </div>
+                            {/* <div className='text-muted-foreground text-xs'>
+                              ID: {batch.id}
+                            </div> */}
+                          </TableCell>
+                          <TableCell>
+                            <div className='flex items-center gap-2'>
+                              <div>
+                                <div className='font-medium'>
+                                  {batch.product?.name || '-'}
+                                </div>
+                                {/* <div className='text-muted-foreground text-xs'>
+                                  {batch.product?.id || '-'}
+                                </div> */}
                               </div>
-                            </td>
-                            <td className='px-4 py-2'>{p.batchCount}</td>
-                            <td className='px-4 py-2'>
-                              {p.totalQuantity.toLocaleString()} kg
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className='overflow-hidden'>
-                <CardHeader>
-                  <CardTitle>
-                    {selectedProductId
-                      ? t('products.batches.title')
-                      : t('products.batches.selectPrompt')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className='p-0'>
-                  {selectedProductId &&
-                    batchesOfSelectedProduct.length === 0 && (
-                      <div className='text-muted-foreground px-4 py-6 text-sm'>
-                        {t('products.batches.empty')}
-                      </div>
-                    )}
-                  {selectedProductId && batchesOfSelectedProduct.length > 0 && (
-                    <div className='w-full overflow-x-auto'>
-                      <table className='w-full text-sm'>
-                        <thead className='bg-muted'>
-                          <tr>
-                            <th className='px-4 py-2 text-left'>
-                              {t('products.batches.columns.batchCode')}
-                            </th>
-                            <th className='px-4 py-2 text-left'>
-                              {t('products.batches.columns.quantity')}
-                            </th>
-                            <th className='px-4 py-2 text-left'>
-                              {t('products.batches.columns.unit')}
-                            </th>
-                            <th className='px-4 py-2 text-left'>
-                              {t('products.batches.columns.createdAt')}
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {batchesOfSelectedProduct.map((b) => (
-                            <tr key={b.id} className='border-t'>
-                              <td className='px-4 py-2'>
-                                <div className='font-mono text-xs'>
-                                  {b.batchCode}
-                                </div>
-                                <div className='text-muted-foreground text-xs'>
-                                  {t('products.batches.columns.id')}: {b.id}
-                                </div>
-                              </td>
-                              <td className='px-4 py-2'>
-                                {b.quantity.toLocaleString()}
-                              </td>
-                              <td className='px-4 py-2'>{b.unit}</td>
-                              <td className='px-4 py-2 text-xs'>
-                                {b.createdAt
-                                  ? new Date(b.createdAt).toLocaleString(locale)
-                                  : '—'}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                  {!selectedProductId && (
-                    <div className='text-muted-foreground px-4 py-6 text-sm'>
-                      {t('products.batches.selectPrompt')}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
+                            </div>
+                          </TableCell>
+                          {/* <TableCell className='font-medium'>
+                            {batch.quantity.toLocaleString()}
+                          </TableCell> */}
+                          <TableCell className='font-medium'>
+                            {(
+                              batch.currentQuantity ??
+                              batch.quantity ??
+                              0
+                            ).toLocaleString()}
+                          </TableCell>
+                          <TableCell>{batch.unit}</TableCell>
+                          <TableCell>
+                            {batch.costPrice
+                              ? `${batch.costPrice.toLocaleString('vi-VN')} VNĐ`
+                              : '-'}
+                          </TableCell>
+                          <TableCell className='text-xs'>
+                            {batch.expiredAt
+                              ? format(
+                                  new Date(batch.expiredAt),
+                                  'dd/MM/yyyy',
+                                  {
+                                    locale: vi
+                                  }
+                                )
+                              : '—'}
+                          </TableCell>
+                          <TableCell className='text-xs'>
+                            {batch.createdAt
+                              ? format(
+                                  new Date(batch.createdAt),
+                                  'dd/MM/yyyy HH:mm',
+                                  {
+                                    locale: vi
+                                  }
+                                )
+                              : '—'}
+                          </TableCell>
+                          <TableCell className='text-right'>
+                            <Button
+                              size='sm'
+                              variant='outline'
+                              onClick={() => {
+                                setSelectedBatchId(batch.id);
+                                setIsPriceDialogOpen(true);
+                              }}
+                            >
+                              <IconEye className='mr-2 h-4 w-4' />
+                              {t('products.batches.actions.viewDetails')}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
@@ -1468,18 +1286,12 @@ export default function AreaDetailView({
         <TabsContent value='history' className='space-y-4'>
           <Card>
             <CardHeader>
-              <div className='flex items-center justify-between'>
-                <div>
-                  <CardTitle className='flex items-center gap-2'>
-                    <IconHistory className='h-5 w-5' />
-                    {t('history.title')}
-                  </CardTitle>
-                  <CardDescription>{t('history.description')}</CardDescription>
-                </div>
-                <Button variant='outline' size='sm'>
-                  <IconClock className='mr-2 h-4 w-4' />
-                  {t('history.exportReport')}
-                </Button>
+              <div>
+                <CardTitle className='flex items-center gap-2'>
+                  <IconHistory className='h-5 w-5' />
+                  {t('history.title')}
+                </CardTitle>
+                <CardDescription>{t('history.description')}</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
@@ -1489,107 +1301,8 @@ export default function AreaDetailView({
                 </div>
               ) : (
                 <>
-                  {/* Filters and Search */}
-                  <div className='mb-6 space-y-4'>
-                    <div className='flex flex-wrap items-center gap-4'>
-                      <div className='min-w-[200px] flex-1'>
-                        <div className='relative'>
-                          <IconSearch className='absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform text-gray-400' />
-                          <Input
-                            placeholder={t('history.searchPlaceholder')}
-                            value={historySearchTerm}
-                            onChange={(e) =>
-                              setHistorySearchTerm(e.target.value)
-                            }
-                            className='pl-10'
-                          />
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className='flex flex-wrap items-center gap-4'>
-                      <div className='flex items-center gap-2'>
-                        <IconFilter className='h-4 w-4 text-gray-500' />
-                        <span className='text-sm font-medium text-gray-700'>
-                          {t('history.filters.label')}:
-                        </span>
-                      </div>
-
-                      <Select
-                        value={selectedActivityType}
-                        onValueChange={setSelectedActivityType}
-                      >
-                        <SelectTrigger className='w-[140px]'>
-                          <SelectValue
-                            placeholder={t('history.filters.activityType')}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='Tất cả'>
-                            {t('history.filters.all')}
-                          </SelectItem>
-                          <SelectItem value='Nhập kho'>
-                            {t('history.import')}
-                          </SelectItem>
-                          <SelectItem value='Xuất kho'>
-                            {t('history.export')}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <Select
-                        value={selectedProduct}
-                        onValueChange={setSelectedProduct}
-                      >
-                        <SelectTrigger className='w-[180px]'>
-                          <SelectValue
-                            placeholder={t('history.filters.product')}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='Tất cả'>
-                            {t('history.filters.allProducts')}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <Select
-                        value={selectedStatus}
-                        onValueChange={setSelectedStatus}
-                      >
-                        <SelectTrigger className='w-[180px]'>
-                          <SelectValue
-                            placeholder={t('history.filters.allStatuses')}
-                          />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value='Tất cả'>
-                            {t('history.filters.allStatuses')}
-                          </SelectItem>
-                          <SelectItem value='completed'>
-                            {t('history.status.completed')}
-                          </SelectItem>
-                          <SelectItem value='Đang xử lý'>
-                            {t('history.status.processing')}
-                          </SelectItem>
-                          <SelectItem value='cancelled'>
-                            {t('history.status.cancelled')}
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {/* Results Summary */}
-                  <div className='mb-4 text-sm text-gray-600'>
-                    {t('history.summary', {
-                      count: filteredHistoryActivities.length,
-                      total: historyActivities.length
-                    })}
-                  </div>
-
                   {/* Activities Table */}
-                  {filteredHistoryActivities.length === 0 ? (
+                  {historyActivities.length === 0 ? (
                     <div className='py-8 text-center text-sm text-gray-500'>
                       {t('history.noResults')}
                     </div>
@@ -1616,7 +1329,7 @@ export default function AreaDetailView({
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {filteredHistoryActivities.map((activity) => (
+                          {historyActivities.map((activity) => (
                             <TableRow
                               key={activity.id}
                               className='hover:bg-gray-50'
@@ -1648,7 +1361,7 @@ export default function AreaDetailView({
                                   </div>
                                 </div>
                               </TableCell>
-                              <TableCell className='text-right font-medium'>
+                              <TableCell className='font-medium'>
                                 {activity.quantity.toLocaleString()}{' '}
                                 {activity.unit}
                               </TableCell>
@@ -1717,25 +1430,6 @@ export default function AreaDetailView({
                         maxTemperature: e.target.value
                       }))
                     }
-                    className='mt-1 w-full rounded-md border px-3 py-2'
-                  />
-                </div>
-                <div>
-                  <label className='text-sm font-medium'>
-                    {t('settings.fields.minCapacity')}
-                  </label>
-                  <input
-                    type='number'
-                    min={0}
-                    value={settingForm.minCapacity}
-                    disabled={isLoadingSetting || isSavingSetting}
-                    onChange={(e) =>
-                      setSettingForm((prev) => ({
-                        ...prev,
-                        minCapacity: e.target.value
-                      }))
-                    }
-                    placeholder={t('settings.fields.minCapacityPlaceholder')}
                     className='mt-1 w-full rounded-md border px-3 py-2'
                   />
                 </div>
@@ -1823,8 +1517,274 @@ export default function AreaDetailView({
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Price Management Dialog */}
+      {selectedBatchId && (
+        <Dialog open={isPriceDialogOpen} onOpenChange={setIsPriceDialogOpen}>
+          <DialogContent className='max-h-[90vh] max-w-4xl overflow-y-auto'>
+            <DialogHeader>
+              <DialogTitle>
+                {t('products.prices.title', {
+                  batchCode:
+                    areaBatches.find((b) => b.id === selectedBatchId)
+                      ?.batchCode || selectedBatchId
+                })}
+              </DialogTitle>
+              <DialogDescription>
+                {t('products.prices.description')}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className='space-y-4'>
+              {/* Add New Price Button */}
+              <div className='flex justify-end'>
+                <Button
+                  size='sm'
+                  onClick={() => {
+                    setEditingPrice('new');
+                  }}
+                >
+                  <IconPlus className='mr-2 h-4 w-4' />
+                  {t('products.prices.addNew')}
+                </Button>
+              </div>
+
+              {/* Prices Table */}
+              {isLoadingPrices ? (
+                <div className='py-8 text-center text-sm text-gray-500'>
+                  {t('products.prices.loading')}
+                </div>
+              ) : batchPrices.length === 0 ? (
+                <div className='py-8 text-center text-sm text-gray-500'>
+                  {t('products.prices.empty')}
+                </div>
+              ) : (
+                <div className='overflow-x-auto'>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>
+                          {t('products.prices.columns.price')}
+                        </TableHead>
+                        <TableHead>
+                          {t('products.prices.columns.quantity')}
+                        </TableHead>
+                        <TableHead>
+                          {t('products.prices.columns.unit')}
+                        </TableHead>
+                        <TableHead>
+                          {t('products.prices.columns.createdAt')}
+                        </TableHead>
+                        <TableHead className='text-right'>
+                          {t('products.prices.columns.actions')}
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {batchPrices.map((price) => (
+                        <TableRow key={price.id}>
+                          <TableCell>
+                            {price.price
+                              ? `${price.price.toLocaleString('vi-VN')} VNĐ`
+                              : '-'}
+                          </TableCell>
+                          <TableCell>
+                            {price.quantity?.toLocaleString() || '-'}
+                          </TableCell>
+                          <TableCell>{price.unit || '-'}</TableCell>
+                          <TableCell className='text-xs'>
+                            {price.createdAt
+                              ? format(
+                                  new Date(price.createdAt),
+                                  'dd/MM/yyyy HH:mm',
+                                  {
+                                    locale: vi
+                                  }
+                                )
+                              : '—'}
+                          </TableCell>
+                          <TableCell className='text-right'>
+                            <div className='flex justify-end gap-2'>
+                              <Button
+                                size='sm'
+                                variant='outline'
+                                onClick={() => setEditingPrice(price)}
+                              >
+                                <IconEdit className='h-4 w-4' />
+                              </Button>
+                              <Button
+                                size='sm'
+                                variant='outline'
+                                onClick={async () => {
+                                  if (
+                                    confirm(t('products.prices.confirmDelete'))
+                                  ) {
+                                    try {
+                                      await deletePrice(price.id);
+                                      const prices = await fetchPricesByBatchId(
+                                        selectedBatchId!
+                                      );
+                                      setBatchPrices(
+                                        Array.isArray(prices) ? prices : []
+                                      );
+                                    } catch (error) {
+                                      console.error(
+                                        'Failed to delete price',
+                                        error
+                                      );
+                                    }
+                                  }
+                                }}
+                              >
+                                <IconTrash className='h-4 w-4 text-red-600' />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              )}
+
+              {/* Edit/Create Price Form */}
+              {editingPrice !== null && editingPrice !== undefined && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>
+                      {editingPrice === 'new' || !editingPrice
+                        ? t('products.prices.createTitle')
+                        : t('products.prices.editTitle')}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <PriceForm
+                      price={editingPrice === 'new' ? null : editingPrice}
+                      batchId={selectedBatchId!}
+                      onSuccess={async () => {
+                        setEditingPrice(null);
+                        const prices = await fetchPricesByBatchId(
+                          selectedBatchId!
+                        );
+                        setBatchPrices(Array.isArray(prices) ? prices : []);
+                      }}
+                      onCancel={() => setEditingPrice(null)}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   ) : (
     <div className='w-full py-10 text-center'>{t('loading')}</div>
+  );
+}
+
+// Price Form Component
+function PriceForm({
+  price,
+  batchId,
+  onSuccess,
+  onCancel
+}: {
+  price: Price | null;
+  batchId: string;
+  onSuccess: () => void;
+  onCancel: () => void;
+}) {
+  const t = useTranslations('AreaDetail');
+  const [formData, setFormData] = useState({
+    price: price?.price?.toString() || '',
+    quantity: price?.quantity?.toString() || '',
+    unit: 'kg'
+  });
+
+  useEffect(() => {
+    if (price) {
+      setFormData({
+        price: price.price?.toString() || '',
+        quantity: price.quantity?.toString() || '',
+        unit: 'kg'
+      });
+    } else {
+      setFormData({
+        price: '',
+        quantity: '',
+        unit: 'kg'
+      });
+    }
+  }, [price]);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      const payload: CreatePriceDto | UpdatePriceDto = {
+        batch: { id: batchId },
+        price: formData.price ? Number(formData.price) : null,
+        quantity: formData.quantity ? Number(formData.quantity) : null,
+        unit: 'kg'
+      };
+
+      if (price) {
+        await updatePrice(price.id, payload);
+      } else {
+        await createPrice(payload as CreatePriceDto);
+      }
+      onSuccess();
+    } catch (error) {
+      console.error('Failed to save price', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className='space-y-4'>
+      <div className='space-y-2'>
+        <Label>{t('products.prices.form.price')}</Label>
+        <Input
+          type='number'
+          value={formData.price}
+          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+          placeholder={t('products.prices.form.pricePlaceholder')}
+          className='[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+        />
+      </div>
+      <div className='space-y-2'>
+        <Label>{t('products.prices.form.quantity')}</Label>
+        <Input
+          type='number'
+          value={formData.quantity}
+          onChange={(e) =>
+            setFormData({ ...formData, quantity: e.target.value })
+          }
+          placeholder={t('products.prices.form.quantityPlaceholder')}
+          className='[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
+        />
+      </div>
+      <div className='space-y-2'>
+        <Label>{t('products.prices.form.unit')}</Label>
+        <div className='border-input bg-muted text-muted-foreground flex h-10 w-full rounded-md border px-3 py-2 text-sm'>
+          kg
+        </div>
+      </div>
+      <DialogFooter>
+        <Button type='button' variant='outline' onClick={onCancel}>
+          {t('products.prices.form.cancel')}
+        </Button>
+        <Button type='submit' disabled={isSaving}>
+          {isSaving
+            ? t('products.prices.form.saving')
+            : price
+              ? t('products.prices.form.update')
+              : t('products.prices.form.create')}
+        </Button>
+      </DialogFooter>
+    </form>
   );
 }

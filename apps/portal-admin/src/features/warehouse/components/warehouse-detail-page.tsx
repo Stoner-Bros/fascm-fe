@@ -486,7 +486,7 @@ export default function WarehouseDetailPage({
         </div>
 
         {/* Recent Activities */}
-        <WarehouseActivitiesTable />
+        <WarehouseActivitiesTable warehouseId={warehouseId} />
       </div>
     </PageContainer>
   ) : (

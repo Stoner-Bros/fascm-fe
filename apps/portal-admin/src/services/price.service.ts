@@ -3,9 +3,8 @@ import type { InfinityPaginationResponse } from '@/types/common';
 
 export interface Price {
   id: string;
-  product: {
+  batch?: {
     id: string;
-    name?: string | null;
   };
   price?: number | null;
   quantity?: number | null;
@@ -15,14 +14,14 @@ export interface Price {
 }
 
 export interface CreatePriceDto {
-  product: { id: string };
+  batch: { id: string };
   price?: number | null;
   quantity?: number | null;
   unit?: string | null;
 }
 
 export interface UpdatePriceDto {
-  product?: { id: string };
+  batch?: { id: string };
   price?: number | null;
   quantity?: number | null;
   unit?: string | null;
@@ -69,4 +68,8 @@ export async function deletePrice(id: string) {
   return fetchJSON<void>(`/prices/${id}`, {
     method: 'DELETE'
   });
+}
+
+export async function fetchPricesByBatchId(batchId: string) {
+  return fetchJSON<Price[]>(`/prices/${batchId}/batch`);
 }

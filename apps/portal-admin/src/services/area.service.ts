@@ -3,7 +3,8 @@ import type {
   Area,
   CreateAreaDto,
   UpdateAreaDto,
-  FindAllAreasDto
+  FindAllAreasDto,
+  AreaTicketsResponse
 } from '@/types/area';
 import type { InfinityPaginationResponse } from '@/types/common';
 
@@ -77,4 +78,8 @@ export async function fetchAreaAlerts({
 
 export async function fetchActiveAreaAlertByAreaId(areaId: string) {
   return fetchJSON<AreaAlert | null>(`/area-alerts/active/area/${areaId}`);
+}
+
+export async function fetchAreaTickets(areaId: string) {
+  return fetchJSON<AreaTicketsResponse>(`/areas/${areaId}/activity-logs`);
 }
