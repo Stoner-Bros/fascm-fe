@@ -38,7 +38,11 @@ export interface HarvestPhase {
   }>;
   imageProof?: Array<{
     id: string;
-    imageUrl?: string;
+    photo?: {
+      id: string;
+      path?: string | null;
+      [key: string]: unknown;
+    };
     [key: string]: unknown;
   }> | null;
 }

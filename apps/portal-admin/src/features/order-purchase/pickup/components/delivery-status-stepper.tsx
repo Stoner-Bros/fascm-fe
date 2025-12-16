@@ -1,17 +1,10 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import { DeliveryStatusEnum } from '@/types/delivery';
 import {
   Check,
-  ChevronDown,
   Circle,
   Clock,
   Loader2,
@@ -28,14 +21,12 @@ interface DeliveryStatusStepperProps {
   canUpdate?: boolean;
 }
 
-interface StatusStep {
+const statusSteps: Array<{
   status: DeliveryStatusEnum;
   label: string;
   icon: React.ReactNode;
   description: string;
-}
-
-const statusSteps: StatusStep[] = [
+}> = [
   {
     status: 'scheduled',
     label: 'Đã lên lịch',
@@ -68,13 +59,6 @@ const statusSteps: StatusStep[] = [
   }
 ];
 
-const canceledStatus: StatusStep = {
-  status: 'canceled',
-  label: 'Đã hủy',
-  icon: <X className='h-4 w-4' />,
-  description: 'Chuyến giao đã bị hủy'
-};
-
 function getStatusIndex(status: DeliveryStatusEnum | null | undefined): number {
   if (!status) return -1;
   return statusSteps.findIndex((s) => s.status === status);
@@ -99,11 +83,6 @@ export function DeliveryStatusStepper({
   const isCanceled = currentStatus === 'canceled';
   const isCompleted = currentStatus === 'completed';
   const nextStatus = getNextStatus(currentStatus);
-
-  // Get available next statuses for dropdown
-  const availableStatuses = statusSteps
-    .slice(currentIndex + 1)
-    .concat(currentStatus !== 'canceled' ? [canceledStatus] : []);
 
   return (
     <div className='space-y-2'>
@@ -202,34 +181,20 @@ export function DeliveryStatusStepper({
             </Button>
           )}
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant='outline'
-                size='icon'
-                className='h-7 w-7'
-                disabled={isLoading}
-              >
-                <ChevronDown className='h-3 w-3' />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align='end'>
-              {availableStatuses.map((step) => (
-                <DropdownMenuItem
-                  key={step.status}
-                  onClick={() => onStatusChange(step.status)}
-                  className={cn(
-                    'text-xs',
-                    step.status === 'canceled' &&
-                      'text-destructive focus:text-destructive'
-                  )}
-                >
-                  {step.icon}
-                  <span className='ml-1.5'>{step.label}</span>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* <Button
+            variant='destructive'
+            size='sm'
+            onClick={() => onStatusChange('canceled')}
+            disabled={isLoading}
+            className='h-7 text-xs'
+          >
+            {isLoading ? (
+              <Loader2 className='mr-1 h-3 w-3 animate-spin' />
+            ) : (
+              <X className='mr-1 h-3 w-3' />
+            )}
+            Hủy
+          </Button> */}
         </div>
       )}
 

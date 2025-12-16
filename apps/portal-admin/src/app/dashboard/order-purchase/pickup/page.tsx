@@ -16,15 +16,7 @@ import {
   ScheduleListPane,
   usePickupPage
 } from '@/features/order-purchase/pickup';
-import {
-  Calendar,
-  CheckCircle2,
-  Clock,
-  LayoutGrid,
-  List,
-  RefreshCw,
-  Truck
-} from 'lucide-react';
+import { LayoutGrid, List, RefreshCw, Truck } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type ViewMode = 'split' | 'list';
@@ -197,8 +189,10 @@ export default function PickupPage() {
                 hasPickupForPhase={page.pickups.hasPickupForPhase}
                 onCreatePickup={page.pickups.createPickup}
                 onUpdatePickupStatus={page.pickups.updatePickupStatus}
+                onUploadPhaseImageProof={page.pickups.uploadPhaseProof}
                 isCreating={page.pickups.loadingCreate}
                 loadingUpdateStatusId={page.pickups.loadingUpdateStatus}
+                uploadingProofPhaseId={page.pickups.loadingUploadProofPhaseId}
               />
             </div>
           </div>

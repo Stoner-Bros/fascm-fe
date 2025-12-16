@@ -15,6 +15,7 @@ import {
   Delivery,
   DeliveryStatusEnum
 } from '@/types/delivery';
+import { uploadPhaseImageProof } from '@/services/harvest-phase.service';
 import { DeliveryStaff } from '@/types/delivery-staff';
 import { HarvestPhase } from '@/types/harvest-phase';
 import {
@@ -274,6 +275,9 @@ export function usePickups() {
   const [loadingUpdateStatus, setLoadingUpdateStatus] = useState<string | null>(
     null
   );
+  const [loadingUploadProofPhaseId, setLoadingUploadProofPhaseId] = useState<
+    string | null
+  >(null);
   const [hasNextPage, setHasNextPage] = useState(false);
 
   const loadPickupsWithHarvestPhase = useCallback(async () => {
@@ -357,6 +361,43 @@ export function usePickups() {
     []
   );
 
+  const uploadPhaseProof = useCallback(
+    async (
+      phaseId: string,
+      files: File[]
+    ): Promise<{ paths: string[] } | null> => {
+      setLoadingUploadProofPhaseId(phaseId);
+      try {
+        const uploads = await Promise.all(
+          files.map(async (file) => uploadPhaseImageProof(phaseId, file))
+        );
+        const paths = uploads
+          .map((res) => res?.path)
+          .filter((p): p is string => Boolean(p));
+        if (!paths.length) {
+          throw new Error('No files uploaded');
+        }
+        toast({
+          title: 'Thành công',
+          description: `Đã tải ${paths.length} hình ảnh xác nhận đợt thu hoạch`
+        });
+        return { paths };
+      } catch (error) {
+        console.error('Failed to upload phase proof:', error);
+        toast({
+          title: 'Lỗi',
+          description: 'Không thể tải hình ảnh xác nhận',
+          variant: 'destructive'
+        });
+        return null;
+      } finally {
+        setLoadingUploadProofPhaseId(null);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   // Get pickup by harvest phase ID
   const getPickupByPhaseId = useCallback(
     (phaseId: string): Delivery | undefined => {
@@ -391,13 +432,15 @@ export function usePickups() {
     loadingFetch,
     loadingCreate,
     loadingUpdateStatus,
+    loadingUploadProofPhaseId,
     hasNextPage,
     loadPickupsWithHarvestPhase,
     createPickup,
     updatePickupStatus,
     getPickupByPhaseId,
     hasPickupForPhase,
-    assignedPhaseIds
+    assignedPhaseIds,
+    uploadPhaseProof
   };
 }
 
