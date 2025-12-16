@@ -711,7 +711,9 @@
         "unit": "Unit",
         "quantity": "Quantity",
         "total": "Total",
-        "remove": "Remove"
+        "remove": "Remove",
+        "enterQuantityTitle": "Enter quantity",
+        "enterQuantityDescription": "Adjust quantity for each product"
       },
       "delivery": {
         "title": "Delivery Information",
@@ -720,7 +722,10 @@
         "deliveryAddress": "Delivery Address",
         "selectOnMap": "Select on Map",
         "orderDescription": "Order Description (Optional)",
-        "descriptionPlaceholder": "Enter any additional notes or requirements..."
+        "descriptionPlaceholder": "Enter any additional notes or requirements...",
+        "receiverInfoTitle": "Receiver Information",
+        "organizationLabel": "Organization",
+        "representativeLabel": "Representative"
       },
       "review": {
         "title": "Review Order",
@@ -729,7 +734,11 @@
         "deliverySummary": "Delivery Summary",
         "totalAmount": "Total Amount",
         "submit": "Submit Order",
-        "submitting": "Submitting..."
+        "submitting": "Submitting...",
+        "selectedProductsTitle": "Selected products",
+        "deliveryInfoTitle": "Delivery Information",
+        "deliveryTimeLabel": "Delivery time",
+        "notesLabel": "Notes"
       },
       "buttons": {
         "next": "Next",
@@ -823,11 +832,20 @@
       "certificatePlaceholder": "Enter certificate information or URL",
       "uploadNewCertificate": "Or upload new certificate:"
     },
+    "warehouseInformation": {
+      "title": "Warehouse Information",
+      "description": "Associated warehouse details",
+      "warehouseName": "Warehouse Name",
+      "warehouseAddress": "Warehouse Address",
+      "noWarehouseAssigned": "No warehouse assigned",
+      "noWarehouseAddress": "No warehouse address"
+    },
     "toast": {
       "fileUploadFailed": "File Upload Failed",
       "fileUploadFailedDescription": "Failed to upload {type} file. Please try again.",
       "error": "Error",
       "consigneeNotFound": "Consignee information not found.",
+      "supplierNotFound": "Supplier information not found.",
       "profileUpdated": "Profile Updated",
       "profileUpdatedDescription": "Your profile has been successfully updated.",
       "updateFailed": "Update Failed",

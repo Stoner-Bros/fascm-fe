@@ -628,9 +628,11 @@ export default function NewOrderPage() {
             {state.orderLines.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle>Nhập số lượng</CardTitle>
+                  <CardTitle>
+                    {t('newOrder.products.enterQuantityTitle')}
+                  </CardTitle>
                   <CardDescription>
-                    Điều chỉnh số lượng cho từng sản phẩm
+                    {t('newOrder.products.enterQuantityDescription')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -782,11 +784,13 @@ export default function NewOrderPage() {
             <CardContent className='space-y-6'>
               {fullInfo && (
                 <div className='bg-muted/50 rounded-lg p-4'>
-                  <h4 className='mb-3 font-semibold'>Thông tin người nhận</h4>
+                  <h4 className='mb-3 font-semibold'>
+                    {t('newOrder.delivery.receiverInfoTitle')}
+                  </h4>
                   <div className='grid gap-3 sm:grid-cols-2'>
                     <div>
                       <Label className='text-muted-foreground text-xs'>
-                        Tổ chức
+                        {t('newOrder.delivery.organizationLabel')}
                       </Label>
                       <p className='font-medium'>
                         {fullInfo.organizationName || 'N/A'}
@@ -794,7 +798,7 @@ export default function NewOrderPage() {
                     </div>
                     <div>
                       <Label className='text-muted-foreground text-xs'>
-                        Người đại diện
+                        {t('newOrder.delivery.representativeLabel')}
                       </Label>
                       <p className='font-medium'>
                         {fullInfo.representativeName || 'N/A'}
@@ -923,13 +927,15 @@ export default function NewOrderPage() {
                   {t('newOrder.review.title')}
                 </CardTitle>
                 <CardDescription>
-                  Kiểm tra lại thông tin trước khi gửi đơn hàng
+                  {t('newOrder.review.description')}
                 </CardDescription>
               </CardHeader>
               <CardContent className='space-y-6'>
                 {/* Order items */}
                 <div>
-                  <h4 className='mb-3 font-semibold'>Sản phẩm đã chọn</h4>
+                  <h4 className='mb-3 font-semibold'>
+                    {t('newOrder.review.selectedProductsTitle')}
+                  </h4>
                   <div className='space-y-3'>
                     {state.orderLines.map((line) => {
                       const product = state.products.find(
@@ -984,13 +990,15 @@ export default function NewOrderPage() {
 
                 {/* Delivery info */}
                 <div>
-                  <h4 className='mb-3 font-semibold'>Thông tin giao hàng</h4>
+                  <h4 className='mb-3 font-semibold'>
+                    {t('newOrder.review.deliveryInfoTitle')}
+                  </h4>
                   <div className='bg-muted/50 space-y-2 rounded-lg p-4'>
                     <div className='flex items-start gap-2'>
                       <IconCalendar className='text-muted-foreground mt-0.5 h-4 w-4' />
                       <div>
                         <p className='text-muted-foreground text-xs'>
-                          Thời gian giao hàng
+                          {t('newOrder.review.deliveryTimeLabel')}
                         </p>
                         <p className='font-medium'>
                           {new Date(state.deliveryDate).toLocaleString(
@@ -1017,7 +1025,7 @@ export default function NewOrderPage() {
                         <IconShoppingCart className='text-muted-foreground mt-0.5 h-4 w-4' />
                         <div>
                           <p className='text-muted-foreground text-xs'>
-                            Ghi chú
+                            {t('newOrder.review.notesLabel')}
                           </p>
                           <p className='font-medium'>
                             {state.orderDescription}
