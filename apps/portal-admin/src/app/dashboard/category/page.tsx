@@ -150,8 +150,7 @@ export default function CategoriesPage() {
           ) : (
             <>
               <div className='text-muted-foreground mb-4 text-sm'>
-                Showing {filteredCategories.length} categor
-                {filteredCategories.length === 1 ? 'y' : 'ies'}
+                {t('list.showing', { count: filteredCategories.length })}
               </div>
 
               {filteredCategories.length === 0 ? (

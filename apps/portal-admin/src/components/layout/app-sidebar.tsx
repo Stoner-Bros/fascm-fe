@@ -84,10 +84,21 @@ export default function AppSidebar() {
       Outbound: t('outbound'),
       Truck: t('truck'),
       Product: t('product'),
+      Category: t('category'),
       Account: t('account'),
       Profile: t('profile'),
       Login: t('login'),
-      Kanban: t('kanban')
+      Kanban: t('kanban'),
+      'Purchase Order': t('purchaseOrder'),
+      'Sale Order': t('saleOrder'),
+      Pickup: t('pickup'),
+      Import: t('import'),
+      Export: t('export'),
+      Manager: t('manager'),
+      Staff: t('staff'),
+      'Delivery Staff': t('deliveryStaff'),
+      Supplier: t('supplier'),
+      Consignee: t('consignee')
     };
     return translationMap[title] || title;
   };

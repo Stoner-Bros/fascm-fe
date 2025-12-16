@@ -1,4 +1,23 @@
 {
+  "Dashboard": {
+    "title": "Bảng điều khiển",
+    "welcome": "Xin chào, Chào mừng trở lại 👋",
+    "download": "Tải xuống",
+    "overview": "Tổng quan",
+    "analytics": "Phân tích",
+    "totalRevenue": "Tổng doanh thu",
+    "newCustomers": "Khách hàng mới",
+    "activeAccounts": "Tài khoản hoạt động",
+    "growthRate": "Tỷ lệ tăng trưởng",
+    "trendingUp": "Tăng trưởng trong tháng này",
+    "trendingDown": "Giảm {percentage}% trong kỳ này",
+    "visitorsLastMonths": "Lượt truy cập trong 6 tháng qua",
+    "acquisitionNeedsAttention": "Cần chú ý đến việc thu hút khách hàng",
+    "strongUserRetention": "Giữ chân người dùng tốt",
+    "engagementExceedTargets": "Tương tác vượt mục tiêu",
+    "steadyPerformanceIncrease": "Hiệu suất tăng ổn định",
+    "meetsGrowthProjections": "Đáp ứng dự báo tăng trưởng"
+  },
   "Sidebar": {
     "overview": "Tổng quan",
     "dashboard": "Bảng điều khiển",
@@ -11,10 +30,21 @@
     "outbound": "Xuất kho",
     "truck": "Xe tải",
     "product": "Sản phẩm",
+    "category": "Danh mục",
     "account": "Tài khoản",
     "profile": "Hồ sơ",
     "login": "Đăng nhập",
     "kanban": "Bảng Kanban",
+    "purchaseOrder": "Đề nghị mua hàng",
+    "saleOrder": "Đơn bán hàng",
+    "pickup": "Lấy hàng",
+    "import": "Nhập kho",
+    "export": "Xuất kho",
+    "manager": "Nhà Quản lý",
+    "staff": "Nhân viên kho",
+    "deliveryStaff": "Tài xế",
+    "supplier": "Nhà cung cấp",
+    "consignee": "Người nhận hàng",
     "userMenu": {
       "profile": "Hồ sơ",
       "billing": "Thanh toán",
@@ -28,6 +58,7 @@
       "subtitle": "Quản lý danh mục sản phẩm",
       "new": "Thêm danh mục mới",
       "searchPlaceholder": "Tìm kiếm theo tên hoặc mô tả danh mục...",
+      "showing": "Hiển thị {count} danh mục",
       "empty": {
         "title": "Không có danh mục",
         "description": "Hãy thử điều chỉnh tìm kiếm"

@@ -1,4 +1,23 @@
 {
+  "Dashboard": {
+    "title": "Dashboard",
+    "welcome": "Hi, Welcome back 👋",
+    "download": "Download",
+    "overview": "Overview",
+    "analytics": "Analytics",
+    "totalRevenue": "Total Revenue",
+    "newCustomers": "New Customers",
+    "activeAccounts": "Active Accounts",
+    "growthRate": "Growth Rate",
+    "trendingUp": "Trending up this month",
+    "trendingDown": "Down {percentage}% this period",
+    "visitorsLastMonths": "Visitors for the last 6 months",
+    "acquisitionNeedsAttention": "Acquisition needs attention",
+    "strongUserRetention": "Strong user retention",
+    "engagementExceedTargets": "Engagement exceed targets",
+    "steadyPerformanceIncrease": "Steady performance increase",
+    "meetsGrowthProjections": "Meets growth projections"
+  },
   "Sidebar": {
     "overview": "Overview",
     "dashboard": "Dashboard",
@@ -11,10 +30,21 @@
     "outbound": "Outbound",
     "truck": "Truck",
     "product": "Product",
+    "category": "Category",
     "account": "Account",
     "profile": "Profile",
     "login": "Login",
     "kanban": "Kanban",
+    "purchaseOrder": "Purchase Order",
+    "saleOrder": "Sale Order",
+    "pickup": "Pickup",
+    "import": "Import",
+    "export": "Export",
+    "manager": "Manager",
+    "staff": "Staff",
+    "deliveryStaff": "Delivery Staff",
+    "supplier": "Supplier",
+    "consignee": "Consignee",
     "userMenu": {
       "profile": "Profile",
       "billing": "Billing",
@@ -28,6 +58,7 @@
       "subtitle": "Manage product categories",
       "new": "Add New Category",
       "searchPlaceholder": "Search categories by name or description...",
+      "showing": "Showing {count} {count, plural, one {category} other {categories}}",
       "empty": {
         "title": "No Categories Found",
         "description": "Try adjusting your search"
