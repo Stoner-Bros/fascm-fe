@@ -12,6 +12,7 @@ import { generateQRCodeDataURL } from '../utils/qr-code';
 import { IconLoader2, IconCheck } from '@tabler/icons-react';
 import type { Debt } from '@/types/debt';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 interface PaymentModalProps {
   debt: Debt;
@@ -26,6 +27,7 @@ export function PaymentModal({
   onClose,
   onSuccess
 }: PaymentModalProps) {
+  const t = useTranslations('Debt.paymentModal');
   const [amount, setAmount] = useState<string>('');
   const [errors, setErrors] = useState<{ amount?: string }>({});
   const [qrCodeDataURL, setQrCodeDataURL] = useState<string | null>(null);
@@ -119,7 +121,7 @@ export function PaymentModal({
 
       if (!consigneeId) {
         setErrors({
-          amount: 'Không tìm thấy thông tin đối tác'
+          amount: t('partnerNotFound')
         });
         return;
       }
@@ -137,8 +139,8 @@ export function PaymentModal({
 
   return (
     <Modal
-      title='Thanh toán hóa đơn'
-      description='Nhập số tiền bạn muốn thanh toán và quét mã QR để hoàn tất giao dịch'
+      title={t('title')}
+      description={t('description')}
       isOpen={isOpen}
       onClose={handleClose}
       className='lg:max-w-2xl'
@@ -147,9 +149,9 @@ export function PaymentModal({
         <form onSubmit={handleSubmit} className='space-y-6'>
           <div className='space-y-2'>
             <div className='flex items-center justify-between'>
-              <Label htmlFor='amount'>Số tiền thanh toán</Label>
+              <Label htmlFor='amount'>{t('amountLabel')}</Label>
               <span className='text-muted-foreground text-sm'>
-                Tối đa: {formatCurrency(maxAmount)}
+                {t('maxAmount')}: {formatCurrency(maxAmount)}
               </span>
             </div>
             <div className='relative'>
@@ -158,7 +160,7 @@ export function PaymentModal({
                 type='text'
                 value={amount}
                 onChange={(e) => handleAmountChange(e.target.value)}
-                placeholder='Nhập số tiền'
+                placeholder={t('enterAmount')}
                 className={cn('pr-20', errors.amount && 'border-destructive')}
                 disabled={isCreating}
                 aria-invalid={!!errors.amount}
@@ -171,7 +173,7 @@ export function PaymentModal({
                 className='absolute top-1/2 right-1 h-7 -translate-y-1/2 px-2 text-xs'
                 disabled={isCreating}
               >
-                Tối đa
+                {t('maxAmount')}
               </Button>
             </div>
             {errors.amount && (
@@ -181,19 +183,19 @@ export function PaymentModal({
 
           <div className='bg-muted/50 space-y-2 rounded-lg p-4'>
             <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>
-                Số tiền cần thanh toán:
-              </span>
+              <span className='text-muted-foreground'>{t('amountToPay')}:</span>
               <span className='font-semibold'>{formatCurrency(maxAmount)}</span>
             </div>
             <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>Số tiền nhập:</span>
+              <span className='text-muted-foreground'>
+                {t('enteredAmount')}:
+              </span>
               <span className='font-semibold'>
                 {formatCurrency(parseFloat(amount) || 0)}
               </span>
             </div>
             <div className='flex justify-between border-t pt-2'>
-              <span className='font-medium'>Còn lại sau thanh toán:</span>
+              <span className='font-medium'>{t('remainingAfterPayment')}:</span>
               <span className='font-bold text-orange-600 dark:text-orange-400'>
                 {formatCurrency(
                   Math.max(0, maxAmount - (parseFloat(amount) || 0))
@@ -209,16 +211,16 @@ export function PaymentModal({
               onClick={handleClose}
               disabled={isCreating}
             >
-              Hủy
+              {t('cancel')}
             </Button>
             <Button type='submit' disabled={isCreating}>
               {isCreating ? (
                 <>
                   <IconLoader2 className='mr-2 h-4 w-4 animate-spin' />
-                  Đang tạo giao dịch...
+                  {t('creating')}
                 </>
               ) : (
-                'Tạo mã QR thanh toán'
+                t('createQR')
               )}
             </Button>
           </div>
@@ -228,12 +230,10 @@ export function PaymentModal({
           <div className='rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/20'>
             <div className='flex items-center gap-2 text-green-700 dark:text-green-300'>
               <IconCheck className='h-5 w-5' />
-              <span className='font-semibold'>
-                Giao dịch đã được tạo thành công
-              </span>
+              <span className='font-semibold'>{t('transactionCreated')}</span>
             </div>
             <p className='mt-2 text-sm text-green-600 dark:text-green-400'>
-              Vui lòng quét mã QR bên dưới để thanh toán
+              {t('scanQRToPay')}
             </p>
           </div>
 
@@ -247,17 +247,17 @@ export function PaymentModal({
                 ) : qrCodeDataURL ? (
                   <img
                     src={qrCodeDataURL}
-                    alt='QR Code thanh toán'
+                    alt={t('qrCodeAlt')}
                     className='h-64 w-64 object-contain'
                   />
                 ) : (
                   <div className='text-muted-foreground flex h-64 w-64 items-center justify-center text-sm'>
-                    Không thể tạo mã QR
+                    {t('cannotGenerateQR')}
                   </div>
                 )}
               </div>
               <p className='text-muted-foreground text-center text-sm'>
-                Quét mã QR bằng ứng dụng ngân hàng của bạn để thanh toán
+                {t('scanQRWithBankingApp')}
               </p>
             </div>
           )}
@@ -274,7 +274,7 @@ export function PaymentModal({
                   target='_blank'
                   rel='noopener noreferrer'
                 >
-                  Mở trang thanh toán PayOS
+                  {t('openPayOSPage')}
                 </a>
               </Button>
             </div>
@@ -282,19 +282,21 @@ export function PaymentModal({
 
           <div className='bg-muted/50 space-y-2 rounded-lg p-4'>
             <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>Mã giao dịch:</span>
+              <span className='text-muted-foreground'>
+                {t('transactionCode')}:
+              </span>
               <span className='font-mono font-semibold'>
                 {payment.paymentCode || payment.id.slice(0, 8)}
               </span>
             </div>
             <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>Số tiền:</span>
+              <span className='text-muted-foreground'>{t('amount')}:</span>
               <span className='font-semibold'>
                 {formatCurrency(payment.amount ?? 0)}
               </span>
             </div>
             <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>Trạng thái:</span>
+              <span className='text-muted-foreground'>{t('status')}:</span>
               <span
                 className={cn(
                   'font-semibold',
@@ -303,16 +305,14 @@ export function PaymentModal({
                     : 'text-orange-600 dark:text-orange-400'
                 )}
               >
-                {payment.status === 'paid'
-                  ? 'Đã thanh toán'
-                  : 'Đang chờ thanh toán'}
+                {payment.status === 'paid' ? t('paid') : t('pending')}
               </span>
             </div>
           </div>
 
           <div className='flex justify-end gap-3'>
             <Button variant='outline' onClick={handleClose}>
-              Đóng
+              {t('close')}
             </Button>
           </div>
         </div>

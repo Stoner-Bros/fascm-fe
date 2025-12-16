@@ -71,6 +71,7 @@ export default function ConsigneeSidebar() {
       dashboard: t('navigation.dashboard'),
       products: t('navigation.products'),
       orders: t('navigation.orders'),
+      payments: t('navigation.payments'),
       profile: t('navigation.profile')
     };
     return translationMap[title] || title;

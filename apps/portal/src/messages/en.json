@@ -526,6 +526,7 @@
       "dashboard": "Dashboard",
       "products": "Products",
       "orders": "Orders",
+      "payments": "Payments",
       "profile": "Profile",
       "harvestBatches": "Purchase Order Request"
     },
@@ -889,6 +890,125 @@
       "profileUpdatedDescription": "Your profile has been successfully updated.",
       "updateFailed": "Update Failed",
       "updateFailedDescription": "Failed to update profile. Please try again."
+    }
+  },
+  "Debt": {
+    "title": "Settle Invoice",
+    "subtitle": "Please settle invoices before the due date",
+    "noDebt": "No debt information",
+    "status": {
+      "paid": "Paid",
+      "partiallyPaid": "Partially Paid",
+      "overdue": "Overdue",
+      "unpaid": "Unpaid"
+    },
+    "debtType": {
+      "receivable": "Receivable",
+      "payable": "Payable"
+    },
+    "card": {
+      "invoiceToSettle": "Invoice to Settle",
+      "invoiceCode": "Invoice Code",
+      "amountToSettle": "Amount to Settle",
+      "totalInvoiceValue": "Total Invoice Value",
+      "settleInvoice": "Settle Invoice",
+      "daysUntilDue": "Days until due",
+      "debtOverview": "Debt Overview",
+      "originalAmount": "Original Amount",
+      "paid": "Paid",
+      "remaining": "Remaining",
+      "creditLimit": "Credit Limit",
+      "limit": "Limit",
+      "used": "Used",
+      "available": "Available",
+      "usageRate": "Usage Rate",
+      "creditLimitWarning": "Warning: Credit limit nearly exhausted",
+      "paymentInformation": "Payment Information",
+      "dueDate": "Due Date",
+      "dueSoon": "Due Soon",
+      "overdueBy": "Overdue by {days} days",
+      "daysUntilDueText": "{days} days until due",
+      "invoiceStatus": "Invoice Status",
+      "settled": "Settled",
+      "partiallyPaid": "Partially Paid",
+      "overdueSettleNow": "Overdue - Settle immediately",
+      "notSettled": "Not Settled",
+      "pleaseSettleBeforeDue": "Please settle before the due date"
+    },
+    "alertBanner": {
+      "overdueTitle": "Invoice is overdue",
+      "overdueMessage": "Invoice is overdue by {days} days. Please settle immediately to avoid affecting your credit limit.",
+      "dueSoonTitle": "Invoice due soon",
+      "dueSoonMessage": "{days} days until payment due. Please settle before {date}.",
+      "infoTitle": "Payment Information",
+      "infoMessage": "{days} days until payment due. Please settle before {date}."
+    },
+    "error": {
+      "title": "Unable to load debt information",
+      "message": "An error occurred while loading data",
+      "retry": "Retry"
+    },
+    "paymentModal": {
+      "title": "Pay Invoice",
+      "description": "Enter the amount you want to pay and scan the QR code to complete the transaction",
+      "amountLabel": "Payment Amount",
+      "maxAmount": "Maximum",
+      "enterAmount": "Enter amount",
+      "amountToPay": "Amount to Pay",
+      "enteredAmount": "Entered Amount",
+      "remainingAfterPayment": "Remaining after payment",
+      "cancel": "Cancel",
+      "creating": "Creating transaction...",
+      "createQR": "Create Payment QR Code",
+      "partnerNotFound": "Partner information not found",
+      "transactionCreated": "Transaction created successfully",
+      "scanQRToPay": "Please scan the QR code below to pay",
+      "cannotGenerateQR": "Unable to generate QR code",
+      "qrCodeAlt": "Payment QR Code",
+      "scanQRWithBankingApp": "Scan QR code with your banking app to pay",
+      "openPayOSPage": "Open PayOS Payment Page",
+      "transactionCode": "Transaction Code",
+      "amount": "Amount",
+      "status": "Status",
+      "paid": "Paid",
+      "pending": "Pending Payment",
+      "close": "Close"
+    }
+  },
+  "SupplierDashboard": {
+    "welcome": "Hi, Welcome back 👋",
+    "subtitle": "Overview of your harvest batches and activities",
+    "newHarvestBatch": "New Purchase Order Request",
+    "stats": {
+      "totalBatches": "Total Batches",
+      "totalBatchesDescription": "All harvest batches created",
+      "pendingApproval": "Pending Approval",
+      "pendingApprovalDescription": "Awaiting approval",
+      "inTransit": "In Transit",
+      "inTransitDescription": "Being prepared or delivered",
+      "completed": "Completed",
+      "completedDescription": "Successfully completed"
+    },
+    "recentBatches": {
+      "title": "Recent Harvest Batches",
+      "description": "Your latest harvest batch submissions",
+      "viewAll": "View All",
+      "noBatches": "No harvest batches yet",
+      "harvestDate": "Harvest Date",
+      "viewAllBatches": "View All Batches"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "description": "Frequently used actions",
+      "createNewBatch": "Create New Batch",
+      "viewProfile": "View Profile"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "inTransit": "In Transit",
+      "completed": "Completed",
+      "rejected": "Rejected"
     }
   },
   "common": {

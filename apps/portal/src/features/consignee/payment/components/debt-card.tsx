@@ -19,6 +19,7 @@ import {
   IconWallet
 } from '@tabler/icons-react';
 import { useState } from 'react';
+import { useTranslations } from 'next-intl';
 import {
   getAvailableCredit,
   getCreditUsagePercentage,
@@ -38,6 +39,7 @@ interface DebtCardProps {
 
 export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const t = useTranslations('Debt');
 
   const getStatusBadge = () => {
     switch (debt.status) {
@@ -48,7 +50,7 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
             className='bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
           >
             <IconCheck className='mr-1 h-3 w-3' />
-            Đã thanh toán
+            {t('status.paid')}
           </Badge>
         );
       case 'partially_paid':
@@ -58,7 +60,7 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
             className='bg-yellow-50 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
           >
             <IconClock className='mr-1 h-3 w-3' />
-            Thanh toán một phần
+            {t('status.partiallyPaid')}
           </Badge>
         );
       case 'overdue':
@@ -68,7 +70,7 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
             className='bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
           >
             <IconAlertCircle className='mr-1 h-3 w-3' />
-            Quá hạn
+            {t('status.overdue')}
           </Badge>
         );
       default:
@@ -78,14 +80,16 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
             className='bg-orange-50 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
           >
             <IconClock className='mr-1 h-3 w-3' />
-            Chưa thanh toán
+            {t('status.unpaid')}
           </Badge>
         );
     }
   };
 
   const getDebtTypeLabel = () => {
-    return debt.debtType === 'receivable' ? 'Phải thu' : 'Phải trả';
+    return debt.debtType === 'receivable'
+      ? t('debtType.receivable')
+      : t('debtType.payable');
   };
 
   const days = getDaysUntilDue(debt.dueDate);
@@ -129,9 +133,11 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
               <IconReceipt className='text-primary h-5 w-5' />
             </div>
             <div>
-              <CardTitle className='text-lg'>Hóa đơn cần tất toán</CardTitle>
+              <CardTitle className='text-lg'>
+                {t('card.invoiceToSettle')}
+              </CardTitle>
               <p className='text-muted-foreground text-xs font-normal'>
-                Mã hóa đơn: {debt.id.slice(0, 8)}...
+                {t('card.invoiceCode')}: {debt.id.slice(0, 8)}...
               </p>
             </div>
           </div>
@@ -145,13 +151,14 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
             <div className='flex flex-col items-center justify-center text-center md:flex-row md:justify-between md:text-left'>
               <div className='mb-4 md:mb-0'>
                 <p className='text-muted-foreground mb-2 text-sm font-medium'>
-                  Số tiền cần tất toán
+                  {t('card.amountToSettle')}
                 </p>
                 <p className='text-4xl font-bold text-orange-600 dark:text-orange-400'>
                   {formatCurrency(debt.remainingAmount)}
                 </p>
                 <p className='text-muted-foreground mt-2 text-xs'>
-                  Tổng giá trị hóa đơn: {formatCurrency(debt.originalAmount)}
+                  {t('card.totalInvoiceValue')}:{' '}
+                  {formatCurrency(debt.originalAmount)}
                 </p>
               </div>
               <div className='flex flex-col gap-3'>
@@ -161,11 +168,11 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
                   className='bg-orange-600 hover:bg-orange-700 dark:bg-orange-500 dark:hover:bg-orange-600'
                 >
                   <IconCash className='mr-2 h-5 w-5' />
-                  Tất toán hóa đơn
+                  {t('card.settleInvoice')}
                 </Button>
                 {days >= 0 && (
                   <p className='text-muted-foreground text-center text-xs'>
-                    Còn {days} ngày đến hạn
+                    {t('card.daysUntilDue', { days })}
                   </p>
                 )}
               </div>
@@ -177,7 +184,7 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
         <div className='bg-muted/30 rounded-lg border p-4'>
           <h3 className='mb-4 flex items-center gap-2 text-sm font-semibold'>
             <IconCurrencyDong className='h-4 w-4' />
-            Tổng quan nợ
+            {t('card.debtOverview')}
           </h3>
           <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
             {/* Original Amount */}
@@ -185,7 +192,7 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
               <div className='mb-2 flex items-center gap-2'>
                 <IconWallet className='text-muted-foreground h-4 w-4' />
                 <p className='text-muted-foreground text-xs font-medium'>
-                  Số tiền gốc
+                  {t('card.originalAmount')}
                 </p>
               </div>
               <p className='text-xl font-bold'>
@@ -198,7 +205,7 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
               <div className='mb-2 flex items-center gap-2'>
                 <IconCheck className='h-4 w-4 text-green-600 dark:text-green-400' />
                 <p className='text-muted-foreground text-xs font-medium'>
-                  Đã thanh toán
+                  {t('card.paid')}
                 </p>
               </div>
               <p className='text-xl font-bold text-green-600 dark:text-green-400'>
@@ -222,7 +229,7 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
               <div className='mb-2 flex items-center gap-2'>
                 <IconAlertCircle className='h-4 w-4 text-orange-600 dark:text-orange-400' />
                 <p className='text-muted-foreground text-xs font-medium'>
-                  Còn lại
+                  {t('card.remaining')}
                 </p>
               </div>
               <p className='text-xl font-bold text-orange-600 dark:text-orange-400'>
@@ -247,13 +254,13 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
           <div className='rounded-lg border bg-gradient-to-br from-purple-50/50 to-blue-50/50 p-4 dark:from-purple-950/20 dark:to-blue-950/20'>
             <h3 className='mb-4 flex items-center gap-2 text-sm font-semibold'>
               <IconTrendingUp className='h-4 w-4' />
-              Hạn mức tín dụng
+              {t('card.creditLimit')}
             </h3>
             <div className='space-y-4'>
               <div className='grid grid-cols-1 gap-3 md:grid-cols-3'>
                 <div className='bg-background rounded-lg p-3 shadow-sm'>
                   <p className='text-muted-foreground mb-1 text-xs font-medium'>
-                    Hạn mức
+                    {t('card.limit')}
                   </p>
                   <p className='text-lg font-bold'>
                     {formatCurrency(debt.creditLimit)}
@@ -261,7 +268,7 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
                 </div>
                 <div className='rounded-lg bg-orange-50 p-3 dark:bg-orange-950/20'>
                   <p className='text-muted-foreground mb-1 text-xs font-medium'>
-                    Đã sử dụng
+                    {t('card.used')}
                   </p>
                   <p className='text-lg font-bold text-orange-600 dark:text-orange-400'>
                     {formatCurrency(debt.remainingAmount)}
@@ -269,7 +276,7 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
                 </div>
                 <div className='rounded-lg bg-green-50 p-3 dark:bg-green-950/20'>
                   <p className='text-muted-foreground mb-1 text-xs font-medium'>
-                    Còn lại
+                    {t('card.available')}
                   </p>
                   <p className='text-lg font-bold text-green-600 dark:text-green-400'>
                     {formatCurrency(availableCredit)}
@@ -282,7 +289,9 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
                 <div className='flex items-center justify-between'>
                   <div className='flex items-center gap-2'>
                     <IconPercentage className='text-muted-foreground h-4 w-4' />
-                    <span className='text-sm font-medium'>Tỷ lệ sử dụng</span>
+                    <span className='text-sm font-medium'>
+                      {t('card.usageRate')}
+                    </span>
                   </div>
                   <span className='text-lg font-bold'>
                     {creditUsagePercentage.toFixed(1)}%
@@ -306,7 +315,7 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
                     <div className='flex items-center gap-2 rounded-lg bg-red-50 p-2 dark:bg-red-950/30'>
                       <IconAlertCircle className='h-4 w-4 text-red-600 dark:text-red-400' />
                       <p className='text-xs font-medium text-red-700 dark:text-red-300'>
-                        Cảnh báo: Hạn mức tín dụng gần hết
+                        {t('card.creditLimitWarning')}
                       </p>
                     </div>
                   )}
@@ -323,12 +332,12 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
             <div className='bg-muted/30 rounded-lg border p-4'>
               <h3 className='mb-4 flex items-center gap-2 text-sm font-semibold'>
                 <IconCalendar className='h-4 w-4' />
-                Thông tin thanh toán
+                {t('card.paymentInformation')}
               </h3>
               <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                 <div className='bg-background rounded-lg p-4'>
                   <p className='text-muted-foreground mb-2 text-xs font-medium'>
-                    Ngày đến hạn tất toán
+                    {t('card.dueDate')}
                   </p>
                   <div className='flex items-center gap-2'>
                     <p
@@ -345,39 +354,39 @@ export function DebtCard({ debt, onPaymentSuccess }: DebtCardProps) {
                     </p>
                     {isOverdueValue && (
                       <Badge variant='destructive' className='text-xs'>
-                        Quá hạn
+                        {t('status.overdue')}
                       </Badge>
                     )}
                     {isDueSoon && !isOverdueValue && (
                       <Badge className='bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'>
-                        Sắp đến hạn
+                        {t('card.dueSoon')}
                       </Badge>
                     )}
                   </div>
                   <p className='text-muted-foreground mt-2 text-xs'>
                     {isOverdueValue
-                      ? `Đã quá hạn ${Math.abs(days)} ngày`
+                      ? t('card.overdueBy', { days: Math.abs(days) })
                       : days >= 0
-                        ? `Còn ${days} ngày đến hạn`
-                        : 'Đã quá hạn'}
+                        ? t('card.daysUntilDueText', { days })
+                        : t('status.overdue')}
                   </p>
                 </div>
                 <div className='bg-background rounded-lg p-4'>
                   <p className='text-muted-foreground mb-2 text-xs font-medium'>
-                    Trạng thái hóa đơn
+                    {t('card.invoiceStatus')}
                   </p>
                   <p className='text-lg font-semibold'>
                     {debt.status === 'paid'
-                      ? 'Đã tất toán'
+                      ? t('card.settled')
                       : debt.status === 'partially_paid'
-                        ? 'Đã thanh toán một phần'
+                        ? t('card.partiallyPaid')
                         : debt.status === 'overdue'
-                          ? 'Quá hạn - Cần tất toán ngay'
-                          : 'Chưa tất toán'}
+                          ? t('card.overdueSettleNow')
+                          : t('card.notSettled')}
                   </p>
                   {debt.status !== 'paid' && (
                     <p className='text-muted-foreground mt-2 text-xs'>
-                      Vui lòng tất toán trước ngày đến hạn
+                      {t('card.pleaseSettleBeforeDue')}
                     </p>
                   )}
                 </div>

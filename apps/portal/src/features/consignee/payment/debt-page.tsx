@@ -8,9 +8,11 @@ import {
   DebtError
 } from './components';
 import { useMyDebt } from './hooks';
+import { useTranslations } from 'next-intl';
 
 export default function DebtPage() {
   const { debt, isLoading, error, refetch } = useMyDebt();
+  const t = useTranslations('Debt');
 
   if (isLoading) {
     return (
@@ -25,12 +27,8 @@ export default function DebtPage() {
       <PageContainer>
         <div className='w-full flex-1 space-y-6'>
           <div>
-            <h2 className='text-3xl font-bold tracking-tight'>
-              Tất toán hóa đơn
-            </h2>
-            <p className='text-muted-foreground mt-1'>
-              Vui lòng tất toán hóa đơn trước ngày đến hạn
-            </p>
+            <h2 className='text-3xl font-bold tracking-tight'>{t('title')}</h2>
+            <p className='text-muted-foreground mt-1'>{t('subtitle')}</p>
           </div>
           <DebtError error={error} onRetry={refetch} />
         </div>
@@ -43,16 +41,10 @@ export default function DebtPage() {
       <PageContainer>
         <div className='w-full flex-1 space-y-6'>
           <div>
-            <h2 className='text-3xl font-bold tracking-tight'>
-              Tất toán hóa đơn
-            </h2>
-            <p className='text-muted-foreground mt-1'>
-              Vui lòng tất toán hóa đơn trước ngày đến hạn
-            </p>
+            <h2 className='text-3xl font-bold tracking-tight'>{t('title')}</h2>
+            <p className='text-muted-foreground mt-1'>{t('subtitle')}</p>
           </div>
-          <div className='text-muted-foreground text-center'>
-            Không có thông tin nợ nào
-          </div>
+          <div className='text-muted-foreground text-center'>{t('noDebt')}</div>
         </div>
       </PageContainer>
     );
@@ -63,12 +55,8 @@ export default function DebtPage() {
       <div className='w-full flex-1 space-y-6'>
         {/* Header */}
         <div>
-          <h2 className='text-3xl font-bold tracking-tight'>
-            Tất toán hóa đơn
-          </h2>
-          <p className='text-muted-foreground mt-1'>
-            Vui lòng tất toán hóa đơn trước ngày đến hạn
-          </p>
+          <h2 className='text-3xl font-bold tracking-tight'>{t('title')}</h2>
+          <p className='text-muted-foreground mt-1'>{t('subtitle')}</p>
         </div>
 
         {/* Alert Banner */}

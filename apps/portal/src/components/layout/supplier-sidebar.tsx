@@ -70,6 +70,7 @@ export default function SupplierSidebar() {
       dashboard: t('navigation.dashboard'),
       products: t('navigation.products'),
       harvestBatches: t('navigation.harvestBatches'),
+      payments: t('navigation.payments'),
       profile: t('navigation.profile')
     };
     return translationMap[title] || title;

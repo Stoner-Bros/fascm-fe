@@ -1,5 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { IconAlertTriangle, IconCalendar } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
 import { getDaysUntilDue } from '../utils';
 import { formatDate } from '../utils/formatting';
 import type { Debt } from '@/types/debt';
@@ -9,6 +10,7 @@ interface DebtAlertBannerProps {
 }
 
 export function DebtAlertBanner({ debt }: DebtAlertBannerProps) {
+  const t = useTranslations('Debt.alertBanner');
   const daysUntilDue = getDaysUntilDue(debt.dueDate);
   const isOverdue = daysUntilDue < 0;
   const isDueSoon = daysUntilDue <= 3 && daysUntilDue >= 0;
@@ -23,11 +25,10 @@ export function DebtAlertBanner({ debt }: DebtAlertBannerProps) {
             </div>
             <div className='flex-1'>
               <h3 className='font-semibold text-red-900 dark:text-red-100'>
-                Hóa đơn đã quá hạn thanh toán
+                {t('overdueTitle')}
               </h3>
               <p className='text-sm text-red-700 dark:text-red-300'>
-                Hóa đơn đã quá hạn {Math.abs(daysUntilDue)} ngày. Vui lòng tất
-                toán ngay để tránh ảnh hưởng đến hạn mức tín dụng.
+                {t('overdueMessage', { days: Math.abs(daysUntilDue) })}
               </p>
             </div>
           </div>
@@ -46,11 +47,13 @@ export function DebtAlertBanner({ debt }: DebtAlertBannerProps) {
             </div>
             <div className='flex-1'>
               <h3 className='font-semibold text-orange-900 dark:text-orange-100'>
-                Hóa đơn sắp đến hạn
+                {t('dueSoonTitle')}
               </h3>
               <p className='text-sm text-orange-700 dark:text-orange-300'>
-                Còn {daysUntilDue} ngày đến hạn thanh toán. Vui lòng tất toán
-                trước ngày {debt.dueDate ? formatDate(debt.dueDate) : 'N/A'}.
+                {t('dueSoonMessage', {
+                  days: daysUntilDue,
+                  date: debt.dueDate ? formatDate(debt.dueDate) : 'N/A'
+                })}
               </p>
             </div>
           </div>
@@ -68,11 +71,13 @@ export function DebtAlertBanner({ debt }: DebtAlertBannerProps) {
           </div>
           <div className='flex-1'>
             <h3 className='font-semibold text-blue-900 dark:text-blue-100'>
-              Thông tin thanh toán
+              {t('infoTitle')}
             </h3>
             <p className='text-sm text-blue-700 dark:text-blue-300'>
-              Còn {daysUntilDue} ngày đến hạn thanh toán. Vui lòng tất toán
-              trước ngày {debt.dueDate ? formatDate(debt.dueDate) : 'N/A'}.
+              {t('infoMessage', {
+                days: daysUntilDue,
+                date: debt.dueDate ? formatDate(debt.dueDate) : 'N/A'
+              })}
             </p>
           </div>
         </div>
