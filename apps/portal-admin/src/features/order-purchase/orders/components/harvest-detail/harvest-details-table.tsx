@@ -11,6 +11,20 @@ import type { HarvestSchedule } from '@/types/harvest-schedule';
 import { useTranslations } from 'next-intl';
 import { formatCurrency } from '../../utils/formatting';
 import type { ProductTotals } from '../../utils/calculations';
+import { Button } from '@/components/ui/button';
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { updatePrice } from '@/services/harvest-detail.service';
+import { useToast } from '@/components/ui/use-toast';
 
 interface HarvestDetailsTableProps {
   schedule: HarvestSchedule;
@@ -22,8 +36,66 @@ export function HarvestDetailsTable({
   totals
 }: HarvestDetailsTableProps) {
   const t = useTranslations('HarvestOrders.detail.detailsTable');
+  const tDialog = useTranslations('HarvestOrders.negotiationDialog');
+  const { toast } = useToast();
   const hasDetails =
     schedule.harvestDetails && schedule.harvestDetails.length > 0;
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedDetail, setSelectedDetail] = useState<any>(null);
+  const [negotiatedPrice, setNegotiatedPrice] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleOpenDialog = (detail: any) => {
+    setSelectedDetail(detail);
+    setNegotiatedPrice('');
+    setIsDialogOpen(true);
+  };
+
+  const handleCloseDialog = () => {
+    setIsDialogOpen(false);
+    setSelectedDetail(null);
+    setNegotiatedPrice('');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const price = parseFloat(negotiatedPrice);
+    if (!price || price <= 0) {
+      toast({
+        title: tDialog('validation.priceRequired'),
+        description: tDialog('validation.pricePositive'),
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await updatePrice(selectedDetail.id, {
+        finalUnitPrice: price
+      });
+
+      toast({
+        title: tDialog('toast.success'),
+        variant: 'default'
+      });
+
+      handleCloseDialog();
+      // Optionally refresh the data here
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: tDialog('toast.error'),
+        description:
+          error instanceof Error ? error.message : 'An error occurred',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <Card>
@@ -39,11 +111,13 @@ export function HarvestDetailsTable({
             <TableHeader>
               <TableRow>
                 <TableHead>{t('product')}</TableHead>
-                <TableHead>{t('quantity')}</TableHead>
+                <TableHead>{t('expectedQuantity')}</TableHead>
                 <TableHead>{t('unit')}</TableHead>
-                <TableHead>{t('unitPrice')}</TableHead>
+                <TableHead>{t('currentUnitPrice')}</TableHead>
                 <TableHead>{t('amount')}</TableHead>
                 {totals && <TableHead>{t('received')}</TableHead>}
+                {/* thương lượng giá trong tiếng anh  */}
+                <TableHead>{t('negotiatedPrice')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -52,7 +126,9 @@ export function HarvestDetailsTable({
                   const productId = detail.product?.id || '';
                   const productTotals = totals?.[productId];
                   const quantity = detail.quantity || 0;
-                  const unitPrice = detail.unitPrice || 0;
+                  const unitPrice = detail.finalUnitPriceAccepted
+                    ? detail.finalUnitPrice || 0
+                    : detail.expectedUnitPrice || 0;
                   const amount = quantity * unitPrice;
 
                   return (
@@ -81,6 +157,52 @@ export function HarvestDetailsTable({
                           </span>
                         </TableCell>
                       )}
+                      <TableCell>
+                        {detail.finalUnitPriceAccepted === null &&
+                          // Chưa thương lượng thì hiện button bấm thương lượng
+                          // Nếu đã thương lượng rồi thì hiện chữ đang chơ chấp thuận
+                          (detail.finalUnitPrice ? (
+                            <div className='flex w-fit flex-col items-center gap-2'>
+                              {t('waitingNegotiation')}
+                              <Button
+                                variant='outline'
+                                size='sm'
+                                className='w-fit'
+                                onClick={() => handleOpenDialog(detail)}
+                              >
+                                {t('makeNegotiationAgain')}
+                              </Button>
+                            </div>
+                          ) : (
+                            <Button
+                              variant='outline'
+                              size='sm'
+                              onClick={() => handleOpenDialog(detail)}
+                            >
+                              {t('makeNegotiation')}
+                            </Button>
+                          ))}
+                        {detail.finalUnitPriceAccepted === true && (
+                          <span className='font-medium text-green-600'>
+                            {t('negotiated')}
+                          </span>
+                        )}
+                        {detail.finalUnitPriceAccepted === false && (
+                          <div className='flex w-fit flex-col items-center gap-2'>
+                            <span className='font-medium text-red-600'>
+                              {t('negotiationRejected')}
+                            </span>
+                            <Button
+                              variant='outline'
+                              size='sm'
+                              className='w-fit'
+                              onClick={() => handleOpenDialog(detail)}
+                            >
+                              {t('makeNegotiationAgain')}
+                            </Button>
+                          </div>
+                        )}
+                      </TableCell>
                     </TableRow>
                   );
                 })
@@ -98,6 +220,99 @@ export function HarvestDetailsTable({
           </Table>
         </div>
       </CardContent>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className='sm:max-w-[500px]'>
+          <DialogHeader>
+            <DialogTitle>{tDialog('title')}</DialogTitle>
+            <DialogDescription>{tDialog('description')}</DialogDescription>
+          </DialogHeader>
+
+          {selectedDetail && (
+            <form onSubmit={handleSubmit}>
+              <div className='grid gap-4 py-4'>
+                <div className='grid gap-2'>
+                  <Label className='text-muted-foreground text-sm'>
+                    {tDialog('product')}
+                  </Label>
+                  <div className='font-medium'>
+                    {selectedDetail.product?.name || '-'}
+                  </div>
+                </div>
+
+                <div className='grid grid-cols-2 gap-4'>
+                  <div className='grid gap-2'>
+                    <Label className='text-muted-foreground text-sm'>
+                      {tDialog('quantity')}
+                    </Label>
+                    <div className='font-medium'>{selectedDetail.quantity}</div>
+                  </div>
+                  <div className='grid gap-2'>
+                    <Label className='text-muted-foreground text-sm'>
+                      {tDialog('unit')}
+                    </Label>
+                    <div className='font-medium'>
+                      {selectedDetail.unit || '-'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className='grid gap-2'>
+                  <Label className='text-muted-foreground text-sm'>
+                    {tDialog('expectedPrice')}
+                  </Label>
+                  <div className='bg-muted/50 rounded-md border p-3 font-medium'>
+                    {formatCurrency(selectedDetail.expectedUnitPrice || 0)}
+                  </div>
+                </div>
+
+                {selectedDetail.finalUnitPrice && (
+                  <div className='grid gap-2'>
+                    <Label className='text-muted-foreground text-sm'>
+                      {tDialog('negotiatedPriceCurrent')}
+                    </Label>
+                    <div className='bg-muted/50 rounded-md border p-3 font-medium'>
+                      {formatCurrency(selectedDetail.finalUnitPrice || 0)}
+                    </div>
+                  </div>
+                )}
+
+                <div className='grid gap-2'>
+                  <Label htmlFor='negotiatedPrice'>
+                    {tDialog('negotiatedPrice')}{' '}
+                    <span className='text-destructive'>*</span>
+                  </Label>
+                  <Input
+                    id='negotiatedPrice'
+                    type='number'
+                    step='0.01'
+                    min='0'
+                    placeholder={tDialog('negotiatedPricePlaceholder')}
+                    value={negotiatedPrice}
+                    onChange={(e) => setNegotiatedPrice(e.target.value)}
+                    required
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button
+                  type='button'
+                  variant='outline'
+                  onClick={handleCloseDialog}
+                  disabled={isSubmitting}
+                >
+                  {tDialog('cancel')}
+                </Button>
+                <Button type='submit' disabled={isSubmitting}>
+                  {isSubmitting ? tDialog('submitting') : tDialog('submit')}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

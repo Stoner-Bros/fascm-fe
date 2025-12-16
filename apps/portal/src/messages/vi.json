@@ -355,7 +355,9 @@
         "enterDetails": "Nhập chi tiết",
         "enterDetailsDescription": "Điều chỉnh số lượng và giá cho từng sản phẩm",
         "quantity": "Số lượng",
+        "expectedQuantity": "Số lượng dự kiến",
         "unitPrice": "Đơn giá",
+        "expectedUnitPrice": "Đơn giá mong muốn",
         "total": "Tổng cộng"
       },
       "schedule": {
@@ -459,9 +461,11 @@
         "listLabel": "Sản phẩm",
         "table": {
           "product": "Sản phẩm",
+          "expectedQuantity": "Số lượng dự kiến",
           "quantity": "Số lượng",
           "unit": "Đơn vị",
-          "unitPrice": "Đơn giá"
+          "unitPrice": "Đơn giá",
+          "currentUnitPrice": "Đơn giá hiện tại"
         },
         "unknownProduct": "Không xác định",
         "itemsInHarvest": "sản phẩm trong lô thu hoạch này",
@@ -498,6 +502,21 @@
         "errorTitle": "Lỗi",
         "errorLoadDetails": "Không thể tải chi tiết lô thu hoạch",
         "cancelErrorDescription": "Không thể hủy lô thu hoạch {id}."
+      }
+    },
+    "negotiation": {
+      "title": "Thương lượng giá",
+      "negotiatedPrice": "Giá thương lượng",
+      "expectedPrice": "Giá mong đợi",
+      "acceptPrice": "Chấp nhận giá",
+      "rejectPrice": "Từ chối giá",
+      "accepting": "Đang chấp nhận...",
+      "rejecting": "Đang từ chối...",
+      "toast": {
+        "acceptSuccess": "Đã chấp nhận giá thành công",
+        "acceptError": "Không thể chấp nhận giá",
+        "rejectSuccess": "Đã từ chối giá thành công",
+        "rejectError": "Không thể từ chối giá"
       }
     }
   },

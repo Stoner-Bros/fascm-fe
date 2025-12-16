@@ -31,12 +31,10 @@ import {
 import type { HarvestSchedule } from '@/types/harvest-schedule';
 import {
   IconArrowLeft,
-  IconBuilding,
   IconCalendar,
   IconCheck,
   IconClock,
   IconEdit,
-  IconFileInvoice,
   IconMapPin,
   IconPackage,
   IconTruck,
@@ -52,6 +50,7 @@ const HarvestRouteSim = dynamic(
 
 import { fetchDeliveriesByHarvestSchedule } from '@/services/delivery.service';
 import { fetchHarvestPhasesBySchedule } from '@/services/harvest-phase.service';
+import { acceptPrice } from '@/services/harvest-detail.service';
 import type { HarvestPhase } from '@/types/harvest-phase';
 import { useTranslations } from 'next-intl';
 import dynamic from 'next/dynamic';
@@ -63,7 +62,9 @@ type DetailRow = {
   productImage?: string;
   quantity: number;
   unit: string;
-  unitPrice: number;
+  expectedUnitPrice: number;
+  finalUnitPrice: number;
+  finalUnitPriceAccepted: boolean | null | undefined;
   totalPrice: number;
 };
 
@@ -165,6 +166,8 @@ export default function HarvestBatchDetailPage() {
   const [loading, setLoading] = useState(false);
   const [phasesLoading, setPhasesLoading] = useState(true);
   const [activeDeliveryId, setActiveDeliveryId] = useState<string>('');
+  const [acceptingPriceId, setAcceptingPriceId] = useState<string | null>(null);
+  const [rejectingPriceId, setRejectingPriceId] = useState<string | null>(null);
 
   const getStatusLabel = (status: HarvestScheduleStatus) => {
     switch (status) {
@@ -214,7 +217,10 @@ export default function HarvestBatchDetailPage() {
         // Extract details from schedule response (already included)
         const rows: DetailRow[] = (s.harvestDetails ?? []).map((detail) => {
           const quantity = Number(detail.quantity ?? 0);
-          const unitPrice = Number(detail.unitPrice ?? 0);
+          const expectedUnitPrice = Number(detail.expectedUnitPrice ?? 0);
+          const finalUnitPrice = Number(detail.finalUnitPrice ?? 0);
+          const finalUnitPriceAccepted = detail.finalUnitPriceAccepted;
+
           const productName =
             detail.product?.name ||
             detail.product?.id ||
@@ -230,8 +236,12 @@ export default function HarvestBatchDetailPage() {
             productImage: detail.product?.image as string | undefined,
             quantity,
             unit,
-            unitPrice,
-            totalPrice: quantity * unitPrice
+            expectedUnitPrice,
+            finalUnitPrice,
+            finalUnitPriceAccepted,
+            totalPrice:
+              quantity *
+              (finalUnitPriceAccepted ? finalUnitPrice : expectedUnitPrice)
           };
         });
 
@@ -345,6 +355,50 @@ export default function HarvestBatchDetailPage() {
     }
   };
 
+  const handleAcceptPrice = async (detailId: string) => {
+    setAcceptingPriceId(detailId);
+    try {
+      await acceptPrice(detailId, { finalUnitPriceAccepted: true });
+      toast({
+        title: t('negotiation.toast.acceptSuccess'),
+        variant: 'default'
+      });
+      // Refresh schedule data
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: t('negotiation.toast.acceptError'),
+        description:
+          error instanceof Error ? error.message : 'An error occurred',
+        variant: 'destructive'
+      });
+    } finally {
+      setAcceptingPriceId(null);
+    }
+  };
+
+  const handleRejectPrice = async (detailId: string) => {
+    setRejectingPriceId(detailId);
+    try {
+      await acceptPrice(detailId, { finalUnitPriceAccepted: false });
+      toast({
+        title: t('negotiation.toast.rejectSuccess'),
+        variant: 'default'
+      });
+      // Refresh schedule data
+      window.location.reload();
+    } catch (error) {
+      toast({
+        title: t('negotiation.toast.rejectError'),
+        description:
+          error instanceof Error ? error.message : 'An error occurred',
+        variant: 'destructive'
+      });
+    } finally {
+      setRejectingPriceId(null);
+    }
+  };
+
   const totalQuantity = useMemo(
     () => details.reduce((sum, d) => sum + d.quantity, 0),
     [details]
@@ -353,12 +407,6 @@ export default function HarvestBatchDetailPage() {
     () => details.reduce((sum, d) => sum + d.totalPrice, 0),
     [details]
   );
-
-  const unitLabel = useMemo(() => {
-    const firstUnit =
-      details.find((d) => d.unit && d.unit.trim() !== '')?.unit ?? '';
-    return firstUnit || 'kg';
-  }, [details]);
 
   // Status stepper steps
   const getStatusSteps = () => {
@@ -748,47 +796,119 @@ export default function HarvestBatchDetailPage() {
                     {details.map((product) => (
                       <div
                         key={product.id}
-                        className='flex items-center gap-4 rounded-lg border p-4'
+                        className='flex flex-col gap-4 rounded-lg border p-4'
                       >
-                        <div className='relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border bg-gray-100'>
-                          {product.productImage ? (
-                            <Image
-                              src={product.productImage}
-                              alt={product.productName}
-                              fill
-                              className='object-cover'
-                            />
-                          ) : (
-                            <div className='flex h-full w-full items-center justify-center'>
-                              <IconPackage className='text-muted-foreground h-8 w-8' />
+                        <div className='flex items-center gap-4'>
+                          <div className='relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-md border bg-gray-100'>
+                            {product.productImage ? (
+                              <Image
+                                src={product.productImage}
+                                alt={product.productName}
+                                fill
+                                className='object-cover'
+                              />
+                            ) : (
+                              <div className='flex h-full w-full items-center justify-center'>
+                                <IconPackage className='text-muted-foreground h-8 w-8' />
+                              </div>
+                            )}
+                          </div>
+                          <div className='flex-1'>
+                            <h4 className='font-semibold'>
+                              {product.productName}
+                            </h4>
+                            <div className='mt-2 flex items-center gap-4 text-sm'>
+                              <span>
+                                {t('detail.products.table.expectedQuantity')}:{' '}
+                                <strong>{product.quantity}</strong>{' '}
+                                {product.unit}
+                              </span>
+                              <span>
+                                {t('detail.products.table.currentUnitPrice')}:{' '}
+                                <strong>
+                                  {formatCurrency(
+                                    product.finalUnitPriceAccepted
+                                      ? product.finalUnitPrice
+                                      : product.expectedUnitPrice
+                                  )}
+                                </strong>
+                              </span>
                             </div>
-                          )}
-                        </div>
-                        <div className='flex-1'>
-                          <h4 className='font-semibold'>
-                            {product.productName}
-                          </h4>
-                          <div className='mt-2 flex items-center gap-4 text-sm'>
-                            <span>
-                              {t('detail.products.table.quantity')}:{' '}
-                              <strong>{product.quantity}</strong> {product.unit}
-                            </span>
-                            <span>
-                              {t('detail.products.table.unitPrice')}:{' '}
-                              <strong>
-                                {formatCurrency(product.unitPrice)}
-                              </strong>
-                            </span>
+                          </div>
+                          <div className='text-right'>
+                            <p className='text-muted-foreground text-sm'>
+                              {t('detail.products.amount')}
+                            </p>
+                            <p className='text-lg font-bold'>
+                              {formatCurrency(product.totalPrice)}
+                            </p>
                           </div>
                         </div>
-                        <div className='text-right'>
-                          <p className='text-muted-foreground text-sm'>
-                            {t('detail.products.amount')}
-                          </p>
-                          <p className='text-lg font-bold'>
-                            {formatCurrency(product.totalPrice)}
-                          </p>
-                        </div>
+
+                        {/* Show negotiation section if finalUnitPrice exists and not yet accepted */}
+                        {product.finalUnitPrice > 0 &&
+                          product.finalUnitPriceAccepted === null && (
+                            <div className='border-t pt-4'>
+                              <div className='rounded-lg bg-blue-50 p-4 dark:bg-blue-950'>
+                                <h5 className='mb-3 text-sm font-semibold text-blue-900 dark:text-blue-100'>
+                                  {t('negotiation.title')}
+                                </h5>
+                                <div className='flex items-center justify-between gap-4'>
+                                  <div className='flex gap-6'>
+                                    <div>
+                                      <p className='text-muted-foreground mb-1 text-xs'>
+                                        {t('negotiation.expectedPrice')}
+                                      </p>
+                                      <p className='text-sm font-medium'>
+                                        {formatCurrency(
+                                          product.expectedUnitPrice
+                                        )}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className='text-muted-foreground mb-1 text-xs'>
+                                        {t('negotiation.negotiatedPrice')}
+                                      </p>
+                                      <p className='text-lg font-bold text-blue-600 dark:text-blue-400'>
+                                        {formatCurrency(product.finalUnitPrice)}
+                                      </p>
+                                    </div>
+                                  </div>
+                                  <div className='flex gap-2'>
+                                    <Button
+                                      variant='outline'
+                                      size='sm'
+                                      onClick={() =>
+                                        handleRejectPrice(product.id)
+                                      }
+                                      disabled={
+                                        acceptingPriceId === product.id ||
+                                        rejectingPriceId === product.id
+                                      }
+                                    >
+                                      {rejectingPriceId === product.id
+                                        ? t('negotiation.rejecting')
+                                        : t('negotiation.rejectPrice')}
+                                    </Button>
+                                    <Button
+                                      size='sm'
+                                      onClick={() =>
+                                        handleAcceptPrice(product.id)
+                                      }
+                                      disabled={
+                                        acceptingPriceId === product.id ||
+                                        rejectingPriceId === product.id
+                                      }
+                                    >
+                                      {acceptingPriceId === product.id
+                                        ? t('negotiation.accepting')
+                                        : t('negotiation.acceptPrice')}
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                       </div>
                     ))}
                   </div>

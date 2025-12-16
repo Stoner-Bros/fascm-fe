@@ -811,6 +811,14 @@
         "quantity": "Số lượng",
         "unit": "Đơn vị",
         "unitPrice": "Đơn giá",
+        "currentUnitPrice": "Đơn giá hiện tại",
+        "expectedQuantity": "Số lượng dự kiến",
+        "negotiatedPrice": "Thương lượng giá",
+        "makeNegotiation": "Thương lượng",
+        "makeNegotiationAgain": "Thương lượng lại",
+        "negotiated": "Đã thương lượng",
+        "waitingNegotiation": "Chờ thương lượng",
+        "negotiationRejected": "Thương lượng bị từ chối",
         "amount": "Thành tiền",
         "received": "Đã nhận",
         "empty": "Không có chi tiết sản phẩm"
@@ -901,6 +909,28 @@
       "empty": {
         "title": "Không tìm thấy lịch thu hoạch",
         "back": "Quay lại"
+      }
+    },
+    "negotiationDialog": {
+      "title": "Thương lượng giá",
+      "description": "Nhập giá thương lượng cho sản phẩm này",
+      "expectedPrice": "Giá mong đợi",
+      "negotiatedPrice": "Giá thương lượng",
+      "negotiatedPricePlaceholder": "Nhập giá thương lượng",
+      "negotiatedPriceCurrent": "Giá thương lượng hiện tại",
+      "product": "Sản phẩm",
+      "quantity": "Số lượng",
+      "unit": "Đơn vị",
+      "cancel": "Hủy",
+      "submit": "Xác nhận giá",
+      "submitting": "Đang xử lý...",
+      "validation": {
+        "priceRequired": "Giá thương lượng là bắt buộc",
+        "pricePositive": "Giá phải lớn hơn 0"
+      },
+      "toast": {
+        "success": "Thương lượng giá thành công",
+        "error": "Không thể thương lượng giá"
       }
     }
   },
