@@ -3,13 +3,13 @@
 import * as React from 'react';
 import { Label, Pie, PieChart } from 'recharts';
 import { useTranslations } from 'next-intl';
-import { getProductStatistics } from '@/services/statistics.service';
+import { getTruckStatistics } from '@/services/statistics.service';
+import { TruckStatisticsDto } from '@/types/statistics';
 
 import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
@@ -20,34 +20,37 @@ import {
   ChartTooltipContent
 } from '@/components/ui/chart';
 
-export function PieGraph() {
-  const t = useTranslations('Overview.charts.productCategories');
+export function TruckGraph() {
+  const t = useTranslations('Overview.charts.truck');
   const tCommon = useTranslations('Overview.charts');
-  const [chartData, setChartData] = React.useState<any[]>([]);
+  const [data, setData] = React.useState<TruckStatisticsDto | null>(null);
   const [loading, setLoading] = React.useState(true);
-  const [totalProducts, setTotalProducts] = React.useState(0);
-
-  const COLORS = ['#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4'];
 
   const chartConfig = {
-    products: {
-      label: t('labelProducts')
+    trucks: {
+      label: t('labelTrucks')
+    },
+    available: {
+      label: 'Available',
+      color: '#10b981'
+    },
+    in_use: {
+      label: 'In Use',
+      color: '#3b82f6'
+    },
+    maintenance: {
+      label: 'Maintenance',
+      color: '#ef4444'
     }
   } satisfies ChartConfig;
 
   React.useEffect(() => {
     const fetchData = async () => {
       try {
-        const result = await getProductStatistics();
-        const data = result.productsByCategory.map((item, index) => ({
-          category: item.categoryName,
-          products: item.count,
-          fill: COLORS[index % COLORS.length]
-        }));
-        setChartData(data);
-        setTotalProducts(result.totalProducts);
+        const result = await getTruckStatistics();
+        setData(result);
       } catch (error) {
-        console.error('Failed to fetch product statistics:', error);
+        console.error('Failed to fetch truck statistics:', error);
       } finally {
         setLoading(false);
       }
@@ -56,8 +59,35 @@ export function PieGraph() {
     fetchData();
   }, []);
 
-  const totalVisitors = React.useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.products, 0);
+  const chartData = React.useMemo(() => {
+    if (!data) return [];
+
+    const getCount = (status: string) => {
+      const item = data.trucksByStatus.find((s) => s.status === status);
+      return item ? item.count : 0;
+    };
+
+    return [
+      {
+        status: 'available',
+        trucks: getCount('available'),
+        fill: 'var(--color-available)'
+      },
+      {
+        status: 'in_use',
+        trucks: getCount('in_use'),
+        fill: 'var(--color-in_use)'
+      },
+      {
+        status: 'maintenance',
+        trucks: getCount('maintenance'),
+        fill: 'var(--color-maintenance)'
+      }
+    ];
+  }, [data]);
+
+  const totalTrucks = React.useMemo(() => {
+    return chartData.reduce((acc, curr) => acc + curr.trucks, 0);
   }, [chartData]);
 
   if (loading) {
@@ -72,7 +102,9 @@ export function PieGraph() {
     <Card className='@container/card flex flex-col'>
       <CardHeader className='items-center pb-0'>
         <CardTitle>{t('title')}</CardTitle>
-        <CardDescription>{t('description')}</CardDescription>
+        <CardDescription>
+          {t('description', { count: totalTrucks })}
+        </CardDescription>
       </CardHeader>
       <CardContent className='flex-1 pb-0'>
         <ChartContainer
@@ -86,8 +118,8 @@ export function PieGraph() {
             />
             <Pie
               data={chartData}
-              dataKey='products'
-              nameKey='category'
+              dataKey='trucks'
+              nameKey='status'
               innerRadius={60}
               strokeWidth={5}
             >
@@ -106,14 +138,14 @@ export function PieGraph() {
                           y={viewBox.cy}
                           className='fill-foreground text-3xl font-bold'
                         >
-                          {totalVisitors.toLocaleString()}
+                          {totalTrucks.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
                           className='fill-muted-foreground'
                         >
-                          {t('labelProducts')}
+                          {t('centerLabel')}
                         </tspan>
                       </text>
                     );
@@ -124,14 +156,6 @@ export function PieGraph() {
           </PieChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter className='flex-col gap-2 text-sm'>
-        <div className='flex items-center gap-2 leading-none font-medium'>
-          {t('footerTitle')}
-        </div>
-        <div className='text-muted-foreground leading-none'>
-          {t('footerDesc')}
-        </div>
-      </CardFooter>
     </Card>
   );
 }

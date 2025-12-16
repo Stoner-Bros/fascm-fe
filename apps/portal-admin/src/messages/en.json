@@ -1702,5 +1702,78 @@
         "deleteError": "Failed to delete staff"
       }
     }
+  },
+  "Overview": {
+    "title": "Hi, Welcome back 👋",
+    "cards": {
+      "totalRevenue": "Total Revenue",
+      "totalOrders": "Total Orders",
+      "totalCustomers": "Total Customers",
+      "totalSuppliers": "Total Suppliers",
+      "fromLastMonth": "+{value}% from last month",
+      "totalDeliveries": "Total Deliveries",
+      "grossProfit": "Gross Profit",
+      "revenueDesc": "Total revenue generated",
+      "ordersDesc": "Total orders processed",
+      "deliveriesDesc": "Completed deliveries",
+      "profitDesc": "Total gross profit",
+      "revenueLabel": "Revenue",
+      "ordersLabel": "Orders",
+      "deliveriesLabel": "Deliveries",
+      "profitLabel": "Profit"
+    },
+    "charts": {
+      "revenueTrend": {
+        "title": "Revenue Trend",
+        "description": "Showing revenue, cost, and profit over time",
+        "labelRevenue": "Revenue",
+        "labelCost": "Cost",
+        "labelProfit": "Profit",
+        "footerTitle": "Revenue trend analysis",
+        "footerDesc": "Based on recent transaction data"
+      },
+      "orderStatus": {
+        "title": "Order Status",
+        "description": "Current distribution of order statuses",
+        "labelOrders": "Orders"
+      },
+      "productCategories": {
+        "title": "Product Categories",
+        "description": "Distribution of products by category",
+        "labelProducts": "Products",
+        "totalProducts": "Total Products",
+        "footerTitle": "Inventory distribution",
+        "footerDesc": "Based on current inventory"
+      },
+      "debt": {
+        "title": "Debt Overview",
+        "receivableVsPayable": "Receivable vs Payable",
+        "receivable": "Receivable",
+        "payable": "Payable",
+        "labelAmount": "Amount"
+      },
+      "warehouse": {
+        "title": "Warehouse Inventory",
+        "description": "Total inventory value by warehouse",
+        "labelValue": "Inventory Value"
+      },
+      "truck": {
+        "title": "Fleet Status",
+        "description": "Current status of {count} trucks",
+        "labelTrucks": "Trucks",
+        "centerLabel": "Trucks"
+      },
+      "topCustomers": {
+        "title": "Top Customers",
+        "description": "By total purchase amount",
+        "totalAmount": "Total Amount"
+      },
+      "topSuppliers": {
+        "title": "Top Suppliers",
+        "description": "By total purchase amount",
+        "totalAmount": "Total Amount"
+      },
+      "loading": "Loading..."
+    }
   }
 }

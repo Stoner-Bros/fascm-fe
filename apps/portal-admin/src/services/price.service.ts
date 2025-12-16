@@ -6,6 +6,9 @@ export interface Price {
   batch?: {
     id: string;
   };
+  product?: {
+    id: string;
+  };
   price?: number | null;
   quantity?: number | null;
   unit?: string | null;
@@ -14,7 +17,8 @@ export interface Price {
 }
 
 export interface CreatePriceDto {
-  batch: { id: string };
+  batch?: { id: string };
+  product?: { id: string };
   price?: number | null;
   quantity?: number | null;
   unit?: string | null;
@@ -22,6 +26,7 @@ export interface CreatePriceDto {
 
 export interface UpdatePriceDto {
   batch?: { id: string };
+  product?: { id: string };
   price?: number | null;
   quantity?: number | null;
   unit?: string | null;
