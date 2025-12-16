@@ -101,7 +101,7 @@ export function usePhaseForm(
         schedule.harvestDetails!.map((detail) => ({
           product: { id: detail.product!.id },
           quantity: 0,
-          unitPrice: detail.unitPrice || 0,
+          unitPrice: detail.finalUnitPrice ?? detail.expectedUnitPrice ?? 0,
           unit: detail.unit || ''
         }));
       reset(newDetails, phases.length + 2);

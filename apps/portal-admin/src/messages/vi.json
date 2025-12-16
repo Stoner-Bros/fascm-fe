@@ -1732,5 +1732,78 @@
         "deleteError": "Không thể xóa nhân viên"
       }
     }
+  },
+  "Overview": {
+    "title": "Xin chào, Chào mừng trở lại 👋",
+    "cards": {
+      "totalRevenue": "Tổng Doanh Thu",
+      "totalOrders": "Tổng Đơn Hàng",
+      "totalCustomers": "Tổng Khách Hàng",
+      "totalSuppliers": "Tổng Nhà Cung Cấp",
+      "fromLastMonth": "+{value}% so với tháng trước",
+      "totalDeliveries": "Tổng Giao Hàng",
+      "grossProfit": "Lợi Nhuận Gộp",
+      "revenueDesc": "Tổng doanh thu đã tạo",
+      "ordersDesc": "Tổng đơn hàng đã xử lý",
+      "deliveriesDesc": "Các giao hàng đã hoàn thành",
+      "profitDesc": "Tổng lợi nhuận gộp",
+      "revenueLabel": "Doanh thu",
+      "ordersLabel": "Đơn hàng",
+      "deliveriesLabel": "Giao hàng",
+      "profitLabel": "Lợi nhuận"
+    },
+    "charts": {
+      "revenueTrend": {
+        "title": "Xu hướng doanh thu",
+        "description": "Hiển thị doanh thu, chi phí và lợi nhuận theo thời gian",
+        "labelRevenue": "Doanh thu",
+        "labelCost": "Chi phí",
+        "labelProfit": "Lợi nhuận",
+        "footerTitle": "Phân tích xu hướng doanh thu",
+        "footerDesc": "Dựa trên dữ liệu giao dịch gần đây"
+      },
+      "orderStatus": {
+        "title": "Trạng thái đơn hàng",
+        "description": "Phân bố trạng thái đơn hàng hiện tại",
+        "labelOrders": "Đơn hàng"
+      },
+      "productCategories": {
+        "title": "Danh mục sản phẩm",
+        "description": "Phân bố sản phẩm theo danh mục",
+        "labelProducts": "Sản phẩm",
+        "totalProducts": "Tổng sản phẩm",
+        "footerTitle": "Phân bố tồn kho",
+        "footerDesc": "Dựa trên tồn kho hiện tại"
+      },
+      "debt": {
+        "title": "Tổng quan công nợ",
+        "receivableVsPayable": "Phải thu vs Phải trả",
+        "receivable": "Phải thu",
+        "payable": "Phải trả",
+        "labelAmount": "Số tiền"
+      },
+      "warehouse": {
+        "title": "Tồn kho theo kho",
+        "description": "Tổng giá trị tồn kho theo kho",
+        "labelValue": "Giá trị tồn kho"
+      },
+      "truck": {
+        "title": "Trạng thái đội xe",
+        "description": "Trạng thái hiện tại của {count} xe",
+        "labelTrucks": "Xe tải",
+        "centerLabel": "Xe tải"
+      },
+      "topCustomers": {
+        "title": "Khách hàng hàng đầu",
+        "description": "Theo tổng giá trị mua hàng",
+        "totalAmount": "Tổng giá trị"
+      },
+      "topSuppliers": {
+        "title": "Nhà cung cấp hàng đầu",
+        "description": "Theo tổng giá trị mua hàng",
+        "totalAmount": "Tổng giá trị"
+      },
+      "loading": "Đang tải..."
+    }
   }
 }
