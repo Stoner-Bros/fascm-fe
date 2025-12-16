@@ -91,6 +91,7 @@ export function PhaseCard({
                 startAddress={t('detail.phases.startAddressDefault')}
                 endAddress={String(orderSchedule.address ?? '')}
                 orderScheduleId={String(orderSchedule.id ?? '')}
+                phaseId={phase.id}
                 productName={(phase.orderInvoiceDetails || [])
                   .map((d) => d.product?.name)
                   .filter(Boolean)

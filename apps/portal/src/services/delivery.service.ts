@@ -12,6 +12,8 @@ export type Delivery = {
   startTime?: string | null;
   endTime?: string | null;
   orderSchedule?: { id: string } | null;
+  orderPhase?: { id: string } | null;
+  harvestPhase?: { id: string } | null;
   harvestSchedule?: {
     id: string;
     description?: string | null;
