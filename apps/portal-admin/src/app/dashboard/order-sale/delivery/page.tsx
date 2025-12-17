@@ -199,8 +199,12 @@ export default function DeliveryPage() {
                 hasDeliveryForPhase={page.deliveries.hasDeliveryForPhase}
                 onCreateDelivery={page.deliveries.createDelivery}
                 onUpdateDeliveryStatus={page.deliveries.updateDeliveryStatus}
+                onUploadPhaseImageProof={page.deliveries.uploadPhaseProof}
                 isCreating={page.deliveries.loadingCreate}
                 loadingUpdateStatusId={page.deliveries.loadingUpdateStatus}
+                uploadingProofPhaseId={
+                  page.deliveries.loadingUploadProofPhaseId
+                }
               />
             </div>
           </div>
