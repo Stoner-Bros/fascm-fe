@@ -7,7 +7,10 @@ import {
   fetchDeliveries,
   updateDeliveryStatus as updateDeliveryStatusService
 } from '@/services/delivery.service';
-import { fetchOrderPhasesBySchedule } from '@/services/order-phase.service';
+import {
+  fetchOrderPhasesBySchedule,
+  uploadPhaseImageProof
+} from '@/services/order-phase.service';
 import { fetchOrderSchedules } from '@/services/order-schedule.service';
 import { fetchTrucks } from '@/services/truck.service';
 import {
@@ -271,6 +274,9 @@ export function useDeliveries() {
   const [loadingUpdateStatus, setLoadingUpdateStatus] = useState<string | null>(
     null
   );
+  const [loadingUploadProofPhaseId, setLoadingUploadProofPhaseId] = useState<
+    string | null
+  >(null);
   const [hasNextPage, setHasNextPage] = useState(false);
 
   const loadDeliveriesWithOrderPhase = useCallback(async () => {
@@ -375,6 +381,43 @@ export function useDeliveries() {
     [deliveries]
   );
 
+  const uploadPhaseProof = useCallback(
+    async (
+      phaseId: string,
+      files: File[]
+    ): Promise<{ paths: string[] } | null> => {
+      setLoadingUploadProofPhaseId(phaseId);
+      try {
+        const uploads = await Promise.all(
+          files.map(async (file) => uploadPhaseImageProof(phaseId, file))
+        );
+        const paths = uploads
+          .map((res) => res?.path)
+          .filter((p): p is string => Boolean(p));
+        if (!paths.length) {
+          throw new Error('No files uploaded');
+        }
+        toast({
+          title: 'Thành công',
+          description: `Đã tải ${paths.length} hình ảnh xác nhận đợt giao hàng`
+        });
+        return { paths };
+      } catch (error) {
+        console.error('Failed to upload phase proof:', error);
+        toast({
+          title: 'Lỗi',
+          description: 'Không thể tải hình ảnh xác nhận',
+          variant: 'destructive'
+        });
+        return null;
+      } finally {
+        setLoadingUploadProofPhaseId(null);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   // Get all phase IDs that have deliveries
   const assignedPhaseIds = useMemo(() => {
     return new Set(
@@ -393,13 +436,15 @@ export function useDeliveries() {
     loadingFetch,
     loadingCreate,
     loadingUpdateStatus,
+    loadingUploadProofPhaseId,
     hasNextPage,
     loadDeliveriesWithOrderPhase,
     createDelivery,
     updateDeliveryStatus,
     getDeliveryByPhaseId,
     hasDeliveryForPhase,
-    assignedPhaseIds
+    assignedPhaseIds,
+    uploadPhaseProof
   };
 }
 

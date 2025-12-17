@@ -88,6 +88,7 @@ export async function uploadPhaseImageProof(id: string, file: File) {
   return fetchJSON<{ path: string }>(`/order-phases/${id}/upload-img-proof`, {
     method: 'POST',
     body: formData,
-    headers: {} // Let browser set Content-Type with boundary
+    headers: {}, // Let browser set Content-Type with boundary
+    file: true
   });
 }

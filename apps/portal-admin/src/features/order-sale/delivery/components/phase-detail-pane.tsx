@@ -41,6 +41,9 @@ import {
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from '@/components/ui/use-toast';
+import { FileUploader } from '@/components/file-uploader';
+import { Modal } from '@/components/modal';
 import { cn } from '@/lib/utils';
 import {
   CreateDeliveryDto,
@@ -61,6 +64,7 @@ import {
   Plus,
   Truck as TruckIcon
 } from 'lucide-react';
+import Image from 'next/image';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { CreateDeliveryDialog } from './create-delivery-dialog';
 import {
@@ -83,8 +87,13 @@ interface PhaseDetailPaneProps {
     id: string,
     status: DeliveryStatusEnum
   ) => Promise<Delivery | null>;
+  onUploadPhaseImageProof: (
+    phaseId: string,
+    files: File[]
+  ) => Promise<{ paths: string[] } | null>;
   isCreating: boolean;
   loadingUpdateStatusId: string | null;
+  uploadingProofPhaseId: string | null;
 }
 
 type LatLng = { lat: number; lng: number };
@@ -556,11 +565,19 @@ export function PhaseDetailPane({
   hasDeliveryForPhase,
   onCreateDelivery,
   onUpdateDeliveryStatus,
+  onUploadPhaseImageProof,
   isCreating,
-  loadingUpdateStatusId
+  loadingUpdateStatusId,
+  uploadingProofPhaseId
 }: PhaseDetailPaneProps) {
+  const { toast } = useToast();
   const [selectedPhaseForCreate, setSelectedPhaseForCreate] =
     useState<OrderPhase | null>(null);
+  const [deliveryForProof, setDeliveryForProof] = useState<Delivery | null>(
+    null
+  );
+  const [proofFiles, setProofFiles] = useState<File[]>([]);
+  const [submittingProof, setSubmittingProof] = useState(false);
 
   if (!schedule) {
     return <EmptyScheduleState />;
@@ -570,6 +587,55 @@ export function PhaseDetailPane({
     const result = await onCreateDelivery(data);
     if (result) {
       setSelectedPhaseForCreate(null);
+    }
+  };
+
+  const handleDeliveryStatusChange = async (
+    delivery: Delivery,
+    status: DeliveryStatusEnum
+  ) => {
+    if (status === 'delivered') {
+      setDeliveryForProof(delivery);
+      setProofFiles([]);
+      return;
+    }
+    await onUpdateDeliveryStatus(delivery.id, status);
+  };
+
+  const closeProofModal = () => {
+    setDeliveryForProof(null);
+    setProofFiles([]);
+    setSubmittingProof(false);
+  };
+
+  const handleConfirmProofUpload = async () => {
+    if (!deliveryForProof) return;
+    if (!proofFiles.length) {
+      toast({
+        title: 'Thiếu hình ảnh',
+        description: 'Vui lòng tải lên hình ảnh xác nhận trước khi tiếp tục',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    const phaseId = deliveryForProof.orderPhase?.id;
+    if (!phaseId) {
+      toast({
+        title: 'Không tìm thấy đợt giao hàng',
+        description: 'Không thể xác định đợt giao hàng để tải minh chứng',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    setSubmittingProof(true);
+    const uploaded = await onUploadPhaseImageProof(phaseId, proofFiles);
+    if (uploaded) {
+      await onUpdateDeliveryStatus(deliveryForProof.id, 'delivered');
+      closeProofModal();
+    } else {
+      setSubmittingProof(false);
     }
   };
 
@@ -833,6 +899,37 @@ export function PhaseDetailPane({
                                 status={delivery.status ?? undefined}
                               />
                             )}
+                            <div className='rounded-md border p-2'>
+                              <h5 className='mb-2 flex items-center gap-1 text-xs font-medium'>
+                                <FileText className='h-3 w-3' />
+                                Minh chứng giao hàng
+                              </h5>
+
+                              <div className='grid gap-1.5 text-xs'>
+                                {phase.imageProof?.length && (
+                                  <p className='text-muted-foreground'>
+                                    {phase.imageProof?.length} hình ảnh
+                                  </p>
+                                )}
+                                <div className='grid grid-cols-5 gap-2'>
+                                  {phase.imageProof?.map((proof) => (
+                                    <div
+                                      className='flex items-center gap-1'
+                                      key={proof.id}
+                                    >
+                                      <Image
+                                        src={proof.photo?.path || ''}
+                                        alt={proof.photo?.id || ''}
+                                        width={80}
+                                        height={80}
+                                        className='h-full w-full rounded-md object-cover'
+                                      />
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+
                             {/* Status stepper */}
                             <div className='rounded-md border p-2'>
                               <h5 className='mb-2 flex items-center gap-1 text-xs font-medium'>
@@ -842,10 +939,12 @@ export function PhaseDetailPane({
                               <DeliveryStatusStepper
                                 currentStatus={delivery.status}
                                 onStatusChange={(status) =>
-                                  onUpdateDeliveryStatus(delivery.id, status)
+                                  handleDeliveryStatusChange(delivery, status)
                                 }
                                 isLoading={
-                                  loadingUpdateStatusId === delivery.id
+                                  loadingUpdateStatusId === delivery.id ||
+                                  uploadingProofPhaseId ===
+                                    delivery.orderPhase?.id
                                 }
                                 canUpdate={true}
                               />
@@ -893,6 +992,48 @@ export function PhaseDetailPane({
           isSubmitting={isCreating}
         />
       )}
+
+      {/* Upload proof before marking delivered */}
+      <Modal
+        title='Tải minh chứng giao hàng'
+        description='Vui lòng tải lên hình ảnh minh chứng trước khi chuyển trạng thái sang Đã giao.'
+        isOpen={!!deliveryForProof}
+        onClose={closeProofModal}
+        footer={
+          <div className='flex w-full justify-end gap-2'>
+            <Button variant='outline' size='sm' onClick={closeProofModal}>
+              Hủy
+            </Button>
+            <Button
+              size='sm'
+              onClick={handleConfirmProofUpload}
+              disabled={
+                submittingProof ||
+                !!(
+                  deliveryForProof?.orderPhase?.id &&
+                  uploadingProofPhaseId === deliveryForProof.orderPhase.id
+                )
+              }
+            >
+              {submittingProof ? 'Đang tải...' : 'Xác nhận và cập nhật'}
+            </Button>
+          </div>
+        }
+      >
+        <div className='space-y-3'>
+          <FileUploader
+            value={proofFiles}
+            onValueChange={(files) => setProofFiles(files)}
+            accept={{ 'image/*': [] }}
+            maxFiles={5}
+            multiple
+          />
+          <p className='text-muted-foreground text-xs'>
+            Chỉ chuyển trạng thái sang Đã giao khi đã tải hình ảnh minh chứng
+            (tối đa 5 ảnh).
+          </p>
+        </div>
+      </Modal>
     </>
   );
 }
