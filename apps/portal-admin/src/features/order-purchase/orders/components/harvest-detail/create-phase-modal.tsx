@@ -13,7 +13,6 @@ import {
 } from '@/components/ui/table';
 import { Textarea } from '@/components/ui/textarea';
 import type { HarvestSchedule } from '@/types/harvest-schedule';
-import { Minus, Plus } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useEffect, useMemo } from 'react';
 import type { PhaseFormData } from '../../hooks/harvest-detail/use-phase-form';
@@ -78,16 +77,6 @@ export function CreatePhaseDialog({
     };
   }, [phaseData.invoiceDetails, phaseData.taxRate]);
 
-  const handleQuantityChange = (
-    productId: string,
-    currentQuantity: number,
-    delta: number,
-    max: number
-  ) => {
-    const newQuantity = Math.max(0, Math.min(max, currentQuantity + delta));
-    onQuantityChange(productId, newQuantity);
-  };
-
   const hasValidItems = calculatedTotals.itemCount > 0;
   const t = useTranslations('HarvestOrders.detail.createPhase');
 
@@ -145,11 +134,23 @@ export function CreatePhaseDialog({
         <Textarea
           id='description'
           value={phaseData.description}
-          onChange={(e) => onPhaseDataChange({ description: e.target.value })}
+          onChange={(e) => {
+            const value = e.target.value;
+            if (value.length <= 240) {
+              onPhaseDataChange({ description: value });
+            }
+          }}
           placeholder={t('descriptionPlaceholder')}
           rows={2}
           className='mt-2'
+          maxLength={240}
         />
+        <div className='text-muted-foreground mt-1 flex items-center justify-between text-xs'>
+          <span>{phaseData.description?.length || 0} / 240 ký tự</span>
+          {(phaseData.description?.length || 0) >= 240 && (
+            <span className='text-destructive'>Đã đạt giới hạn tối đa</span>
+          )}
+        </div>
       </div>
 
       {/* Products Table */}
@@ -171,7 +172,7 @@ export function CreatePhaseDialog({
                 </TableHead>
                 <TableHead className='text-center'>{t('unit')}</TableHead>
                 <TableHead className='text-right'>{t('unitPrice')}</TableHead>
-                <TableHead className='text-right'>{t('amount')}</TableHead>
+                {/* <TableHead className='text-right'>{t('amount')}</TableHead> */}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -201,14 +202,7 @@ export function CreatePhaseDialog({
                     }
                   >
                     <TableCell className='font-medium'>
-                      <div>
-                        <div>{product?.product?.name || '-'}</div>
-                        {product?.product?.id && (
-                          <div className='text-muted-foreground text-xs'>
-                            ID: {product.product.id.slice(0, 8)}
-                          </div>
-                        )}
-                      </div>
+                      <div>{product?.product?.name || '-'}</div>
                     </TableCell>
                     <TableCell className='text-center'>
                       <span
@@ -222,55 +216,29 @@ export function CreatePhaseDialog({
                       </span>
                     </TableCell>
                     <TableCell>
-                      <div className='flex items-center justify-center gap-1'>
-                        <Button
-                          type='button'
-                          variant='outline'
-                          size='icon'
-                          className='h-8 w-8'
-                          onClick={() =>
-                            handleQuantityChange(
-                              detail.product.id,
-                              quantity,
-                              -1,
-                              remaining
-                            )
-                          }
-                          disabled={!hasRemaining || quantity <= 0}
-                        >
-                          <Minus className='h-4 w-4' />
-                        </Button>
+                      <div className='flex items-center justify-center'>
                         <Input
                           type='number'
                           min={0}
                           max={remaining}
-                          value={quantity}
-                          onChange={(e) =>
-                            onQuantityChange(
-                              detail.product.id,
-                              parseFloat(e.target.value) || 0
-                            )
-                          }
-                          className='h-8 w-20 text-center'
+                          value={quantity === 0 ? '' : quantity}
+                          onChange={(e) => {
+                            const inputValue = e.target.value;
+                            if (inputValue === '') {
+                              onQuantityChange(detail.product.id, 0);
+                            } else {
+                              const value = parseFloat(inputValue) || 0;
+                              const clampedValue = Math.max(
+                                0,
+                                Math.min(remaining, value)
+                              );
+                              onQuantityChange(detail.product.id, clampedValue);
+                            }
+                          }}
+                          className='h-8 w-20 [appearance:textfield] text-center [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
                           disabled={!hasRemaining}
+                          placeholder=''
                         />
-                        <Button
-                          type='button'
-                          variant='outline'
-                          size='icon'
-                          className='h-8 w-8'
-                          onClick={() =>
-                            handleQuantityChange(
-                              detail.product.id,
-                              quantity,
-                              1,
-                              remaining
-                            )
-                          }
-                          disabled={!hasRemaining || quantity >= remaining}
-                        >
-                          <Plus className='h-4 w-4' />
-                        </Button>
                       </div>
                       {quantity > remaining && (
                         <p className='text-destructive mt-1 text-xs'>
@@ -284,7 +252,7 @@ export function CreatePhaseDialog({
                     <TableCell className='text-right font-medium'>
                       {formatCurrency(unitPrice)}
                     </TableCell>
-                    <TableCell className='text-right font-semibold'>
+                    {/* <TableCell className='text-right font-semibold'>
                       {quantity > 0 ? (
                         <span className='text-primary'>
                           {formatCurrency(amount)}
@@ -292,7 +260,7 @@ export function CreatePhaseDialog({
                       ) : (
                         <span className='text-muted-foreground'>-</span>
                       )}
-                    </TableCell>
+                    </TableCell> */}
                   </TableRow>
                 );
               })}
