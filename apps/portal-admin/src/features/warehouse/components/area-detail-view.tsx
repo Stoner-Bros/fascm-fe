@@ -1155,7 +1155,7 @@ export default function AreaDetailView({
                           {t('products.batches.columns.unit')}
                         </TableHead>
                         <TableHead className='font-semibold'>
-                          {t('products.batches.columns.costPrice')}
+                          {t('products.batches.columns.costPrice')} /kg
                         </TableHead>
                         <TableHead className='font-semibold'>
                           {t('products.batches.columns.expiredAt')}
@@ -1203,8 +1203,8 @@ export default function AreaDetailView({
                           </TableCell>
                           <TableCell>{batch.unit}</TableCell>
                           <TableCell>
-                            {batch.costPrice
-                              ? `${batch.costPrice.toLocaleString('vi-VN')} VNĐ`
+                            {batch.costPrice && batch.quantity
+                              ? `${Math.round(batch.costPrice / batch.quantity).toLocaleString('vi-VN')} VNĐ`
                               : '-'}
                           </TableCell>
                           <TableCell className='text-xs'>
