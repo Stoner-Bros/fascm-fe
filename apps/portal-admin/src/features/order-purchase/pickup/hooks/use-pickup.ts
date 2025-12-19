@@ -7,7 +7,10 @@ import {
   fetchDeliveriesWithHarvestPhase,
   updateDeliveryStatus
 } from '@/services/delivery.service';
-import { fetchHarvestPhasesBySchedule } from '@/services/harvest-phase.service';
+import {
+  fetchHarvestPhaseById,
+  fetchHarvestPhasesBySchedule
+} from '@/services/harvest-phase.service';
 import { fetchHarvestSchedules } from '@/services/harvest-schedule.service';
 import { fetchTrucks } from '@/services/truck.service';
 import {
@@ -235,6 +238,46 @@ export function useHarvestPhasesBySchedule() {
     []
   );
 
+  const refetchPhase = useCallback(
+    async (phaseId: string, scheduleId: string) => {
+      try {
+        const response = await fetchHarvestPhaseById(phaseId);
+        // Update the phase in the phasesMap for the schedule
+        setPhasesMap((prev) => {
+          const schedulePhases = prev[scheduleId];
+          if (!schedulePhases) {
+            return prev;
+          }
+          const updatedPhases = schedulePhases.phases.map((phase) =>
+            phase.id === phaseId ? response : phase
+          );
+          // Update cache
+          const updatedResult = {
+            phases: updatedPhases,
+            hasNextPage: schedulePhases.hasNextPage
+          };
+          cacheRef.current[scheduleId] = updatedResult;
+          return {
+            ...prev,
+            [scheduleId]: updatedResult
+          };
+        });
+        return response;
+      } catch (error) {
+        console.error('Failed to refetch phase:', error);
+        toast({
+          title: 'Lỗi',
+          description: 'Không thể tải lại thông tin đợt thu hoạch',
+          variant: 'destructive'
+        });
+        return null;
+      } finally {
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   const getPhases = useCallback(
     (scheduleId: string): HarvestPhase[] => {
       return phasesMap[scheduleId]?.phases || [];
@@ -261,7 +304,8 @@ export function useHarvestPhasesBySchedule() {
     loadingScheduleId,
     loadPhases,
     getPhases,
-    clearCache
+    clearCache,
+    refetchPhase
   };
 }
 

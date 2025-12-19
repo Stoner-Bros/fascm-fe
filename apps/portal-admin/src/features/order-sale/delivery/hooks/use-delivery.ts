@@ -8,6 +8,7 @@ import {
   updateDeliveryStatus as updateDeliveryStatusService
 } from '@/services/delivery.service';
 import {
+  fetchOrderPhaseById,
   fetchOrderPhasesBySchedule,
   uploadPhaseImageProof
 } from '@/services/order-phase.service';
@@ -19,8 +20,7 @@ import {
   DeliveryStatusEnum
 } from '@/types/delivery';
 import { DeliveryStaff } from '@/types/delivery-staff';
-import { OrderPhase } from '@/types/order';
-import { OrderSchedule, OrderScheduleStatus } from '@/types/order';
+import { OrderPhase, OrderSchedule, OrderScheduleStatus } from '@/types/order';
 import { Truck } from '@/types/truck';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -254,12 +254,53 @@ export function useOrderPhasesBySchedule() {
     }
   }, []);
 
+  const refetchPhase = useCallback(
+    async (phaseId: string, scheduleId: string) => {
+      try {
+        const response = await fetchOrderPhaseById(phaseId);
+        // Update the phase in the phasesMap for the schedule
+        setPhasesMap((prev) => {
+          const schedulePhases = prev[scheduleId];
+          if (!schedulePhases) {
+            return prev;
+          }
+          const updatedPhases = schedulePhases.phases.map((phase) =>
+            phase.id === phaseId ? response : phase
+          );
+          // Update cache
+          const updatedResult = {
+            phases: updatedPhases,
+            hasNextPage: schedulePhases.hasNextPage
+          };
+          cacheRef.current[scheduleId] = updatedResult;
+          return {
+            ...prev,
+            [scheduleId]: updatedResult
+          };
+        });
+        return response;
+      } catch (error) {
+        console.error('Failed to refetch phase:', error);
+        toast({
+          title: 'Lỗi',
+          description: 'Không thể tải lại thông tin đợt giao hàng',
+          variant: 'destructive'
+        });
+        return null;
+      } finally {
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
+
   return {
     phasesMap,
     loadingScheduleId,
     loadPhases,
     getPhases,
-    clearCache
+    clearCache,
+    refetchPhase
   };
 }
 

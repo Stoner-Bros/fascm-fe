@@ -16,15 +16,7 @@ import {
   ScheduleListPane,
   useDeliveryPage
 } from '@/features/order-sale/delivery';
-import {
-  Calendar,
-  CheckCircle2,
-  Clock,
-  LayoutGrid,
-  List,
-  RefreshCw,
-  Truck
-} from 'lucide-react';
+import { LayoutGrid, List, RefreshCw, Truck } from 'lucide-react';
 import { useMemo, useState } from 'react';
 
 type ViewMode = 'split' | 'list';
@@ -200,6 +192,7 @@ export default function DeliveryPage() {
                 onCreateDelivery={page.deliveries.createDelivery}
                 onUpdateDeliveryStatus={page.deliveries.updateDeliveryStatus}
                 onUploadPhaseImageProof={page.deliveries.uploadPhaseProof}
+                onRefetchPhase={page.phases.refetchPhase}
                 isCreating={page.deliveries.loadingCreate}
                 loadingUpdateStatusId={page.deliveries.loadingUpdateStatus}
                 uploadingProofPhaseId={

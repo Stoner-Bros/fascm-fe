@@ -190,6 +190,7 @@ export default function PickupPage() {
                 onCreatePickup={page.pickups.createPickup}
                 onUpdatePickupStatus={page.pickups.updatePickupStatus}
                 onUploadPhaseImageProof={page.pickups.uploadPhaseProof}
+                onRefetchPhase={page.phases.refetchPhase}
                 isCreating={page.pickups.loadingCreate}
                 loadingUpdateStatusId={page.pickups.loadingUpdateStatus}
                 uploadingProofPhaseId={page.pickups.loadingUploadProofPhaseId}

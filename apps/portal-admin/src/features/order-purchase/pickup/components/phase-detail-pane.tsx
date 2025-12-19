@@ -1,7 +1,10 @@
 'use client';
 
+import { fetchDeliveryById } from '@/services/delivery.service';
+import type { Icon, Map as LeafletMap } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import dynamic from 'next/dynamic';
+import { io } from 'socket.io-client';
 const MapContainer = dynamic(
   () => import('react-leaflet').then((m) => m.MapContainer),
   { ssr: false }
@@ -20,12 +23,7 @@ const Polyline = dynamic(
   () => import('react-leaflet').then((m) => m.Polyline),
   { ssr: false }
 );
-import type { Icon, Map as LeafletMap } from 'leaflet';
-import { io } from 'socket.io-client';
-import { fetchDeliveryById } from '@/services/delivery.service';
 
-import { FileUploader } from '@/components/file-uploader';
-import { Modal } from '@/components/modal';
 import {
   Accordion,
   AccordionContent,
@@ -71,6 +69,7 @@ import {
   DeliveryStatusBadge,
   DeliveryStatusStepper
 } from './delivery-status-stepper';
+import { UploadImageProof } from './upload-image-proof';
 
 interface PhaseDetailPaneProps {
   schedule: HarvestSchedule | null;
@@ -91,6 +90,10 @@ interface PhaseDetailPaneProps {
     phaseId: string,
     files: File[]
   ) => Promise<{ paths: string[] } | null>;
+  onRefetchPhase?: (
+    phaseId: string,
+    scheduleId: string
+  ) => Promise<HarvestPhase | null>;
   isCreating: boolean;
   loadingUpdateStatusId: string | null;
   uploadingProofPhaseId: string | null;
@@ -563,6 +566,7 @@ export function PhaseDetailPane({
   onCreatePickup,
   onUpdatePickupStatus,
   onUploadPhaseImageProof,
+  onRefetchPhase,
   isCreating,
   loadingUpdateStatusId,
   uploadingProofPhaseId
@@ -630,6 +634,10 @@ export function PhaseDetailPane({
     const uploaded = await onUploadPhaseImageProof(phaseId, proofFiles);
     if (uploaded) {
       await onUpdatePickupStatus(deliveryForProof.id, 'delivered');
+      // Refetch the phase to get updated image proof
+      if (onRefetchPhase && schedule?.id) {
+        await onRefetchPhase(phaseId, schedule.id);
+      }
       closeProofModal();
     } else {
       setSubmittingProof(false);
@@ -906,36 +914,36 @@ export function PhaseDetailPane({
                                 </div>
                               )}
 
-                            <div className='rounded-md border p-2'>
-                              <h5 className='mb-2 flex items-center gap-1 text-xs font-medium'>
-                                <FileText className='h-3 w-3' />
-                                Minh chứng giao hàng
-                              </h5>
+                            {Boolean(phase.imageProof?.length) && (
+                              <div className='rounded-md border p-2'>
+                                <h5 className='mb-2 flex items-center gap-1 text-xs font-medium'>
+                                  <FileText className='h-3 w-3' />
+                                  Minh chứng giao hàng
+                                </h5>
 
-                              <div className='grid gap-1.5 text-xs'>
-                                {phase.imageProof?.length && (
+                                <div className='grid gap-1.5 text-xs'>
                                   <p className='text-muted-foreground'>
                                     {phase.imageProof?.length} hình ảnh
                                   </p>
-                                )}
-                                <div className='grid grid-cols-5 gap-2'>
-                                  {phase.imageProof?.map((proof) => (
-                                    <div
-                                      className='flex items-center gap-1'
-                                      key={proof.id}
-                                    >
-                                      <Image
-                                        src={proof.photo?.path || ''}
-                                        alt={proof.photo?.id || ''}
-                                        width={80}
-                                        height={80}
-                                        className='h-full w-full rounded-md object-cover'
-                                      />
-                                    </div>
-                                  ))}
+                                  <div className='grid grid-cols-5 gap-2'>
+                                    {phase.imageProof?.map((proof) => (
+                                      <div
+                                        className='flex items-center gap-1'
+                                        key={proof.id}
+                                      >
+                                        <Image
+                                          src={proof.photo?.path || ''}
+                                          alt={proof.photo?.id || ''}
+                                          width={80}
+                                          height={80}
+                                          className='h-full w-full rounded-md object-cover'
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
+                            )}
 
                             {/* Status stepper */}
                             <div className='rounded-md border p-2'>
@@ -1001,46 +1009,15 @@ export function PhaseDetailPane({
       )}
 
       {/* Upload proof before marking delivered */}
-      <Modal
-        title='Tải minh chứng giao hàng'
-        description='Vui lòng tải lên hình ảnh minh chứng trước khi chuyển trạng thái sang Đã giao.'
-        isOpen={!!deliveryForProof}
+      <UploadImageProof
+        deliveryForProof={deliveryForProof}
+        proofFiles={proofFiles}
+        onProofFilesChange={setProofFiles}
         onClose={closeProofModal}
-        footer={
-          <div className='flex w-full justify-end gap-2'>
-            <Button variant='outline' size='sm' onClick={closeProofModal}>
-              Hủy
-            </Button>
-            <Button
-              size='sm'
-              onClick={handleConfirmProofUpload}
-              disabled={
-                submittingProof ||
-                !!(
-                  deliveryForProof?.harvestPhase?.id &&
-                  uploadingProofPhaseId === deliveryForProof.harvestPhase.id
-                )
-              }
-            >
-              {submittingProof ? 'Đang tải...' : 'Xác nhận và cập nhật'}
-            </Button>
-          </div>
-        }
-      >
-        <div className='space-y-3'>
-          <FileUploader
-            value={proofFiles}
-            onValueChange={(files) => setProofFiles(files)}
-            accept={{ 'image/*': [] }}
-            maxFiles={5}
-            multiple
-          />
-          <p className='text-muted-foreground text-xs'>
-            Chỉ chuyển trạng thái sang Đã giao khi đã tải hình ảnh minh chứng
-            (tối đa 5 ảnh).
-          </p>
-        </div>
-      </Modal>
+        onSubmit={handleConfirmProofUpload}
+        submittingProof={submittingProof}
+        uploadingProofPhaseId={uploadingProofPhaseId}
+      />
     </>
   );
 }
