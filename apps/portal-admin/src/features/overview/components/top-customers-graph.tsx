@@ -25,12 +25,19 @@ import {
   ChartTooltipContent
 } from '@/components/ui/chart';
 import { useTranslations } from 'next-intl';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { DateRange } from 'react-day-picker';
+import { format } from 'date-fns';
 
 export function TopCustomersGraph() {
   const t = useTranslations('Overview.charts.topCustomers');
   const tCommon = useTranslations('Overview.charts');
   const [chartData, setChartData] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [date, setDate] = React.useState<DateRange | undefined>({
+    from: new Date(new Date().getFullYear(), 0, 1),
+    to: new Date()
+  });
 
   // Fresh colors palette
   const COLORS = ['#3b82f6', '#8b5cf6', '#ec4899', '#f43f5e', '#f97316'];
@@ -38,7 +45,11 @@ export function TopCustomersGraph() {
   React.useEffect(() => {
     const fetchData = async () => {
       try {
-        const result = await getConsigneeStatistics();
+        setLoading(true);
+        const result = await getConsigneeStatistics({
+          startDate: date?.from ? format(date.from, 'yyyy-MM-dd') : undefined,
+          endDate: date?.to ? format(date.to, 'yyyy-MM-dd') : undefined
+        });
         // Sort by amount descending and take top 5
         const sortedData = (result.topConsignees || [])
           .sort((a, b) => b.totalAmount - a.totalAmount)
@@ -58,7 +69,7 @@ export function TopCustomersGraph() {
     };
 
     fetchData();
-  }, []);
+  }, [date]);
 
   const chartConfig = {
     amount: {
@@ -77,9 +88,12 @@ export function TopCustomersGraph() {
 
   return (
     <Card className='h-full'>
-      <CardHeader>
-        <CardTitle>{t('title')}</CardTitle>
-        <CardDescription>{t('description')}</CardDescription>
+      <CardHeader className='items-center pb-0 sm:flex-row sm:justify-between sm:pb-4'>
+        <div className='flex flex-col gap-1'>
+          <CardTitle>{t('title')}</CardTitle>
+          <CardDescription>{t('description')}</CardDescription>
+        </div>
+        <DateRangePicker date={date} onDateChange={setDate} />
       </CardHeader>
       <CardContent>
         <ChartContainer
@@ -112,7 +126,7 @@ export function TopCustomersGraph() {
               cursor={false}
               content={<ChartTooltipContent indicator='line' />}
             />
-            <Bar dataKey='amount' layout='vertical' radius={4}>
+            <Bar dataKey='amount' layout='vertical' radius={4} barSize={32}>
               <LabelList
                 dataKey='amount'
                 position='right'

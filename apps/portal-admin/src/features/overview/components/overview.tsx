@@ -131,9 +131,9 @@ export default function OverViewPage() {
               <div className='col-span-4'>
                 <BarGraph />
               </div>
-              <Card className='col-span-4 md:col-span-3'>
+              <div className='col-span-4 md:col-span-3'>
                 <RecentSales />
-              </Card>
+              </div>
               <div className='col-span-4'>
                 <AreaGraph />
               </div>

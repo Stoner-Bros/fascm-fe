@@ -64,9 +64,11 @@ export function WarehouseGraph() {
 
   return (
     <Card className='@container/card'>
-      <CardHeader>
-        <CardTitle>{t('title')}</CardTitle>
-        <CardDescription>{t('description')}</CardDescription>
+      <CardHeader className='items-center pb-0 sm:flex-row sm:justify-between sm:pb-4'>
+        <div className='flex flex-col gap-1'>
+          <CardTitle>{t('title')}</CardTitle>
+          <CardDescription>{t('description')}</CardDescription>
+        </div>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className='min-h-[200px] w-full'>
@@ -85,7 +87,7 @@ export function WarehouseGraph() {
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
             />
-            <Bar dataKey='value' strokeWidth={2} radius={8} />
+            <Bar dataKey='value' strokeWidth={2} radius={8} maxBarSize={50} />
           </BarChart>
         </ChartContainer>
       </CardContent>

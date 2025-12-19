@@ -8,18 +8,29 @@ import {
   CardTitle,
   CardDescription
 } from '@/components/ui/card';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { getConsigneeStatistics } from '@/services/statistics.service';
 import { ConsigneeStatisticsDto } from '@/types/statistics';
 import { useEffect, useState } from 'react';
+import { DateRange } from 'react-day-picker';
+import { format } from 'date-fns';
 
 export function RecentSales() {
   const [data, setData] = useState<ConsigneeStatisticsDto['topConsignees']>([]);
   const [loading, setLoading] = useState(true);
+  const [date, setDate] = useState<DateRange | undefined>({
+    from: new Date(new Date().getFullYear(), 0, 1),
+    to: new Date()
+  });
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const result = await getConsigneeStatistics();
+        setLoading(true);
+        const result = await getConsigneeStatistics({
+          startDate: date?.from ? format(date.from, 'yyyy-MM-dd') : undefined,
+          endDate: date?.to ? format(date.to, 'yyyy-MM-dd') : undefined
+        });
         setData(result.topConsignees || []);
       } catch (error) {
         console.error('Failed to fetch top consignees:', error);
@@ -29,7 +40,7 @@ export function RecentSales() {
     };
 
     fetchData();
-  }, []);
+  }, [date]);
 
   if (loading) {
     return (
@@ -49,11 +60,14 @@ export function RecentSales() {
 
   return (
     <Card className='h-full'>
-      <CardHeader>
-        <CardTitle>Top Customers</CardTitle>
-        <CardDescription>
-          Top {data.length} customers by total order amount.
-        </CardDescription>
+      <CardHeader className='items-center pb-0 sm:flex-row sm:justify-between sm:pb-4'>
+        <div className='flex flex-col gap-1'>
+          <CardTitle>Top Customers</CardTitle>
+          <CardDescription>
+            Top {data.length} customers by total order amount.
+          </CardDescription>
+        </div>
+        <DateRangePicker date={date} onDateChange={setDate} />
       </CardHeader>
       <CardContent>
         <div className='space-y-8'>
