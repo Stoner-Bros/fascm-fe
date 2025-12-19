@@ -143,12 +143,14 @@ function RealtimeMap({
   deliveryId,
   initialStart,
   initialEnd,
-  status
+  status,
+  isHidden
 }: {
   deliveryId: string;
   initialStart?: LatLng;
   initialEnd?: LatLng;
   status?: DeliveryStatusEnum;
+  isHidden?: boolean;
 }) {
   const [start, setStart] = useState<LatLng | undefined>(undefined);
   const [end, setEnd] = useState<LatLng | undefined>(undefined);
@@ -364,6 +366,8 @@ function RealtimeMap({
     }
   }, [start?.lat, start?.lng, end?.lat, end?.lng, route.length]);
 
+  if (isHidden) return null;
+
   return (
     <>
       {(start || end) && (
@@ -380,8 +384,8 @@ function RealtimeMap({
             if (m) {
               const pb = m.createPane('pane-blue');
               const pg = m.createPane('pane-gray');
-              if (pb) pb.style.zIndex = '390';
-              if (pg) pg.style.zIndex = '391';
+              if (pb) pb.style.zIndex = '10';
+              if (pg) pg.style.zIndex = '11';
             }
           }}
         >
@@ -581,6 +585,8 @@ export function PhaseDetailPane({
   );
   const [proofFiles, setProofFiles] = useState<File[]>([]);
   const [submittingProof, setSubmittingProof] = useState(false);
+
+  const isAnyDialogOpen = !!selectedPhaseForCreate;
 
   if (!schedule) {
     return <EmptyScheduleState />;
@@ -884,9 +890,10 @@ export function PhaseDetailPane({
                               </div>
                             </div>
                             {/* Map */}
-                            {delivery && (
+                            {delivery && delivery.status !== 'completed' && (
                               <RealtimeMap
                                 deliveryId={delivery.id}
+                                isHidden={isAnyDialogOpen}
                                 initialStart={
                                   delivery.startLat && delivery.startLng
                                     ? {

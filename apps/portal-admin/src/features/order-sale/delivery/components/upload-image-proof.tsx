@@ -29,6 +29,8 @@ export function UploadImageProof({
       description='Vui lòng tải lên hình ảnh minh chứng trước khi chuyển trạng thái sang Đã giao.'
       isOpen={!!deliveryForProof}
       onClose={onClose}
+      className='z-[1001]'
+      overlayClassName='z-[1000]'
       footer={
         <div className='flex w-full justify-end gap-2'>
           <Button variant='outline' size='sm' onClick={onClose}>
