@@ -81,9 +81,11 @@ export function DebtGraph() {
 
   return (
     <Card className='@container/card'>
-      <CardHeader>
-        <CardTitle>{t('title')}</CardTitle>
-        <CardDescription>{t('receivableVsPayable')}</CardDescription>
+      <CardHeader className='items-center pb-0 sm:flex-row sm:justify-between sm:pb-4'>
+        <div className='flex flex-col gap-1'>
+          <CardTitle>{t('title')}</CardTitle>
+          <CardDescription>{t('receivableVsPayable')}</CardDescription>
+        </div>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig} className='min-h-[200px] w-full'>
@@ -99,7 +101,7 @@ export function DebtGraph() {
               cursor={false}
               content={<ChartTooltipContent hideLabel />}
             />
-            <Bar dataKey='amount' strokeWidth={2} radius={8} />
+            <Bar dataKey='amount' strokeWidth={2} radius={8} maxBarSize={50} />
           </BarChart>
         </ChartContainer>
       </CardContent>

@@ -4,6 +4,8 @@ import * as React from 'react';
 import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts';
 import { useTranslations } from 'next-intl';
 import { getOrderStatistics } from '@/services/statistics.service';
+import { DateRange } from 'react-day-picker';
+import { format } from 'date-fns';
 
 import {
   Card,
@@ -18,6 +20,7 @@ import {
   ChartTooltip,
   ChartTooltipContent
 } from '@/components/ui/chart';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
 
 export const description = 'Order Status Distribution';
 
@@ -26,13 +29,21 @@ export function BarGraph() {
   const tCommon = useTranslations('Overview.charts');
   const [chartData, setChartData] = React.useState<any[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [date, setDate] = React.useState<DateRange | undefined>({
+    from: new Date(new Date().getFullYear(), 0, 1),
+    to: new Date()
+  });
 
   const COLORS = ['#8b5cf6', '#ec4899', '#14b8a6', '#f97316', '#06b6d4'];
 
   React.useEffect(() => {
     const fetchData = async () => {
       try {
-        const result = await getOrderStatistics();
+        setLoading(true);
+        const result = await getOrderStatistics({
+          startDate: date?.from ? format(date.from, 'yyyy-MM-dd') : undefined,
+          endDate: date?.to ? format(date.to, 'yyyy-MM-dd') : undefined
+        });
         const data = result.ordersByStatus.map((item, index) => ({
           status: item.status,
           count: item.count,
@@ -47,7 +58,7 @@ export function BarGraph() {
     };
 
     fetchData();
-  }, []);
+  }, [date]);
 
   const chartConfig = {
     count: {
@@ -70,6 +81,9 @@ export function BarGraph() {
         <div className='flex flex-1 flex-col justify-center gap-1 px-6 py-4 sm:py-6'>
           <CardTitle>{t('title')}</CardTitle>
           <CardDescription>{t('description')}</CardDescription>
+        </div>
+        <div className='flex items-center p-4 sm:p-6'>
+          <DateRangePicker date={date} onDateChange={setDate} />
         </div>
       </CardHeader>
       <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>

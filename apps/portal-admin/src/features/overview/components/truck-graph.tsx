@@ -100,11 +100,13 @@ export function TruckGraph() {
 
   return (
     <Card className='@container/card flex flex-col'>
-      <CardHeader className='items-center pb-0'>
-        <CardTitle>{t('title')}</CardTitle>
-        <CardDescription>
-          {t('description', { count: totalTrucks })}
-        </CardDescription>
+      <CardHeader className='items-center pb-0 sm:flex-row sm:justify-between sm:pb-4'>
+        <div className='flex flex-col gap-1'>
+          <CardTitle>{t('title')}</CardTitle>
+          <CardDescription>
+            {t('description', { count: totalTrucks })}
+          </CardDescription>
+        </div>
       </CardHeader>
       <CardContent className='flex-1 pb-0'>
         <ChartContainer
