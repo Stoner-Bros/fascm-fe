@@ -11,7 +11,7 @@
       "title": "Connecting Farmers and Retailers in a",
       "titleHighlight": "Transparent Supply Chain",
       "description": "FASCM digitizes Vietnam's fresh produce ecosystem through",
-      "blockchain": "Blockchain",
+      "blockchain": "Smart Technology",
       "and": "and",
       "iot": "IoT",
       "integration": "integration.",
@@ -54,7 +54,7 @@
       "distributors": "distributors",
       "retailers": "retailers",
       "description2": "in one transparent ecosystem. By combining",
-      "blockchain": "Blockchain",
+      "blockchain": "Smart Technology",
       "and": "and",
       "iotTechnologies": "IoT technologies",
       "description3": "it ensures real-time freshness monitoring, traceability, and trustworthy transactions.",
@@ -65,7 +65,7 @@
         "updates": "Updates"
       },
       "cards": {
-        "blockchain": "Blockchain Security",
+        "blockchain": "Smart Technology",
         "iot": "IoT Monitoring",
         "supplyChain": "Supply Chain Tracking"
       }
@@ -82,8 +82,8 @@
         "description": "View and order verified produce, track origin, and ensure freshness on arrival."
       },
       "iotBlockchain": {
-        "title": "IoT & Blockchain",
-        "description": "Real-time monitoring of storage and transport with verified blockchain traceability."
+        "title": "IoT & Smart Technology",
+        "description": "Real-time monitoring of storage and transport with connected IoT devices for temperature, humidity, and quality."
       },
       "forSuppliers": {
         "title": "For Suppliers",
@@ -91,7 +91,8 @@
           "batch": "Digital harvest batch management",
           "qr": "QR code generation for products",
           "pickup": "Real-time pickup confirmation",
-          "blockchain": "Blockchain-verified origin records"
+          "negotiation": "Direct price negotiation",
+          "qualityCheck": "Observe quality inspection process"
         }
       },
       "forConsignees": {
@@ -99,8 +100,9 @@
         "items": {
           "view": "View verified supplier products",
           "track": "Track freshness and quality metrics",
-          "scan": "Scan QR codes for full traceability",
-          "monitoring": "Automated temperature monitoring alerts"
+          "scan": "Scan QR codes for product info",
+          "monitoring": "Automated temperature monitoring alerts",
+          "creditPayment": "Credit payment with minimum limit"
         }
       }
     },
@@ -125,8 +127,12 @@
           "description": "Warehouse staff processes your order and coordinates with suppliers for fulfillment."
         },
         "step4": {
+          "title": "Credit Payment",
+          "description": "Flexible payment via credit with assigned limits."
+        },
+        "step5": {
           "title": "Track & Receive",
-          "description": "Monitor order status and receive products with full traceability and quality verification."
+          "description": "Monitor order status and receive products with full quality verification."
         }
       },
       "supplier": {
@@ -135,14 +141,18 @@
           "description": "Get notified when warehouse staff creates orders that require your products."
         },
         "step2": {
-          "title": "Review Orders",
-          "description": "Check order details, quantities, and delivery requirements from warehouse staff."
+          "title": "Review & Negotiate",
+          "description": "Check order details and negotiate prices with managers."
         },
         "step3": {
           "title": "Confirm Availability",
           "description": "Confirm product availability and accept or decline orders based on your inventory."
         },
         "step4": {
+          "title": "Quality Inspection",
+          "description": "Observe and verify the product quality inspection process."
+        },
+        "step5": {
           "title": "Fulfill Order",
           "description": "Prepare and deliver confirmed orders with proper documentation and quality assurance."
         }
@@ -158,7 +168,7 @@
     },
     "tracking": {
       "title": "Product Tracking & Verification",
-      "description": "Enter lot code or scan QR code to view detailed product information and verify on blockchain",
+      "description": "Enter lot code or scan QR code to view detailed product information and verify on system",
       "tabLot": "Lot Code Tracking",
       "lotTracking": {
         "title": "Track by Lot Code",
@@ -170,12 +180,12 @@
         "resultTitle": "Lot Code Tracking Results"
       },
       "blockchain": {
-        "title": "Blockchain Verification",
-        "description": "Enter transaction hash to verify on blockchain",
+        "title": "System Verification",
+        "description": "Enter transaction hash to verify on system",
         "placeholder": "Enter transaction hash",
-        "button": "Check on Blockchain",
+        "button": "Check on System",
         "demo": "Demo: 0x1234567890abcdef1234567890abcdef12345678",
-        "resultTitle": "Blockchain Verification Results"
+        "resultTitle": "System Verification Results"
       },
       "lotResult": {
         "lotCode": "Lot Code",
@@ -223,8 +233,8 @@
       "signIn": "Sign in here"
     },
     "footer": {
-      "description": "Modernizing Vietnam's fresh produce supply chain through Blockchain and IoT technologies for complete transparency and traceability.",
-      "copyright": "FASCM Project. All rights reserved.",
+        "description": "Modernizing Vietnam's fresh produce supply chain through Smart Technology and IoT technologies for complete transparency and efficiency.",
+        "copyright": "FASCM Project. All rights reserved.",
       "quickLinks": "Quick Links",
       "links": {
         "home": "Home",

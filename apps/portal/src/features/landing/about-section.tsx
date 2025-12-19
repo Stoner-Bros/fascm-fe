@@ -2,7 +2,7 @@
 
 import { motion } from 'motion/react';
 import { useInView } from 'react-intersection-observer';
-import { Shield, Cpu, Package } from 'lucide-react';
+import { Sparkles, Cpu, Package } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 
 export function AboutSection() {
@@ -31,7 +31,7 @@ export function AboutSection() {
                 transition={{ duration: 0.6, delay: 0.2 }}
                 className='from-agri-primary to-agri-primary-light flex flex-col items-center justify-center rounded-2xl bg-gradient-to-br p-8 text-white shadow-lg transition-shadow hover:shadow-xl'
               >
-                <Shield className='mb-4 h-16 w-16' />
+                <Sparkles className='mb-4 h-16 w-16' />
                 <h3 className='text-center text-xl font-bold'>
                   {t('cards.blockchain')}
                 </h3>

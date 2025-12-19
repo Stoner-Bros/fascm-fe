@@ -2,7 +2,7 @@
 
 import { motion } from 'motion/react';
 import { useInView } from 'react-intersection-observer';
-import { Wheat, ShoppingBasket, Settings } from 'lucide-react';
+import { Wheat, ShoppingBasket, Zap } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -31,7 +31,7 @@ export function FeaturesSection() {
       delay: 0.2
     },
     {
-      icon: Settings,
+      icon: Zap,
       titleKey: 'iotBlockchain.title',
       descriptionKey: 'iotBlockchain.description',
       color: 'from-[#1976D2] to-[#42A5F5]',
@@ -118,7 +118,11 @@ export function FeaturesSection() {
               </li>
               <li className='flex items-start'>
                 <span className='mr-2'>✓</span>
-                <span>{t('forSuppliers.items.blockchain')}</span>
+                <span>{t('forSuppliers.items.negotiation')}</span>
+              </li>
+              <li className='flex items-start'>
+                <span className='mr-2'>✓</span>
+                <span>{t('forSuppliers.items.qualityCheck')}</span>
               </li>
             </ul>
           </div>
@@ -143,6 +147,10 @@ export function FeaturesSection() {
               <li className='flex items-start'>
                 <span className='mr-2'>✓</span>
                 <span>{t('forConsignees.items.monitoring')}</span>
+              </li>
+              <li className='flex items-start'>
+                <span className='mr-2'>✓</span>
+                <span>{t('forConsignees.items.creditPayment')}</span>
               </li>
             </ul>
           </div>
