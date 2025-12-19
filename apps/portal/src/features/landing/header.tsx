@@ -95,12 +95,6 @@ export function LandingHeader() {
             >
               {t('features')}
             </Link>
-            <Link
-              href='#tracking'
-              className='text-foreground hover:text-agri-primary font-medium transition-colors'
-            >
-              {t('tracking')}
-            </Link>
             <Link href='/auth/sign-in'>
               <Button
                 variant='outline'

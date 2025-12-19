@@ -5,4 +5,3 @@ export { HowItWorksSection } from './how-it-works-section';
 export { LandingFooter } from './footer';
 export { LandingHeader } from './header';
 export { HeroSection } from './hero-section';
-export { TrackingSection } from './tracking-section';

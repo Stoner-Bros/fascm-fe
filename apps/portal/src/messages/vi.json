@@ -11,7 +11,7 @@
       "title": "Kết nối Nông dân và Nhà bán lẻ trong",
       "titleHighlight": "Chuỗi cung ứng minh bạch",
       "description": "FASCM số hóa hệ sinh thái nông sản tươi Việt Nam thông qua",
-      "blockchain": "Blockchain",
+      "blockchain": "Công nghệ thông minh",
       "and": "và",
       "iot": "IoT",
       "integration": "tích hợp.",
@@ -54,7 +54,7 @@
       "distributors": "nhà phân phối",
       "retailers": "nhà bán lẻ",
       "description2": "trong một hệ sinh thái minh bạch. Bằng cách kết hợp",
-      "blockchain": "Blockchain",
+      "blockchain": "công nghệ thông minh",
       "and": "và",
       "iotTechnologies": "công nghệ IoT",
       "description3": "nó đảm bảo giám sát độ tươi theo thời gian thực, khả năng truy xuất nguồn gốc và các giao dịch đáng tin cậy.",
@@ -65,7 +65,7 @@
         "updates": "Cập nhật"
       },
       "cards": {
-        "blockchain": "Bảo mật Blockchain",
+        "blockchain": "Công nghệ thông minh",
         "iot": "Giám sát IoT",
         "supplyChain": "Theo dõi chuỗi cung ứng"
       }
@@ -82,8 +82,8 @@
         "description": "Xem và đặt hàng nông sản đã xác minh, theo dõi nguồn gốc và đảm bảo độ tươi khi nhận hàng."
       },
       "iotBlockchain": {
-        "title": "IoT & Blockchain",
-        "description": "Giám sát thời gian thực về lưu trữ và vận chuyển với khả năng truy xuất nguồn gốc blockchain đã xác minh."
+        "title": "IoT & Công nghệ thông minh",
+        "description": "Giám sát thời gian thực về lưu trữ và vận chuyển với khả năng kết nối với các thiết bị IoT để theo dõi tình trạng hàng hóa."
       },
       "forSuppliers": {
         "title": "Dành cho Nhà cung cấp",
@@ -91,7 +91,8 @@
           "batch": "Quản lý lô hàng thu hoạch kỹ thuật số",
           "qr": "Tạo mã QR cho sản phẩm",
           "pickup": "Xác nhận lấy hàng theo thời gian thực",
-          "blockchain": "Hồ sơ nguồn gốc được xác minh bằng Blockchain"
+          "negotiation": "Thương lượng giá cả trực tiếp",
+          "qualityCheck": "Quan sát quy trình kiểm tra chất lượng"
         }
       },
       "forConsignees": {
@@ -99,8 +100,9 @@
         "items": {
           "view": "Xem sản phẩm của nhà cung cấp đã xác minh",
           "track": "Theo dõi độ tươi và chỉ số chất lượng",
-          "scan": "Quét mã QR để truy xuất nguồn gốc đầy đủ",
-          "monitoring": "Cảnh báo giám sát nhiệt độ tự động"
+          "scan": "Quét mã QR để truy xuất thông tin",
+          "monitoring": "Cảnh báo giám sát nhiệt độ tự động",
+          "creditPayment": "Thanh toán công nợ với hạn mức tối thiểu"
         }
       }
     },
@@ -118,15 +120,19 @@
         },
         "step2": {
           "title": "Đặt yêu cầu đơn hàng",
-          "description": "Gửi yêu cầu đơn hàng đến nhân viên kho, người sẽ quản lý và xử lý đơn hàng của bạn."
+          "description": "Gửi yêu cầu đơn hàng đến nhân viên kho để quản lý và xử lý đơn hàng của bạn."
         },
         "step3": {
           "title": "Xử lý đơn hàng",
           "description": "Nhân viên kho xử lý đơn hàng của bạn và phối hợp với nhà cung cấp để thực hiện."
         },
         "step4": {
+          "title": "Thanh toán công nợ",
+          "description": "Thanh toán linh hoạt theo công nợ với hạn mức tín dụng được cấp."
+        },
+        "step5": {
           "title": "Theo dõi & Nhận hàng",
-          "description": "Theo dõi trạng thái đơn hàng và nhận sản phẩm với khả năng truy xuất nguồn gốc đầy đủ và xác minh chất lượng."
+          "description": "Theo dõi trạng thái đơn hàng và nhận sản phẩm với đầy đủ xác minh chất lượng."
         }
       },
       "supplier": {
@@ -135,16 +141,20 @@
           "description": "Nhận thông báo khi nhân viên kho tạo đơn hàng yêu cầu sản phẩm của bạn."
         },
         "step2": {
-          "title": "Xem xét đơn hàng",
-          "description": "Kiểm tra chi tiết đơn hàng, số lượng và yêu cầu giao hàng từ nhân viên kho."
+          "title": "Xem xét & Thương lượng",
+          "description": "Kiểm tra chi tiết đơn hàng và thương lượng giá cả với nhà quản lý."
         },
         "step3": {
-          "title": "Xác nhận tình trạng có sẵn",
-          "description": "Xác nhận tình trạng có sẵn sản phẩm và chấp nhận hoặc từ chối đơn hàng dựa trên hàng tồn kho của bạn."
+          "title": "Xác nhận khả năng cung ứng",
+          "description": "Xác nhận khả năng cung cấp sản phẩm và chấp nhận hoặc từ chối đơn hàng dựa trên kho của bạn."
         },
         "step4": {
+          "title": "Kiểm tra chất lượng",
+          "description": "Quan sát và xác nhận quy trình kiểm tra chất lượng sản phẩm tại kho."
+        },
+        "step5": {
           "title": "Thực hiện đơn hàng",
-          "description": "Chuẩn bị và giao các đơn hàng đã được xác nhận với tài liệu phù hợp và đảm bảo chất lượng."
+          "description": "Chuẩn bị và giao đơn hàng đã xác nhận với đầy đủ giấy tờ và đảm bảo chất lượng."
         }
       },
       "cta": {
@@ -158,7 +168,7 @@
     },
     "tracking": {
       "title": "Tra cứu & Xác minh sản phẩm",
-      "description": "Nhập mã lô hoặc quét QR code để tra cứu thông tin chi tiết về sản phẩm và xác minh trên blockchain",
+      "description": "Nhập mã lô hoặc quét QR code để tra cứu thông tin chi tiết về sản phẩm và xác minh trên hệ thống",
       "tabLot": "Tra cứu theo Mã lô",
       "lotTracking": {
         "title": "Tra cứu theo Mã lô",
@@ -170,12 +180,12 @@
         "resultTitle": "Kết quả tra cứu theo Mã lô"
       },
       "blockchain": {
-        "title": "Xác minh Blockchain",
-        "description": "Nhập transaction hash để xác minh trên blockchain",
+        "title": "Xác minh Hệ thống",
+        "description": "Nhập transaction hash để xác minh trên hệ thống",
         "placeholder": "Nhập transaction hash",
-        "button": "Kiểm tra trên Blockchain",
+        "button": "Kiểm tra trên Hệ thống",
         "demo": "Demo: 0x1234567890abcdef1234567890abcdef12345678",
-        "resultTitle": "Kết quả xác thực Blockchain"
+        "resultTitle": "Kết quả xác thực Hệ thống"
       },
       "lotResult": {
         "lotCode": "Mã lô",
@@ -223,8 +233,8 @@
       "signIn": "Đăng nhập tại đây"
     },
     "footer": {
-      "description": "Hiện đại hóa chuỗi cung ứng nông sản tươi của Việt Nam thông qua công nghệ Blockchain và IoT để có sự minh bạch và truy xuất nguồn gốc hoàn toàn.",
-      "copyright": "Dự án FASCM. Đã đăng ký bản quyền.",
+        "description": "Hiện đại hóa chuỗi cung ứng nông sản tươi của Việt Nam thông qua công nghệ thông minh và IoT để có sự minh bạch và hiệu quả.",
+        "copyright": "Dự án FASCM. Đã đăng ký bản quyền.",
       "quickLinks": "Liên kết nhanh",
       "links": {
         "home": "Trang chủ",

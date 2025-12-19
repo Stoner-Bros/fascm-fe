@@ -1,34 +1,38 @@
 'use client';
 
-import { motion } from 'motion/react';
-import { useInView } from 'react-intersection-observer';
-import { useState } from 'react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import {
-  IconShoppingCart,
-  IconWheat,
-  IconSearch,
-  IconTruck,
-  IconCircleCheck,
   IconBell,
-  IconClipboardCheck,
+  IconCircleCheck,
+  IconCreditCard,
+  IconCurrencyDollar,
+  IconPackage,
+  IconSearch,
+  IconShoppingCart,
+  IconTruck,
   IconUserCheck,
-  IconPackage
+  IconWheat,
+  IconZoomCheck
 } from '@tabler/icons-react';
 import {
   BellIcon,
   CircleCheckIcon,
-  ClipboardCheckIcon,
+  CreditCard,
+  Handshake,
   PackageIcon,
   PackageSearch,
+  ShieldCheck,
   ShoppingCart,
   TruckIcon,
   UserCheckIcon,
   Wheat
 } from 'lucide-react';
+import { motion } from 'motion/react';
 import { useTranslations } from 'next-intl';
+import { useState } from 'react';
+import { useInView } from 'react-intersection-observer';
 
 interface TimelineStep {
   id: number;
@@ -71,9 +75,17 @@ export function HowItWorksSection() {
       id: 4,
       titleKey: 'consignee.step4.title',
       descriptionKey: 'consignee.step4.description',
+      icon: IconCreditCard,
+      icon2: CreditCard,
+      color: 'from-purple-500 to-purple-600'
+    },
+    {
+      id: 5,
+      titleKey: 'consignee.step5.title',
+      descriptionKey: 'consignee.step5.description',
       icon: IconPackage,
       icon2: PackageIcon,
-      color: 'from-purple-500 to-purple-600'
+      color: 'from-pink-500 to-pink-600'
     }
   ];
 
@@ -90,8 +102,8 @@ export function HowItWorksSection() {
       id: 2,
       titleKey: 'supplier.step2.title',
       descriptionKey: 'supplier.step2.description',
-      icon: IconClipboardCheck,
-      icon2: ClipboardCheckIcon,
+      icon: IconCurrencyDollar,
+      icon2: Handshake,
       color: 'from-green-500 to-green-600'
     },
     {
@@ -106,9 +118,17 @@ export function HowItWorksSection() {
       id: 4,
       titleKey: 'supplier.step4.title',
       descriptionKey: 'supplier.step4.description',
+      icon: IconZoomCheck,
+      icon2: ShieldCheck,
+      color: 'from-purple-500 to-purple-600'
+    },
+    {
+      id: 5,
+      titleKey: 'supplier.step5.title',
+      descriptionKey: 'supplier.step5.description',
       icon: IconTruck,
       icon2: TruckIcon,
-      color: 'from-purple-500 to-purple-600'
+      color: 'from-pink-500 to-pink-600'
     }
   ];
   const [activeTab, setActiveTab] = useState<'consignee' | 'supplier'>(
