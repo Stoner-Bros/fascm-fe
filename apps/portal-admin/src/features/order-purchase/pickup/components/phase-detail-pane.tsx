@@ -142,12 +142,14 @@ function RealtimeMap({
   deliveryId,
   initialStart,
   initialEnd,
-  status
+  status,
+  isHidden
 }: {
   deliveryId: string;
   initialStart?: LatLng;
   initialEnd?: LatLng;
   status?: DeliveryStatusEnum;
+  isHidden?: boolean;
 }) {
   const [start, setStart] = useState<LatLng | undefined>(undefined);
   const [end, setEnd] = useState<LatLng | undefined>(undefined);
@@ -363,6 +365,8 @@ function RealtimeMap({
     }
   }, [start?.lat, start?.lng, end?.lat, end?.lng, route.length]);
 
+  if (isHidden) return null;
+
   return (
     <>
       {(start || end) && (
@@ -379,8 +383,8 @@ function RealtimeMap({
             if (m) {
               const pb = m.createPane('pane-blue');
               const pg = m.createPane('pane-gray');
-              if (pb) pb.style.zIndex = '390';
-              if (pg) pg.style.zIndex = '391';
+              if (pb) pb.style.zIndex = '10';
+              if (pg) pg.style.zIndex = '11';
             }
           }}
         >
@@ -882,37 +886,37 @@ export function PhaseDetailPane({
                             </div>
 
                             {/* Realtime map */}
-                            {delivery.status !== 'completed' &&
-                              !deliveryForProof && (
-                                <div className='rounded-md border p-2'>
-                                  <h5 className='mb-2 flex items-center gap-1 text-xs font-medium'>
-                                    <MapPin className='h-3 w-3' />
-                                    Lộ trình
-                                  </h5>
-                                  <RealtimeMap
-                                    deliveryId={delivery.id}
-                                    status={delivery.status || undefined}
-                                    initialStart={
-                                      typeof delivery.startLat === 'number' &&
-                                      typeof delivery.startLng === 'number'
-                                        ? {
-                                            lat: delivery.startLat,
-                                            lng: delivery.startLng
-                                          }
-                                        : undefined
-                                    }
-                                    initialEnd={
-                                      typeof delivery.endLat === 'number' &&
-                                      typeof delivery.endLng === 'number'
-                                        ? {
-                                            lat: delivery.endLat,
-                                            lng: delivery.endLng
-                                          }
-                                        : undefined
-                                    }
-                                  />
-                                </div>
-                              )}
+                            {delivery.status !== 'completed' && (
+                              <div className='rounded-md border p-2'>
+                                <h5 className='mb-2 flex items-center gap-1 text-xs font-medium'>
+                                  <MapPin className='h-3 w-3' />
+                                  Lộ trình
+                                </h5>
+                                <RealtimeMap
+                                  deliveryId={delivery.id}
+                                  status={delivery.status || undefined}
+                                  isHidden={!!selectedPhaseForCreate}
+                                  initialStart={
+                                    typeof delivery.startLat === 'number' &&
+                                    typeof delivery.startLng === 'number'
+                                      ? {
+                                          lat: delivery.startLat,
+                                          lng: delivery.startLng
+                                        }
+                                      : undefined
+                                  }
+                                  initialEnd={
+                                    typeof delivery.endLat === 'number' &&
+                                    typeof delivery.endLng === 'number'
+                                      ? {
+                                          lat: delivery.endLat,
+                                          lng: delivery.endLng
+                                        }
+                                      : undefined
+                                  }
+                                />
+                              </div>
+                            )}
 
                             {Boolean(phase.imageProof?.length) && (
                               <div className='rounded-md border p-2'>

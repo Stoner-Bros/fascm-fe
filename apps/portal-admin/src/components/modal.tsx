@@ -17,6 +17,7 @@ interface ModalProps {
   children?: React.ReactNode;
   footer?: React.ReactNode;
   className?: string;
+  overlayClassName?: string;
 }
 
 export const Modal: React.FC<ModalProps> = ({
@@ -26,7 +27,8 @@ export const Modal: React.FC<ModalProps> = ({
   onClose,
   children,
   footer,
-  className
+  className,
+  overlayClassName
 }) => {
   const onChange = (open: boolean) => {
     if (!open) {
@@ -36,7 +38,10 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onChange}>
-      <DialogContent className={cn('lg:max-w-4xl', className)}>
+      <DialogContent
+        className={cn('lg:max-w-4xl', className)}
+        overlayClassName={overlayClassName}
+      >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
