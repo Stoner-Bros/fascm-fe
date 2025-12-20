@@ -19,7 +19,7 @@ export const supplierNavItems: NavItem[] = [
   },
   {
     title: 'payments',
-    url: '/supplier/payments',
+    url: '/supplier/payment',
     icon: 'payment',
     shortcut: ['s', 'p'],
     isActive: false,
@@ -54,7 +54,7 @@ export const consigneeNavItems: NavItem[] = [
   },
   {
     title: 'payments',
-    url: '/consignee/payments',
+    url: '/consignee/payment',
     icon: 'payment',
     shortcut: ['p', 'p'],
     isActive: false,
