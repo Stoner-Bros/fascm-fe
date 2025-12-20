@@ -168,9 +168,14 @@ export default function DeliveryPage() {
                 selectedScheduleId={page.selectedScheduleId}
                 searchQuery={page.schedules.searchQuery}
                 statusFilter={page.schedules.statusFilter}
+                page={page.schedules.page}
+                pageCount={page.schedules.pageCount}
+                limit={page.schedules.limit}
+                hasNextPage={page.schedules.hasNextPage}
                 onSelectSchedule={page.selectSchedule}
                 onSearchChange={page.schedules.setSearchQuery}
                 onStatusFilterChange={page.schedules.setStatusFilter}
+                onPageChange={page.schedules.setPage}
                 onRefresh={page.schedules.loadSchedules}
               />
             </div>

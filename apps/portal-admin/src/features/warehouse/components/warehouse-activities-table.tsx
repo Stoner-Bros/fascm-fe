@@ -17,14 +17,15 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import { DataTable } from '@/components/ui/table/data-table';
+import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+  type ColumnDef,
+  getCoreRowModel,
+  getPaginationRowModel,
+  type PaginationState,
+  useReactTable
+} from '@tanstack/react-table';
 import {
   fetchExportTicketById,
   fetchExportTickets
@@ -42,7 +43,8 @@ import {
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import { useTranslations, useLocale } from 'next-intl';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { parseAsInteger, useQueryState } from 'nuqs';
 
 // Define types for warehouse activities
 export interface WarehouseActivity {
@@ -83,6 +85,7 @@ export function WarehouseActivitiesTable({
   const t = useTranslations('WarehouseActivities');
   const locale = useLocale();
   const [activities, setActivities] = useState<WarehouseActivity[]>([]);
+  const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedWarehouse, setSelectedWarehouse] = useState('all');
   const [selectedActivityType, setSelectedActivityType] = useState<
@@ -98,6 +101,9 @@ export function WarehouseActivitiesTable({
     useState<WarehouseActivity | null>(null);
   const [importDetail, setImportDetail] = useState<any | null>(null);
   const [exportDetail, setExportDetail] = useState<any | null>(null);
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const [limit] = useQueryState('limit', parseAsInteger.withDefault(10));
+  const [pageCount, setPageCount] = useState(1);
 
   const warehouses = useMemo(
     () => [
@@ -123,127 +129,146 @@ export function WarehouseActivitiesTable({
     [t]
   );
 
-  useEffect(() => {
-    const load = async () => {
-      try {
-        if (warehouseId) {
-          // Use new service to fetch tickets by warehouse ID
-          const ticketsRes = await fetchWarehouseTickets(warehouseId);
+  const loadActivities = useCallback(async () => {
+    setLoading(true);
+    try {
+      if (warehouseId) {
+        // Use new service to fetch tickets by warehouse ID
+        const ticketsRes = await fetchWarehouseTickets(warehouseId);
 
-          const importActivities: WarehouseActivity[] = (
-            ticketsRes.importTickets ?? []
-          ).map((it) => ({
-            id: String(it.id),
-            date: String(
-              it.importDate ?? it.createdAt ?? new Date().toISOString()
-            ),
-            code: String(it.id),
-            type: 'import',
-            productName: String(it?.productName ?? '-'),
-            productCode: '-',
-            quantity: Number(it.quantity ?? it.percent ?? 0),
-            unit: String(it?.unit ?? ''),
-            warehouse: '-',
-            warehouseArea: it.areaName ?? undefined,
-            user: '-',
-            notes: undefined,
-            status: 'completed',
-            batchNumber:
-              it.numberOfBatch !== undefined && it.numberOfBatch !== null
-                ? String(it.numberOfBatch)
-                : undefined
-          }));
+        const importActivities: WarehouseActivity[] = (
+          ticketsRes.importTickets ?? []
+        ).map((it) => ({
+          id: String(it.id),
+          date: String(
+            it.importDate ?? it.createdAt ?? new Date().toISOString()
+          ),
+          code: String(it.id),
+          type: 'import',
+          productName: String(it?.productName ?? '-'),
+          productCode: '-',
+          quantity: Number(it.quantity ?? it.percent ?? 0),
+          unit: String(it?.unit ?? ''),
+          warehouse: '-',
+          warehouseArea: it.areaName ?? undefined,
+          user: '-',
+          notes: undefined,
+          status: 'completed',
+          batchNumber:
+            it.numberOfBatch !== undefined && it.numberOfBatch !== null
+              ? String(it.numberOfBatch)
+              : undefined
+        }));
 
-          const exportActivities: WarehouseActivity[] = (
-            ticketsRes.exportTickets ?? []
-          ).map((et) => ({
-            id: String(et.id ?? ''),
-            date: String(
-              et.exportDate ?? et.createdAt ?? new Date().toISOString()
-            ),
-            code: String(et.id ?? ''),
-            type: 'export',
-            productName: String(et.productName ?? '-'),
-            productCode: '-',
-            quantity: Number(et.quantity ?? 0),
-            unit: String(et.unit ?? ''),
-            warehouse: '-',
-            warehouseArea: et.areaName ?? undefined,
-            user: '-',
-            notes: undefined,
-            status: 'completed',
-            batchNumber: undefined,
-            customer: undefined
-          }));
+        const exportActivities: WarehouseActivity[] = (
+          ticketsRes.exportTickets ?? []
+        ).map((et) => ({
+          id: String(et.id ?? ''),
+          date: String(
+            et.exportDate ?? et.createdAt ?? new Date().toISOString()
+          ),
+          code: String(et.id ?? ''),
+          type: 'export',
+          productName: String(et.productName ?? '-'),
+          productCode: '-',
+          quantity: Number(et.quantity ?? 0),
+          unit: String(et.unit ?? ''),
+          warehouse: '-',
+          warehouseArea: et.areaName ?? undefined,
+          user: '-',
+          notes: undefined,
+          status: 'completed',
+          batchNumber: undefined,
+          customer: undefined
+        }));
 
-          setActivities([...importActivities, ...exportActivities]);
+        const allActivities = [...importActivities, ...exportActivities];
+        setActivities(allActivities);
+        // Calculate pageCount for warehouse-specific data
+        const totalPages = Math.ceil(allActivities.length / (limit ?? 10));
+        setPageCount(Math.max(1, totalPages));
+      } else {
+        // Fallback to old behavior when no warehouseId is provided
+        const [importsRes, exportsRes] = await Promise.all([
+          fetchImportTickets({ page: page ?? 1, limit: limit ?? 10 }),
+          fetchExportTickets({ page: page ?? 1, limit: limit ?? 10 })
+        ]);
+
+        const importActivities: any[] = (importsRes.data ?? []).map((it) => ({
+          id: String(it.id),
+          date: String(
+            it.importDate ?? it.createdAt ?? new Date().toISOString()
+          ),
+          code: String(it.id),
+          type: 'import',
+          productName: String(it?.productName ?? '-'),
+          quantity: Number(it.quantity ?? it.percent ?? 0),
+          unit: String(it?.unit ?? it?.unit ?? ''),
+          warehouseArea: it.areaName ?? undefined,
+          notes: undefined,
+          status: 'completed',
+          batchNumber:
+            it.numberOfBatch !== undefined && it.numberOfBatch !== null
+              ? String(it.numberOfBatch)
+              : undefined
+        }));
+
+        const exportActivities: WarehouseActivity[] = (
+          exportsRes.data ?? []
+        ).map((et) => ({
+          id: String((et as any).id ?? ''),
+          date: String(
+            (et as any).ExportDate ??
+              (et as any).createdAt ??
+              new Date().toISOString()
+          ),
+          code: String(
+            (et as any).orderDetail?.order?.id ?? (et as any).id ?? ''
+          ),
+          type: 'export',
+          productName: String((et as any).productName ?? '-'),
+          productCode: String((et as any).orderDetail?.product?.id ?? '-'),
+          quantity: Number((et as any).quantity ?? 0),
+          unit: String((et as any).unit ?? ''),
+          warehouse: '-',
+          warehouseArea: undefined,
+          user: String(
+            (et as any).orderDetail?.order?.orderSchedule?.consignee
+              ?.representativeName ?? '-'
+          ),
+          notes: undefined,
+          status: 'completed',
+          batchNumber:
+            (et as any).numberOfBatch !== undefined &&
+            (et as any).numberOfBatch !== null
+              ? String((et as any).numberOfBatch)
+              : undefined,
+          customer:
+            (et as any).orderDetail?.order?.orderSchedule?.consignee
+              ?.organizationName ?? undefined
+        }));
+
+        const allActivities = [...importActivities, ...exportActivities];
+        setActivities(allActivities);
+
+        // Calculate pageCount based on hasNextPage
+        const hasMore = importsRes.hasNextPage || exportsRes.hasNextPage;
+        if (hasMore) {
+          setPageCount((prev) => Math.max(prev, (page ?? 1) + 1));
         } else {
-          // Fallback to old behavior when no warehouseId is provided
-          const [importsRes, exportsRes] = await Promise.all([
-            fetchImportTickets({ page: 1, limit: 50 }),
-            fetchExportTickets({ page: 1, limit: 50 })
-          ]);
-
-          const importActivities: any[] = (importsRes.data ?? []).map((it) => ({
-            id: String(it.id),
-            date: String(
-              it.importDate ?? it.createdAt ?? new Date().toISOString()
-            ),
-            code: String(it.id),
-            type: 'import',
-            productName: String(it?.productName ?? '-'),
-            quantity: Number(it.quantity ?? it.percent ?? 0),
-            unit: String(it?.unit ?? it?.unit ?? ''),
-            warehouseArea: it.areaName ?? undefined,
-            notes: undefined,
-            status: 'completed',
-            batchNumber:
-              it.numberOfBatch !== undefined && it.numberOfBatch !== null
-                ? String(it.numberOfBatch)
-                : undefined
-          }));
-
-          const exportActivities: WarehouseActivity[] = (
-            exportsRes.data ?? []
-          ).map((et) => ({
-            id: String((et as any).id ?? ''),
-            date: String(
-              (et as any).ExportDate ??
-                (et as any).createdAt ??
-                new Date().toISOString()
-            ),
-            code: String(
-              (et as any).orderDetail?.order?.id ?? (et as any).id ?? ''
-            ),
-            type: 'export',
-            productName: String((et as any).productName ?? '-'),
-            productCode: String((et as any).orderDetail?.product?.id ?? '-'),
-            quantity: Number((et as any).quantity ?? 0),
-            unit: String((et as any).unit ?? ''),
-            warehouse: '-',
-            warehouseArea: undefined,
-            user: String(
-              (et as any).orderDetail?.order?.orderSchedule?.consignee
-                ?.representativeName ?? '-'
-            ),
-            notes: undefined,
-            status: 'completed',
-            batchNumber:
-              (et as any).numberOfBatch !== undefined &&
-              (et as any).numberOfBatch !== null
-                ? String((et as any).numberOfBatch)
-                : undefined,
-            customer:
-              (et as any).orderDetail?.order?.orderSchedule?.consignee
-                ?.organizationName ?? undefined
-          }));
-
-          setActivities([...importActivities, ...exportActivities]);
+          setPageCount(page ?? 1);
         }
-      } catch {}
-    };
-    load();
-  }, [warehouseId]);
+      }
+    } catch (error) {
+      console.error('Failed to load activities:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [warehouseId, page, limit]);
+
+  useEffect(() => {
+    loadActivities();
+  }, [loadActivities]);
 
   // Filter and search logic
   const filteredActivities = useMemo(() => {
@@ -281,8 +306,22 @@ export function WarehouseActivitiesTable({
     searchTerm,
     selectedWarehouse,
     selectedActivityType,
-    selectedStatus
+    selectedStatus,
+    warehouses
   ]);
+
+  // Paginate filtered activities
+  const paginatedActivities = useMemo(() => {
+    const startIndex = ((page ?? 1) - 1) * (limit ?? 10);
+    const endIndex = startIndex + (limit ?? 10);
+    return filteredActivities.slice(startIndex, endIndex);
+  }, [filteredActivities, page, limit]);
+
+  // Update pageCount based on filtered results
+  useEffect(() => {
+    const totalPages = Math.ceil(filteredActivities.length / (limit ?? 10));
+    setPageCount(Math.max(1, totalPages));
+  }, [filteredActivities.length, limit]);
 
   const openDetail = async (activity: WarehouseActivity) => {
     setSelectedActivity(activity);
@@ -370,8 +409,100 @@ export function WarehouseActivitiesTable({
     setSelectedWarehouse('all');
     setSelectedActivityType('all');
     setSelectedStatus('all');
-    setActivities((prev) => [...prev]);
+    if (page !== 1) {
+      setPage(1);
+    }
   };
+
+  // DataTable columns
+  const columns: ColumnDef<WarehouseActivity>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'date',
+        header: t('table.date'),
+        cell: ({ row }) => (
+          <div className='flex items-center gap-2'>
+            <IconCalendar className='h-4 w-4 text-gray-400' />
+            <span className='text-sm'>
+              {format(new Date(row.original.date), 'dd/MM/yyyy')}
+            </span>
+          </div>
+        )
+      },
+      {
+        accessorKey: 'code',
+        header: t('table.code'),
+        cell: ({ row }) => (
+          <code className='rounded bg-gray-100 px-2 py-1 text-xs'>
+            {row.original.code}
+          </code>
+        )
+      },
+      {
+        accessorKey: 'type',
+        header: t('table.activityType'),
+        cell: ({ row }) => (
+          <div className='flex items-center gap-2'>
+            {getActivityTypeIcon(row.original.type)}
+            {getActivityTypeBadge(row.original.type)}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'productName',
+        header: t('table.product'),
+        cell: ({ row }) => (
+          <div className='text-sm font-medium'>{row.original.productName}</div>
+        )
+      },
+      {
+        accessorKey: 'quantity',
+        header: t('table.quantity'),
+        cell: ({ row }) => (
+          <span className='text-sm font-medium'>
+            {row.original.quantity.toLocaleString()}
+          </span>
+        )
+      },
+      {
+        accessorKey: 'unit',
+        header: t('table.unit'),
+        cell: ({ row }) => <span>{row.original.unit}</span>
+      },
+      {
+        accessorKey: 'status',
+        header: t('table.status'),
+        cell: ({ row }) => getStatusBadge(row.original.status)
+      }
+    ],
+    [t]
+  );
+
+  const pagination: PaginationState = useMemo(
+    () => ({
+      pageIndex: (page ?? 1) - 1,
+      pageSize: limit ?? 10
+    }),
+    [page, limit]
+  );
+
+  const table = useReactTable({
+    data: paginatedActivities,
+    columns,
+    pageCount,
+    state: { pagination },
+    onPaginationChange: (updater) => {
+      if (typeof updater === 'function') {
+        const next = updater(pagination);
+        setPage(next.pageIndex + 1);
+      } else {
+        setPage(updater.pageIndex + 1);
+      }
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true
+  });
 
   return (
     <>
@@ -385,8 +516,18 @@ export function WarehouseActivitiesTable({
               </CardTitle>
               <CardDescription>{t('description')}</CardDescription>
             </div>
-            <Button variant='outline' size='sm' onClick={clearFilters}>
-              <IconRefresh className='mr-2 h-4 w-4' />
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => {
+                clearFilters();
+                loadActivities();
+              }}
+              disabled={loading}
+            >
+              <IconRefresh
+                className={`mr-2 h-4 w-4 ${loading ? 'animate-spin' : ''}`}
+              />
               {t('actions.refresh')}
             </Button>
           </div>
@@ -492,135 +633,15 @@ export function WarehouseActivitiesTable({
           </div>
 
           {/* Activities Table */}
-          <div className='overflow-hidden rounded-lg border'>
-            <Table>
-              <TableHeader>
-                <TableRow className='bg-gray-50'>
-                  <TableHead className='font-semibold'>
-                    {t('table.date')}
-                  </TableHead>
-                  <TableHead className='font-semibold'>
-                    {t('table.code')}
-                  </TableHead>
-                  <TableHead className='font-semibold'>
-                    {t('table.activityType')}
-                  </TableHead>
-                  <TableHead className='font-semibold'>
-                    {t('table.product')}
-                  </TableHead>
-                  <TableHead className='font-semibold'>
-                    {t('table.quantity')}
-                  </TableHead>
-                  <TableHead className='font-semibold'>
-                    {t('table.unit')}
-                  </TableHead>
-                  {/* <TableHead className='font-semibold'>Kho</TableHead> */}
-                  {/* <TableHead className='font-semibold'>
-                    Người thực hiện
-                  </TableHead> */}
-                  {/* <TableHead className='font-semibold'>
-                    Nhân viên giao hàng
-                  </TableHead> */}
-                  <TableHead className='font-semibold'>
-                    {t('table.status')}
-                  </TableHead>
-                  {/* <TableHead className='text-right font-semibold'>
-                    {t('table.actions')}
-                  </TableHead> */}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredActivities.length === 0 ? (
-                  <TableRow>
-                    <TableCell
-                      colSpan={11}
-                      className='py-8 text-center text-gray-500'
-                    >
-                      {t('noResults')}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredActivities.map((activity) => (
-                    <TableRow key={activity.id} className='hover:bg-gray-50'>
-                      <TableCell>
-                        <div className='flex items-center gap-2'>
-                          <IconCalendar className='h-4 w-4 text-gray-400' />
-                          <span className='text-sm'>
-                            {format(new Date(activity.date), 'dd/MM/yyyy')}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <code className='rounded bg-gray-100 px-2 py-1 text-xs'>
-                          {activity.code}
-                        </code>
-                      </TableCell>
-                      <TableCell>
-                        <div className='flex items-center gap-2'>
-                          {getActivityTypeIcon(activity.type)}
-                          {getActivityTypeBadge(activity.type)}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className='text-sm font-medium'>
-                            {activity.productName}
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className='text-sm font-medium'>
-                        {activity.quantity.toLocaleString()}
-                      </TableCell>
-                      <TableCell>{activity.unit}</TableCell>
-                      {/* <TableCell>
-                        <div className='flex items-center gap-2'>
-                          <IconMapPin className='h-4 w-4 text-gray-400' />
-                          <div>
-                            <div className='text-sm font-medium'>
-                              {activity.warehouse}
-                            </div>
-                            {activity.warehouseArea && (
-                              <div className='text-xs text-gray-500'>
-                                {activity.warehouseArea}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </TableCell> */}
-                      {/* <TableCell>
-                        <div className='flex items-center gap-2'>
-                          <IconUser className='h-4 w-4 text-gray-400' />
-                          <span className='text-sm'>{activity.user}</span>
-                        </div>
-                      </TableCell> */}
-                      {/* <TableCell>
-                        {activity.deliveryStaff ? (
-                          <div className='flex items-center gap-2'>
-                            <IconUser className='h-4 w-4 text-gray-400' />
-                            <span className='text-sm'>
-                              {activity.deliveryStaff}
-                            </span>
-                          </div>
-                        ) : (
-                          <span className='text-sm text-gray-400'>-</span>
-                        )}
-                      </TableCell> */}
-                      <TableCell>{getStatusBadge(activity.status)}</TableCell>
-                      {/* <TableCell className='text-right'>
-                        <Button
-                          size='sm'
-                          variant='outline'
-                          onClick={() => openDetail(activity)}
-                        >
-                          {t('actions.viewDetails')}
-                        </Button>
-                      </TableCell> */}
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          {loading ? (
+            <DataTableSkeleton columnCount={7} rowCount={10} />
+          ) : filteredActivities.length === 0 ? (
+            <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
+              {t('noResults')}
+            </div>
+          ) : (
+            <DataTable table={table} pageSizeOptions={[]} />
+          )}
         </CardContent>
       </Card>
 

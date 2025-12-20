@@ -7,7 +7,8 @@ import {
 } from '@/services/order-schedule.service';
 import type { OrderSchedule, OrderScheduleStatus } from '@/types/order';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { parseAsInteger, useQueryState } from 'nuqs';
 import type {
   Action,
   OrderScheduleRow,
@@ -130,81 +131,109 @@ export function useOrderList() {
   const { toast } = useToast();
   const t = useTranslations('Orders.list');
   const [state, dispatch] = useReducer(orderSchedulesReducer, initialState);
-  const didFetchRef = useRef(false);
-
-  const loadData = useCallback(async () => {
-    dispatch({ type: 'SET_LOADING', payload: true });
-    try {
-      // Fetch all order schedules
-      const schedulesRes = await fetchOrderSchedules({
-        page: 1,
-        limit: 50,
-        sort: 'desc'
-      });
-      const schedules: OrderSchedule[] = schedulesRes.data ?? [];
-
-      // Process schedules into rows
-      const rows: OrderScheduleRow[] = schedules.map((schedule) => {
-        // Extract product names from order details
-        const productNames = new Set<string>();
-        const orderDetails = schedule.orderDetails ?? [];
-        for (const detail of orderDetails) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const productName =
-            (detail as any)?.product?.name ||
-            (detail as any)?.productName ||
-            (detail as any)?.product?.id;
-          if (productName) productNames.add(String(productName));
-        }
-
-        const products =
-          Array.from(productNames).join(', ') || t('table.noProducts');
-
-        const deliveryDate = formatDateTime(schedule.deliveryDate);
-        const orderNumber =
-          (schedule.order && schedule.order?.id) || schedule.id;
-        const address = schedule.address || '-';
-        const createdAt = formatDateTime(schedule.createdAt);
-        const consigneeName = schedule.consignee?.organizationName || '-';
-
-        return {
-          id: schedule.id,
-          orderNumber,
-          products,
-          deliveryDate,
-          address,
-          status: (schedule.status ?? 'pending') as OrderScheduleStatus,
-          description: schedule.description ?? undefined,
-          reason: schedule.reason ?? undefined,
-          createdAt,
-          consigneeName
-        };
-      });
-
-      dispatch({ type: 'SET_ORDER_SCHEDULES', payload: rows });
-    } catch {
-      dispatch({ type: 'LOAD_ERROR' });
-      toast({
-        title: t('toast.errorTitle'),
-        description: t('toast.errorDescription'),
-        variant: 'destructive'
-      });
-    }
-  }, [t, toast]);
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const [limit] = useQueryState('limit', parseAsInteger.withDefault(10));
+  const [pageCount, setPageCount] = useState(1);
 
   useEffect(() => {
-    if (didFetchRef.current) return;
-    didFetchRef.current = true;
-    loadData();
-  }, [loadData]);
+    let cancelled = false;
 
-  const setSearchQuery = useCallback((query: string) => {
-    dispatch({ type: 'SET_SEARCH_QUERY', payload: query });
-  }, []);
+    const loadData = async () => {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      try {
+        const schedulesRes = await fetchOrderSchedules({
+          page: page ?? 1,
+          limit: limit ?? 10,
+          sort: 'desc'
+        });
 
-  const setStatusFilter = useCallback((filter: StatusFilter) => {
-    dispatch({ type: 'SET_STATUS_FILTER', payload: filter });
-  }, []);
+        if (cancelled) return;
+
+        const schedules: OrderSchedule[] = schedulesRes.data ?? [];
+
+        // Process schedules into rows
+        const rows: OrderScheduleRow[] = schedules.map((schedule) => {
+          // Extract product names from order details
+          const productNames = new Set<string>();
+          const orderDetails = schedule.orderDetails ?? [];
+          for (const detail of orderDetails) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const productName =
+              (detail as any)?.product?.name ||
+              (detail as any)?.productName ||
+              (detail as any)?.product?.id;
+            if (productName) productNames.add(String(productName));
+          }
+
+          const products =
+            Array.from(productNames).join(', ') || t('table.noProducts');
+
+          const deliveryDate = formatDateTime(schedule.deliveryDate);
+          const orderNumber =
+            (schedule.order && schedule.order?.id) || schedule.id;
+          const address = schedule.address || '-';
+          const createdAt = formatDateTime(schedule.createdAt);
+          const consigneeName = schedule.consignee?.organizationName || '-';
+
+          return {
+            id: schedule.id,
+            orderNumber,
+            products,
+            deliveryDate,
+            address,
+            status: (schedule.status ?? 'pending') as OrderScheduleStatus,
+            description: schedule.description ?? undefined,
+            reason: schedule.reason ?? undefined,
+            createdAt,
+            consigneeName
+          };
+        });
+
+        dispatch({ type: 'SET_ORDER_SCHEDULES', payload: rows });
+        setPageCount((prev) => {
+          const minimalTotal = schedulesRes.hasNextPage
+            ? (page ?? 1) + 1
+            : (page ?? 1);
+          return Math.max(prev, minimalTotal);
+        });
+      } catch {
+        if (cancelled) return;
+        dispatch({ type: 'LOAD_ERROR' });
+        toast({
+          title: t('toast.errorTitle'),
+          description: t('toast.errorDescription'),
+          variant: 'destructive'
+        });
+      }
+    };
+
+    void loadData();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit]);
+
+  const setSearchQuery = useCallback(
+    (query: string) => {
+      dispatch({ type: 'SET_SEARCH_QUERY', payload: query });
+      if (page !== 1) {
+        void setPage(1);
+      }
+    },
+    [page, setPage]
+  );
+
+  const setStatusFilter = useCallback(
+    (filter: StatusFilter) => {
+      dispatch({ type: 'SET_STATUS_FILTER', payload: filter });
+      if (page !== 1) {
+        void setPage(1);
+      }
+    },
+    [page, setPage]
+  );
 
   const handleOpenCancelDialog = useCallback((scheduleId: string) => {
     dispatch({ type: 'OPEN_CANCEL_DIALOG', payload: scheduleId });
@@ -385,7 +414,10 @@ export function useOrderList() {
     handleCancelOrder,
     handleRejectOrder,
     showRejectionReason,
-    loadData,
+    page,
+    setPage,
+    limit,
+    pageCount,
     t
   };
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { parseAsInteger, useQueryState } from 'nuqs';
 import {
   Card,
   CardContent,
@@ -27,16 +28,17 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { DataTable } from '@/components/ui/table/data-table';
+import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslations } from 'next-intl';
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  getPaginationRowModel,
+  type PaginationState,
+  useReactTable
+} from '@tanstack/react-table';
 import {
   createManager,
   deleteManager,
@@ -106,6 +108,9 @@ export default function ManagersAccount() {
   const [warehouseFilter, setWarehouseFilter] = useState<'ALL' | string>('ALL');
   const [editingManager, setEditingManager] = useState<Manager | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const [limit] = useQueryState('limit', parseAsInteger.withDefault(10));
+  const [pageCount, setPageCount] = useState(1);
 
   const loadData = useCallback(async () => {
     if (isFetchingRef.current) {
@@ -115,11 +120,17 @@ export default function ManagersAccount() {
     setIsLoading(true);
     try {
       const [managerRes, warehouseRes] = await Promise.all([
-        fetchManagers({ page: 1, limit: 50 }),
+        fetchManagers({ page: page ?? 1, limit: limit ?? 10 }),
         fetchWarehouses({ page: 1, limit: 100 })
       ]);
       setManagers(managerRes.data);
       setWarehouses(warehouseRes.data);
+      setPageCount((prev) => {
+        const minimalTotal = managerRes.hasNextPage
+          ? (page ?? 1) + 1
+          : (page ?? 1);
+        return Math.max(prev, minimalTotal);
+      });
     } catch (error) {
       toastRef.current?.({
         variant: 'destructive',
@@ -131,7 +142,8 @@ export default function ManagersAccount() {
       isFetchingRef.current = false;
       setIsLoading(false);
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit]);
 
   useEffect(() => {
     void loadData();
@@ -269,6 +281,117 @@ export default function ManagersAccount() {
       return matchesSearch && matchesWarehouse;
     });
   }, [tableData, searchQuery, warehouseFilter]);
+
+  // DataTable columns
+  const columns: ColumnDef<ManagerRow>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'index',
+        header: t('table.columns.index'),
+        cell: ({ row, table }) => {
+          const pageIndex = table.getState().pagination.pageIndex;
+          const pageSize = table.getState().pagination.pageSize;
+          return (
+            pageIndex * pageSize + table.getRowModel().rows.indexOf(row) + 1
+          );
+        }
+      },
+      {
+        accessorKey: 'firstName',
+        header: t('table.columns.firstName'),
+        cell: ({ row }) => (
+          <div className='max-w-[120px] break-words whitespace-normal'>
+            {row.original.firstName}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'lastName',
+        header: t('table.columns.lastName'),
+        cell: ({ row }) => (
+          <div className='max-w-[120px] break-words whitespace-normal'>
+            {row.original.lastName}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'email',
+        header: t('table.columns.email'),
+        cell: ({ row }) => (
+          <div className='max-w-[200px] break-words whitespace-normal'>
+            {row.original.email}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'warehouseName',
+        header: t('table.columns.warehouse'),
+        cell: ({ row }) => (
+          <div className='max-w-[150px] break-words whitespace-normal'>
+            {row.original.warehouseName}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'address',
+        header: t('table.columns.address'),
+        cell: ({ row }) => (
+          <div className='max-w-[200px] break-words whitespace-normal'>
+            {row.original.warehouse?.address || '—'}
+          </div>
+        )
+      },
+      {
+        id: 'actions',
+        header: t('table.columns.actions'),
+        cell: ({ row }) => (
+          <div className='flex justify-end gap-2'>
+            <Button
+              variant='secondary'
+              size='sm'
+              onClick={() => handleEdit(row.original)}
+            >
+              {t('actions.edit')}
+            </Button>
+            <Button
+              variant='destructive'
+              size='sm'
+              onClick={() => handleDelete(row.original.id)}
+            >
+              {t('actions.delete')}
+            </Button>
+          </div>
+        )
+      }
+    ],
+    [t]
+  );
+
+  const pagination: PaginationState = useMemo(
+    () => ({
+      pageIndex: (page ?? 1) - 1,
+      pageSize: limit ?? 10
+    }),
+    [page, limit]
+  );
+
+  const table = useReactTable({
+    data: filteredManagers,
+    columns,
+    pageCount,
+    state: { pagination },
+    onPaginationChange: (updater) => {
+      if (typeof updater === 'function') {
+        const next = updater(pagination);
+        setPage(next.pageIndex + 1);
+      } else {
+        setPage(updater.pageIndex + 1);
+      }
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true
+  });
 
   return (
     <section className='flex w-full flex-col gap-6 pb-6'>
@@ -437,77 +560,15 @@ export default function ManagersAccount() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className='rounded-md border'>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('table.columns.index')}</TableHead>
-                  <TableHead>{t('table.columns.firstName')}</TableHead>
-                  <TableHead>{t('table.columns.lastName')}</TableHead>
-                  <TableHead>{t('table.columns.email')}</TableHead>
-                  <TableHead>{t('table.columns.warehouse')}</TableHead>
-                  <TableHead>{t('table.columns.address')}</TableHead>
-                  <TableHead className='text-right'>
-                    {t('table.columns.actions')}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className='text-center'>
-                      {t('table.loading')}
-                    </TableCell>
-                  </TableRow>
-                ) : filteredManagers.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} className='text-center'>
-                      {t('table.empty')}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  filteredManagers.map((manager, index) => (
-                    <TableRow key={manager.id}>
-                      <TableCell className='font-medium'>{index + 1}</TableCell>
-                      <TableCell className='max-w-[120px] break-words whitespace-normal'>
-                        {manager.firstName}
-                      </TableCell>
-                      <TableCell className='max-w-[120px] break-words whitespace-normal'>
-                        {manager.lastName}
-                      </TableCell>
-                      <TableCell className='max-w-[200px] break-words whitespace-normal'>
-                        {manager.email}
-                      </TableCell>
-                      <TableCell className='max-w-[150px] break-words whitespace-normal'>
-                        {manager.warehouseName}
-                      </TableCell>
-                      <TableCell className='max-w-[200px] break-words whitespace-normal'>
-                        {manager.warehouse?.address}
-                      </TableCell>
-                      <TableCell className='text-right'>
-                        <div className='flex justify-end gap-2'>
-                          <Button
-                            variant='secondary'
-                            size='sm'
-                            onClick={() => handleEdit(manager)}
-                          >
-                            {t('actions.edit')}
-                          </Button>
-                          <Button
-                            variant='destructive'
-                            size='sm'
-                            onClick={() => handleDelete(manager.id)}
-                          >
-                            {t('actions.delete')}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
+          {isLoading ? (
+            <DataTableSkeleton columnCount={7} rowCount={10} />
+          ) : filteredManagers.length === 0 ? (
+            <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
+              {t('table.empty')}
+            </div>
+          ) : (
+            <DataTable table={table} pageSizeOptions={[]} />
+          )}
         </CardContent>
       </Card>
     </section>

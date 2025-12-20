@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { parseAsInteger, useQueryState } from 'nuqs';
 import {
   Card,
   CardContent,
@@ -27,16 +28,17 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { DataTable } from '@/components/ui/table/data-table';
+import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslations } from 'next-intl';
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  getPaginationRowModel,
+  type PaginationState,
+  useReactTable
+} from '@tanstack/react-table';
 import {
   createStaff,
   deleteStaff,
@@ -83,6 +85,9 @@ export default function StaffsAccount() {
   const [warehouseFilter, setWarehouseFilter] = useState<'ALL' | string>('ALL');
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const isFetchingRef = useRef(false);
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const [limit] = useQueryState('limit', parseAsInteger.withDefault(10));
+  const [pageCount, setPageCount] = useState(1);
 
   // sync toast vào ref để loadData không cần deps
   useEffect(() => {
@@ -95,11 +100,17 @@ export default function StaffsAccount() {
     setIsLoading(true);
     try {
       const [staffRes, warehouseRes] = await Promise.all([
-        fetchStaffs({ page: 1, limit: 50 }),
+        fetchStaffs({ page: page ?? 1, limit: limit ?? 10 }),
         fetchWarehouses({ page: 1, limit: 100 })
       ]);
       setStaffs(staffRes.data);
       setWarehouses(warehouseRes.data);
+      setPageCount((prev) => {
+        const minimalTotal = staffRes.hasNextPage
+          ? (page ?? 1) + 1
+          : (page ?? 1);
+        return Math.max(prev, minimalTotal);
+      });
     } catch (error) {
       toastRef.current?.({
         variant: 'destructive',
@@ -111,7 +122,8 @@ export default function StaffsAccount() {
       isFetchingRef.current = false;
       setIsLoading(false);
     }
-  }, []); // deps rỗng
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit]);
 
   useEffect(() => {
     void loadData();
@@ -240,6 +252,126 @@ export default function StaffsAccount() {
       return matchesSearch && matchesWarehouse;
     });
   }, [tableData, searchQuery, warehouseFilter]);
+
+  // DataTable columns
+  const columns: ColumnDef<(typeof tableData)[number]>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'index',
+        header: t('table.columns.index'),
+        cell: ({ row, table }) => {
+          const pageIndex = table.getState().pagination.pageIndex;
+          const pageSize = table.getState().pagination.pageSize;
+          return (
+            pageIndex * pageSize + table.getRowModel().rows.indexOf(row) + 1
+          );
+        }
+      },
+      {
+        accessorKey: 'firstName',
+        header: t('table.columns.firstName'),
+        cell: ({ row }) => (
+          <div className='max-w-[120px] break-words whitespace-normal'>
+            {row.original.firstName}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'lastName',
+        header: t('table.columns.lastName'),
+        cell: ({ row }) => (
+          <div className='max-w-[120px] break-words whitespace-normal'>
+            {row.original.lastName}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'email',
+        header: t('table.columns.email'),
+        cell: ({ row }) => (
+          <div className='max-w-[200px] break-words whitespace-normal'>
+            {row.original.email}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'position',
+        header: t('table.columns.position'),
+        cell: ({ row }) => (
+          <div className='max-w-[150px] break-words whitespace-normal'>
+            {row.original.position}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'warehouseName',
+        header: t('table.columns.warehouse'),
+        cell: ({ row }) => (
+          <div className='max-w-[150px] break-words whitespace-normal'>
+            {row.original.warehouseName}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'createdAtDisplay',
+        header: t('table.columns.createdAt'),
+        cell: ({ row }) => (
+          <div className='max-w-[150px] break-words whitespace-normal'>
+            {row.original.createdAtDisplay}
+          </div>
+        )
+      },
+      {
+        id: 'actions',
+        header: t('table.columns.actions'),
+        cell: ({ row }) => (
+          <div className='flex justify-end gap-2'>
+            <Button
+              variant='secondary'
+              size='sm'
+              onClick={() => handleEdit(row.original)}
+            >
+              {t('actions.edit')}
+            </Button>
+            <Button
+              variant='destructive'
+              size='sm'
+              onClick={() => handleDelete(row.original.id)}
+            >
+              {t('actions.delete')}
+            </Button>
+          </div>
+        )
+      }
+    ],
+    [t]
+  );
+
+  const pagination: PaginationState = useMemo(
+    () => ({
+      pageIndex: (page ?? 1) - 1,
+      pageSize: limit ?? 10
+    }),
+    [page, limit]
+  );
+
+  const table = useReactTable({
+    data: filteredStaffs,
+    columns,
+    pageCount,
+    state: { pagination },
+    onPaginationChange: (updater) => {
+      if (typeof updater === 'function') {
+        const next = updater(pagination);
+        setPage(next.pageIndex + 1);
+      } else {
+        setPage(updater.pageIndex + 1);
+      }
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true
+  });
 
   return (
     <div className='flex flex-1 flex-col overflow-hidden'>
@@ -431,85 +563,15 @@ export default function StaffsAccount() {
             </div>
           </CardHeader>
           <CardContent className='flex-1'>
-            <div className='rounded-md border'>
-              <div className='overflow-x-auto'>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('table.columns.index')}</TableHead>
-                      <TableHead>{t('table.columns.firstName')}</TableHead>
-                      <TableHead>{t('table.columns.lastName')}</TableHead>
-                      <TableHead>{t('table.columns.email')}</TableHead>
-                      <TableHead>{t('table.columns.position')}</TableHead>
-                      <TableHead>{t('table.columns.warehouse')}</TableHead>
-                      <TableHead>{t('table.columns.createdAt')}</TableHead>
-                      <TableHead className='text-right'>
-                        {t('table.columns.actions')}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={8} className='text-center'>
-                          {t('table.loading')}
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredStaffs.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={8} className='text-center'>
-                          {t('table.empty')}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredStaffs.map((staff, index) => (
-                        <TableRow key={staff.id}>
-                          <TableCell className='font-medium'>
-                            {index + 1}
-                          </TableCell>
-                          <TableCell className='max-w-[120px] break-words whitespace-normal'>
-                            {staff.firstName}
-                          </TableCell>
-                          <TableCell className='max-w-[120px] break-words whitespace-normal'>
-                            {staff.lastName}
-                          </TableCell>
-                          <TableCell className='max-w-[200px] break-words whitespace-normal'>
-                            {staff.email}
-                          </TableCell>
-                          <TableCell className='max-w-[150px] break-words whitespace-normal'>
-                            {staff.position}
-                          </TableCell>
-                          <TableCell className='max-w-[150px] break-words whitespace-normal'>
-                            {staff.warehouseName}
-                          </TableCell>
-                          <TableCell className='max-w-[150px] break-words whitespace-normal'>
-                            {staff.createdAtDisplay}
-                          </TableCell>
-                          <TableCell className='text-right'>
-                            <div className='flex justify-end gap-2'>
-                              <Button
-                                variant='secondary'
-                                size='sm'
-                                onClick={() => handleEdit(staff)}
-                              >
-                                {t('actions.edit')}
-                              </Button>
-                              <Button
-                                variant='destructive'
-                                size='sm'
-                                onClick={() => handleDelete(staff.id)}
-                              >
-                                {t('actions.delete')}
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+            {isLoading ? (
+              <DataTableSkeleton columnCount={8} rowCount={10} />
+            ) : filteredStaffs.length === 0 ? (
+              <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
+                {t('table.empty')}
               </div>
-            </div>
+            ) : (
+              <DataTable table={table} pageSizeOptions={[]} />
+            )}
           </CardContent>
         </Card>
       </div>

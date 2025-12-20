@@ -10,17 +10,10 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
+import { ExportTable } from '@/features/order-sale/export/components';
 import { useExportTickets } from '@/features/order-sale/export/hooks';
-import { Calendar, FileOutput, Plus, RefreshCw, Trash2 } from 'lucide-react';
+import { Calendar, FileOutput, Plus, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ExportTicketsPage() {
@@ -29,20 +22,13 @@ export default function ExportTicketsPage() {
     loadingFetch,
     loadingDelete,
     hasNextPage,
+    page,
+    setPage,
+    limit,
+    pageCount,
     loadETickets,
     deleteETicket
   } = useExportTickets();
-
-  const formatDate = (date: string | undefined) => {
-    if (!date) return '-';
-    return new Date(date).toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
 
   return (
     <PageContainer>
@@ -146,107 +132,31 @@ export default function ExportTicketsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className='rounded-lg border'>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Mã phiếu</TableHead>
-                    <TableHead>Ngày tạo</TableHead>
-                    <TableHead>Cập nhật</TableHead>
-                    <TableHead>Trạng thái</TableHead>
-                    <TableHead className='text-right'>Thao tác</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loadingFetch ? (
-                    // Loading state
-                    Array.from({ length: 5 }).map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell>
-                          <Skeleton className='h-4 w-24' />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className='h-4 w-32' />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className='h-4 w-32' />
-                        </TableCell>
-                        <TableCell>
-                          <Skeleton className='h-5 w-20' />
-                        </TableCell>
-                        <TableCell className='text-right'>
-                          <Skeleton className='ml-auto h-8 w-8' />
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : tickets.length === 0 ? (
-                    // Empty state
-                    <TableRow>
-                      <TableCell colSpan={5} className='py-12 text-center'>
-                        <div className='flex flex-col items-center gap-2'>
-                          <FileOutput className='text-muted-foreground h-10 w-10' />
-                          <p className='text-muted-foreground'>
-                            Chưa có phiếu xuất kho nào
-                          </p>
-                          <Link href='/dashboard/order-sale/export/create'>
-                            <Button
-                              variant='outline'
-                              size='sm'
-                              className='mt-2'
-                            >
-                              <Plus className='mr-2 h-4 w-4' />
-                              Tạo phiếu đầu tiên
-                            </Button>
-                          </Link>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    // Data rows
-                    tickets.map((ticket) => (
-                      <TableRow key={ticket.id}>
-                        <TableCell className='font-mono text-sm'>
-                          {ticket.id.slice(0, 8).toUpperCase()}
-                        </TableCell>
-                        <TableCell>
-                          <div className='flex items-center gap-2'>
-                            <Calendar className='text-muted-foreground h-4 w-4' />
-                            <span>{formatDate(ticket.createdAt)}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <span className='text-muted-foreground'>
-                            {formatDate(ticket.updatedAt)}
-                          </span>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant='default'>Đã tạo</Badge>
-                        </TableCell>
-                        <TableCell className='text-right'>
-                          <Button
-                            variant='ghost'
-                            size='icon'
-                            onClick={() => deleteETicket(ticket.id)}
-                            disabled={loadingDelete}
-                          >
-                            <Trash2 className='text-destructive h-4 w-4' />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Pagination info */}
-            {!loadingFetch && tickets.length > 0 && (
-              <div className='text-muted-foreground mt-4 flex items-center justify-between text-sm'>
-                <span>Hiển thị {tickets.length} phiếu</span>
-                {hasNextPage && (
-                  <span className='text-primary'>Còn thêm dữ liệu...</span>
-                )}
+            {loadingFetch ? (
+              <DataTableSkeleton columnCount={5} rowCount={10} />
+            ) : tickets.length === 0 ? (
+              <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
+                <div className='flex flex-col items-center gap-2'>
+                  <FileOutput className='h-10 w-10' />
+                  <p>Chưa có phiếu xuất kho nào</p>
+                  <Link href='/dashboard/order-sale/export/create'>
+                    <Button variant='outline' size='sm' className='mt-2'>
+                      <Plus className='mr-2 h-4 w-4' />
+                      Tạo phiếu đầu tiên
+                    </Button>
+                  </Link>
+                </div>
               </div>
+            ) : (
+              <ExportTable
+                loading={loadingFetch}
+                tickets={tickets}
+                page={page ?? 1}
+                limit={limit ?? 10}
+                pageCount={pageCount}
+                onPageChange={setPage}
+                onDeleteTicket={deleteETicket}
+              />
             )}
           </CardContent>
         </Card>

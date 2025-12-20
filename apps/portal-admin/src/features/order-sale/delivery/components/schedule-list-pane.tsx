@@ -5,6 +5,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious
+} from '@/components/ui/pagination';
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -22,9 +30,14 @@ interface ScheduleListPaneProps {
   selectedScheduleId: string | null;
   searchQuery: string;
   statusFilter: OrderScheduleStatus | 'all';
+  page: number;
+  pageCount: number;
+  limit: number;
+  hasNextPage: boolean;
   onSelectSchedule: (id: string) => void;
   onSearchChange: (query: string) => void;
   onStatusFilterChange: (status: OrderScheduleStatus | 'all') => void;
+  onPageChange: (page: number) => void;
   onRefresh: () => void;
 }
 
@@ -75,9 +88,14 @@ export function ScheduleListPane({
   selectedScheduleId,
   searchQuery,
   statusFilter,
+  page,
+  pageCount,
+  limit,
+  hasNextPage,
   onSelectSchedule,
   onSearchChange,
   onStatusFilterChange,
+  onPageChange,
   onRefresh
 }: ScheduleListPaneProps) {
   return (
@@ -225,12 +243,75 @@ export function ScheduleListPane({
         </div>
       </CardContent>
 
-      {/* Footer with count */}
+      {/* Footer with pagination */}
       {!loading && schedules.length > 0 && (
-        <div className='border-t px-3 py-1.5'>
-          <p className='text-muted-foreground text-[10px]'>
-            Hiển thị {schedules.length} lịch
-          </p>
+        <div className='border-t px-3 py-2'>
+          <div className='flex items-center justify-between'>
+            <p className='text-muted-foreground text-[10px]'>
+              Hiển thị {schedules.length} lịch
+            </p>
+            {(hasNextPage || page > 1) && (
+              <Pagination className='m-0'>
+                <PaginationContent>
+                  <PaginationItem>
+                    <PaginationPrevious
+                      href='#'
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (page > 1) {
+                          onPageChange(page - 1);
+                        }
+                      }}
+                      className={cn(
+                        page === 1 && 'pointer-events-none opacity-50'
+                      )}
+                    />
+                  </PaginationItem>
+                  {Array.from({ length: Math.min(pageCount, 5) }, (_, i) => {
+                    let pageNum: number;
+                    if (pageCount <= 5) {
+                      pageNum = i + 1;
+                    } else if (page <= 3) {
+                      pageNum = i + 1;
+                    } else if (page >= pageCount - 2) {
+                      pageNum = pageCount - 4 + i;
+                    } else {
+                      pageNum = page - 2 + i;
+                    }
+                    return (
+                      <PaginationItem key={pageNum}>
+                        <PaginationLink
+                          href='#'
+                          onClick={(e) => {
+                            e.preventDefault();
+                            onPageChange(pageNum);
+                          }}
+                          isActive={pageNum === page}
+                          className='h-7 w-7 text-[10px]'
+                        >
+                          {pageNum}
+                        </PaginationLink>
+                      </PaginationItem>
+                    );
+                  })}
+                  <PaginationItem>
+                    <PaginationNext
+                      href='#'
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (page < pageCount) {
+                          onPageChange(page + 1);
+                        }
+                      }}
+                      className={cn(
+                        page >= pageCount && 'pointer-events-none opacity-50'
+                      )}
+                    />
+                  </PaginationItem>
+                </PaginationContent>
+              </Pagination>
+            )}
+          </div>
         </div>
       )}
     </Card>

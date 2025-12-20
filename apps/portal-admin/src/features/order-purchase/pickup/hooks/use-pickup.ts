@@ -27,6 +27,7 @@ import {
 } from '@/types/harvest-schedule';
 import { Truck } from '@/types/truck';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { parseAsInteger, useQueryState } from 'nuqs';
 import { io } from 'socket.io-client';
 
 // ============================================================================
@@ -125,20 +126,70 @@ export function useHarvestSchedules() {
   const [schedules, setSchedules] = useState<HarvestSchedule[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasNextPage, setHasNextPage] = useState(false);
+  const [pageCount, setPageCount] = useState(1);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<
     HarvestScheduleStatus | 'all'
   >('processing');
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const [limit] = useQueryState('limit', parseAsInteger.withDefault(7));
+
+  // Sort function: processing and pending first, completed last
+  const sortSchedules = useCallback((schedulesList: HarvestSchedule[]) => {
+    return [...schedulesList].sort((a, b) => {
+      const statusA = (a.status || 'pending').toLowerCase();
+      const statusB = (b.status || 'pending').toLowerCase();
+
+      // Processing and pending should be first
+      const priorityA =
+        statusA === 'processing' || statusA === 'pending' ? 0 : 1;
+      const priorityB =
+        statusB === 'processing' || statusB === 'pending' ? 0 : 1;
+
+      // Completed should be last
+      const completedA = statusA === 'completed' ? 1 : 0;
+      const completedB = statusB === 'completed' ? 1 : 0;
+
+      // First sort by priority (processing/pending first)
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+
+      // Then sort completed to the end
+      if (completedA !== completedB) {
+        return completedA - completedB;
+      }
+
+      // For same priority, sort by date (newest first)
+      const dateA = new Date(a.createdAt || a.harvestDate || 0).getTime();
+      const dateB = new Date(b.createdAt || b.harvestDate || 0).getTime();
+      return dateB - dateA;
+    });
+  }, []);
 
   const loadSchedules = useCallback(async () => {
     setLoading(true);
     try {
       const response = await fetchHarvestSchedules({
+        page,
+        limit,
         status: statusFilter === 'all' ? undefined : statusFilter,
-        limit: 50
+        sort: 'desc'
       });
-      setSchedules(response.data);
+      const sortedSchedules = sortSchedules(response.data);
+      setSchedules(sortedSchedules);
       setHasNextPage(response.hasNextPage);
+
+      // Calculate pageCount for pagination display
+      // If hasNextPage is true, there's at least one more page
+      // If we're on page > 1 and no next page, this is the last page
+      if (response.hasNextPage) {
+        // There's at least one more page, so pageCount is at least current page + 1
+        setPageCount((prev) => Math.max(prev, page + 1));
+      } else {
+        // No next page, so current page is the last page
+        setPageCount(page);
+      }
     } catch (error) {
       console.error('Failed to fetch schedule:', error);
       toast({
@@ -150,7 +201,7 @@ export function useHarvestSchedules() {
       setLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter]);
+  }, [page, statusFilter, sortSchedules]);
 
   useEffect(() => {
     loadSchedules();
@@ -169,15 +220,43 @@ export function useHarvestSchedules() {
     );
   }, [schedules, searchQuery]);
 
+  const handlePageChange = useCallback((newPage: number) => {
+    setPage(newPage);
+  }, []);
+
+  const handleSearchChange = useCallback(
+    (query: string) => {
+      setSearchQuery(query);
+      if (page !== 1) {
+        setPage(1);
+      }
+    },
+    [page]
+  );
+
+  const handleStatusFilterChange = useCallback(
+    (filter: HarvestScheduleStatus | 'all') => {
+      setStatusFilter(filter);
+      if (page !== 1) {
+        setPage(1);
+      }
+    },
+    [page]
+  );
+
   return {
     schedules: filteredSchedules,
     allSchedules: schedules,
     loading,
     hasNextPage,
+    page,
+    pageCount,
+    limit,
     searchQuery,
-    setSearchQuery,
+    setSearchQuery: handleSearchChange,
     statusFilter,
-    setStatusFilter,
+    setStatusFilter: handleStatusFilterChange,
+    setPage: handlePageChange,
     loadSchedules
   };
 }

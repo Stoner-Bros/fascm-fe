@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { parseAsInteger, useQueryState } from 'nuqs';
 import {
   Card,
   CardContent,
@@ -27,16 +28,17 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { DataTable } from '@/components/ui/table/data-table';
+import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslations } from 'next-intl';
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  getPaginationRowModel,
+  type PaginationState,
+  useReactTable
+} from '@tanstack/react-table';
 import {
   createSupplier,
   deleteSupplier,
@@ -90,7 +92,12 @@ export default function SuppliersAccount() {
   const [searchQuery, setSearchQuery] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState<'ALL' | string>('ALL');
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
+  const [viewingSupplier, setViewingSupplier] = useState<Supplier | null>(null);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const isFetchingRef = useRef(false);
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const [limit] = useQueryState('limit', parseAsInteger.withDefault(10));
+  const [pageCount, setPageCount] = useState(1);
 
   // sync toast vào ref
   useEffect(() => {
@@ -103,11 +110,17 @@ export default function SuppliersAccount() {
     setIsLoading(true);
     try {
       const [supplierRes, warehouseRes] = await Promise.all([
-        fetchSuppliers({ page: 1, limit: 50 }),
+        fetchSuppliers({ page: page ?? 1, limit: limit ?? 10 }),
         fetchWarehouses({ page: 1, limit: 100 })
       ]);
       setSuppliers(supplierRes.data);
       setWarehouses(warehouseRes.data);
+      setPageCount((prev) => {
+        const minimalTotal = supplierRes.hasNextPage
+          ? (page ?? 1) + 1
+          : (page ?? 1);
+        return Math.max(prev, minimalTotal);
+      });
     } catch (error) {
       toastRef.current?.({
         variant: 'destructive',
@@ -119,11 +132,20 @@ export default function SuppliersAccount() {
       isFetchingRef.current = false;
       setIsLoading(false);
     }
-  }, []); // deps rỗng để không tạo lại
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit]);
 
   useEffect(() => {
     void loadData();
   }, [loadData]);
+
+  // Reset page when search or filter changes
+  useEffect(() => {
+    if (page !== 1) {
+      void setPage(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, warehouseFilter]);
 
   const resetForm = () => {
     setForm(DEFAULT_FORM);
@@ -278,6 +300,115 @@ export default function SuppliersAccount() {
       return matchesSearch && matchesWarehouse;
     });
   }, [tableData, searchQuery, warehouseFilter]);
+
+  const handleViewDetails = (supplier: (typeof tableData)[number]) => {
+    setViewingSupplier(supplier);
+    setIsViewDialogOpen(true);
+  };
+
+  // DataTable columns
+  const columns: ColumnDef<(typeof tableData)[number]>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'index',
+        header: t('table.columns.index'),
+        cell: ({ row, table }) => {
+          const pageIndex = table.getState().pagination.pageIndex;
+          const pageSize = table.getState().pagination.pageSize;
+          return (
+            pageIndex * pageSize + table.getRowModel().rows.indexOf(row) + 1
+          );
+        }
+      },
+      {
+        accessorKey: 'gardenNameDisplay',
+        header: t('table.columns.garden'),
+        cell: ({ row }) => (
+          <div className='max-w-[200px] break-words whitespace-normal'>
+            {row.original.gardenNameDisplay}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'representativeName',
+        header: t('table.columns.representative'),
+        cell: ({ row }) => (
+          <div className='max-w-[150px] break-words whitespace-normal'>
+            {row.original.representativeName || '—'}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'warehouseName',
+        header: t('table.columns.warehouse'),
+        cell: ({ row }) => (
+          <div className='max-w-[150px] break-words whitespace-normal'>
+            {row.original.warehouseName}
+          </div>
+        )
+      },
+      {
+        id: 'actions',
+        header: () => (
+          <div className='w-full pr-2 text-right'>
+            {t('table.columns.actions')}
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className='flex justify-end gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => handleViewDetails(row.original)}
+            >
+              {t('actions.viewDetails')}
+            </Button>
+            <Button
+              variant='secondary'
+              size='sm'
+              onClick={() => handleEdit(row.original)}
+            >
+              {t('actions.edit')}
+            </Button>
+            <Button
+              variant='destructive'
+              size='sm'
+              onClick={() => handleDelete(row.original.id)}
+            >
+              {t('actions.delete')}
+            </Button>
+          </div>
+        )
+      }
+    ],
+    [t]
+  );
+
+  const pagination: PaginationState = useMemo(
+    () => ({
+      pageIndex: (page ?? 1) - 1,
+      pageSize: limit ?? 10
+    }),
+    [page, limit]
+  );
+
+  const table = useReactTable({
+    data: filteredSuppliers,
+    columns,
+    pageCount,
+    state: { pagination },
+    onPaginationChange: (updater) => {
+      if (typeof updater === 'function') {
+        const next = updater(pagination);
+        setPage(next.pageIndex + 1);
+      } else {
+        setPage(updater.pageIndex + 1);
+      }
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true
+  });
 
   return (
     <div className='flex flex-1 flex-col overflow-hidden'>
@@ -546,83 +677,121 @@ export default function SuppliersAccount() {
             </div>
           </CardHeader>
           <CardContent className='flex-1'>
-            <div className='rounded-md border'>
-              <div className='overflow-x-auto'>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('table.columns.index')}</TableHead>
-                      <TableHead>{t('table.columns.garden')}</TableHead>
-                      <TableHead>{t('table.columns.representative')}</TableHead>
-                      <TableHead>{t('table.columns.email')}</TableHead>
-                      <TableHead>{t('table.columns.warehouse')}</TableHead>
-                      <TableHead>{t('table.columns.address')}</TableHead>
-                      <TableHead className='text-right'>
-                        {t('table.columns.actions')}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className='text-center'>
-                          {t('table.loading')}
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredSuppliers.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className='text-center'>
-                          {t('table.empty')}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredSuppliers.map((supplier, index) => (
-                        <TableRow key={supplier.id}>
-                          <TableCell className='font-medium'>
-                            {index + 1}
-                          </TableCell>
-                          <TableCell className='max-w-[200px] break-words whitespace-normal'>
-                            {supplier.gardenNameDisplay}
-                          </TableCell>
-                          <TableCell className='max-w-[150px] break-words whitespace-normal'>
-                            {supplier.representativeName || '—'}
-                          </TableCell>
-                          <TableCell className='max-w-[200px] break-words whitespace-normal'>
-                            {supplier.email}
-                          </TableCell>
-                          <TableCell className='max-w-[150px] break-words whitespace-normal'>
-                            {supplier.warehouseName}
-                          </TableCell>
-                          <TableCell className='max-w-[200px] break-words whitespace-normal'>
-                            {supplier.warehouse?.address}
-                          </TableCell>
-                          <TableCell className='text-right'>
-                            <div className='flex justify-end gap-2'>
-                              <Button
-                                variant='secondary'
-                                size='sm'
-                                onClick={() => handleEdit(supplier)}
-                              >
-                                {t('actions.edit')}
-                              </Button>
-                              <Button
-                                variant='destructive'
-                                size='sm'
-                                onClick={() => handleDelete(supplier.id)}
-                              >
-                                {t('actions.delete')}
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
+            {isLoading ? (
+              <DataTableSkeleton columnCount={5} rowCount={10} />
+            ) : filteredSuppliers.length === 0 ? (
+              <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
+                {t('table.empty')}
               </div>
-            </div>
+            ) : (
+              <DataTable table={table} pageSizeOptions={[]} />
+            )}
           </CardContent>
         </Card>
+
+        {/* View Details Dialog */}
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
+            <DialogHeader>
+              <DialogTitle>{t('dialog.viewTitle')}</DialogTitle>
+              <DialogDescription>
+                {t('dialog.viewDescription')}
+              </DialogDescription>
+            </DialogHeader>
+            {viewingSupplier && (
+              <div className='space-y-4'>
+                <div className='grid gap-4 md:grid-cols-2'>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>
+                      {t('form.gardenName')}
+                    </Label>
+                    <p className='text-sm'>
+                      {viewingSupplier.gardenName || '—'}
+                    </p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>
+                      {t('form.representativeName')}
+                    </Label>
+                    <p className='text-sm'>
+                      {viewingSupplier.representativeName || '—'}
+                    </p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>{t('form.contact')}</Label>
+                    <p className='text-sm'>{viewingSupplier.contact || '—'}</p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>{t('form.taxCode')}</Label>
+                    <p className='text-sm'>{viewingSupplier.taxCode || '—'}</p>
+                  </div>
+                  <div className='space-y-2 md:col-span-2'>
+                    <Label className='font-semibold'>{t('form.address')}</Label>
+                    <p className='text-sm'>{viewingSupplier.address || '—'}</p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>
+                      {t('form.certificate')}
+                    </Label>
+                    <p className='text-sm'>
+                      {viewingSupplier.certificate || '—'}
+                    </p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>{t('form.qrCode')}</Label>
+                    <p className='text-sm'>{viewingSupplier.qrCode || '—'}</p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>
+                      {t('form.warehouseOptional')}
+                    </Label>
+                    <p className='text-sm'>
+                      {viewingSupplier.warehouse?.name || t('form.notAssigned')}
+                    </p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>{t('form.email')}</Label>
+                    <p className='text-sm'>
+                      {viewingSupplier.user?.email || '—'}
+                    </p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>
+                      {t('form.firstName')}
+                    </Label>
+                    <p className='text-sm'>
+                      {viewingSupplier.user?.firstName || '—'}
+                    </p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>
+                      {t('form.lastName')}
+                    </Label>
+                    <p className='text-sm'>
+                      {viewingSupplier.user?.lastName || '—'}
+                    </p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>
+                      {t('form.createdAt')}
+                    </Label>
+                    <p className='text-sm'>
+                      {formatDateTime(viewingSupplier.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button
+                variant='outline'
+                onClick={() => setIsViewDialogOpen(false)}
+              >
+                {t('actions.close')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

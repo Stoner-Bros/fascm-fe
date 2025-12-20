@@ -1425,13 +1425,17 @@
         "creating": "Đang tạo...",
         "saveChanges": "Lưu thay đổi",
         "create": "Tạo",
-        "confirmDelete": "Bạn có chắc chắn muốn xóa consignee này?"
+        "confirmDelete": "Bạn có chắc chắn muốn xóa consignee này?",
+        "viewDetails": "Xem chi tiết",
+        "close": "Đóng"
       },
       "dialog": {
         "editTitle": "Cập nhật tài khoản consignee",
         "createTitle": "Tạo tài khoản consignee",
         "editDescription": "Điều chỉnh thông tin tổ chức và tài khoản đăng nhập.",
-        "createDescription": "Nhập thông tin tổ chức và tài khoản đăng nhập."
+        "createDescription": "Nhập thông tin tổ chức và tài khoản đăng nhập.",
+        "viewTitle": "Chi tiết Consignee",
+        "viewDescription": "Xem thông tin chi tiết của consignee này"
       },
       "form": {
         "organizationName": "Tên tổ chức *",
@@ -1445,7 +1449,8 @@
         "password": "Mật khẩu *",
         "passwordOptional": "Mật khẩu (tùy chọn)",
         "firstName": "Họ *",
-        "lastName": "Tên *"
+        "lastName": "Tên *",
+        "createdAt": "Ngày tạo"
       },
       "placeholders": {
         "organizationName": "Công ty ABC",
@@ -1506,13 +1511,17 @@
         "creating": "Đang tạo...",
         "saveChanges": "Lưu thay đổi",
         "create": "Tạo",
-        "confirmDelete": "Bạn có chắc chắn muốn xóa supplier này?"
+        "confirmDelete": "Bạn có chắc chắn muốn xóa supplier này?",
+        "viewDetails": "Xem chi tiết",
+        "close": "Đóng"
       },
       "dialog": {
         "editTitle": "Cập nhật tài khoản nhà cung cấp",
         "createTitle": "Tạo tài khoản nhà cung cấp",
         "editDescription": "Điều chỉnh thông tin doanh nghiệp, kho và tài khoản đăng nhập.",
-        "createDescription": "Nhập thông tin doanh nghiệp, kho (nếu có) và tài khoản đăng nhập."
+        "createDescription": "Nhập thông tin doanh nghiệp, kho (nếu có) và tài khoản đăng nhập.",
+        "viewTitle": "Chi tiết Nhà cung cấp",
+        "viewDescription": "Xem thông tin chi tiết của nhà cung cấp này"
       },
       "form": {
         "fillRequired": "Vui lòng điền đầy đủ thông tin bắt buộc",
@@ -1529,7 +1538,9 @@
         "firstName": "Họ *",
         "lastName": "Tên *",
         "warehouseOptional": "Kho (tùy chọn)",
-        "unassignedWarehouse": "Không gán kho"
+        "unassignedWarehouse": "Không gán kho",
+        "createdAt": "Ngày tạo",
+        "notAssigned": "Không gán"
       },
       "placeholders": {
         "gardenName": "Vườn Cam X",
@@ -1595,13 +1606,17 @@
         "creating": "Đang tạo...",
         "saveChanges": "Lưu thay đổi",
         "create": "Tạo",
-        "confirmDelete": "Bạn có chắc chắn muốn xóa tài xế này?"
+        "confirmDelete": "Bạn có chắc chắn muốn xóa tài xế này?",
+        "viewDetails": "Xem chi tiết",
+        "close": "Đóng"
       },
       "dialog": {
         "editTitle": "Cập nhật tài khoản tài xế",
         "createTitle": "Tạo tài khoản tài xế",
         "editDescription": "Điều chỉnh thông tin giấy phép, kho/xe (tùy chọn) và tài khoản đăng nhập.",
-        "createDescription": "Nhập thông tin giấy phép, kho/xe (tùy chọn) và tài khoản đăng nhập."
+        "createDescription": "Nhập thông tin giấy phép, kho/xe (tùy chọn) và tài khoản đăng nhập.",
+        "viewTitle": "Chi tiết Tài xế",
+        "viewDescription": "Xem thông tin chi tiết của tài xế này"
       },
       "form": {
         "warehouseOptional": "Kho (tùy chọn)",
@@ -1613,7 +1628,9 @@
         "lastName": "Tên *",
         "email": "Email *",
         "password": "Mật khẩu *",
-        "passwordOptional": "Mật khẩu (tùy chọn)"
+        "passwordOptional": "Mật khẩu (tùy chọn)",
+        "createdAt": "Ngày tạo",
+        "notAssigned": "Không gán"
       },
       "placeholders": {
         "selectWarehouse": "Chọn kho",

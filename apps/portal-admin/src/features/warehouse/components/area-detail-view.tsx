@@ -20,6 +20,8 @@ import {
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
+import { DataTable } from '@/components/ui/table/data-table';
+import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 import {
   Table,
   TableBody,
@@ -28,6 +30,13 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  getPaginationRowModel,
+  type PaginationState,
+  useReactTable
+} from '@tanstack/react-table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getApiBase } from '@/lib/client';
 import {
@@ -81,7 +90,8 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { parseAsInteger, useQueryState } from 'nuqs';
 import { io } from 'socket.io-client';
 
 interface AreaDetailViewProps {
@@ -141,6 +151,28 @@ export default function AreaDetailView({
   const [isLoadingIoT, setIsLoadingIoT] = useState(false);
   const [allImportTickets, setAllImportTickets] = useState<ImportTicket[]>([]);
   const [allExportTickets, setAllExportTickets] = useState<any[]>([]);
+
+  // Pagination for batches table
+  const [batchesPage, setBatchesPage] = useQueryState(
+    'batchesPage',
+    parseAsInteger.withDefault(1)
+  );
+  const [batchesLimit] = useQueryState(
+    'batchesLimit',
+    parseAsInteger.withDefault(10)
+  );
+  const [batchesPageCount, setBatchesPageCount] = useState(1);
+
+  // Pagination for history table
+  const [historyPage, setHistoryPage] = useQueryState(
+    'historyPage',
+    parseAsInteger.withDefault(1)
+  );
+  const [historyLimit] = useQueryState(
+    'historyLimit',
+    parseAsInteger.withDefault(10)
+  );
+  const [historyPageCount, setHistoryPageCount] = useState(1);
 
   type EnvironmentReadings = {
     temperature?: number | null;
@@ -537,28 +569,33 @@ export default function AreaDetailView({
   }, [areaId]);
 
   // Fetch batches từ API khi areaId thay đổi
-  useEffect(() => {
+  const loadBatches = useCallback(async () => {
     if (!areaId) return;
+    setIsLoadingBatches(true);
+    try {
+      const batchesRes = await fetchBatchesByArea({
+        areaId,
+        page: batchesPage ?? 1,
+        limit: batchesLimit ?? 10
+      });
+      setAreaBatches(batchesRes.data || []);
+      setBatchesPageCount((prev) => {
+        const minimalTotal = batchesRes.hasNextPage
+          ? (batchesPage ?? 1) + 1
+          : (batchesPage ?? 1);
+        return Math.max(prev, minimalTotal);
+      });
+    } catch (error) {
+      console.error('Unable to load batches', error);
+      setAreaBatches([]);
+    } finally {
+      setIsLoadingBatches(false);
+    }
+  }, [areaId, batchesPage, batchesLimit]);
 
-    const loadBatches = async () => {
-      setIsLoadingBatches(true);
-      try {
-        const batchesRes = await fetchBatchesByArea({
-          areaId,
-          page: 1,
-          limit: 200
-        });
-        setAreaBatches(batchesRes.data || []);
-      } catch (error) {
-        console.error('Unable to load batches', error);
-        setAreaBatches([]);
-      } finally {
-        setIsLoadingBatches(false);
-      }
-    };
-
+  useEffect(() => {
     void loadBatches();
-  }, [areaId]);
+  }, [loadBatches]);
 
   // Fetch import và export tickets khi areaId thay đổi
   useEffect(() => {
@@ -620,56 +657,56 @@ export default function AreaDetailView({
   }, [selectedBatchId, isPriceDialogOpen]);
 
   // Load history data từ API activity-logs theo area ID
+  const loadHistoryData = useCallback(async () => {
+    if (!areaId) return;
+    setIsLoadingHistory(true);
+    try {
+      const ticketsRes = await fetchAreaTickets(areaId);
+
+      // Map import tickets từ API response
+      const importTickets: ImportTicket[] = (
+        ticketsRes.importTickets || []
+      ).map((it) => ({
+        id: it.id,
+        unit: it.unit,
+        quantity: it.quantity,
+        percent: it.percent,
+        importDate: it.importDate,
+        expiredAt: it.expiredAt,
+        createdAt: it.createdAt,
+        updatedAt: it.updatedAt,
+        batchCode: it.batchCode,
+        productName: it.productName,
+        numberOfBatch: it.numberOfBatch,
+        areaName: it.areaName
+      }));
+
+      // Map export tickets từ API response
+      const exportTickets = (ticketsRes.exportTickets || []).map((et) => ({
+        id: et.id,
+        createdAt: et.createdAt,
+        updatedAt: et.updatedAt,
+        ExportDate: et.exportDate,
+        productName: et.productName,
+        quantity: et.quantity,
+        unit: et.unit,
+        areaName: et.areaName
+      }));
+
+      setAreaImportTickets(importTickets);
+      setAreaExportTickets(exportTickets);
+    } catch (error) {
+      console.error('Unable to load area history data', error);
+      setAreaImportTickets([]);
+      setAreaExportTickets([]);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  }, [areaId, historyLimit]);
+
   useEffect(() => {
-    const loadHistoryData = async () => {
-      if (!areaId) return;
-      setIsLoadingHistory(true);
-      try {
-        const ticketsRes = await fetchAreaTickets(areaId);
-
-        // Map import tickets từ API response
-        const importTickets: ImportTicket[] = (
-          ticketsRes.importTickets || []
-        ).map((it) => ({
-          id: it.id,
-          unit: it.unit,
-          quantity: it.quantity,
-          percent: it.percent,
-          importDate: it.importDate,
-          expiredAt: it.expiredAt,
-          createdAt: it.createdAt,
-          updatedAt: it.updatedAt,
-          batchCode: it.batchCode,
-          productName: it.productName,
-          numberOfBatch: it.numberOfBatch,
-          areaName: it.areaName
-        }));
-
-        // Map export tickets từ API response
-        const exportTickets = (ticketsRes.exportTickets || []).map((et) => ({
-          id: et.id,
-          createdAt: et.createdAt,
-          updatedAt: et.updatedAt,
-          ExportDate: et.exportDate,
-          productName: et.productName,
-          quantity: et.quantity,
-          unit: et.unit,
-          areaName: et.areaName
-        }));
-
-        setAreaImportTickets(importTickets);
-        setAreaExportTickets(exportTickets);
-      } catch (error) {
-        console.error('Unable to load area history data', error);
-        setAreaImportTickets([]);
-        setAreaExportTickets([]);
-      } finally {
-        setIsLoadingHistory(false);
-      }
-    };
-
     void loadHistoryData();
-  }, [areaId]);
+  }, [loadHistoryData]);
 
   // Update areaImportTickets và areaExportTickets từ all data (fallback)
   useEffect(() => {
@@ -729,6 +766,21 @@ export default function AreaDetailView({
     return [...importActivities, ...exportActivities];
   }, [areaImportTickets, areaExportTickets]);
 
+  // Paginate history activities
+  const paginatedHistoryActivities = useMemo(() => {
+    const startIndex = ((historyPage ?? 1) - 1) * (historyLimit ?? 10);
+    const endIndex = startIndex + (historyLimit ?? 10);
+    return historyActivities.slice(startIndex, endIndex);
+  }, [historyActivities, historyPage, historyLimit]);
+
+  // Update history pageCount when activities change
+  useEffect(() => {
+    const totalPages = Math.ceil(
+      historyActivities.length / (historyLimit ?? 10)
+    );
+    setHistoryPageCount(Math.max(1, totalPages));
+  }, [historyActivities.length, historyLimit]);
+
   const getActivityTypeIcon = (type: 'import' | 'export') => {
     return type === 'import' ? (
       <IconArrowDown className='h-4 w-4 text-green-600' />
@@ -786,6 +838,203 @@ export default function AreaDetailView({
       </span>
     );
   };
+
+  // Batches table columns
+  const batchesColumns: ColumnDef<Batch>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'batchCode',
+        header: t('products.batches.columns.batchCode'),
+        cell: ({ row }) => (
+          <div className='font-mono text-xs'>{row.original.batchCode}</div>
+        )
+      },
+      {
+        accessorKey: 'product',
+        header: t('products.batches.columns.product'),
+        cell: ({ row }) => (
+          <div className='font-medium'>{row.original.product?.name || '-'}</div>
+        )
+      },
+      {
+        accessorKey: 'quantity',
+        header: t('products.batches.columns.quantity'),
+        cell: ({ row }) => (
+          <span className='font-medium'>
+            {(
+              row.original.currentQuantity ??
+              row.original.quantity ??
+              0
+            ).toLocaleString()}
+          </span>
+        )
+      },
+      {
+        accessorKey: 'unit',
+        header: t('products.batches.columns.unit'),
+        cell: ({ row }) => <span>{row.original.unit}</span>
+      },
+      {
+        accessorKey: 'costPrice',
+        header: `${t('products.batches.columns.costPrice')} /kg`,
+        cell: ({ row }) => {
+          const batch = row.original;
+          return batch.costPrice && batch.quantity
+            ? `${Math.round(batch.costPrice / batch.quantity).toLocaleString('vi-VN')} VNĐ`
+            : '-';
+        }
+      },
+      {
+        accessorKey: 'expiredAt',
+        header: t('products.batches.columns.expiredAt'),
+        cell: ({ row }) => {
+          const expiredAt = row.original.expiredAt;
+          return expiredAt
+            ? format(new Date(expiredAt), 'dd/MM/yyyy', { locale: vi })
+            : '—';
+        }
+      },
+      {
+        accessorKey: 'createdAt',
+        header: t('products.batches.columns.createdAt'),
+        cell: ({ row }) => {
+          const createdAt = row.original.createdAt;
+          return createdAt
+            ? format(new Date(createdAt), 'dd/MM/yyyy HH:mm', { locale: vi })
+            : '—';
+        }
+      },
+      {
+        id: 'actions',
+        header: t('products.batches.columns.actions'),
+        cell: ({ row }) => (
+          <div className='text-right'>
+            <Button
+              size='sm'
+              variant='outline'
+              onClick={() => {
+                setSelectedBatchId(row.original.id);
+                setIsPriceDialogOpen(true);
+              }}
+            >
+              <IconEye className='mr-2 h-4 w-4' />
+              {t('products.batches.actions.viewDetails')}
+            </Button>
+          </div>
+        )
+      }
+    ],
+    [t]
+  );
+
+  // History table columns
+  const historyColumns: ColumnDef<(typeof historyActivities)[number]>[] =
+    useMemo(
+      () => [
+        {
+          accessorKey: 'date',
+          header: t('history.columns.datetime'),
+          cell: ({ row }) => (
+            <div className='flex items-center gap-2'>
+              <IconCalendar className='h-4 w-4 text-gray-400' />
+              <span className='text-sm'>
+                {format(new Date(row.original.date), 'dd/MM/yyyy HH:mm', {
+                  locale: vi
+                })}
+              </span>
+            </div>
+          )
+        },
+        {
+          accessorKey: 'type',
+          header: t('history.columns.activityType'),
+          cell: ({ row }) => (
+            <div className='flex items-center gap-2'>
+              {getActivityTypeIcon(row.original.type)}
+              {getActivityTypeBadge(row.original.type)}
+            </div>
+          )
+        },
+        {
+          accessorKey: 'productName',
+          header: t('history.columns.product'),
+          cell: ({ row }) => (
+            <div className='text-sm font-medium'>
+              {row.original.productName}
+            </div>
+          )
+        },
+        {
+          accessorKey: 'quantity',
+          header: t('history.columns.quantity'),
+          cell: ({ row }) => (
+            <span className='font-medium'>
+              {row.original.quantity.toLocaleString()} {row.original.unit}
+            </span>
+          )
+        },
+        {
+          accessorKey: 'status',
+          header: t('history.columns.status'),
+          cell: ({ row }) => getHistoryStatusBadge(row.original.status)
+        }
+      ],
+      [t]
+    );
+
+  // Batches table
+  const batchesPagination: PaginationState = useMemo(
+    () => ({
+      pageIndex: (batchesPage ?? 1) - 1,
+      pageSize: batchesLimit ?? 10
+    }),
+    [batchesPage, batchesLimit]
+  );
+
+  const batchesTable = useReactTable({
+    data: areaBatches,
+    columns: batchesColumns,
+    pageCount: batchesPageCount,
+    state: { pagination: batchesPagination },
+    onPaginationChange: (updater) => {
+      if (typeof updater === 'function') {
+        const next = updater(batchesPagination);
+        setBatchesPage(next.pageIndex + 1);
+      } else {
+        setBatchesPage(updater.pageIndex + 1);
+      }
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true
+  });
+
+  // History table
+  const historyPagination: PaginationState = useMemo(
+    () => ({
+      pageIndex: (historyPage ?? 1) - 1,
+      pageSize: historyLimit ?? 10
+    }),
+    [historyPage, historyLimit]
+  );
+
+  const historyTable = useReactTable({
+    data: paginatedHistoryActivities,
+    columns: historyColumns,
+    pageCount: historyPageCount,
+    state: { pagination: historyPagination },
+    onPaginationChange: (updater) => {
+      if (typeof updater === 'function') {
+        const next = updater(historyPagination);
+        setHistoryPage(next.pageIndex + 1);
+      } else {
+        setHistoryPage(updater.pageIndex + 1);
+      }
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true
+  });
 
   useEffect(() => {
     if (activeTab !== 'iot' || !areaId) return;
@@ -1117,11 +1366,9 @@ export default function AreaDetailView({
           </div>
 
           {isLoadingBatches ? (
-            <div className='text-muted-foreground text-sm'>
-              {t('products.loading')}
-            </div>
+            <DataTableSkeleton columnCount={8} rowCount={10} />
           ) : areaBatches.length === 0 ? (
-            <div className='text-muted-foreground text-sm'>
+            <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
               {t('products.empty')}
             </div>
           ) : (
@@ -1134,119 +1381,8 @@ export default function AreaDetailView({
                   })}
                 </CardDescription>
               </CardHeader>
-              <CardContent className='p-0'>
-                <div className='w-full overflow-x-auto'>
-                  <Table>
-                    <TableHeader>
-                      <TableRow className='bg-gray-50'>
-                        <TableHead className='font-semibold'>
-                          {t('products.batches.columns.batchCode')}
-                        </TableHead>
-                        <TableHead className='font-semibold'>
-                          {t('products.batches.columns.product')}
-                        </TableHead>
-                        <TableHead className='font-semibold'>
-                          {t('products.batches.columns.quantity')}
-                        </TableHead>
-                        {/* <TableHead className='font-semibold'>
-                          {t('products.batches.columns.currentQuantity')}
-                        </TableHead> */}
-                        <TableHead className='font-semibold'>
-                          {t('products.batches.columns.unit')}
-                        </TableHead>
-                        <TableHead className='font-semibold'>
-                          {t('products.batches.columns.costPrice')} /kg
-                        </TableHead>
-                        <TableHead className='font-semibold'>
-                          {t('products.batches.columns.expiredAt')}
-                        </TableHead>
-                        <TableHead className='font-semibold'>
-                          {t('products.batches.columns.createdAt')}
-                        </TableHead>
-                        <TableHead className='text-right font-semibold'>
-                          {t('products.batches.columns.actions')}
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {areaBatches.map((batch) => (
-                        <TableRow key={batch.id} className='hover:bg-gray-50'>
-                          <TableCell>
-                            <div className='font-mono text-xs'>
-                              {batch.batchCode}
-                            </div>
-                            {/* <div className='text-muted-foreground text-xs'>
-                              ID: {batch.id}
-                            </div> */}
-                          </TableCell>
-                          <TableCell>
-                            <div className='flex items-center gap-2'>
-                              <div>
-                                <div className='font-medium'>
-                                  {batch.product?.name || '-'}
-                                </div>
-                                {/* <div className='text-muted-foreground text-xs'>
-                                  {batch.product?.id || '-'}
-                                </div> */}
-                              </div>
-                            </div>
-                          </TableCell>
-                          {/* <TableCell className='font-medium'>
-                            {batch.quantity.toLocaleString()}
-                          </TableCell> */}
-                          <TableCell className='font-medium'>
-                            {(
-                              batch.currentQuantity ??
-                              batch.quantity ??
-                              0
-                            ).toLocaleString()}
-                          </TableCell>
-                          <TableCell>{batch.unit}</TableCell>
-                          <TableCell>
-                            {batch.costPrice && batch.quantity
-                              ? `${Math.round(batch.costPrice / batch.quantity).toLocaleString('vi-VN')} VNĐ`
-                              : '-'}
-                          </TableCell>
-                          <TableCell className='text-xs'>
-                            {batch.expiredAt
-                              ? format(
-                                  new Date(batch.expiredAt),
-                                  'dd/MM/yyyy',
-                                  {
-                                    locale: vi
-                                  }
-                                )
-                              : '—'}
-                          </TableCell>
-                          <TableCell className='text-xs'>
-                            {batch.createdAt
-                              ? format(
-                                  new Date(batch.createdAt),
-                                  'dd/MM/yyyy HH:mm',
-                                  {
-                                    locale: vi
-                                  }
-                                )
-                              : '—'}
-                          </TableCell>
-                          <TableCell className='text-right'>
-                            <Button
-                              size='sm'
-                              variant='outline'
-                              onClick={() => {
-                                setSelectedBatchId(batch.id);
-                                setIsPriceDialogOpen(true);
-                              }}
-                            >
-                              <IconEye className='mr-2 h-4 w-4' />
-                              {t('products.batches.actions.viewDetails')}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+              <CardContent>
+                <DataTable table={batchesTable} pageSizeOptions={[]} />
               </CardContent>
             </Card>
           )}
@@ -1296,85 +1432,13 @@ export default function AreaDetailView({
             </CardHeader>
             <CardContent>
               {isLoadingHistory ? (
-                <div className='py-8 text-center text-sm text-gray-500'>
-                  {t('history.loading')}
+                <DataTableSkeleton columnCount={5} rowCount={10} />
+              ) : historyActivities.length === 0 ? (
+                <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
+                  {t('history.noResults')}
                 </div>
               ) : (
-                <>
-                  {/* Activities Table */}
-                  {historyActivities.length === 0 ? (
-                    <div className='py-8 text-center text-sm text-gray-500'>
-                      {t('history.noResults')}
-                    </div>
-                  ) : (
-                    <div className='overflow-hidden rounded-lg border'>
-                      <Table>
-                        <TableHeader>
-                          <TableRow className='bg-gray-50'>
-                            <TableHead className='font-semibold'>
-                              {t('history.columns.datetime')}
-                            </TableHead>
-                            <TableHead className='font-semibold'>
-                              {t('history.columns.activityType')}
-                            </TableHead>
-                            <TableHead className='font-semibold'>
-                              {t('history.columns.product')}
-                            </TableHead>
-                            <TableHead className='font-semibold'>
-                              {t('history.columns.quantity')}
-                            </TableHead>
-                            <TableHead className='font-semibold'>
-                              {t('history.columns.status')}
-                            </TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {historyActivities.map((activity) => (
-                            <TableRow
-                              key={activity.id}
-                              className='hover:bg-gray-50'
-                            >
-                              <TableCell>
-                                <div className='flex items-center gap-2'>
-                                  <IconCalendar className='h-4 w-4 text-gray-400' />
-                                  <span className='text-sm'>
-                                    {format(
-                                      new Date(activity.date),
-                                      'dd/MM/yyyy HH:mm',
-                                      {
-                                        locale: vi
-                                      }
-                                    )}
-                                  </span>
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div className='flex items-center gap-2'>
-                                  {getActivityTypeIcon(activity.type)}
-                                  {getActivityTypeBadge(activity.type)}
-                                </div>
-                              </TableCell>
-                              <TableCell>
-                                <div>
-                                  <div className='text-sm font-medium'>
-                                    {activity.productName}
-                                  </div>
-                                </div>
-                              </TableCell>
-                              <TableCell className='font-medium'>
-                                {activity.quantity.toLocaleString()}{' '}
-                                {activity.unit}
-                              </TableCell>
-                              <TableCell>
-                                {getHistoryStatusBadge(activity.status)}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </>
+                <DataTable table={historyTable} pageSizeOptions={[]} />
               )}
             </CardContent>
           </Card>

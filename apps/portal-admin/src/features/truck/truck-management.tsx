@@ -29,27 +29,25 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { DataTable } from '@/components/ui/table/data-table';
+import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 import { useToast } from '@/components/ui/use-toast';
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  getPaginationRowModel,
+  type PaginationState,
+  useReactTable
+} from '@tanstack/react-table';
 import { uploadFile } from '@/services/file.service';
 import {
   createTruck,
   deleteTruck,
-  fetchTrucks,
-  fetchActiveTruckAlertByTruckId
+  fetchTrucks
 } from '@/services/truck.service';
 import type { Truck, TruckStatusEnum, TruckAlert } from '@/types/truck';
 import { fetchTruckAlerts } from '@/services/truck.service';
 import {
-  IconChevronLeft,
-  IconChevronRight,
   IconCpu,
   IconLoader2,
   IconPlus,
@@ -66,7 +64,8 @@ import { connectIoTSocket } from '@/services/iotdevice.service';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { parseAsInteger, useQueryState } from 'nuqs';
 
 function getStatusBadge(status: TruckStatusEnum | null | undefined, t: any) {
   switch (status) {
@@ -126,8 +125,9 @@ export function TruckManagement() {
   // Data state
   const [trucks, setTrucks] = useState<Truck[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const [limit] = useQueryState('limit', parseAsInteger.withDefault(10));
+  const [pageCount, setPageCount] = useState(1);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<
     'ALL' | 'available' | 'in_use' | 'maintenance' | 'unavailable'
@@ -147,18 +147,27 @@ export function TruckManagement() {
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
-  const LIMIT = 10;
   const isMounted = useRef(false);
   const [alertsByTruck, setAlertsByTruck] = useState<
     Record<string, TruckAlert | null>
   >({});
 
-  const loadTrucks = async () => {
+  const loadTrucks = useCallback(async () => {
+    const currentPage = page ?? 1;
+    const currentLimit = limit ?? 10;
     setLoading(true);
     try {
-      const response = await fetchTrucks({ page, limit: LIMIT });
+      const response = await fetchTrucks({
+        page: currentPage,
+        limit: currentLimit
+      });
       setTrucks(response.data ?? []);
-      setHasMore(response.hasNextPage ?? false);
+      setPageCount((prev) => {
+        const minimalTotal = response.hasNextPage
+          ? currentPage + 1
+          : currentPage;
+        return Math.max(prev, minimalTotal);
+      });
     } catch {
       toast({
         variant: 'destructive',
@@ -168,34 +177,36 @@ export function TruckManagement() {
     } finally {
       setLoading(false);
     }
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit]);
+
+  const loadTruckAlerts = useCallback(async () => {
+    try {
+      const res = await fetchTruckAlerts({ page: 1, limit: 100 });
+      const map: Record<string, TruckAlert | null> = {};
+      (res.data || [])
+        .filter((a) => String(a.status).toLowerCase() !== 'resolved')
+        .forEach((a) => {
+          const tid = String(a.truck?.id ?? '');
+          if (!tid) return;
+          const prev = map[tid];
+          if (!prev) map[tid] = a;
+          else {
+            const p = new Date(
+              prev.createdAt || prev.updatedAt || ''
+            ).getTime();
+            const c = new Date(a.createdAt || a.updatedAt || '').getTime();
+            if (c >= p) map[tid] = a;
+          }
+        });
+      setAlertsByTruck(map);
+    } catch {}
+  }, []);
 
   useEffect(() => {
     if (!isMounted.current) {
       isMounted.current = true;
-      loadTrucks();
-      (async () => {
-        try {
-          const res = await fetchTruckAlerts({ page: 1, limit: 10 });
-          const map: Record<string, TruckAlert | null> = {};
-          (res.data || [])
-            .filter((a) => String(a.status).toLowerCase() !== 'resolved')
-            .forEach((a) => {
-              const tid = String(a.truck?.id ?? '');
-              if (!tid) return;
-              const prev = map[tid];
-              if (!prev) map[tid] = a;
-              else {
-                const p = new Date(
-                  prev.createdAt || prev.updatedAt || ''
-                ).getTime();
-                const c = new Date(a.createdAt || a.updatedAt || '').getTime();
-                if (c >= p) map[tid] = a;
-              }
-            });
-          setAlertsByTruck(map);
-        } catch {}
-      })();
+      loadTruckAlerts();
       const socket = connectIoTSocket();
       const events = [
         'truck-alert',
@@ -228,35 +239,14 @@ export function TruckManagement() {
         socket.disconnect();
       };
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (!isMounted.current) return;
-    const ids = trucks.map((t) => String(t.id || '')).filter((id) => !!id);
-    if (ids.length === 0) return;
-    (async () => {
-      try {
-        const results = await Promise.all(
-          ids.map((id) => fetchActiveTruckAlertByTruckId(id).catch(() => null))
-        );
-        const next: Record<string, TruckAlert | null> = {};
-        ids.forEach((id, idx) => {
-          const a = results[idx];
-          next[id] =
-            a && String(a.status).toLowerCase() !== 'resolved' ? a : null;
-        });
-        setAlertsByTruck((prev) => ({ ...prev, ...next }));
-      } catch {}
-    })();
-  }, [trucks]);
+  }, [loadTruckAlerts]);
 
   useEffect(() => {
     if (isMounted.current) {
       loadTrucks();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  }, [page, limit]);
 
   // Filter trucks by search term and status
   const filteredTrucks = useMemo(() => {
@@ -272,6 +262,189 @@ export function TruckManagement() {
       return matchesSearch && matchesStatus;
     });
   }, [trucks, searchTerm, statusFilter]);
+
+  // DataTable columns
+  const columns: ColumnDef<Truck>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'id',
+        header: 'ID',
+        cell: ({ row }) => (
+          <span
+            className='cursor-pointer hover:underline'
+            onClick={() => router.push(`/dashboard/truck/${row.original.id}`)}
+          >
+            {row.original.id || '-'}
+          </span>
+        )
+      },
+      {
+        accessorKey: 'licensePlate',
+        header: t('fields.licensePlate'),
+        cell: ({ row }) => (
+          <span
+            className='cursor-pointer font-medium hover:underline'
+            onClick={() => router.push(`/dashboard/truck/${row.original.id}`)}
+          >
+            {row.original.licensePlate || '-'}
+          </span>
+        )
+      },
+      {
+        accessorKey: 'model',
+        header: t('fields.model'),
+        cell: ({ row }) => (
+          <span
+            className='cursor-pointer hover:underline'
+            onClick={() => router.push(`/dashboard/truck/${row.original.id}`)}
+          >
+            {row.original.model || '-'}
+          </span>
+        )
+      },
+      {
+        accessorKey: 'capacity',
+        header: t('fields.capacity'),
+        cell: ({ row }) => {
+          const capacity = row.original.capacity;
+          return (
+            <span
+              className='cursor-pointer hover:underline'
+              onClick={() => router.push(`/dashboard/truck/${row.original.id}`)}
+            >
+              {capacity ? `${capacity} ${t('units.kg')}` : '-'}
+            </span>
+          );
+        }
+      },
+      {
+        accessorKey: 'currentLocation',
+        header: t('fields.currentLocation'),
+        cell: ({ row }) => (
+          <span
+            className='cursor-pointer hover:underline'
+            onClick={() => router.push(`/dashboard/truck/${row.original.id}`)}
+          >
+            {row.original.currentLocation || '-'}
+          </span>
+        )
+      },
+      {
+        accessorKey: 'status',
+        header: t('fields.status'),
+        cell: ({ row }) => (
+          <div
+            className='cursor-pointer'
+            onClick={() => router.push(`/dashboard/truck/${row.original.id}`)}
+          >
+            {getStatusBadge(row.original.status, t)}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'iotDevice',
+        header: t('fields.iotDevices'),
+        cell: ({ row }) => {
+          const devices = row.original.iotDevice;
+          return devices && devices.length > 0 ? (
+            <Badge
+              variant='outline'
+              className='hover:bg-accent cursor-pointer'
+              onClick={() => router.push(`/dashboard/truck/${row.original.id}`)}
+            >
+              <IconCpu className='mr-1 h-3 w-3' />
+              {devices.length}{' '}
+              {devices.length === 1 ? t('units.device') : t('units.devices')}
+            </Badge>
+          ) : (
+            <span
+              className='text-muted-foreground cursor-pointer hover:underline'
+              onClick={() => router.push(`/dashboard/truck/${row.original.id}`)}
+            >
+              -
+            </span>
+          );
+        }
+      },
+      {
+        id: 'alert',
+        header: 'Alert',
+        cell: ({ row }) => {
+          const alert = alertsByTruck[row.original.id];
+          return (
+            <div
+              className='cursor-pointer'
+              onClick={() => router.push(`/dashboard/truck/${row.original.id}`)}
+            >
+              {alert ? (
+                <Badge
+                  variant='outline'
+                  className='gap-1.5 bg-amber-50 text-amber-600'
+                >
+                  <IconAlertTriangle className='h-3 w-3 text-amber-600' />
+                  {alert.alertType || 'Alert'}
+                </Badge>
+              ) : (
+                <Badge
+                  variant='outline'
+                  className='gap-1.5 bg-emerald-50 text-emerald-600'
+                >
+                  OK
+                </Badge>
+              )}
+            </div>
+          );
+        }
+      },
+      {
+        id: 'actions',
+        header: '',
+        cell: ({ row }) => (
+          <div className='text-right'>
+            <Button
+              variant='ghost'
+              size='icon'
+              onClick={(e) => {
+                e.stopPropagation();
+                handleOpenDelete(row.original);
+              }}
+              title={t('actions.delete')}
+              className='text-destructive hover:text-destructive'
+            >
+              <IconTrash className='h-4 w-4' />
+            </Button>
+          </div>
+        )
+      }
+    ],
+    [t, alertsByTruck, router]
+  );
+
+  const pagination: PaginationState = useMemo(
+    () => ({
+      pageIndex: (page ?? 1) - 1,
+      pageSize: limit ?? 10
+    }),
+    [page, limit]
+  );
+
+  const table = useReactTable({
+    data: filteredTrucks,
+    columns,
+    pageCount,
+    state: { pagination },
+    onPaginationChange: (updater) => {
+      if (typeof updater === 'function') {
+        const next = updater(pagination);
+        setPage(next.pageIndex + 1);
+      } else {
+        setPage(updater.pageIndex + 1);
+      }
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true
+  });
 
   // Status counts
   const statusCounts = useMemo(
@@ -574,142 +747,24 @@ export function TruckManagement() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className='rounded-md border'>
-              {loading ? (
-                <div className='flex items-center justify-center py-16'>
-                  <IconLoader2 className='text-muted-foreground h-8 w-8 animate-spin' />
-                  <span className='text-muted-foreground ml-2'>
-                    {t('loading')}
-                  </span>
-                </div>
-              ) : filteredTrucks.length === 0 ? (
-                <div className='flex flex-col items-center justify-center py-16'>
-                  <IconTruck className='text-muted-foreground h-12 w-12' />
-                  <p className='text-muted-foreground mt-2'>
+            {loading ? (
+              <DataTableSkeleton columnCount={9} rowCount={10} />
+            ) : filteredTrucks.length === 0 ? (
+              <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
+                <div className='flex flex-col items-center justify-center'>
+                  <IconTruck className='mb-2 h-12 w-12' />
+                  <p>
                     {searchTerm || statusFilter !== 'ALL'
                       ? t('noTrucks')
                       : t('noTrucksEmpty')}
                   </p>
                 </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>ID</TableHead>
-                      <TableHead>{t('fields.licensePlate')}</TableHead>
-                      <TableHead>{t('fields.model')}</TableHead>
-                      <TableHead>{t('fields.capacity')}</TableHead>
-                      <TableHead>{t('fields.currentLocation')}</TableHead>
-                      <TableHead>{t('fields.status')}</TableHead>
-                      <TableHead>{t('fields.iotDevices')}</TableHead>
-                      <TableHead>Alert</TableHead>
-                      <TableHead className='text-right'></TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredTrucks.map((truck) => (
-                      <TableRow
-                        onClick={() =>
-                          router.push(`/dashboard/truck/${truck.id}`)
-                        }
-                        className='hover:bg-accent cursor-pointer'
-                        key={truck.id}
-                      >
-                        <TableCell>{truck.id || '-'}</TableCell>
-                        <TableCell className='font-medium'>
-                          {truck.licensePlate || '-'}
-                        </TableCell>
-                        <TableCell>{truck.model || '-'}</TableCell>
-                        <TableCell>
-                          {truck.capacity
-                            ? `${truck.capacity} ${t('units.kg')}`
-                            : '-'}
-                        </TableCell>
-                        <TableCell>{truck.currentLocation || '-'}</TableCell>
-                        <TableCell>{getStatusBadge(truck.status, t)}</TableCell>
-                        <TableCell>
-                          {truck.iotDevice && truck.iotDevice.length > 0 ? (
-                            <Badge
-                              variant='outline'
-                              className='hover:bg-accent cursor-pointer'
-                            >
-                              <IconCpu className='mr-1 h-3 w-3' />
-                              {truck.iotDevice.length}{' '}
-                              {truck.iotDevice.length === 1
-                                ? t('units.device')
-                                : t('units.devices')}
-                            </Badge>
-                          ) : (
-                            <span className='text-muted-foreground'>-</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {alertsByTruck[truck.id] ? (
-                            <Badge
-                              variant='outline'
-                              className='gap-1.5 bg-amber-50 text-amber-600'
-                            >
-                              <IconAlertTriangle className='h-3 w-3 text-amber-600' />
-                              {alertsByTruck[truck.id]?.alertType || 'Alert'}
-                            </Badge>
-                          ) : (
-                            <Badge
-                              variant='outline'
-                              className='gap-1.5 bg-emerald-50 text-emerald-600'
-                            >
-                              OK
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className='text-right'>
-                          <Button
-                            variant='ghost'
-                            size='icon'
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleOpenDelete(truck);
-                            }}
-                            title={t('actions.delete')}
-                            className='text-destructive hover:text-destructive'
-                          >
-                            <IconTrash className='h-4 w-4' />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
-            </div>
+              </div>
+            ) : (
+              <DataTable table={table} pageSizeOptions={[]} />
+            )}
           </CardContent>
         </Card>
-
-        {/* Pagination */}
-        {!loading && trucks.length > 0 && (
-          <div className='flex items-center justify-center gap-2'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-            >
-              <IconChevronLeft className='h-4 w-4' />
-              {t('pagination.previous')}
-            </Button>
-            <span className='text-muted-foreground text-sm'>
-              {t('pagination.page', { page })}
-            </span>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => setPage((p) => p + 1)}
-              disabled={!hasMore}
-            >
-              {t('pagination.next')}
-              <IconChevronRight className='h-4 w-4' />
-            </Button>
-          </div>
-        )}
       </div>
 
       {/* Create Dialog */}
