@@ -34,14 +34,8 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { DataTable } from '@/components/ui/table/data-table';
+import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 import { useToast } from '@/hooks/use-toast';
 import { fetchMyOrderSchedules } from '@/services/order-schedule.service';
 import type { OrderSchedule, OrderScheduleStatus } from '@/types/order';
@@ -58,9 +52,17 @@ import {
   IconTruck,
   IconX
 } from '@tabler/icons-react';
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  getPaginationRowModel,
+  type PaginationState,
+  useReactTable
+} from '@tanstack/react-table';
+import { parseAsInteger, useQueryState } from 'nuqs';
 import Link from 'next/link';
 import { useTranslations } from 'next-intl';
-import { useEffect, useMemo, useReducer } from 'react';
+import { useEffect, useMemo, useReducer, useState } from 'react';
 import type { Action, OrderScheduleRow, State, StatusFilter } from './types';
 
 const initialState: State = {
@@ -165,6 +167,12 @@ export default function ConsigneeOrdersFeature() {
   const t = useTranslations('Orders');
 
   const [state, dispatch] = useReducer(orderSchedulesReducer, initialState);
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const [limit, setLimit] = useQueryState(
+    'limit',
+    parseAsInteger.withDefault(10)
+  );
+  const [pageCount, setPageCount] = useState(1);
 
   const getStatusLabel = (status: OrderScheduleStatus) => {
     const s = normalizeStatus(status);
@@ -186,17 +194,16 @@ export default function ConsigneeOrdersFeature() {
     }
   };
 
-  const loadData = async () => {
+  const loadData = async (page: number, limit: number) => {
     dispatch({ type: 'SET_LOADING', payload: true });
     try {
-      // Fetch order schedules by consignee
       const schedulesRes = await fetchMyOrderSchedules({
-        page: 1,
-        limit: 50
+        page,
+        limit,
+        sort: 'desc'
       });
       const schedules: OrderSchedule[] = schedulesRes.data ?? [];
 
-      // Process schedules into rows
       const rows: OrderScheduleRow[] = schedules.map((schedule) => {
         // Extract product names from order details
         const productNames = new Set<string>();
@@ -242,6 +249,10 @@ export default function ConsigneeOrdersFeature() {
       });
 
       dispatch({ type: 'SET_ORDER_SCHEDULES', payload: rows });
+      setPageCount((prev) => {
+        const minimalTotal = schedulesRes.hasNextPage ? page + 1 : page;
+        return Math.max(prev, minimalTotal);
+      });
     } catch (err) {
       dispatch({ type: 'LOAD_ERROR' });
       toast({
@@ -253,9 +264,9 @@ export default function ConsigneeOrdersFeature() {
   };
 
   useEffect(() => {
-    loadData();
+    void loadData(page, limit);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page, limit]);
 
   const handleCancelOrder = (scheduleId: string) => {
     dispatch({ type: 'OPEN_CANCEL_DIALOG', payload: scheduleId });
@@ -315,6 +326,158 @@ export default function ConsigneeOrdersFeature() {
     }),
     [state.orderSchedules]
   );
+
+  const pagination: PaginationState = useMemo(
+    () => ({
+      pageIndex: (page ?? 1) - 1,
+      pageSize: limit ?? 5
+    }),
+    [page, limit]
+  );
+
+  const columns: ColumnDef<OrderScheduleRow>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'orderNumber',
+        header: t('table.orderNumber'),
+        cell: ({ row }) => (
+          <div className='max-w-[150px] truncate font-medium'>
+            {row.original.orderNumber}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'products',
+        header: t('table.products'),
+        cell: ({ row }) => (
+          <div className='max-w-[200px] truncate'>{row.original.products}</div>
+        )
+      },
+      {
+        accessorKey: 'deliveryDate',
+        header: t('table.deliveryDate'),
+        cell: ({ row }) => (
+          <div className='max-w-[180px] truncate'>
+            {row.original.deliveryDate}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'createdAt',
+        header: t('table.createdAt'),
+        cell: ({ row }) => (
+          <div className='max-w-[180px] truncate'>{row.original.createdAt}</div>
+        )
+      },
+      {
+        accessorKey: 'address',
+        header: t('table.address'),
+        cell: ({ row }) => (
+          <div className='max-w-[200px] truncate'>{row.original.address}</div>
+        )
+      },
+      {
+        accessorKey: 'status',
+        header: t('table.status'),
+        cell: ({ row }) => (
+          <Badge
+            variant={getStatusVariant(row.original.status)}
+            className='flex w-fit items-center gap-1'
+          >
+            {getStatusIcon(row.original.status)}
+            {getStatusLabel(row.original.status)}
+          </Badge>
+        )
+      },
+      {
+        id: 'actions',
+        header: () => (
+          <div className='w-full pr-2 text-right'>{t('table.actions')}</div>
+        ),
+        cell: ({ row }) => (
+          <div className='text-right'>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='ghost' size='sm'>
+                  <IconDotsVertical className='h-4 w-4' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuItem asChild>
+                  <Link
+                    href={`/consignee/orders/${row.original.id}`}
+                    className='hover:border-primary flex cursor-pointer items-center hover:bg-transparent'
+                  >
+                    <IconEye className='mr-2 h-4 w-4' />
+                    {t('actions.viewDetails')}
+                  </Link>
+                </DropdownMenuItem>
+                {normalizeStatus(row.original.status) === 'pending' && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={`/consignee/orders/${row.original.id}/edit`}
+                        className='hover:border-primary flex cursor-pointer items-center hover:bg-transparent'
+                      >
+                        <IconEdit className='mr-2 h-4 w-4' />
+                        {t('actions.edit')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleCancelOrder(row.original.id)}
+                      className='text-destructive cursor-pointer hover:bg-transparent'
+                    >
+                      <IconX className='text-destructive mr-2 h-4 w-4' />
+                      {t('actions.cancelOrder')}
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {normalizeStatus(row.original.status) === 'rejected' && (
+                  <DropdownMenuItem
+                    onClick={() => {
+                      const reason =
+                        row.original.reason ||
+                        t('dialog.rejectionReasonDefault');
+
+                      toast({
+                        title: t('dialog.rejectionReasonTitle'),
+                        description: reason,
+                        variant: 'default'
+                      });
+                    }}
+                  >
+                    <IconInfoCircle className='mr-2 h-4 w-4' />
+                    {t('actions.viewRejectionReason')}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )
+      }
+    ],
+    [t]
+  );
+
+  const table = useReactTable({
+    data: filteredSchedules,
+    columns,
+    pageCount,
+    state: { pagination },
+    onPaginationChange: (updater) => {
+      if (typeof updater === 'function') {
+        const next = updater(pagination);
+        void setPage(next.pageIndex + 1);
+        void setLimit(next.pageSize);
+      } else {
+        void setPage(updater.pageIndex + 1);
+        void setLimit(updater.pageSize);
+      }
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true
+  });
 
   return (
     <PageContainer>
@@ -472,134 +635,15 @@ export default function ConsigneeOrdersFeature() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className='rounded-md border'>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>{t('table.orderNumber')}</TableHead>
-                    <TableHead>{t('table.products')}</TableHead>
-                    <TableHead>{t('table.deliveryDate')}</TableHead>
-                    <TableHead>{t('table.createdAt')}</TableHead>
-                    <TableHead>{t('table.address')}</TableHead>
-                    <TableHead>{t('table.status')}</TableHead>
-                    <TableHead className='text-right'>
-                      {t('table.actions')}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {state.loading ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className='text-center'>
-                        <div className='flex flex-col items-center justify-center py-12'>
-                          <div className='border-primary mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
-                          <p className='text-muted-foreground'>
-                            {t('table.loading')}
-                          </p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredSchedules.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className='text-center'>
-                        {t('table.empty')}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredSchedules.map((schedule) => (
-                      <TableRow key={schedule.id}>
-                        <TableCell className='max-w-[150px] truncate font-medium'>
-                          {schedule.orderNumber}
-                        </TableCell>
-                        <TableCell className='max-w-[200px] truncate'>
-                          {schedule.products}
-                        </TableCell>
-                        <TableCell className='max-w-[180px] truncate'>
-                          {schedule.deliveryDate}
-                        </TableCell>
-                        <TableCell className='max-w-[180px] truncate'>
-                          {schedule.createdAt}
-                        </TableCell>
-                        <TableCell className='max-w-[200px] truncate'>
-                          {schedule.address}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={getStatusVariant(schedule.status)}
-                            className='flex w-fit items-center gap-1'
-                          >
-                            {getStatusIcon(schedule.status)}
-                            {getStatusLabel(schedule.status)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className='text-right'>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant='ghost' size='sm'>
-                                <IconDotsVertical className='h-4 w-4' />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align='end'>
-                              <DropdownMenuItem asChild>
-                                <Link
-                                  href={`/consignee/orders/${schedule.id}`}
-                                  className='hover:border-primary flex cursor-pointer items-center hover:bg-transparent'
-                                >
-                                  <IconEye className='mr-2 h-4 w-4' />
-                                  {t('actions.viewDetails')}
-                                </Link>
-                              </DropdownMenuItem>
-                              {normalizeStatus(schedule.status) ===
-                                'pending' && (
-                                <>
-                                  <DropdownMenuItem asChild>
-                                    <Link
-                                      href={`/consignee/orders/${schedule.id}/edit`}
-                                      className='hover:border-primary flex cursor-pointer items-center hover:bg-transparent'
-                                    >
-                                      <IconEdit className='mr-2 h-4 w-4' />
-                                      {t('actions.edit')}
-                                    </Link>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() =>
-                                      handleCancelOrder(schedule.id)
-                                    }
-                                    className='text-destructive cursor-pointer hover:bg-transparent'
-                                  >
-                                    <IconX className='text-destructive mr-2 h-4 w-4' />
-                                    {t('actions.cancelOrder')}
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                              {normalizeStatus(schedule.status) ===
-                                'rejected' && (
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    const reason =
-                                      schedule.reason ||
-                                      t('dialog.rejectionReasonDefault');
-
-                                    toast({
-                                      title: t('dialog.rejectionReasonTitle'),
-                                      description: reason,
-                                      variant: 'default'
-                                    });
-                                  }}
-                                >
-                                  <IconInfoCircle className='mr-2 h-4 w-4' />
-                                  {t('actions.viewRejectionReason')}
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+            {state.loading ? (
+              <DataTableSkeleton columnCount={7} rowCount={5} />
+            ) : filteredSchedules.length === 0 ? (
+              <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
+                {t('table.empty')}
+              </div>
+            ) : (
+              <DataTable table={table} pageSizeOptions={[]} />
+            )}
           </CardContent>
         </Card>
       </div>

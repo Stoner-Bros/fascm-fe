@@ -2,6 +2,7 @@
 
 import PageContainer from '@/components/layout/page-container';
 import { Card, CardContent } from '@/components/ui/card';
+import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 
 import { useOrderList } from '../../hooks/order-list/use-order-list';
 import { StatusCards } from './status-cards';
@@ -24,6 +25,10 @@ export default function OrderList() {
     handleCancelOrder,
     handleRejectOrder,
     showRejectionReason,
+    page,
+    setPage,
+    limit,
+    pageCount,
     t
   } = useOrderList();
 
@@ -56,15 +61,27 @@ export default function OrderList() {
             t={t}
           />
           <CardContent>
-            <OrderTable
-              loading={state.loading}
-              schedules={filteredSchedules}
-              updatingStatusIds={state.updatingStatusIds}
-              onApproveOrder={handleApproveOrder}
-              onOpenCancelDialog={handleOpenCancelDialog}
-              onOpenRejectDialog={handleOpenRejectDialog}
-              onShowRejectionReason={showRejectionReason}
-            />
+            {state.loading ? (
+              <DataTableSkeleton columnCount={8} rowCount={10} />
+            ) : filteredSchedules.length === 0 ? (
+              <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
+                {t('table.empty')}
+              </div>
+            ) : (
+              <OrderTable
+                loading={state.loading}
+                schedules={filteredSchedules}
+                updatingStatusIds={state.updatingStatusIds}
+                page={page ?? 1}
+                limit={limit ?? 10}
+                pageCount={pageCount}
+                onPageChange={setPage}
+                onApproveOrder={handleApproveOrder}
+                onOpenCancelDialog={handleOpenCancelDialog}
+                onOpenRejectDialog={handleOpenRejectDialog}
+                onShowRejectionReason={showRejectionReason}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

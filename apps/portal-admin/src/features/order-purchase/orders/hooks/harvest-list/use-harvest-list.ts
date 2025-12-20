@@ -10,7 +10,8 @@ import type {
   HarvestScheduleStatus
 } from '@/types/harvest-schedule';
 import { useTranslations } from 'next-intl';
-import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
+import { parseAsInteger, useQueryState } from 'nuqs';
 import type {
   Action,
   HarvestScheduleRow,
@@ -133,70 +134,99 @@ export function useHarvestList() {
   const { toast } = useToast();
   const t = useTranslations('HarvestOrders.list');
   const [state, dispatch] = useReducer(harvestSchedulesReducer, initialState);
-  const didFetchRef = useRef(false);
-
-  const loadData = useCallback(async () => {
-    dispatch({ type: 'SET_LOADING', payload: true });
-    try {
-      const schedulesRes = await fetchHarvestSchedules({
-        page: 1,
-        limit: 50,
-        sort: 'desc'
-      });
-      const schedules: HarvestSchedule[] = schedulesRes.data ?? [];
-
-      const rows: HarvestScheduleRow[] = schedules.map((schedule) => {
-        const productNames = new Set<string>();
-        const harvestDetails = schedule.harvestDetails ?? [];
-        for (const detail of harvestDetails) {
-          const productName =
-            (detail as any)?.product?.name ||
-            (detail as any)?.productName ||
-            (detail as any)?.product?.id;
-          if (productName) productNames.add(String(productName));
-        }
-
-        const products =
-          Array.from(productNames).join(', ') || t('table.noProducts');
-
-        return {
-          id: schedule.id,
-          scheduleNumber: schedule.id,
-          products,
-          harvestDate: formatDateTime(schedule.harvestDate),
-          address: schedule.address || '-',
-          status: (schedule.status ?? 'pending') as HarvestScheduleStatus,
-          description: schedule.description ?? undefined,
-          reason: schedule.reason ?? undefined,
-          createdAt: formatDateTime(schedule.createdAt),
-          supplierName: schedule.supplier?.gardenName || '-'
-        };
-      });
-
-      dispatch({ type: 'SET_HARVEST_SCHEDULES', payload: rows });
-    } catch {
-      dispatch({ type: 'LOAD_ERROR' });
-      toast({
-        title: t('toast.errorTitle'),
-        description: t('toast.errorDescription'),
-        variant: 'destructive'
-      });
-    }
-  }, [t, toast]);
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const [limit] = useQueryState('limit', parseAsInteger.withDefault(10));
+  const [pageCount, setPageCount] = useState(1);
 
   useEffect(() => {
-    if (didFetchRef.current) return;
-    didFetchRef.current = true;
-    loadData();
-  }, [loadData]);
+    let cancelled = false;
 
-  const setSearchQuery = useCallback((query: string) => {
-    dispatch({ type: 'SET_SEARCH_QUERY', payload: query });
-  }, []);
+    const loadData = async () => {
+      dispatch({ type: 'SET_LOADING', payload: true });
+      try {
+        const schedulesRes = await fetchHarvestSchedules({
+          page: page ?? 1,
+          limit: limit ?? 10,
+          sort: 'desc'
+        });
 
-  const setStatusFilter = useCallback((filter: StatusFilter) => {
-    dispatch({ type: 'SET_STATUS_FILTER', payload: filter });
-  }, []);
+        if (cancelled) return;
+
+        const schedules: HarvestSchedule[] = schedulesRes.data ?? [];
+
+        const rows: HarvestScheduleRow[] = schedules.map((schedule) => {
+          const productNames = new Set<string>();
+          const harvestDetails = schedule.harvestDetails ?? [];
+          for (const detail of harvestDetails) {
+            const productName =
+              (detail as any)?.product?.name ||
+              (detail as any)?.productName ||
+              (detail as any)?.product?.id;
+            if (productName) productNames.add(String(productName));
+          }
+
+          const products =
+            Array.from(productNames).join(', ') || t('table.noProducts');
+
+          return {
+            id: schedule.id,
+            scheduleNumber: schedule.id,
+            products,
+            harvestDate: formatDateTime(schedule.harvestDate),
+            address: schedule.address || '-',
+            status: (schedule.status ?? 'pending') as HarvestScheduleStatus,
+            description: schedule.description ?? undefined,
+            reason: schedule.reason ?? undefined,
+            createdAt: formatDateTime(schedule.createdAt),
+            supplierName: schedule.supplier?.gardenName || '-'
+          };
+        });
+
+        dispatch({ type: 'SET_HARVEST_SCHEDULES', payload: rows });
+        setPageCount((prev) => {
+          const minimalTotal = schedulesRes.hasNextPage
+            ? (page ?? 1) + 1
+            : (page ?? 1);
+          return Math.max(prev, minimalTotal);
+        });
+      } catch {
+        if (cancelled) return;
+        dispatch({ type: 'LOAD_ERROR' });
+        toast({
+          title: t('toast.errorTitle'),
+          description: t('toast.errorDescription'),
+          variant: 'destructive'
+        });
+      }
+    };
+
+    void loadData();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit]);
+
+  const setSearchQuery = useCallback(
+    (query: string) => {
+      dispatch({ type: 'SET_SEARCH_QUERY', payload: query });
+      if (page !== 1) {
+        void setPage(1);
+      }
+    },
+    [page, setPage]
+  );
+
+  const setStatusFilter = useCallback(
+    (filter: StatusFilter) => {
+      dispatch({ type: 'SET_STATUS_FILTER', payload: filter });
+      if (page !== 1) {
+        void setPage(1);
+      }
+    },
+    [page, setPage]
+  );
 
   const handleOpenCancelDialog = useCallback((scheduleId: string) => {
     dispatch({ type: 'OPEN_CANCEL_DIALOG', payload: scheduleId });
@@ -377,7 +407,10 @@ export function useHarvestList() {
     handleCancelSchedule,
     handleRejectSchedule,
     showRejectionReason,
-    loadData,
+    page,
+    setPage,
+    limit,
+    pageCount,
     t
   };
 }

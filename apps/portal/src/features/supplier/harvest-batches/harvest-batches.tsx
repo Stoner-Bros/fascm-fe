@@ -34,14 +34,8 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { DataTable } from '@/components/ui/table/data-table';
+import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 import { useToast } from '@/hooks/use-toast';
 import {
   fetchMyHarvestSchedules,
@@ -59,10 +53,18 @@ import {
   IconTruck,
   IconX
 } from '@tabler/icons-react';
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  getPaginationRowModel,
+  type PaginationState,
+  useReactTable
+} from '@tanstack/react-table';
 import { MoreVertical } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { parseAsInteger, useQueryState } from 'nuqs';
 
 type HarvestBatchRow = {
   id: string;
@@ -155,6 +157,12 @@ export default function SupplierHarvestBatchesFeature() {
   const [loading, setLoading] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [selectedBatchId, setSelectedBatchId] = useState<string | null>(null);
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const [limit, setLimit] = useQueryState(
+    'limit',
+    parseAsInteger.withDefault(7)
+  );
+  const [pageCount, setPageCount] = useState(1);
 
   useEffect(() => {
     let cancelled = false;
@@ -163,17 +171,16 @@ export default function SupplierHarvestBatchesFeature() {
       setLoading(true);
       try {
         const schedulesRes = await fetchMyHarvestSchedules({
-          page: 1,
-          limit: 50,
+          page,
+          limit,
           sort: 'desc'
         });
 
-        const schedules = schedulesRes.data ?? [];
-
         if (cancelled) return;
 
+        const schedules = schedulesRes.data ?? [];
+
         const rows: HarvestBatchRow[] = schedules.map((schedule) => {
-          // Extract product names from harvestDetails (already included in response)
           const productNames = new Set<string>();
           if (
             schedule.harvestDetails &&
@@ -206,8 +213,11 @@ export default function SupplierHarvestBatchesFeature() {
           };
         });
 
-        if (cancelled) return;
         setBatches(rows);
+        setPageCount((prev) => {
+          const minimalTotal = schedulesRes.hasNextPage ? page + 1 : page;
+          return Math.max(prev, minimalTotal);
+        });
       } catch (err) {
         if (cancelled) return;
         toast({
@@ -220,13 +230,13 @@ export default function SupplierHarvestBatchesFeature() {
       }
     };
 
-    loadData();
+    void loadData();
 
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [page, limit]);
 
   const handleCancelBatch = (batchId: string) => {
     setSelectedBatchId(batchId);
@@ -297,6 +307,157 @@ export default function SupplierHarvestBatchesFeature() {
     }),
     [batches]
   );
+
+  const pagination: PaginationState = useMemo(
+    () => ({
+      pageIndex: (page ?? 1) - 1,
+      pageSize: limit ?? 7
+    }),
+    [page, limit]
+  );
+
+  const columns: ColumnDef<HarvestBatchRow>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'id',
+        header: t('table.id'),
+        cell: ({ row }) => (
+          <div
+            className='max-w-[120px] truncate font-medium'
+            title={row.original.id}
+          >
+            {row.original.id}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'products',
+        header: t('table.products'),
+        cell: ({ row }) => (
+          <div className='max-w-[200px] truncate' title={row.original.products}>
+            {row.original.products}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'harvestDate',
+        header: t('table.harvestDate'),
+        cell: ({ row }) => (
+          <div className='w-[160px] whitespace-nowrap'>
+            {row.original.harvestDate}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'location',
+        header: t('table.location'),
+        cell: ({ row }) => (
+          <div className='max-w-[200px] truncate' title={row.original.location}>
+            {row.original.location}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'status',
+        header: t('table.status'),
+        cell: ({ row }) => (
+          <Badge
+            variant={getStatusVariant(row.original.status)}
+            className='flex w-fit items-center gap-1'
+          >
+            {getStatusIcon(row.original.status)}
+            {t(getStatusLabel(row.original.status))}
+          </Badge>
+        )
+      },
+      {
+        id: 'actions',
+        header: () => (
+          <div className='w-full pr-2 text-right'>{t('table.actions')}</div>
+        ),
+        cell: ({ row }) => (
+          <div className='text-right'>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='ghost' size='sm'>
+                  <MoreVertical className='h-4 w-4' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuItem className='cursor-pointer' asChild>
+                  <Link
+                    href={`/supplier/harvest-batches/${row.original.id}`}
+                    className='flex items-center'
+                  >
+                    <IconEye className='mr-2 h-4 w-4' />
+                    {t('actionsMenu.viewDetails')}
+                  </Link>
+                </DropdownMenuItem>
+                {normalizeStatus(row.original.status) === 'pending' && (
+                  <>
+                    <DropdownMenuItem className='cursor-pointer' asChild>
+                      <Link
+                        href={`/supplier/harvest-batches/${row.original.id}/edit`}
+                        className='flex items-center'
+                      >
+                        <IconEdit className='mr-2 h-4 w-4' />
+                        {t('actionsMenu.edit')}
+                      </Link>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => handleCancelBatch(row.original.id)}
+                      className='text-destructive cursor-pointer'
+                    >
+                      <IconX className='mr-2 h-4 w-4 text-red-500' />
+                      {t('actionsMenu.cancelBatch')}
+                    </DropdownMenuItem>
+                  </>
+                )}
+                {normalizeStatus(row.original.status) === 'rejected' && (
+                  <DropdownMenuItem
+                    className='cursor-pointer'
+                    onClick={() => {
+                      const reason = row.original.reason || t('reason.default');
+
+                      toast({
+                        title: t('reason.title'),
+                        description: reason,
+                        variant: 'default'
+                      });
+                    }}
+                  >
+                    <IconInfoCircle className='mr-2 h-4 w-4' />
+                    {t('actionsMenu.viewReason')}
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        )
+      }
+    ],
+    [t]
+  );
+
+  const table = useReactTable({
+    data: filteredBatches,
+    columns,
+    pageCount,
+    state: { pagination },
+    onPaginationChange: (updater) => {
+      if (typeof updater === 'function') {
+        const next = updater(pagination);
+        void setPage(next.pageIndex + 1);
+        void setLimit(next.pageSize);
+      } else {
+        void setPage(updater.pageIndex + 1);
+        void setLimit(updater.pageSize);
+      }
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true
+  });
 
   return (
     <PageContainer>
@@ -449,150 +610,15 @@ export default function SupplierHarvestBatchesFeature() {
             </div>
           </CardHeader>
           <CardContent>
-            <div className='rounded-md border'>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className='w-[120px]'>{t('table.id')}</TableHead>
-                    <TableHead className='max-w-[200px]'>
-                      {t('table.products')}
-                    </TableHead>
-                    <TableHead className='w-[160px]'>
-                      {t('table.harvestDate')}
-                    </TableHead>
-                    <TableHead className='max-w-[200px]'>
-                      {t('table.location')}
-                    </TableHead>
-                    <TableHead className='w-[140px]'>
-                      {t('table.status')}
-                    </TableHead>
-                    <TableHead className='w-[80px] text-right'>
-                      {t('table.actions')}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className='text-center'>
-                        <div className='flex flex-col items-center justify-center py-12'>
-                          <div className='border-primary mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
-                          <p className='text-muted-foreground'>
-                            {t('table.loading')}
-                          </p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredBatches.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className='text-center'>
-                        {t('table.empty')}
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredBatches.map((batch) => (
-                      <TableRow key={batch.id}>
-                        <TableCell
-                          className='max-w-[120px] truncate font-medium'
-                          title={batch.id}
-                        >
-                          {batch.id}
-                        </TableCell>
-                        <TableCell
-                          className='max-w-[200px] truncate'
-                          title={batch.products}
-                        >
-                          {batch.products}
-                        </TableCell>
-                        <TableCell className='w-[160px] whitespace-nowrap'>
-                          {batch.harvestDate}
-                        </TableCell>
-                        <TableCell
-                          className='max-w-[200px] truncate'
-                          title={batch.location}
-                        >
-                          {batch.location}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={getStatusVariant(batch.status)}
-                            className='flex w-fit items-center gap-1'
-                          >
-                            {getStatusIcon(batch.status)}
-                            {t(getStatusLabel(batch.status))}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className='text-right'>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant='ghost' size='sm'>
-                                <MoreVertical className='h-4 w-4' />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align='end'>
-                              <DropdownMenuItem
-                                className='cursor-pointer'
-                                asChild
-                              >
-                                <Link
-                                  href={`/supplier/harvest-batches/${batch.id}`}
-                                  className='flex items-center'
-                                >
-                                  <IconEye className='mr-2 h-4 w-4' />
-                                  {t('actionsMenu.viewDetails')}
-                                </Link>
-                              </DropdownMenuItem>
-                              {normalizeStatus(batch.status) === 'pending' && (
-                                <>
-                                  <DropdownMenuItem
-                                    className='cursor-pointer'
-                                    asChild
-                                  >
-                                    <Link
-                                      href={`/supplier/harvest-batches/${batch.id}/edit`}
-                                      className='flex items-center'
-                                    >
-                                      <IconEdit className='mr-2 h-4 w-4' />
-                                      {t('actionsMenu.edit')}
-                                    </Link>
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleCancelBatch(batch.id)}
-                                    className='text-destructive cursor-pointer'
-                                  >
-                                    <IconX className='mr-2 h-4 w-4 text-red-500' />
-                                    {t('actionsMenu.cancelBatch')}
-                                  </DropdownMenuItem>
-                                </>
-                              )}
-                              {normalizeStatus(batch.status) === 'rejected' && (
-                                <DropdownMenuItem
-                                  className='cursor-pointer'
-                                  onClick={() => {
-                                    // Sử dụng reason từ dữ liệu đã load
-                                    const reason =
-                                      batch.reason || t('reason.default');
-
-                                    toast({
-                                      title: t('reason.title'),
-                                      description: reason,
-                                      variant: 'default'
-                                    });
-                                  }}
-                                >
-                                  <IconInfoCircle className='mr-2 h-4 w-4' />
-                                  {t('actionsMenu.viewReason')}
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+            {loading ? (
+              <DataTableSkeleton columnCount={6} rowCount={7} />
+            ) : filteredBatches.length === 0 ? (
+              <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
+                {t('table.empty')}
+              </div>
+            ) : (
+              <DataTable table={table} pageSizeOptions={[]} />
+            )}
           </CardContent>
         </Card>
       </div>

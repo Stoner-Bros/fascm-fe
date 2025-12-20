@@ -31,17 +31,18 @@ import {
   SelectValue
 } from '@/components/ui/select';
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
-
+import { DataTable } from '@/components/ui/table/data-table';
+import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslations } from 'next-intl';
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  getPaginationRowModel,
+  type PaginationState,
+  useReactTable
+} from '@tanstack/react-table';
+import { parseAsInteger, useQueryState } from 'nuqs';
 
 import {
   createConsignee,
@@ -110,6 +111,13 @@ export default function ConsigneesAccount() {
   const [editingConsignee, setEditingConsignee] = useState<Consignee | null>(
     null
   );
+  const [viewingConsignee, setViewingConsignee] = useState<Consignee | null>(
+    null
+  );
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const [limit] = useQueryState('limit', parseAsInteger.withDefault(10));
+  const [pageCount, setPageCount] = useState(1);
 
   // luôn sync ref với hook toast
   useEffect(() => {
@@ -126,8 +134,15 @@ export default function ConsigneesAccount() {
     isFetchingRef.current = true;
     setIsLoading(true);
     try {
-      const res = await fetchConsignees({ page: 1, limit: 50 });
+      const res = await fetchConsignees({
+        page: page ?? 1,
+        limit: limit ?? 10
+      });
       setConsignees(res.data);
+      setPageCount((prev) => {
+        const minimalTotal = res.hasNextPage ? (page ?? 1) + 1 : (page ?? 1);
+        return Math.max(prev, minimalTotal);
+      });
     } catch (error) {
       toastRef.current?.({
         variant: 'destructive',
@@ -139,11 +154,20 @@ export default function ConsigneesAccount() {
       isFetchingRef.current = false;
       setIsLoading(false);
     }
-  }, []); // <── deps rỗng, không bị tạo lại
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit]);
 
   useEffect(() => {
     void loadData();
   }, [loadData]);
+
+  // Reset page when search or filter changes
+  useEffect(() => {
+    if (page !== 1) {
+      void setPage(1);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQuery, organizationFilter]);
 
   const handleDialogChange = (open: boolean) => {
     setIsDialogOpen(open);
@@ -305,6 +329,124 @@ export default function ConsigneesAccount() {
     );
     return Array.from(unique);
   }, [tableData]);
+
+  const handleViewDetails = (consignee: (typeof tableData)[number]) => {
+    setViewingConsignee(consignee);
+    setIsViewDialogOpen(true);
+  };
+
+  // DataTable columns
+  const columns: ColumnDef<(typeof tableData)[number]>[] = useMemo(
+    () => [
+      {
+        accessorKey: 'index',
+        header: t('table.columns.index'),
+        cell: ({ row, table }) => {
+          const pageIndex = table.getState().pagination.pageIndex;
+          const pageSize = table.getState().pagination.pageSize;
+          return (
+            pageIndex * pageSize + table.getRowModel().rows.indexOf(row) + 1
+          );
+        }
+      },
+      {
+        accessorKey: 'organizationLabel',
+        header: t('table.columns.organization'),
+        cell: ({ row }) => (
+          <div className='max-w-[200px] break-words whitespace-normal'>
+            {row.original.organizationLabel}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'representativeName',
+        header: t('table.columns.representative'),
+        cell: ({ row }) => (
+          <div className='max-w-[150px] break-words whitespace-normal'>
+            {row.original.representativeName || '—'}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'contact',
+        header: t('table.columns.contact'),
+        cell: ({ row }) => (
+          <div className='max-w-[120px] break-words whitespace-normal'>
+            {row.original.contact || '—'}
+          </div>
+        )
+      },
+      {
+        accessorKey: 'email',
+        header: t('table.columns.email'),
+        cell: ({ row }) => (
+          <div className='max-w-[200px] break-words whitespace-normal'>
+            {row.original.email}
+          </div>
+        )
+      },
+      {
+        id: 'actions',
+        header: () => (
+          <div className='w-full pr-2 text-right'>
+            {t('table.columns.actions')}
+          </div>
+        ),
+        cell: ({ row }) => (
+          <div className='flex justify-end gap-2'>
+            <Button
+              variant='outline'
+              size='sm'
+              onClick={() => handleViewDetails(row.original)}
+            >
+              {t('actions.viewDetails')}
+            </Button>
+            <Button
+              variant='secondary'
+              size='sm'
+              onClick={() => handleEdit(row.original)}
+            >
+              {t('actions.edit')}
+            </Button>
+            <Button
+              variant='destructive'
+              size='sm'
+              onClick={() => handleDelete(row.original.id)}
+            >
+              {t('actions.delete')}
+            </Button>
+          </div>
+        )
+      }
+    ],
+    [t]
+  );
+
+  const pagination: PaginationState = useMemo(
+    () => ({
+      pageIndex: (page ?? 1) - 1,
+      pageSize: limit ?? 10
+    }),
+    [page, limit]
+  );
+
+  const table = useReactTable({
+    data: filteredConsignees,
+    columns,
+    pageCount,
+    state: { pagination },
+    onPaginationChange: (updater) => {
+      if (typeof updater === 'function') {
+        const next = updater(pagination);
+        setPage(next.pageIndex + 1);
+      } else {
+        setPage(updater.pageIndex + 1);
+      }
+    },
+    getCoreRowModel: getCoreRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    manualPagination: true
+  });
 
   return (
     <div className='flex flex-1 flex-col overflow-hidden'>
@@ -556,79 +698,115 @@ export default function ConsigneesAccount() {
               </Select>
             </div>
 
-            <div className='mt-4 rounded-md border'>
-              <div className='overflow-x-auto'>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('table.columns.index')}</TableHead>
-                      <TableHead>{t('table.columns.organization')}</TableHead>
-                      <TableHead>{t('table.columns.representative')}</TableHead>
-                      <TableHead>{t('table.columns.contact')}</TableHead>
-                      <TableHead>{t('table.columns.email')}</TableHead>
-                      <TableHead className='text-right'>
-                        {t('table.columns.actions')}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isLoading ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className='text-center'>
-                          {t('table.loading')}
-                        </TableCell>
-                      </TableRow>
-                    ) : filteredConsignees.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className='text-center'>
-                          {t('table.empty')}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredConsignees.map((consignee, index) => (
-                        <TableRow key={consignee.id}>
-                          <TableCell className='font-medium'>
-                            {index + 1}
-                          </TableCell>
-                          <TableCell className='max-w-[200px] break-words whitespace-normal'>
-                            {consignee.organizationLabel}
-                          </TableCell>
-                          <TableCell className='max-w-[150px] break-words whitespace-normal'>
-                            {consignee.representativeName || '—'}
-                          </TableCell>
-                          <TableCell className='max-w-[120px] break-words whitespace-normal'>
-                            {consignee.contact || '—'}
-                          </TableCell>
-                          <TableCell className='max-w-[200px] break-words whitespace-normal'>
-                            {consignee.email}
-                          </TableCell>
-                          <TableCell className='text-right'>
-                            <div className='flex justify-end gap-2'>
-                              <Button
-                                variant='secondary'
-                                size='sm'
-                                onClick={() => handleEdit(consignee)}
-                              >
-                                {t('actions.edit')}
-                              </Button>
-                              <Button
-                                variant='destructive'
-                                size='sm'
-                                onClick={() => handleDelete(consignee.id)}
-                              >
-                                {t('actions.delete')}
-                              </Button>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
+            <div className='mt-4'>
+              {isLoading ? (
+                <DataTableSkeleton columnCount={6} rowCount={10} />
+              ) : filteredConsignees.length === 0 ? (
+                <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
+                  {t('table.empty')}
+                </div>
+              ) : (
+                <DataTable table={table} pageSizeOptions={[]} />
+              )}
             </div>
           </CardContent>
         </Card>
+
+        {/* View Details Dialog */}
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className='max-h-[90vh] max-w-2xl overflow-y-auto'>
+            <DialogHeader>
+              <DialogTitle>{t('dialog.viewTitle')}</DialogTitle>
+              <DialogDescription>
+                {t('dialog.viewDescription')}
+              </DialogDescription>
+            </DialogHeader>
+            {viewingConsignee && (
+              <div className='space-y-4'>
+                <div className='grid gap-4 md:grid-cols-2'>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>
+                      {t('form.organizationName')}
+                    </Label>
+                    <p className='text-sm'>
+                      {viewingConsignee.organizationName || '—'}
+                    </p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>
+                      {t('form.representativeName')}
+                    </Label>
+                    <p className='text-sm'>
+                      {viewingConsignee.representativeName || '—'}
+                    </p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>{t('form.contact')}</Label>
+                    <p className='text-sm'>{viewingConsignee.contact || '—'}</p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>{t('form.taxCode')}</Label>
+                    <p className='text-sm'>{viewingConsignee.taxCode || '—'}</p>
+                  </div>
+                  <div className='space-y-2 md:col-span-2'>
+                    <Label className='font-semibold'>{t('form.address')}</Label>
+                    <p className='text-sm'>{viewingConsignee.address || '—'}</p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>
+                      {t('form.certificate')}
+                    </Label>
+                    <p className='text-sm'>
+                      {viewingConsignee.certificate || '—'}
+                    </p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>{t('form.qrCode')}</Label>
+                    <p className='text-sm'>{viewingConsignee.qrCode || '—'}</p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>{t('form.email')}</Label>
+                    <p className='text-sm'>
+                      {viewingConsignee.user?.email || '—'}
+                    </p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>
+                      {t('form.firstName')}
+                    </Label>
+                    <p className='text-sm'>
+                      {viewingConsignee.user?.firstName || '—'}
+                    </p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>
+                      {t('form.lastName')}
+                    </Label>
+                    <p className='text-sm'>
+                      {viewingConsignee.user?.lastName || '—'}
+                    </p>
+                  </div>
+                  <div className='space-y-2'>
+                    <Label className='font-semibold'>
+                      {t('form.createdAt')}
+                    </Label>
+                    <p className='text-sm'>
+                      {formatDateTime(viewingConsignee.createdAt)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+            <DialogFooter>
+              <Button
+                variant='outline'
+                onClick={() => setIsViewDialogOpen(false)}
+              >
+                {t('actions.close')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

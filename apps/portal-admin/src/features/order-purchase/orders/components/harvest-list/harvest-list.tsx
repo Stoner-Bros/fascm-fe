@@ -2,6 +2,7 @@
 
 import PageContainer from '@/components/layout/page-container';
 import { Card, CardContent } from '@/components/ui/card';
+import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 
 import { useHarvestList } from '../../hooks/harvest-list/use-harvest-list';
 import { StatusCards } from './status-cards';
@@ -24,6 +25,10 @@ export default function HarvestList() {
     handleCancelSchedule,
     handleRejectSchedule,
     showRejectionReason,
+    page,
+    setPage,
+    limit,
+    pageCount,
     t
   } = useHarvestList();
 
@@ -56,15 +61,27 @@ export default function HarvestList() {
             t={t}
           />
           <CardContent>
-            <HarvestTable
-              loading={state.loading}
-              schedules={filteredSchedules}
-              updatingStatusIds={state.updatingStatusIds}
-              onConfirmSchedule={handleConfirmSchedule}
-              onOpenCancelDialog={handleOpenCancelDialog}
-              onOpenRejectDialog={handleOpenRejectDialog}
-              onShowRejectionReason={showRejectionReason}
-            />
+            {state.loading ? (
+              <DataTableSkeleton columnCount={8} rowCount={10} />
+            ) : filteredSchedules.length === 0 ? (
+              <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
+                {t('table.empty')}
+              </div>
+            ) : (
+              <HarvestTable
+                loading={state.loading}
+                schedules={filteredSchedules}
+                updatingStatusIds={state.updatingStatusIds}
+                page={page ?? 1}
+                limit={limit ?? 10}
+                pageCount={pageCount}
+                onPageChange={setPage}
+                onConfirmSchedule={handleConfirmSchedule}
+                onOpenCancelDialog={handleOpenCancelDialog}
+                onOpenRejectDialog={handleOpenRejectDialog}
+                onShowRejectionReason={showRejectionReason}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

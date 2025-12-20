@@ -1426,13 +1426,17 @@
         "creating": "Creating...",
         "saveChanges": "Save Changes",
         "create": "Create",
-        "confirmDelete": "Are you sure you want to delete this consignee?"
+        "confirmDelete": "Are you sure you want to delete this consignee?",
+        "viewDetails": "View Details",
+        "close": "Close"
       },
       "dialog": {
         "editTitle": "Update consignee account",
         "createTitle": "Create consignee account",
         "editDescription": "Adjust organization info and login account.",
-        "createDescription": "Enter organization info and login account."
+        "createDescription": "Enter organization info and login account.",
+        "viewTitle": "Consignee Details",
+        "viewDescription": "View detailed information for this consignee"
       },
       "form": {
         "organizationName": "Organization Name *",
@@ -1446,7 +1450,8 @@
         "password": "Password *",
         "passwordOptional": "Password (optional)",
         "firstName": "First Name *",
-        "lastName": "Last Name *"
+        "lastName": "Last Name *",
+        "createdAt": "Created At"
       },
       "placeholders": {
         "organizationName": "Company ABC",
@@ -1507,13 +1512,17 @@
         "creating": "Creating...",
         "saveChanges": "Save Changes",
         "create": "Create",
-        "confirmDelete": "Are you sure you want to delete this supplier?"
+        "confirmDelete": "Are you sure you want to delete this supplier?",
+        "viewDetails": "View Details",
+        "close": "Close"
       },
       "dialog": {
         "editTitle": "Update supplier account",
         "createTitle": "Create supplier account",
         "editDescription": "Adjust business info, warehouse, and login account.",
-        "createDescription": "Enter business info, optional warehouse, and login account."
+        "createDescription": "Enter business info, optional warehouse, and login account.",
+        "viewTitle": "Supplier Details",
+        "viewDescription": "View detailed information for this supplier"
       },
       "form": {
         "fillRequired": "Please fill in all required fields",
@@ -1530,7 +1539,9 @@
         "firstName": "First Name *",
         "lastName": "Last Name *",
         "warehouseOptional": "Warehouse (optional)",
-        "unassignedWarehouse": "Unassigned warehouse"
+        "unassignedWarehouse": "Unassigned warehouse",
+        "createdAt": "Created At",
+        "notAssigned": "Not assigned"
       },
       "placeholders": {
         "gardenName": "Orange Garden X",
@@ -1596,13 +1607,17 @@
         "creating": "Creating...",
         "saveChanges": "Save Changes",
         "create": "Create",
-        "confirmDelete": "Are you sure you want to delete this delivery staff?"
+        "confirmDelete": "Are you sure you want to delete this delivery staff?",
+        "viewDetails": "View Details",
+        "close": "Close"
       },
       "dialog": {
         "editTitle": "Update delivery staff account",
         "createTitle": "Create delivery staff account",
         "editDescription": "Adjust license info, optional warehouse/truck, and login account.",
-        "createDescription": "Enter license info, optional warehouse/truck, and login account."
+        "createDescription": "Enter license info, optional warehouse/truck, and login account.",
+        "viewTitle": "Delivery Staff Details",
+        "viewDescription": "View detailed information for this delivery staff"
       },
       "form": {
         "warehouseOptional": "Warehouse (optional)",
@@ -1614,7 +1629,9 @@
         "lastName": "Last Name *",
         "email": "Email *",
         "password": "Password *",
-        "passwordOptional": "Password (optional)"
+        "passwordOptional": "Password (optional)",
+        "createdAt": "Created At",
+        "notAssigned": "Not assigned"
       },
       "placeholders": {
         "selectWarehouse": "Select warehouse",

@@ -31,14 +31,7 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow
-} from '@/components/ui/table';
+import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 import QualityDetection from '@/features/warehouse/components/quality-detection';
 import {
   Calendar,
@@ -51,15 +44,24 @@ import {
   Package,
   Plus,
   Search,
-  Trash2,
   Warehouse
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { useArea, useImport, useInboundBatch } from '../hooks/use-import';
-import type { ImportTicketRow } from '../types/types';
+import { ImportTable } from './import-table';
 
 export default function ImportList() {
-  const { state, dispatch, createITicket, deleteITicket } = useImport();
+  const {
+    state,
+    dispatch,
+    createITicket,
+    deleteITicket,
+    page,
+    setPage,
+    limit,
+    pageCount,
+    setSearchQuery
+  } = useImport();
   const { inboundBatches } = useInboundBatch();
   const { areas } = useArea();
 
@@ -132,11 +134,6 @@ export default function ImportList() {
   const selectedBatch = availableBatches.find(
     (b) => b.id === formData.inboundBatchId
   );
-
-  const formatDate = (date: string | null) => {
-    if (!date) return '-';
-    return new Date(date).toLocaleDateString('vi-VN');
-  };
 
   return (
     <PageContainer>
@@ -222,142 +219,30 @@ export default function ImportList() {
                     placeholder='Tìm kiếm theo mã phiếu, lô hàng, sản phẩm...'
                     className='pl-8'
                     value={state.searchQuery}
-                    onChange={(e) =>
-                      dispatch({
-                        type: 'SET_SEARCH_QUERY',
-                        payload: e.target.value
-                      })
-                    }
+                    onChange={(e) => setSearchQuery(e.target.value)}
                   />
                 </div>
               </div>
             </div>
           </CardHeader>
           <CardContent>
-            <div className='rounded-md border'>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Mã phiếu</TableHead>
-                    <TableHead>Lô hàng</TableHead>
-                    <TableHead>Sản phẩm</TableHead>
-                    <TableHead>Số lượng</TableHead>
-                    <TableHead>Số lô</TableHead>
-                    <TableHead>Khu vực</TableHead>
-                    <TableHead>Ngày nhập</TableHead>
-                    <TableHead>Hạn sử dụng</TableHead>
-                    <TableHead className='text-right'>Thao tác</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {state.loading ? (
-                    <TableRow>
-                      <TableCell colSpan={9} className='text-center'>
-                        <div className='flex flex-col items-center justify-center py-12'>
-                          <div className='border-primary mb-4 h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
-                          <p className='text-muted-foreground'>Đang tải...</p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredTickets.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={9}
-                        className='text-muted-foreground py-8 text-center'
-                      >
-                        Không có dữ liệu
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredTickets.map((ticket: ImportTicketRow) => (
-                      <TableRow key={ticket.id}>
-                        <TableCell className='max-w-[150px] truncate font-medium'>
-                          {ticket.id.slice(0, 8)}
-                        </TableCell>
-                        <TableCell className='max-w-[200px] truncate'>
-                          {ticket.batchCode}
-                        </TableCell>
-                        <TableCell className='max-w-[200px] truncate'>
-                          <div className='flex items-center gap-2'>
-                            <Package className='text-muted-foreground h-4 w-4' />
-                            <span>{ticket.productName}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant='outline'>
-                            {ticket.quantity} {ticket.unit}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{ticket.numberOfBatch}</TableCell>
-                        <TableCell className='max-w-[200px] truncate'>
-                          <div className='flex items-center gap-2'>
-                            <MapPin className='text-muted-foreground h-4 w-4' />
-                            <span>{ticket.areaName}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className='flex items-center gap-2'>
-                            <Calendar className='text-muted-foreground h-4 w-4' />
-                            <span>{formatDate(ticket.importDate)}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {ticket.expiredAt ? (
-                            <div className='flex items-center gap-2'>
-                              <Calendar className='h-4 w-4 text-orange-500' />
-                              <span className='text-sm'>
-                                {formatDate(ticket.expiredAt)}
-                              </span>
-                            </div>
-                          ) : (
-                            <span className='text-muted-foreground'>-</span>
-                          )}
-                        </TableCell>
-                        <TableCell className='text-right'>
-                          <Button
-                            variant='ghost'
-                            size='sm'
-                            onClick={() => handleDeleteTicket(ticket.id)}
-                          >
-                            <Trash2 className='text-destructive h-4 w-4' />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Pagination */}
-            <div className='mt-4 flex items-center justify-between'>
-              <p className='text-muted-foreground text-sm'>
-                Trang {state.page}{' '}
-                {state.hasMore ? '- có thêm dữ liệu' : '- hết dữ liệu'}
-              </p>
-              <div className='flex gap-2'>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() =>
-                    dispatch({ type: 'SET_PAGE', payload: state.page - 1 })
-                  }
-                  disabled={state.page === 1 || state.loading}
-                >
-                  Trang trước
-                </Button>
-                <Button
-                  variant='outline'
-                  size='sm'
-                  onClick={() =>
-                    dispatch({ type: 'SET_PAGE', payload: state.page + 1 })
-                  }
-                  disabled={!state.hasMore || state.loading}
-                >
-                  Trang sau
-                </Button>
+            {state.loading ? (
+              <DataTableSkeleton columnCount={9} rowCount={10} />
+            ) : filteredTickets.length === 0 ? (
+              <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
+                Không có dữ liệu
               </div>
-            </div>
+            ) : (
+              <ImportTable
+                loading={state.loading}
+                tickets={filteredTickets}
+                page={page ?? 1}
+                limit={limit ?? 10}
+                pageCount={pageCount}
+                onPageChange={setPage}
+                onDeleteTicket={handleDeleteTicket}
+              />
+            )}
           </CardContent>
         </Card>
       </div>

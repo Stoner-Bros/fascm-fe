@@ -10,6 +10,7 @@ import type { Area } from '@/types/area';
 import type { CreateImportTicketDto } from '@/types/import-ticket';
 import type { InboundBatch } from '@/types/inbound-batch';
 import { useCallback, useEffect, useReducer, useState } from 'react';
+import { parseAsInteger, useQueryState } from 'nuqs';
 import type { Action, ImportTicketRow, State } from '../types/types';
 import { mapImportTicketToRow } from '../types/types';
 
@@ -79,20 +80,29 @@ function importTicketsReducer(state: State, action: Action): State {
 export const useImport = () => {
   const { toast } = useToast();
   const [state, dispatch] = useReducer(importTicketsReducer, initialState);
+  const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
+  const [limit] = useQueryState('limit', parseAsInteger.withDefault(10));
+  const [pageCount, setPageCount] = useState(1);
 
   const loadImportTickets = useCallback(
-    async (pageNum: number = 1) => {
+    async () => {
       dispatch({ type: 'SET_LOADING', payload: true });
       try {
         const response = await fetchImportTickets({
-          page: pageNum,
-          limit: 10
+          page: page ?? 1,
+          limit: limit ?? 10
         });
         const rows: ImportTicketRow[] = response.data.map(mapImportTicketToRow);
         dispatch({ type: 'SET_IMPORT_TICKETS', payload: rows });
         dispatch({
           type: 'SET_HAS_MORE',
           payload: response.hasNextPage ?? false
+        });
+        setPageCount((prev) => {
+          const minimalTotal = response.hasNextPage
+            ? (page ?? 1) + 1
+            : (page ?? 1);
+          return Math.max(prev, minimalTotal);
         });
       } catch (error) {
         console.error('Failed to fetch import tickets:', error);
@@ -105,7 +115,7 @@ export const useImport = () => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [page, limit]
   );
 
   const createITicket = useCallback(
@@ -118,7 +128,7 @@ export const useImport = () => {
           description: 'Đã tạo phiếu nhập kho mới'
         });
         dispatch({ type: 'CLOSE_CREATE_DIALOG' });
-        loadImportTickets(state.page);
+        loadImportTickets();
       } catch (error: any) {
         console.error('Failed to create import ticket:', error);
         toast({
@@ -131,7 +141,7 @@ export const useImport = () => {
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [loadImportTickets, state.page]
+    [loadImportTickets]
   );
 
   const deleteITicket = useCallback(
@@ -157,15 +167,30 @@ export const useImport = () => {
   );
 
   useEffect(() => {
-    loadImportTickets(state.page);
-  }, [state.page, loadImportTickets]);
+    loadImportTickets();
+  }, [loadImportTickets]);
+
+  const setSearchQuery = useCallback(
+    (query: string) => {
+      dispatch({ type: 'SET_SEARCH_QUERY', payload: query });
+      if (page !== 1) {
+        void setPage(1);
+      }
+    },
+    [page, setPage]
+  );
 
   return {
     state,
     dispatch,
     loadImportTickets,
     createITicket,
-    deleteITicket
+    deleteITicket,
+    page,
+    setPage,
+    limit,
+    pageCount,
+    setSearchQuery
   };
 };
 
