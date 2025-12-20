@@ -4,6 +4,7 @@ import {
   IconBrandGithub,
   IconBrandTwitter,
   IconBuildingWarehouse,
+  IconCashRegister,
   IconCheck,
   IconChevronLeft,
   IconChevronRight,
@@ -82,5 +83,6 @@ export const Icons = {
   delivery: IconPackageExport,
   truck: IconTruck,
   order: IconFileInvoice,
-  tag: IconTag
+  tag: IconTag,
+  payment: IconCashRegister
 };

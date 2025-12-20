@@ -98,6 +98,14 @@ export const navItems: NavItem[] = [
     items: []
   },
   {
+    title: 'Payment',
+    url: '/dashboard/payment',
+    icon: 'payment',
+    shortcut: ['p', 'p'],
+    isActive: true,
+    items: []
+  },
+  {
     title: 'Account',
     url: '',
     icon: 'billing',
