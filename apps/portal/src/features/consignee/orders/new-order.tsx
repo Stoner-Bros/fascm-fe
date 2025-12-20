@@ -1042,7 +1042,16 @@ export default function NewOrderPage() {
                                     parseFloat(e.target.value) || 0
                                   )
                                 }
-                                className='w-24'
+                                onKeyDown={(e) => {
+                                  // Prevent arrow keys from incrementing/decrementing the value
+                                  if (
+                                    e.key === 'ArrowUp' ||
+                                    e.key === 'ArrowDown'
+                                  ) {
+                                    e.preventDefault();
+                                  }
+                                }}
+                                className='w-24 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
                               />
                             </div>
 

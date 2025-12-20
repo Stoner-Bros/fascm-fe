@@ -290,8 +290,15 @@ export function HarvestDetailsTable({
                     placeholder={tDialog('negotiatedPricePlaceholder')}
                     value={negotiatedPrice}
                     onChange={(e) => setNegotiatedPrice(e.target.value)}
+                    onKeyDown={(e) => {
+                      // Prevent arrow keys from incrementing/decrementing the value
+                      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                        e.preventDefault();
+                      }
+                    }}
                     required
                     disabled={isSubmitting}
+                    className='[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
                   />
                 </div>
               </div>

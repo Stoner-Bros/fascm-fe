@@ -506,7 +506,14 @@
       "agreement": "By clicking sign in, you agree to our",
       "termsOfService": "Terms of Service",
       "and": "and",
-      "privacyPolicy": "Privacy Policy"
+      "privacyPolicy": "Privacy Policy",
+      "promotional": {
+        "heading": "Connect fresh agricultural products Bring quality to every family",
+        "description": "Real-time agricultural product harvest, transportation, and distribution management system.",
+        "feature1": "Transparent origin",
+        "feature2": "Harvested on the day",
+        "feature3": "Cold chain delivery"
+      }
     },
     "confirmEmail": {
       "title": "Email Confirmation",

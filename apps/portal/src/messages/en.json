@@ -538,7 +538,7 @@
       "orders": "Orders",
       "payments": "Payments",
       "profile": "Profile",
-      "harvestBatches": "Purchase Order Request"
+      "harvestBatches": "Sales Offer"
     },
     "menu": {
       "profile": "Profile",
@@ -988,7 +988,7 @@
   "SupplierDashboard": {
     "welcome": "Hi, Welcome back 👋",
     "subtitle": "Overview of your harvest batches and activities",
-    "newHarvestBatch": "New Purchase Order Request",
+    "newHarvestBatch": "New Sales Offer",
     "stats": {
       "totalBatches": "Total Batches",
       "totalBatchesDescription": "All harvest batches created",

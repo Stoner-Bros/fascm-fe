@@ -167,7 +167,7 @@ export default function HarvestBatchDetailPage() {
   const [schedule, setSchedule] = useState<HarvestSchedule | null>(null);
   const [details, setDetails] = useState<DetailRow[]>([]);
   const [phases, setPhases] = useState<HarvestPhase[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [phasesLoading, setPhasesLoading] = useState(true);
   const [deliveries, setDeliveries] = useState<Delivery[]>([]);
   const [activeDeliveryId, setActiveDeliveryId] = useState<string>('');
