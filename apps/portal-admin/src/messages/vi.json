@@ -506,7 +506,14 @@
       "agreement": "Bằng cách nhấp đăng nhập, bạn đồng ý với",
       "termsOfService": "Điều khoản Dịch vụ",
       "and": "và",
-      "privacyPolicy": "Chính sách Bảo mật"
+      "privacyPolicy": "Chính sách Bảo mật",
+      "promotional": {
+        "heading": "Kết nối nông sản tươi Mang chất lượng đến từng gia đình",
+        "description": "Hệ thống quản lý thu hoạch, vận chuyển và phân phối nông sản theo thời gian thực.",
+        "feature1": "Nguồn gốc minh bạch",
+        "feature2": "Thu hoạch trong ngày",
+        "feature3": "Giao hàng chuẩn lạnh"
+      }
     },
     "confirmEmail": {
       "title": "Xác nhận Email",

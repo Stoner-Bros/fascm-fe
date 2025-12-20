@@ -538,7 +538,7 @@
       "orders": "Đơn hàng",
       "payments": "Thanh toán",
       "profile": "Hồ sơ",
-      "harvestBatches": "Đề nghị mua hàng"
+      "harvestBatches": "Đơn chào hàng"
     },
     "menu": {
       "profile": "Hồ sơ",
@@ -988,7 +988,7 @@
   "SupplierDashboard": {
     "welcome": "Xin chào, Chào mừng trở lại 👋",
     "subtitle": "Tổng quan về các lô thu hoạch và hoạt động của bạn",
-    "newHarvestBatch": "Yêu cầu thu mua mới",
+    "newHarvestBatch": "Đơn chào hàng mới",
     "stats": {
       "totalBatches": "Tổng số lô",
       "totalBatchesDescription": "Tất cả các lô thu hoạch đã tạo",

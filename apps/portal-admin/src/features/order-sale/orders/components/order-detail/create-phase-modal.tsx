@@ -142,7 +142,13 @@ export function CreatePhaseDialog({
                 taxRate: parseFloat(e.target.value) || 0
               })
             }
-            className='mt-2'
+            onKeyDown={(e) => {
+              // Prevent arrow keys from incrementing/decrementing the value
+              if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.preventDefault();
+              }
+            }}
+            className='mt-2 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
             min={0}
             max={100}
             step={0.1}
