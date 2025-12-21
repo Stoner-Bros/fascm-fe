@@ -24,6 +24,7 @@ const Polyline = dynamic(
   { ssr: false }
 );
 
+import { PermissionGuard } from '@/components/permissions';
 import {
   Accordion,
   AccordionContent,
@@ -42,6 +43,8 @@ import {
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
+import { Permission } from '@/constants/permissions';
+import { useAuth } from '@/hooks/use-auth';
 import { cn } from '@/lib/utils';
 import {
   CreateDeliveryDto,
@@ -578,6 +581,8 @@ export function PhaseDetailPane({
   uploadingProofPhaseId
 }: PhaseDetailPaneProps) {
   const { toast } = useToast();
+  const { checkPermission } = useAuth();
+  const canManageDelivery = checkPermission(Permission.MANAGE_SALE_DELIVERY);
   const [selectedPhaseForCreate, setSelectedPhaseForCreate] =
     useState<OrderPhase | null>(null);
   const [deliveryForProof, setDeliveryForProof] = useState<Delivery | null>(
@@ -960,7 +965,7 @@ export function PhaseDetailPane({
                                   uploadingProofPhaseId ===
                                     delivery.orderPhase?.id
                                 }
-                                canUpdate={true}
+                                canUpdate={canManageDelivery}
                               />
                             </div>
                           </div>
@@ -969,14 +974,18 @@ export function PhaseDetailPane({
                             <p className='text-muted-foreground mb-2 text-xs'>
                               Đợt này chưa có chuyến giao hàng
                             </p>
-                            <Button
-                              size='sm'
-                              onClick={() => setSelectedPhaseForCreate(phase)}
-                              className='h-8 w-full'
+                            <PermissionGuard
+                              permission={Permission.MANAGE_SALE_DELIVERY}
                             >
-                              <Plus className='mr-1.5 h-3.5 w-3.5' />
-                              Tạo chuyến giao hàng
-                            </Button>
+                              <Button
+                                size='sm'
+                                onClick={() => setSelectedPhaseForCreate(phase)}
+                                className='h-8 w-full'
+                              >
+                                <Plus className='mr-1.5 h-3.5 w-3.5' />
+                                Tạo chuyến giao hàng
+                              </Button>
+                            </PermissionGuard>
                           </div>
                         )}
                       </div>

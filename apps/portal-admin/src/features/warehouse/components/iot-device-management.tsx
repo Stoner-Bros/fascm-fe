@@ -44,6 +44,8 @@ import {
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { PermissionGuard } from '@/components/permissions';
+import { Permission } from '@/constants/permissions';
 
 type UIIoTDevice = {
   truckId: string;
@@ -139,19 +141,6 @@ const getStatusColor = (status: string) => {
       return 'text-gray-500';
     default:
       return 'text-gray-500';
-  }
-};
-
-const getStatusBadge = (status: string) => {
-  switch (status) {
-    case 'online':
-      return <Badge className='bg-green-100 text-green-800'>Hoạt động</Badge>;
-    case 'offline':
-      return <Badge className='bg-gray-100 text-gray-800'>Offline</Badge>;
-    default:
-      return (
-        <Badge className='bg-gray-100 text-gray-800'>Không xác định</Badge>
-      );
   }
 };
 
@@ -427,100 +416,102 @@ export function IoTDeviceManagement() {
           </p>
         </div>
         <div className='flex gap-2'>
-          <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <IconPlus className='mr-2 h-4 w-4' />
-                {t('actions.add')}
-              </Button>
-            </DialogTrigger>
-            <DialogContent className='max-w-md'>
-              <DialogHeader>
-                <DialogTitle>{t('dialog.addTitle')}</DialogTitle>
-              </DialogHeader>
-              <div className='space-y-4 py-4'>
-                <div className='space-y-2'>
-                  <Label htmlFor='area-id'>{t('edit.areaId')}</Label>
-                  <Input
-                    id='area-id'
-                    placeholder={t('edit.areaPlaceholder')}
-                    value={areaIdInput}
-                    onChange={(e) => {
-                      setAreaIdInput(e.target.value);
-                      if (e.target.value) setTruckIdInput('');
-                    }}
-                  />
-                </div>
-                <div className='space-y-2'>
-                  <Label htmlFor='truck-id'>{t('edit.truckId')}</Label>
-                  <Input
-                    id='truck-id'
-                    placeholder={t('edit.truckPlaceholder')}
-                    value={truckIdInput}
-                    onChange={(e) => {
-                      setTruckIdInput(e.target.value);
-                      if (e.target.value) setAreaIdInput('');
-                    }}
-                  />
-                </div>
-                {createError && (
-                  <div className='rounded-md bg-red-50 p-3 text-sm text-red-600'>
-                    {createError}
-                  </div>
-                )}
-              </div>
-              <DialogFooter>
-                <Button
-                  variant='outline'
-                  onClick={() => {
-                    setIsCreateOpen(false);
-                    setAreaIdInput('');
-                    setTruckIdInput('');
-                    setCreateError('');
-                  }}
-                  disabled={creating}
-                >
-                  {t('actions.cancel')}
+          <PermissionGuard permission={Permission.CREATE_IOT_DEVICE}>
+            <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <IconPlus className='mr-2 h-4 w-4' />
+                  {t('actions.add')}
                 </Button>
-                <Button
-                  disabled={creating}
-                  onClick={async () => {
-                    setCreateError('');
-                    const hasArea = areaIdInput.trim().length > 0;
-                    const hasTruck = truckIdInput.trim().length > 0;
-                    if (!hasArea && !hasTruck) {
-                      setCreateError(t('errors.createNeedAreaOrTruck'));
-                      return;
-                    }
-                    if (hasArea && hasTruck) {
-                      setCreateError(t('errors.createOnlyOne'));
-                      return;
-                    }
-                    setCreating(true);
-                    try {
-                      const body: any = {
-                        status: 'inactive',
-                        type: 'sensor'
-                      };
-                      if (hasArea) body.area = { id: areaIdInput.trim() };
-                      if (hasTruck) body.truck = { id: truckIdInput.trim() };
-                      await createIoTDevice(body);
-                      await loadDevices();
+              </DialogTrigger>
+              <DialogContent className='max-w-md'>
+                <DialogHeader>
+                  <DialogTitle>{t('dialog.addTitle')}</DialogTitle>
+                </DialogHeader>
+                <div className='space-y-4 py-4'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='area-id'>{t('edit.areaId')}</Label>
+                    <Input
+                      id='area-id'
+                      placeholder={t('edit.areaPlaceholder')}
+                      value={areaIdInput}
+                      onChange={(e) => {
+                        setAreaIdInput(e.target.value);
+                        if (e.target.value) setTruckIdInput('');
+                      }}
+                    />
+                  </div>
+                  <div className='space-y-2'>
+                    <Label htmlFor='truck-id'>{t('edit.truckId')}</Label>
+                    <Input
+                      id='truck-id'
+                      placeholder={t('edit.truckPlaceholder')}
+                      value={truckIdInput}
+                      onChange={(e) => {
+                        setTruckIdInput(e.target.value);
+                        if (e.target.value) setAreaIdInput('');
+                      }}
+                    />
+                  </div>
+                  {createError && (
+                    <div className='rounded-md bg-red-50 p-3 text-sm text-red-600'>
+                      {createError}
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button
+                    variant='outline'
+                    onClick={() => {
                       setIsCreateOpen(false);
                       setAreaIdInput('');
                       setTruckIdInput('');
-                    } catch (e) {
-                      setCreateError(t('errors.createFailed'));
-                    } finally {
-                      setCreating(false);
-                    }
-                  }}
-                >
-                  {creating ? t('actions.creating') : t('actions.create')}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                      setCreateError('');
+                    }}
+                    disabled={creating}
+                  >
+                    {t('actions.cancel')}
+                  </Button>
+                  <Button
+                    disabled={creating}
+                    onClick={async () => {
+                      setCreateError('');
+                      const hasArea = areaIdInput.trim().length > 0;
+                      const hasTruck = truckIdInput.trim().length > 0;
+                      if (!hasArea && !hasTruck) {
+                        setCreateError(t('errors.createNeedAreaOrTruck'));
+                        return;
+                      }
+                      if (hasArea && hasTruck) {
+                        setCreateError(t('errors.createOnlyOne'));
+                        return;
+                      }
+                      setCreating(true);
+                      try {
+                        const body: any = {
+                          status: 'inactive',
+                          type: 'sensor'
+                        };
+                        if (hasArea) body.area = { id: areaIdInput.trim() };
+                        if (hasTruck) body.truck = { id: truckIdInput.trim() };
+                        await createIoTDevice(body);
+                        await loadDevices();
+                        setIsCreateOpen(false);
+                        setAreaIdInput('');
+                        setTruckIdInput('');
+                      } catch (e) {
+                        setCreateError(t('errors.createFailed'));
+                      } finally {
+                        setCreating(false);
+                      }
+                    }}
+                  >
+                    {creating ? t('actions.creating') : t('actions.create')}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </PermissionGuard>
           <Button variant='outline' onClick={loadDevices} disabled={isLoading}>
             <IconRefresh
               className={`mr-2 h-4 w-4 ${isLoading ? 'animate-spin' : ''}`}
@@ -908,90 +899,99 @@ export function IoTDeviceManagement() {
                                   {updateError}
                                 </div>
                               )}
-                              <div className='flex items-center justify-end gap-2'>
-                                <Button
-                                  variant='outline'
-                                  onClick={() => {
-                                    setEditAreaIdInput('');
-                                    setEditTruckIdInput('');
-                                    setUpdateError('');
-                                  }}
-                                  disabled={updating}
-                                >
-                                  {t('actions.clearInput')}
-                                </Button>
-                                <Button
-                                  onClick={async () => {
-                                    const hasArea = !!editAreaIdInput.trim();
-                                    const hasTruck = !!editTruckIdInput.trim();
-                                    if (hasArea && hasTruck) {
-                                      setUpdateError(t('errors.updateOnlyOne'));
-                                      return;
-                                    }
-                                    if (!hasArea && !hasTruck) {
-                                      setUpdateError(t('errors.updateNeed'));
-                                      return;
-                                    }
-                                    setUpdating(true);
-                                    try {
-                                      const body: any = {};
-                                      if (hasArea)
-                                        body.area = {
-                                          id: editAreaIdInput.trim()
-                                        };
-                                      if (hasTruck)
-                                        body.truck = {
-                                          id: editTruckIdInput.trim()
-                                        };
-                                      await updateIoTDevice(
-                                        selectedDevice.id,
-                                        body
-                                      );
-                                      const refreshed =
-                                        await fetchIoTDeviceById(
-                                          selectedDevice.id
-                                        );
-                                      setDevices((prev) =>
-                                        prev.map((d) =>
-                                          d.id === selectedDevice.id
-                                            ? {
-                                                ...d,
-                                                areaId: String(
-                                                  (refreshed as any)?.area
-                                                    ?.id ?? ''
-                                                ),
-                                                truckId: String(
-                                                  (refreshed as any)?.truck
-                                                    ?.id ?? ''
-                                                ),
-                                                lastDataTime: String(
-                                                  (refreshed as any)
-                                                    ?.lastDataTime ??
-                                                    d.lastDataTime
-                                                ),
-                                                data:
-                                                  (refreshed as any)?.data ??
-                                                  d.data
-                                              }
-                                            : d
-                                        )
-                                      );
-                                      setUpdateError('');
+                              <PermissionGuard
+                                permission={Permission.UPDATE_IOT_DEVICE}
+                              >
+                                <div className='flex items-center justify-end gap-2'>
+                                  <Button
+                                    variant='outline'
+                                    onClick={() => {
                                       setEditAreaIdInput('');
                                       setEditTruckIdInput('');
-                                    } catch (e) {
-                                      setUpdateError(t('errors.updateFailed'));
-                                    } finally {
-                                      setUpdating(false);
-                                    }
-                                  }}
-                                  disabled={updating}
-                                >
-                                  {updating
-                                    ? t('actions.updating')
-                                    : t('actions.updateLocation')}
-                                </Button>
-                              </div>
+                                      setUpdateError('');
+                                    }}
+                                    disabled={updating}
+                                  >
+                                    {t('actions.clearInput')}
+                                  </Button>
+                                  <Button
+                                    onClick={async () => {
+                                      const hasArea = !!editAreaIdInput.trim();
+                                      const hasTruck =
+                                        !!editTruckIdInput.trim();
+                                      if (hasArea && hasTruck) {
+                                        setUpdateError(
+                                          t('errors.updateOnlyOne')
+                                        );
+                                        return;
+                                      }
+                                      if (!hasArea && !hasTruck) {
+                                        setUpdateError(t('errors.updateNeed'));
+                                        return;
+                                      }
+                                      setUpdating(true);
+                                      try {
+                                        const body: any = {};
+                                        if (hasArea)
+                                          body.area = {
+                                            id: editAreaIdInput.trim()
+                                          };
+                                        if (hasTruck)
+                                          body.truck = {
+                                            id: editTruckIdInput.trim()
+                                          };
+                                        await updateIoTDevice(
+                                          selectedDevice.id,
+                                          body
+                                        );
+                                        const refreshed =
+                                          await fetchIoTDeviceById(
+                                            selectedDevice.id
+                                          );
+                                        setDevices((prev) =>
+                                          prev.map((d) =>
+                                            d.id === selectedDevice.id
+                                              ? {
+                                                  ...d,
+                                                  areaId: String(
+                                                    (refreshed as any)?.area
+                                                      ?.id ?? ''
+                                                  ),
+                                                  truckId: String(
+                                                    (refreshed as any)?.truck
+                                                      ?.id ?? ''
+                                                  ),
+                                                  lastDataTime: String(
+                                                    (refreshed as any)
+                                                      ?.lastDataTime ??
+                                                      d.lastDataTime
+                                                  ),
+                                                  data:
+                                                    (refreshed as any)?.data ??
+                                                    d.data
+                                                }
+                                              : d
+                                          )
+                                        );
+                                        setUpdateError('');
+                                        setEditAreaIdInput('');
+                                        setEditTruckIdInput('');
+                                      } catch (e) {
+                                        setUpdateError(
+                                          t('errors.updateFailed')
+                                        );
+                                      } finally {
+                                        setUpdating(false);
+                                      }
+                                    }}
+                                    disabled={updating}
+                                  >
+                                    {updating
+                                      ? t('actions.updating')
+                                      : t('actions.updateLocation')}
+                                  </Button>
+                                </div>
+                              </PermissionGuard>
                             </div>
                           </div>
                         )}

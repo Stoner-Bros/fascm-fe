@@ -49,6 +49,8 @@ import {
 import { useMemo, useState } from 'react';
 import { useArea, useImport, useInboundBatch } from '../hooks/use-import';
 import { ImportTable } from './import-table';
+import { PermissionGuard } from '@/components/permissions';
+import { Permission } from '@/constants/permissions';
 
 export default function ImportList() {
   const {
@@ -136,7 +138,7 @@ export default function ImportList() {
   );
 
   return (
-    <PageContainer>
+    <PageContainer scrollable={true}>
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
           <div>
@@ -148,17 +150,21 @@ export default function ImportList() {
             </p>
           </div>
           <div className='flex items-center gap-2'>
-            <Button
-              variant='outline'
-              onClick={() => dispatch({ type: 'OPEN_QUALITY_CHECK' })}
-            >
-              <CheckCircle2 className='mr-2 h-4 w-4' />
-              Kiểm định chất lượng
-            </Button>
-            <Button onClick={() => dispatch({ type: 'OPEN_CREATE_DIALOG' })}>
-              <Plus className='mr-2 h-4 w-4' />
-              Tạo phiếu nhập
-            </Button>
+            <PermissionGuard permission={Permission.MANAGE_PURCHASE_IMPORT}>
+              <Button
+                variant='outline'
+                onClick={() => dispatch({ type: 'OPEN_QUALITY_CHECK' })}
+              >
+                <CheckCircle2 className='mr-2 h-4 w-4' />
+                Kiểm định chất lượng
+              </Button>
+            </PermissionGuard>
+            <PermissionGuard permission={Permission.MANAGE_PURCHASE_IMPORT}>
+              <Button onClick={() => dispatch({ type: 'OPEN_CREATE_DIALOG' })}>
+                <Plus className='mr-2 h-4 w-4' />
+                Tạo phiếu nhập
+              </Button>
+            </PermissionGuard>
           </div>
         </div>
 

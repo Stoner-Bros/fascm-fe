@@ -42,6 +42,7 @@ import * as React from 'react';
 import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
 import useAuth from '@/hooks/use-auth';
+import type { NavItem } from '@/types';
 export const company = {
   name: 'Acme Inc',
   logo: IconPhotoUp,
@@ -57,7 +58,7 @@ const tenants = [
 export default function AppSidebar() {
   const pathname = usePathname();
   const { isOpen } = useMediaQuery();
-  const { user, logout } = useAuth();
+  const { user, logout, userRole, checkRouteAccess } = useAuth();
   const router = useRouter();
   const t = useTranslations('Sidebar');
 
@@ -70,6 +71,37 @@ export default function AppSidebar() {
   React.useEffect(() => {
     // Side effects based on sidebar state changes
   }, [isOpen]);
+
+  // Filter navigation items based on user permissions
+  const filterNavItems = React.useMemo(() => {
+    if (!userRole) return [];
+
+    return navItems
+      .map((item) => {
+        // Check if main item is accessible
+        const hasMainAccess = !item.url || checkRouteAccess(item.url);
+
+        // Filter sub-items based on permissions
+        const filteredSubItems = item.items
+          ? item.items.filter((subItem) => checkRouteAccess(subItem.url))
+          : [];
+
+        // If item has sub-items, only show if at least one sub-item is accessible
+        // If item has no sub-items, show if main item is accessible
+        if (item.items && item.items.length > 0) {
+          if (filteredSubItems.length === 0) {
+            return null; // Hide parent if no accessible sub-items
+          }
+          return {
+            ...item,
+            items: filteredSubItems
+          };
+        } else {
+          return hasMainAccess ? item : null;
+        }
+      })
+      .filter((item): item is NavItem => item !== null);
+  }, [userRole, checkRouteAccess]);
 
   // Translation map for nav items
   const getTranslatedTitle = (title: string): string => {
@@ -116,7 +148,7 @@ export default function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupLabel>{t('overview')}</SidebarGroupLabel>
           <SidebarMenu>
-            {navItems.map((item) => {
+            {filterNavItems.map((item) => {
               const Icon = item.icon ? Icons[item.icon] : Icons.logo;
               const translatedTitle = getTranslatedTitle(item.title);
               return item?.items && item?.items?.length > 0 ? (

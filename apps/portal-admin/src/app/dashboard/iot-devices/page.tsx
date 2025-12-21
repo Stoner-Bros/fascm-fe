@@ -4,6 +4,8 @@ import { SearchParams } from 'nuqs/server';
 import PageContainer from '@/components/layout/page-container';
 import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
+import { RouteGuard } from '@/components/permissions';
+import { Permission } from '@/constants/permissions';
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations('IoTDevices');
@@ -22,8 +24,10 @@ export default async function Page(props: pageProps) {
   searchParamsCache.parse(searchParams);
 
   return (
-    <PageContainer scrollable={true}>
-      <IoTDeviceManagement />
-    </PageContainer>
+    <RouteGuard permission={Permission.VIEW_IOT_DEVICE}>
+      <PageContainer scrollable={true}>
+        <IoTDeviceManagement />
+      </PageContainer>
+    </RouteGuard>
   );
 }

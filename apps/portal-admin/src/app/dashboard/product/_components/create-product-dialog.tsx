@@ -31,6 +31,8 @@ import { useEffect, useState } from 'react';
 import { FileUploader } from '@/components/file-uploader';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
+import { PermissionGuard } from '@/components/permissions';
+import { Permission } from '@/constants/permissions';
 
 interface CreateProductDialogProps {
   onSuccess?: () => void;
@@ -146,157 +148,161 @@ export function CreateProductDialog({ onSuccess }: CreateProductDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <IconPlus className='mr-2 h-4 w-4' />
-          {t('createDialog.trigger')}
-        </Button>
-      </DialogTrigger>
-      <DialogContent className='max-h-[90vh] max-w-3xl'>
-        <DialogHeader>
-          <DialogTitle>{t('createDialog.title')}</DialogTitle>
-          <DialogDescription>{t('createDialog.description')}</DialogDescription>
-        </DialogHeader>
-        <ScrollArea className='max-h-[calc(90vh-180px)] pr-4'>
-          <form onSubmit={handleSubmit} className='space-y-6'>
-            {/* Basic Information */}
-            <div className='space-y-4'>
-              <h3 className='text-base font-semibold'>
-                {t('createDialog.basicTitle')}
-              </h3>
-              <div className='grid gap-4 md:grid-cols-3'>
-                <div className='space-y-2'>
-                  <Label htmlFor='name'>
-                    {t('createDialog.nameLabel')}{' '}
-                    <span className='text-red-500'>*</span>
-                  </Label>
-                  <Input
-                    id='name'
-                    placeholder={t('createDialog.namePlaceholder')}
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='category'>
-                    {t('createDialog.categoryLabel')}
-                  </Label>
-                  <Select
-                    value={
-                      formData.categoryId === ''
-                        ? undefined
-                        : formData.categoryId
-                    }
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, categoryId: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={t('createDialog.categoryPlaceholder')}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories
-                        .filter(
-                          (category) =>
-                            category.id && category.id.trim().length > 0
-                        )
-                        .map((category) => (
-                          <SelectItem key={category.id} value={category.id}>
-                            {category.name || t('common.unnamedCategory')}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className='space-y-2'>
-                <Label htmlFor='description'>
-                  {t('createDialog.descriptionLabel')}
-                </Label>
-                <Textarea
-                  id='description'
-                  placeholder={t('createDialog.descriptionPlaceholder')}
-                  rows={3}
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-
-            {/* Product Image */}
-            <div className='space-y-4'>
-              <h3 className='text-base font-semibold'>
-                {t('createDialog.image.title')}
-              </h3>
-              <div className='space-y-2'>
-                {uploadedImageUrl ? (
-                  <div className='space-y-4'>
-                    <div className='relative aspect-video w-full overflow-hidden rounded-lg border'>
-                      <Image
-                        src={uploadedImageUrl}
-                        alt={t('createDialog.image.previewAlt')}
-                        fill
-                        className='object-cover'
-                      />
-                    </div>
-                    <Button
-                      type='button'
-                      variant='outline'
-                      size='sm'
-                      onClick={() => setUploadedImageUrl('')}
-                    >
-                      {t('createDialog.image.change')}
-                    </Button>
+    <PermissionGuard permission={Permission.CREATE_PRODUCT}>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button>
+            <IconPlus className='mr-2 h-4 w-4' />
+            {t('createDialog.trigger')}
+          </Button>
+        </DialogTrigger>
+        <DialogContent className='max-h-[90vh] max-w-3xl'>
+          <DialogHeader>
+            <DialogTitle>{t('createDialog.title')}</DialogTitle>
+            <DialogDescription>
+              {t('createDialog.description')}
+            </DialogDescription>
+          </DialogHeader>
+          <ScrollArea className='max-h-[calc(90vh-180px)] pr-4'>
+            <form onSubmit={handleSubmit} className='space-y-6'>
+              {/* Basic Information */}
+              <div className='space-y-4'>
+                <h3 className='text-base font-semibold'>
+                  {t('createDialog.basicTitle')}
+                </h3>
+                <div className='grid gap-4 md:grid-cols-3'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='name'>
+                      {t('createDialog.nameLabel')}{' '}
+                      <span className='text-red-500'>*</span>
+                    </Label>
+                    <Input
+                      id='name'
+                      placeholder={t('createDialog.namePlaceholder')}
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      required
+                    />
                   </div>
-                ) : (
-                  <FileUploader
-                    value={imageFiles}
-                    onValueChange={setImageFiles}
-                    onUpload={handleImageUpload}
-                    maxFiles={1}
-                    maxSize={1024 * 1024 * 5}
-                    accept={{ 'image/*': [] }}
-                    disabled={uploading}
+
+                  <div className='space-y-2'>
+                    <Label htmlFor='category'>
+                      {t('createDialog.categoryLabel')}
+                    </Label>
+                    <Select
+                      value={
+                        formData.categoryId === ''
+                          ? undefined
+                          : formData.categoryId
+                      }
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, categoryId: value })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={t('createDialog.categoryPlaceholder')}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories
+                          .filter(
+                            (category) =>
+                              category.id && category.id.trim().length > 0
+                          )
+                          .map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name || t('common.unnamedCategory')}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className='space-y-2'>
+                  <Label htmlFor='description'>
+                    {t('createDialog.descriptionLabel')}
+                  </Label>
+                  <Textarea
+                    id='description'
+                    placeholder={t('createDialog.descriptionPlaceholder')}
+                    rows={3}
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
                   />
-                )}
+                </div>
               </div>
-            </div>
-          </form>
-        </ScrollArea>
-        <DialogFooter>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => {
-              resetForm();
-              setOpen(false);
-            }}
-            disabled={loading}
-          >
-            {t('common.cancel')}
-          </Button>
-          <Button
-            type='submit'
-            disabled={loading || uploading}
-            onClick={handleSubmit}
-          >
-            <IconDeviceFloppy className='mr-2 h-4 w-4' />
-            {loading
-              ? t('createDialog.footer.creating')
-              : t('createDialog.footer.submit')}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+
+              {/* Product Image */}
+              <div className='space-y-4'>
+                <h3 className='text-base font-semibold'>
+                  {t('createDialog.image.title')}
+                </h3>
+                <div className='space-y-2'>
+                  {uploadedImageUrl ? (
+                    <div className='space-y-4'>
+                      <div className='relative aspect-video w-full overflow-hidden rounded-lg border'>
+                        <Image
+                          src={uploadedImageUrl}
+                          alt={t('createDialog.image.previewAlt')}
+                          fill
+                          className='object-cover'
+                        />
+                      </div>
+                      <Button
+                        type='button'
+                        variant='outline'
+                        size='sm'
+                        onClick={() => setUploadedImageUrl('')}
+                      >
+                        {t('createDialog.image.change')}
+                      </Button>
+                    </div>
+                  ) : (
+                    <FileUploader
+                      value={imageFiles}
+                      onValueChange={setImageFiles}
+                      onUpload={handleImageUpload}
+                      maxFiles={1}
+                      maxSize={1024 * 1024 * 5}
+                      accept={{ 'image/*': [] }}
+                      disabled={uploading}
+                    />
+                  )}
+                </div>
+              </div>
+            </form>
+          </ScrollArea>
+          <DialogFooter>
+            <Button
+              type='button'
+              variant='outline'
+              onClick={() => {
+                resetForm();
+                setOpen(false);
+              }}
+              disabled={loading}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type='submit'
+              disabled={loading || uploading}
+              onClick={handleSubmit}
+            >
+              <IconDeviceFloppy className='mr-2 h-4 w-4' />
+              {loading
+                ? t('createDialog.footer.creating')
+                : t('createDialog.footer.submit')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </PermissionGuard>
   );
 }

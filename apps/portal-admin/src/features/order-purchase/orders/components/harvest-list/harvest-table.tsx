@@ -1,6 +1,6 @@
 'use client';
 
-import { Badge } from '@/components/ui/badge';
+import { PermissionGuard } from '@/components/permissions';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { DataTable } from '@/components/ui/table/data-table';
 import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
+import { Permission } from '@/constants/permissions';
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -165,36 +166,52 @@ export function HarvestTable({
                 </DropdownMenuItem>
                 {normalizeStatus(row.original.status) === 'pending' && (
                   <>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={`/dashboard/order-purchase/order/${row.original.id}/edit`}
-                        className='hover:border-primary flex cursor-pointer items-center hover:bg-transparent'
+                    <PermissionGuard
+                      permission={Permission.UPDATE_PURCHASE_ORDER}
+                    >
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={`/dashboard/order-purchase/order/${row.original.id}/edit`}
+                          className='hover:border-primary flex cursor-pointer items-center hover:bg-transparent'
+                        >
+                          <Edit className='mr-2 h-4 w-4' />
+                          {t('actions.edit')}
+                        </Link>
+                      </DropdownMenuItem>
+                    </PermissionGuard>
+                    <PermissionGuard
+                      permission={Permission.UPDATE_PURCHASE_ORDER}
+                    >
+                      <DropdownMenuItem
+                        onClick={() => onConfirmSchedule(row.original.id)}
+                        className='cursor-pointer hover:bg-transparent'
                       >
-                        <Edit className='mr-2 h-4 w-4' />
-                        {t('actions.edit')}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => onConfirmSchedule(row.original.id)}
-                      className='cursor-pointer hover:bg-transparent'
+                        <Check className='mr-2 h-4 w-4' />
+                        {t('actions.confirm')}
+                      </DropdownMenuItem>
+                    </PermissionGuard>
+                    <PermissionGuard
+                      permission={Permission.UPDATE_PURCHASE_ORDER}
                     >
-                      <Check className='mr-2 h-4 w-4' />
-                      {t('actions.confirm')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => onOpenRejectDialog(row.original.id)}
-                      className='text-destructive cursor-pointer hover:bg-transparent'
+                      <DropdownMenuItem
+                        onClick={() => onOpenRejectDialog(row.original.id)}
+                        className='text-destructive cursor-pointer hover:bg-transparent'
+                      >
+                        <X className='text-destructive mr-2 h-4 w-4' />
+                        {t('actions.reject')}
+                      </DropdownMenuItem>
+                    </PermissionGuard>
+                    <PermissionGuard
+                      permission={Permission.DELETE_PURCHASE_ORDER}
                     >
-                      <X className='text-destructive mr-2 h-4 w-4' />
-                      {t('actions.reject')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => onOpenCancelDialog(row.original.id)}
-                      className='text-destructive cursor-pointer hover:bg-transparent'
-                    >
-                      <X className='text-destructive mr-2 h-4 w-4' />
-                      {t('actions.cancelSchedule')}
-                    </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onOpenCancelDialog(row.original.id)}
+                        className='text-destructive cursor-pointer hover:bg-transparent'
+                      >
+                        <X className='text-destructive mr-2 h-4 w-4' />
+                        {t('actions.cancelSchedule')}
+                      </DropdownMenuItem>
+                    </PermissionGuard>
                   </>
                 )}
               </DropdownMenuContent>

@@ -1,9 +1,12 @@
 'use client';
 
+import { PermissionGuard } from '@/components/permissions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/table/data-table';
 import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
+import { Permission } from '@/constants/permissions';
+import type { ExportTicket } from '@/services/export-ticket.service';
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -13,7 +16,6 @@ import {
 } from '@tanstack/react-table';
 import { Calendar, Trash2 } from 'lucide-react';
 import { useMemo } from 'react';
-import type { ExportTicket } from '@/services/export-ticket.service';
 
 type ExportTableProps = {
   loading: boolean;
@@ -96,13 +98,15 @@ export function ExportTable({
         header: () => <div className='w-full pr-2 text-right'>Thao tác</div>,
         cell: ({ row }) => (
           <div className='text-right'>
-            <Button
-              variant='ghost'
-              size='icon'
-              onClick={() => onDeleteTicket(row.original.id)}
-            >
-              <Trash2 className='text-destructive h-4 w-4' />
-            </Button>
+            <PermissionGuard permission={Permission.MANAGE_SALE_EXPORT}>
+              <Button
+                variant='ghost'
+                size='icon'
+                onClick={() => onDeleteTicket(row.original.id)}
+              >
+                <Trash2 className='text-destructive h-4 w-4' />
+              </Button>
+            </PermissionGuard>
           </div>
         )
       }

@@ -1,6 +1,7 @@
 'use client';
 
 import PageContainer from '@/components/layout/page-container';
+import { PermissionGuard, RouteGuard } from '@/components/permissions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -12,9 +13,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from '@/components/ui/use-toast';
+import { Permission } from '@/constants/permissions';
 import { deleteCategory, fetchCategories } from '@/services/category.service';
 import type { Category } from '@/types/product';
-import { useTranslations } from 'next-intl';
 import {
   IconEdit,
   IconEye,
@@ -23,6 +24,7 @@ import {
   IconTag,
   IconTrash
 } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
@@ -87,171 +89,185 @@ export default function CategoriesPage() {
   });
 
   return (
-    <PageContainer>
-      <div className='w-full space-y-6'>
-        <div className='flex items-center justify-between'>
-          <div>
-            <h2 className='text-3xl font-bold tracking-tight'>
-              {t('list.title')}
-            </h2>
-            <p className='text-muted-foreground'>{t('list.subtitle')}</p>
+    <RouteGuard permission={Permission.VIEW_CATEGORY}>
+      <PageContainer scrollable={true}>
+        <div className='w-full space-y-6'>
+          <div className='flex items-center justify-between'>
+            <div>
+              <h2 className='text-3xl font-bold tracking-tight'>
+                {t('list.title')}
+              </h2>
+              <p className='text-muted-foreground'>{t('list.subtitle')}</p>
+            </div>
+            <PermissionGuard permission={Permission.CREATE_CATEGORY}>
+              <Link href='/dashboard/category/new'>
+                <Button>
+                  <IconPlus className='mr-2 h-4 w-4' />
+                  {t('list.new')}
+                </Button>
+              </Link>
+            </PermissionGuard>
           </div>
-          <Link href='/dashboard/category/new'>
-            <Button>
-              <IconPlus className='mr-2 h-4 w-4' />
-              {t('list.new')}
-            </Button>
-          </Link>
-        </div>
 
-        <div className='space-y-4'>
-          <Card>
-            <CardHeader>
-              <div className='relative'>
-                <IconSearch className='text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4' />
-                <Input
-                  placeholder={t('list.searchPlaceholder')}
-                  className='pl-8'
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  disabled={loading}
-                />
+          <div className='space-y-4'>
+            <Card>
+              <CardHeader>
+                <div className='relative'>
+                  <IconSearch className='text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4' />
+                  <Input
+                    placeholder={t('list.searchPlaceholder')}
+                    className='pl-8'
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    disabled={loading}
+                  />
+                </div>
+              </CardHeader>
+            </Card>
+
+            {loading ? (
+              <div className='space-y-4'>
+                <Skeleton className='h-12 w-full' />
+                <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                    <Card key={i}>
+                      <CardHeader>
+                        <Skeleton className='h-6 w-3/4' />
+                        <Skeleton className='h-4 w-1/2' />
+                      </CardHeader>
+                      <CardContent>
+                        <Skeleton className='h-20 w-full' />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
               </div>
-            </CardHeader>
-          </Card>
+            ) : error ? (
+              <Card>
+                <CardContent className='flex flex-col items-center justify-center py-12'>
+                  <div className='rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200'>
+                    <p className='font-medium'>
+                      {t('toast.error')}: {error}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <>
+                <div className='text-muted-foreground mb-4 text-sm'>
+                  {t('list.showing', { count: filteredCategories.length })}
+                </div>
 
-          {loading ? (
-            <div className='space-y-4'>
-              <Skeleton className='h-12 w-full' />
-              <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-                {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
-                  <Card key={i}>
-                    <CardHeader>
-                      <Skeleton className='h-6 w-3/4' />
-                      <Skeleton className='h-4 w-1/2' />
-                    </CardHeader>
-                    <CardContent>
-                      <Skeleton className='h-20 w-full' />
+                {filteredCategories.length === 0 ? (
+                  <Card>
+                    <CardContent className='flex flex-col items-center justify-center py-12'>
+                      <IconSearch className='text-muted-foreground mb-4 h-12 w-12' />
+                      <h3 className='mb-2 text-lg font-semibold'>
+                        {t('list.empty.title')}
+                      </h3>
+                      <p className='text-muted-foreground mb-4'>
+                        {t('list.empty.description')}
+                      </p>
                     </CardContent>
                   </Card>
-                ))}
-              </div>
-            </div>
-          ) : error ? (
-            <Card>
-              <CardContent className='flex flex-col items-center justify-center py-12'>
-                <div className='rounded-lg border border-red-200 bg-red-50 p-4 text-red-800 dark:border-red-800 dark:bg-red-950 dark:text-red-200'>
-                  <p className='font-medium'>
-                    {t('toast.error')}: {error}
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <div className='text-muted-foreground mb-4 text-sm'>
-                {t('list.showing', { count: filteredCategories.length })}
-              </div>
-
-              {filteredCategories.length === 0 ? (
-                <Card>
-                  <CardContent className='flex flex-col items-center justify-center py-12'>
-                    <IconSearch className='text-muted-foreground mb-4 h-12 w-12' />
-                    <h3 className='mb-2 text-lg font-semibold'>
-                      {t('list.empty.title')}
-                    </h3>
-                    <p className='text-muted-foreground mb-4'>
-                      {t('list.empty.description')}
-                    </p>
-                  </CardContent>
-                </Card>
-              ) : (
-                <>
-                  <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-                    {filteredCategories.map((category) => (
-                      <Card key={category.id} className='overflow-hidden'>
-                        <CardHeader>
-                          <div className='flex items-start justify-between'>
-                            <div className='flex-1'>
-                              <div className='flex items-center gap-2'>
-                                <IconTag className='text-primary h-5 w-5' />
-                                <CardTitle className='text-lg'>
-                                  {category.name || t('common.unnamed')}
-                                </CardTitle>
+                ) : (
+                  <>
+                    <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
+                      {filteredCategories.map((category) => (
+                        <Card key={category.id} className='overflow-hidden'>
+                          <CardHeader>
+                            <div className='flex items-start justify-between'>
+                              <div className='flex-1'>
+                                <div className='flex items-center gap-2'>
+                                  <IconTag className='text-primary h-5 w-5' />
+                                  <CardTitle className='text-lg'>
+                                    {category.name || t('common.unnamed')}
+                                  </CardTitle>
+                                </div>
+                                {category.description && (
+                                  <CardDescription className='mt-2 line-clamp-2'>
+                                    {category.description}
+                                  </CardDescription>
+                                )}
                               </div>
-                              {category.description && (
-                                <CardDescription className='mt-2 line-clamp-2'>
-                                  {category.description}
-                                </CardDescription>
-                              )}
                             </div>
-                          </div>
-                        </CardHeader>
-                        <CardContent className='space-y-4'>
-                          {category.createdAt && (
-                            <div className='text-muted-foreground text-xs'>
-                              {t('common.created')}{' '}
-                              {new Date(
-                                category.createdAt
-                              ).toLocaleDateString()}
+                          </CardHeader>
+                          <CardContent className='space-y-4'>
+                            {category.createdAt && (
+                              <div className='text-muted-foreground text-xs'>
+                                {t('common.created')}{' '}
+                                {new Date(
+                                  category.createdAt
+                                ).toLocaleDateString()}
+                              </div>
+                            )}
+
+                            <div className='flex gap-2'>
+                              <Link
+                                href={`/dashboard/category/${category.id}`}
+                                className='flex-1'
+                              >
+                                <Button variant='outline' className='w-full'>
+                                  <IconEye className='mr-2 h-4 w-4' />
+                                  {t('common.view')}
+                                </Button>
+                              </Link>
+                              <PermissionGuard
+                                permission={Permission.UPDATE_CATEGORY}
+                              >
+                                <Link
+                                  href={`/dashboard/category/${category.id}`}
+                                >
+                                  <Button variant='secondary'>
+                                    <IconEdit className='h-4 w-4' />
+                                  </Button>
+                                </Link>
+                              </PermissionGuard>
+                              <PermissionGuard
+                                permission={Permission.DELETE_CATEGORY}
+                              >
+                                <Button
+                                  variant='destructive'
+                                  onClick={() => handleDelete(category.id)}
+                                >
+                                  <IconTrash className='h-4 w-4' />
+                                </Button>
+                              </PermissionGuard>
                             </div>
-                          )}
-
-                          <div className='flex gap-2'>
-                            <Link
-                              href={`/dashboard/category/${category.id}`}
-                              className='flex-1'
-                            >
-                              <Button variant='outline' className='w-full'>
-                                <IconEye className='mr-2 h-4 w-4' />
-                                {t('common.view')}
-                              </Button>
-                            </Link>
-                            <Link href={`/dashboard/category/${category.id}`}>
-                              <Button variant='secondary'>
-                                <IconEdit className='h-4 w-4' />
-                              </Button>
-                            </Link>
-                            <Button
-                              variant='destructive'
-                              onClick={() => handleDelete(category.id)}
-                            >
-                              <IconTrash className='h-4 w-4' />
-                            </Button>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-
-                  {/* Pagination */}
-                  {(page > 1 || hasNextPage) && (
-                    <div className='flex items-center justify-center gap-2 pt-4'>
-                      <Button
-                        variant='outline'
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        disabled={page === 1 || loading}
-                      >
-                        {t('pagination.previous')}
-                      </Button>
-                      <span className='text-muted-foreground text-sm'>
-                        {t('pagination.page')} {page}
-                      </span>
-                      <Button
-                        variant='outline'
-                        onClick={() => setPage((p) => p + 1)}
-                        disabled={!hasNextPage || loading}
-                      >
-                        {t('pagination.next')}
-                      </Button>
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
-                  )}
-                </>
-              )}
-            </>
-          )}
+
+                    {/* Pagination */}
+                    {(page > 1 || hasNextPage) && (
+                      <div className='flex items-center justify-center gap-2 pt-4'>
+                        <Button
+                          variant='outline'
+                          onClick={() => setPage((p) => Math.max(1, p - 1))}
+                          disabled={page === 1 || loading}
+                        >
+                          {t('pagination.previous')}
+                        </Button>
+                        <span className='text-muted-foreground text-sm'>
+                          {t('pagination.page')} {page}
+                        </span>
+                        <Button
+                          variant='outline'
+                          onClick={() => setPage((p) => p + 1)}
+                          disabled={!hasNextPage || loading}
+                        >
+                          {t('pagination.next')}
+                        </Button>
+                      </div>
+                    )}
+                  </>
+                )}
+              </>
+            )}
+          </div>
         </div>
-      </div>
-    </PageContainer>
+      </PageContainer>
+    </RouteGuard>
   );
 }

@@ -1,4 +1,6 @@
+import { PermissionGuard } from '@/components/permissions';
 import { Button } from '@/components/ui/button';
+import { Permission } from '@/constants/permissions';
 import type { OrderSchedule, OrderScheduleStatus } from '@/types/order';
 import { ArrowLeft, Check, Plus, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
@@ -49,32 +51,40 @@ export function OrderHeader({
       <div className='flex flex-wrap items-center gap-2'>
         {status === 'pending' && (
           <>
-            <Button
-              variant='destructive'
-              onClick={onReject}
-              disabled={updating}
-            >
-              <X className='mr-2 h-4 w-4' />
-              {t('header.reject')}
-            </Button>
-            <Button onClick={onApprove} disabled={updating} variant='default'>
-              <Check className='mr-2 h-4 w-4' />
-              {t('header.approve')}
-            </Button>
+            <PermissionGuard permission={Permission.UPDATE_SALE_ORDER}>
+              <Button
+                variant='destructive'
+                onClick={onReject}
+                disabled={updating}
+              >
+                <X className='mr-2 h-4 w-4' />
+                {t('header.reject')}
+              </Button>
+            </PermissionGuard>
+            <PermissionGuard permission={Permission.UPDATE_SALE_ORDER}>
+              <Button onClick={onApprove} disabled={updating} variant='default'>
+                <Check className='mr-2 h-4 w-4' />
+                {t('header.approve')}
+              </Button>
+            </PermissionGuard>
           </>
         )}
         {(status === 'approved' || status === 'processing') &&
           hasRemainingQuantity && (
-            <Button onClick={onCreatePhase} variant='default'>
-              <Plus className='mr-2 h-4 w-4' />
-              {t('header.createPhase')}
-            </Button>
+            <PermissionGuard permission={Permission.UPDATE_SALE_ORDER}>
+              <Button onClick={onCreatePhase} variant='default'>
+                <Plus className='mr-2 h-4 w-4' />
+                {t('header.createPhase')}
+              </Button>
+            </PermissionGuard>
           )}
         {status === 'processing' && !hasRemainingQuantity && (
-          <Button onClick={onComplete} variant='default'>
-            <Check className='mr-2 h-4 w-4' />
-            {t('header.markComplete')}
-          </Button>
+          <PermissionGuard permission={Permission.UPDATE_SALE_ORDER}>
+            <Button onClick={onComplete} variant='default'>
+              <Check className='mr-2 h-4 w-4' />
+              {t('header.markComplete')}
+            </Button>
+          </PermissionGuard>
         )}
       </div>
     </div>

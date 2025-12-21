@@ -1,6 +1,7 @@
 'use client';
 
 import PageContainer from '@/components/layout/page-container';
+import { PermissionGuard } from '@/components/permissions';
 import { Badge } from '@/components/ui/badge';
 import { Button, buttonVariants } from '@/components/ui/button';
 import {
@@ -28,6 +29,7 @@ import {
   SelectValue
 } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
+import { Permission } from '@/constants/permissions';
 import { cn } from '@/lib/utils';
 import { fetchAreas } from '@/services/area.service';
 import { fetchBatches } from '@/services/batch.service';
@@ -696,12 +698,14 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
             >
               Hủy
             </Button>
-            <Button
-              onClick={handleCreateWarehouseWithManager}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? 'Đang tạo...' : 'Tạo kho & manager'}
-            </Button>
+            <PermissionGuard permission={Permission.CREATE_WAREHOUSE}>
+              <Button
+                onClick={handleCreateWarehouseWithManager}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Đang tạo...' : 'Tạo kho & manager'}
+              </Button>
+            </PermissionGuard>
           </DialogFooter>
         </DialogContent>
       </Dialog>

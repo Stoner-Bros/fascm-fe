@@ -16,6 +16,17 @@ import {
   me as getMe,
   confirmEmail as authConfirmEmail
 } from '@/services/auth.service';
+import {
+  hasPermission,
+  hasAnyPermission,
+  hasAllPermissions,
+  hasMinimumRole,
+  hasExactRole,
+  hasAnyRole as checkAnyRole,
+  canAccessRoute,
+  getUserPermissions
+} from '@/lib/permissions';
+import { Permission } from '@/constants/permissions';
 
 export const useAuth = () => {
   const user = useUser();
@@ -113,30 +124,67 @@ export const useAuth = () => {
     [setLoading]
   );
 
+  // Permission checking methods
   const checkPermission = useCallback(
+    (permission: Permission): boolean => {
+      if (!user || !userRole) return false;
+      return hasPermission(userRole, permission);
+    },
+    [user, userRole]
+  );
+
+  const checkAnyPermission = useCallback(
+    (permissions: Permission[]): boolean => {
+      if (!user || !userRole) return false;
+      return hasAnyPermission(userRole, permissions);
+    },
+    [user, userRole]
+  );
+
+  const checkAllPermissions = useCallback(
+    (permissions: Permission[]): boolean => {
+      if (!user || !userRole) return false;
+      return hasAllPermissions(userRole, permissions);
+    },
+    [user, userRole]
+  );
+
+  const checkMinimumRole = useCallback(
     (requiredRole: string): boolean => {
       if (!user || !userRole) return false;
-
-      const roleHierarchy: Record<string, number> = {
-        user: 1,
-        admin: 2,
-        'super-admin': 3
-      };
-
-      const userLevel = roleHierarchy[userRole.toLowerCase()] || 0;
-      const requiredLevel = roleHierarchy[requiredRole.toLowerCase()] || 999;
-
-      return userLevel >= requiredLevel;
+      return hasMinimumRole(userRole, requiredRole);
     },
     [user, userRole]
   );
 
   const hasRole = useCallback(
     (role: string): boolean => {
-      return userRole === role;
+      if (!userRole) return false;
+      return hasExactRole(userRole, role);
     },
     [userRole]
   );
+
+  const hasAnyRole = useCallback(
+    (roles: string[]): boolean => {
+      if (!userRole) return false;
+      return checkAnyRole(userRole, roles);
+    },
+    [userRole]
+  );
+
+  const checkRouteAccess = useCallback(
+    (route: string): boolean => {
+      if (!user || !userRole) return false;
+      return canAccessRoute(userRole, route);
+    },
+    [user, userRole]
+  );
+
+  const getPermissions = useCallback((): Permission[] => {
+    if (!userRole) return [];
+    return getUserPermissions(userRole);
+  }, [userRole]);
 
   return {
     user,
@@ -150,8 +198,16 @@ export const useAuth = () => {
     register,
     updateProfile,
     refreshUserData,
+    // Permission methods
     checkPermission,
+    checkAnyPermission,
+    checkAllPermissions,
+    checkMinimumRole,
     hasRole,
+    hasAnyRole,
+    checkRouteAccess,
+    getPermissions,
+    // Legacy methods (for backward compatibility)
     confirmEmail,
     setUser,
     setFullInfo,

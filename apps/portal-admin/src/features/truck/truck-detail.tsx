@@ -1,5 +1,7 @@
 'use client';
 
+import { PermissionGuard } from '@/components/permissions';
+import { Permission } from '@/constants/permissions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -475,13 +477,17 @@ export function TruckDetail({ truckId }: TruckDetailProps) {
         </div>
         <div className='flex gap-2'>
           {getStatusBadge(truck.status, t)}
-          <Button variant='outline' size='sm' onClick={handleOpenStatus}>
-            {t('actions.changeStatus')}
-          </Button>
-          <Button variant='outline' size='sm' onClick={handleOpenEdit}>
-            <IconEdit className='mr-2 h-4 w-4' />
-            {t('actions.edit')}
-          </Button>
+          <PermissionGuard permission={Permission.UPDATE_TRUCK}>
+            <Button variant='outline' size='sm' onClick={handleOpenStatus}>
+              {t('actions.changeStatus')}
+            </Button>
+          </PermissionGuard>
+          <PermissionGuard permission={Permission.UPDATE_TRUCK}>
+            <Button variant='outline' size='sm' onClick={handleOpenEdit}>
+              <IconEdit className='mr-2 h-4 w-4' />
+              {t('actions.edit')}
+            </Button>
+          </PermissionGuard>
           <Button variant='outline' size='sm' onClick={loadTruckData}>
             <IconRefresh className='mr-2 h-4 w-4' />
           </Button>
