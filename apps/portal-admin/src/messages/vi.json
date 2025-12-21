@@ -100,6 +100,26 @@
       },
       "na": "N/A"
     },
+    "type": {
+      "debit": "Ghi nợ",
+      "credit": "Ghi có",
+      "adjustment": "Điều chỉnh"
+    },
+    "method": {
+      "cash": "Tiền mặt",
+      "bank_transfer": "Chuyển khoản",
+      "qr_code": "Mã QR"
+    },
+    "debtType": {
+      "payable": "Phải trả",
+      "receivable": "Phải thu",
+      "unknown": "Không xác định"
+    },
+    "partnerType": {
+      "supplier": "Nhà cung cấp",
+      "consignee": "Người nhận hàng",
+      "unknown": "Không xác định"
+    },
     "modal": {
       "title": "Tạo thanh toán",
       "description": "Nhập số tiền thanh toán cho khoản nợ này",

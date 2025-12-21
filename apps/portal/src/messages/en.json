@@ -1083,7 +1083,11 @@
       "status": "Status",
       "paid": "Paid",
       "pending": "Pending Payment",
-      "close": "Close"
+      "close": "Close",
+      "cancelSuccess": "Payment canceled successfully",
+      "cancelFailed": "Failed to cancel payment. Please try again.",
+      "cancelSuccessDesc": "Pending payment has been canceled successfully",
+      "canceling": "Canceling payment..."
     }
   },
   "ConsigneeDashboard": {
