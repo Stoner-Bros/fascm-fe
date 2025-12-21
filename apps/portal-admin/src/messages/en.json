@@ -1522,7 +1522,9 @@
         "refresh": "Refresh",
         "saving": "Saving...",
         "creating": "Creating...",
-        "saveChanges": "Save Changes"
+        "saveChanges": "Save Changes",
+        "approve": "Approve",
+        "confirmApprove": "Are you sure you want to approve this manager?"
       },
       "dialog": {
         "editTitle": "Update manager account",
@@ -1579,7 +1581,8 @@
         "updateError": "Failed to update manager",
         "createError": "Failed to create manager",
         "deleteSuccess": "Manager deleted",
-        "deleteError": "Failed to delete manager"
+        "deleteError": "Failed to delete manager",
+        "approveSuccess": "Manager approved"
       }
     },
     "Consignees": {
@@ -1601,7 +1604,9 @@
         "create": "Create",
         "confirmDelete": "Are you sure you want to delete this consignee?",
         "viewDetails": "View Details",
-        "close": "Close"
+        "close": "Close",
+        "approve": "Approve",
+        "confirmApprove": "Are you sure you want to approve this consignee?"
       },
       "dialog": {
         "editTitle": "Update consignee account",
@@ -1671,7 +1676,8 @@
         "updateError": "Failed to update consignee",
         "createError": "Failed to create consignee",
         "deleteSuccess": "Consignee deleted",
-        "deleteError": "Failed to delete consignee"
+        "deleteError": "Failed to delete consignee",
+        "approveSuccess": "Consignee approved"
       }
     },
     "Suppliers": {
@@ -1692,7 +1698,9 @@
         "create": "Create",
         "confirmDelete": "Are you sure you want to delete this supplier?",
         "viewDetails": "View Details",
-        "close": "Close"
+        "close": "Close",
+        "approve": "Approve",
+        "confirmApprove": "Are you sure you want to approve this supplier?"
       },
       "dialog": {
         "editTitle": "Update supplier account",
@@ -1775,7 +1783,8 @@
         "updateError": "Failed to update supplier",
         "createError": "Failed to create supplier",
         "deleteSuccess": "Supplier deleted",
-        "deleteError": "Failed to delete supplier"
+        "deleteError": "Failed to delete supplier",
+        "approveSuccess": "Supplier approved"
       }
     },
     "DeliveryStaffs": {
@@ -1797,7 +1806,9 @@
         "create": "Create",
         "confirmDelete": "Are you sure you want to delete this delivery staff?",
         "viewDetails": "View Details",
-        "close": "Close"
+        "close": "Close",
+        "approve": "Approve",
+        "confirmApprove": "Are you sure you want to approve this delivery staff?"
       },
       "dialog": {
         "editTitle": "Update delivery staff account",
@@ -1819,7 +1830,8 @@
         "password": "Password *",
         "passwordOptional": "Password (optional)",
         "createdAt": "Created At",
-        "notAssigned": "Not assigned"
+        "notAssigned": "Not assigned",
+        "warehouse": "Select warehouse"
       },
       "placeholders": {
         "selectWarehouse": "Select warehouse",
@@ -1867,7 +1879,8 @@
         "updateError": "Failed to update delivery staff",
         "createError": "Failed to create delivery staff",
         "deleteSuccess": "Delivery staff deleted",
-        "deleteError": "Failed to delete delivery staff"
+        "deleteError": "Failed to delete delivery staff",
+        "approveSuccess": "Delivery staff approved"
       }
     },
     "Staffs": {
@@ -1887,7 +1900,9 @@
         "creating": "Creating...",
         "saveChanges": "Save Changes",
         "create": "Create",
-        "confirmDelete": "Are you sure you want to delete this staff?"
+        "confirmDelete": "Are you sure you want to delete this staff?",
+        "approve": "Approve",
+        "confirmApprove": "Are you sure you want to approve this staff?"
       },
       "dialog": {
         "editTitle": "Update staff account",
@@ -1946,7 +1961,8 @@
         "updateError": "Failed to update staff",
         "createError": "Failed to create staff",
         "deleteSuccess": "Staff deleted",
-        "deleteError": "Failed to delete staff"
+        "deleteError": "Failed to delete staff",
+        "approveSuccess": "Staff approved"
       }
     }
   },

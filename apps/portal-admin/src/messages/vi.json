@@ -1521,7 +1521,9 @@
         "refresh": "Làm mới",
         "saving": "Đang lưu...",
         "creating": "Đang tạo...",
-        "saveChanges": "Lưu thay đổi"
+        "saveChanges": "Lưu thay đổi",
+        "approve": "Duyệt",
+        "confirmApprove": "Bạn có chắc chắn muốn duyệt quản lý này?"
       },
       "dialog": {
         "editTitle": "Cập nhật tài khoản quản lý",
@@ -1579,17 +1581,18 @@
         "updateError": "Không thể cập nhật quản lý",
         "createError": "Không thể tạo quản lý",
         "deleteSuccess": "Đã xóa quản lý",
-        "deleteError": "Không thể xóa quản lý"
+        "deleteError": "Không thể xóa quản lý",
+        "approveSuccess": "Đã duyệt quản lý"
       }
     },
     "Consignees": {
       "header": {
-        "title": "Quản lý tài khoản Consignee",
+        "title": "Quản lý tài khoản Người nhận",
         "description": "Quản lý tài khoản và thông tin khách nhận"
       },
       "actions": {
-        "editConsignee": "Chỉnh sửa Consignee",
-        "createConsignee": "Tạo Consignee",
+        "editConsignee": "Chỉnh sửa Người nhận",
+        "createConsignee": "Tạo Người nhận",
         "edit": "Sửa",
         "delete": "Xóa",
         "accept": "Chấp nhận",
@@ -1599,9 +1602,11 @@
         "creating": "Đang tạo...",
         "saveChanges": "Lưu thay đổi",
         "create": "Tạo",
-        "confirmDelete": "Bạn có chắc chắn muốn xóa consignee này?",
+        "confirmDelete": "Bạn có chắc chắn muốn xóa đơn vị này?",
         "viewDetails": "Xem chi tiết",
-        "close": "Đóng"
+        "close": "Đóng",
+        "approve": "Duyệt",
+        "confirmApprove": "Bạn có chắc chắn muốn duyệt đơn vị này?"
       },
       "dialog": {
         "editTitle": "Cập nhật tài khoản consignee",
@@ -1671,7 +1676,8 @@
         "updateError": "Không thể cập nhật consignee",
         "createError": "Không thể tạo consignee",
         "deleteSuccess": "Đã xóa consignee",
-        "deleteError": "Không thể xóa consignee"
+        "deleteError": "Không thể xóa consignee",
+        "approveSuccess": "Đã duyệt đơn vị"
       }
     },
     "Suppliers": {
@@ -1693,7 +1699,9 @@
         "create": "Tạo",
         "confirmDelete": "Bạn có chắc chắn muốn xóa supplier này?",
         "viewDetails": "Xem chi tiết",
-        "close": "Đóng"
+        "close": "Đóng",
+        "approve": "Duyệt",
+        "confirmApprove": "Bạn có chắc chắn muốn duyệt nhà cung cấp này?"
       },
       "dialog": {
         "editTitle": "Cập nhật tài khoản nhà cung cấp",
@@ -1798,7 +1806,9 @@
         "create": "Tạo",
         "confirmDelete": "Bạn có chắc chắn muốn xóa tài xế này?",
         "viewDetails": "Xem chi tiết",
-        "close": "Đóng"
+        "close": "Đóng",
+        "approve": "Duyệt",
+        "confirmApprove": "Bạn có chắc chắn muốn duyệt tài xế này?"
       },
       "dialog": {
         "editTitle": "Cập nhật tài khoản tài xế",
@@ -1820,7 +1830,8 @@
         "password": "Mật khẩu *",
         "passwordOptional": "Mật khẩu (tùy chọn)",
         "createdAt": "Ngày tạo",
-        "notAssigned": "Không gán"
+        "notAssigned": "Không gán",
+        "warehouse":"Chọn kho"
       },
       "placeholders": {
         "selectWarehouse": "Chọn kho",
@@ -1868,7 +1879,8 @@
         "updateError": "Không thể cập nhật tài xế",
         "createError": "Không thể tạo tài xế",
         "deleteSuccess": "Đã xóa tài xế",
-        "deleteError": "Không thể xóa tài xế"
+        "deleteError": "Không thể xóa tài xế",
+        "approveSuccess": "Đã duyệt tài xế"
       }
     },
     "Staffs": {
@@ -1888,7 +1900,9 @@
         "creating": "Đang tạo...",
         "saveChanges": "Lưu thay đổi",
         "create": "Tạo",
-        "confirmDelete": "Bạn có chắc chắn muốn xóa nhân viên này?"
+        "confirmDelete": "Bạn có chắc chắn muốn xóa nhân viên này?",
+        "approve": "Duyệt",
+        "confirmApprove": "Bạn có chắc chắn muốn duyệt nhân viên này?"
       },
       "dialog": {
         "editTitle": "Cập nhật tài khoản nhân viên",
@@ -1947,7 +1961,8 @@
         "updateError": "Không thể cập nhật nhân viên",
         "createError": "Không thể tạo nhân viên",
         "deleteSuccess": "Đã xóa nhân viên",
-        "deleteError": "Không thể xóa nhân viên"
+        "deleteError": "Không thể xóa nhân viên",
+        "approveSuccess": "Đã duyệt nhân viên"
       }
     }
   },

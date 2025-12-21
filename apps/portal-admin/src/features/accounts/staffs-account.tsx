@@ -30,7 +30,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -56,6 +56,7 @@ import {
   updateStaff
 } from '@/services/staff.service';
 import { fetchWarehouses } from '@/services/warehouse.service';
+import { approveRegister } from '@/services/auth.service';
 import type { Staff, Warehouse } from '@/types';
 
 const NONE_VALUE = 'none';
@@ -219,6 +220,32 @@ export default function StaffsAccount() {
     }
   };
 
+  const handleApprove = async (staff: Staff) => {
+    if (!staff.user?.id) {
+      toast({
+        variant: 'destructive',
+        title: t('toast.approveError'),
+        description: 'User ID not found'
+      });
+      return;
+    }
+
+    if (!window.confirm(t('actions.confirmApprove'))) return;
+
+    try {
+      await approveRegister(staff.user.id);
+      toast({ title: t('toast.approveSuccess') });
+      await loadData();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: t('toast.approveError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
+      });
+    }
+  };
+
   const handleEdit = (staff: Staff) => {
     setForm({
       position: staff.position ?? '',
@@ -352,31 +379,21 @@ export default function StaffsAccount() {
       },
       {
         id: 'actions',
+        header: t('table.columns.actions'),
         cell: ({ row }) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant='ghost' className='h-8 w-8 p-0'>
                 <span className='sr-only'>Open menu</span>
-                <MoreHorizontal className='h-4 w-4' />
+                <MoreVertical className='h-4 w-4' />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
-              <DropdownMenuLabel>
-                {t('table.columns.actions')}
-              </DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => handleEdit(row.original)}>
-                {t('actions.edit')}
-              </DropdownMenuItem>
               {row.original.statusName !== 'Active' && (
-                <DropdownMenuItem onClick={() => {}}>Accept</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleApprove(row.original)}>
+                  {t('actions.approve')}
+                </DropdownMenuItem>
               )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className='text-red-600'
-                onClick={() => handleDelete(row.original.id)}
-              >
-                {t('actions.delete')}
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )
