@@ -1,6 +1,7 @@
 import { fetchJSON } from '@/lib/client';
 import type { InfinityPaginationResponse } from '@/types/common';
 import type { Debt, CreateDebtDto, UpdateDebtDto } from '@/types/debt';
+import type { Payment } from '@/types/payment';
 
 // ============================================================================
 // HTTP API Functions
@@ -87,6 +88,26 @@ export async function deleteDebt(id: string): Promise<void> {
   await fetchJSON(`/debts/${id}`, {
     method: 'DELETE'
   });
+}
+
+/**
+ * Fetch payments by debt ID with pagination
+ *
+ * @param id - Debt ID
+ * @param options - Pagination options
+ * @returns Paginated list of payments
+ */
+export async function fetchPaymentsByDebtId(
+  id: string,
+  options: { page?: number; limit?: number } = {}
+): Promise<InfinityPaginationResponse<Payment>> {
+  const params = new URLSearchParams();
+  if (options.page) params.append('page', String(options.page));
+  if (options.limit) params.append('limit', String(options.limit));
+
+  return fetchJSON<InfinityPaginationResponse<Payment>>(
+    `/debts/${id}/payments?${params.toString()}`
+  );
 }
 
 // ============================================================================

@@ -1,4 +1,44 @@
 {
+  "Payment": {
+    "title": "Lịch sử thanh toán",
+    "table": {
+      "code": "Mã",
+      "date": "Ngày",
+      "type": "Loại",
+      "method": "Phương thức",
+      "status": "Trạng thái",
+      "amount": "Số tiền",
+      "actions": "Thao tác",
+      "confirmPayment": "Xác nhận thanh toán",
+      "openMenu": "Mở menu",
+      "na": "N/A"
+    },
+    "status": {
+      "paid": "Đã thanh toán",
+      "pending": "Đang chờ"
+    },
+    "type": {
+      "in": "Thu",
+      "out": "Chi"
+    },
+    "method": {
+      "bank_transfer": "Chuyển khoản",
+      "cash": "Tiền mặt"
+    },
+    "dialog": {
+      "title": "Xác nhận thanh toán tiền mặt",
+      "description": "Bạn có chắc chắn muốn xác nhận đã nhận {amount} cho mã thanh toán {code} không? Hành động này không thể hoàn tác.",
+      "cancel": "Hủy",
+      "confirm": "Xác nhận",
+      "confirming": "Đang xác nhận..."
+    },
+    "toast": {
+      "successTitle": "Thành công",
+      "successDescription": "Xác nhận thanh toán thành công",
+      "errorTitle": "Lỗi",
+      "errorDescription": "Không thể xác nhận thanh toán"
+    }
+  },
   "Landing": {
     "header": {
       "home": "Trang chủ",
@@ -136,21 +176,21 @@
         }
       },
       "supplier": {
-        "step1": {
+        "step3": {
           "title": "Nhận thông báo",
-          "description": "Nhận thông báo khi nhân viên kho tạo đơn hàng yêu cầu sản phẩm của bạn."
+          "description": "Nhận thông báo khi nhân viên kho chấp thuận đơn hàng yêu cầu của bạn."
         },
         "step2": {
           "title": "Xem xét & Thương lượng",
           "description": "Kiểm tra chi tiết đơn hàng và thương lượng giá cả với nhà quản lý."
         },
-        "step3": {
+        "step1": {
           "title": "Xác nhận khả năng cung ứng",
-          "description": "Xác nhận khả năng cung cấp sản phẩm và chấp nhận hoặc từ chối đơn hàng dựa trên kho của bạn."
+          "description": "Xác nhận khả năng cung cấp sản phẩm và chấp nhận hoặc từ chối đơn hàng dựa trên giá cả mong muốn của bạn."
         },
         "step4": {
           "title": "Kiểm tra chất lượng",
-          "description": "Quan sát và xác nhận quy trình kiểm tra chất lượng sản phẩm tại kho."
+          "description": "Quan sát và xác nhận quy trình kiểm tra chất lượng sản phẩm sau khi giao hàng."
         },
         "step5": {
           "title": "Thực hiện đơn hàng",
@@ -952,6 +992,10 @@
     "title": "Tất toán hóa đơn",
     "subtitle": "Vui lòng tất toán hóa đơn trước ngày đến hạn",
     "noDebt": "Không có thông tin nợ nào",
+    "tabs": {
+      "debt": "Công nợ",
+      "history": "Lịch sử công nợ"
+    },
     "status": {
       "paid": "Đã thanh toán",
       "partiallyPaid": "Thanh toán một phần",
@@ -989,7 +1033,18 @@
       "partiallyPaid": "Đã thanh toán một phần",
       "overdueSettleNow": "Quá hạn - Cần tất toán ngay",
       "notSettled": "Chưa tất toán",
-      "pleaseSettleBeforeDue": "Vui lòng tất toán trước ngày đến hạn"
+      "pleaseSettleBeforeDue": "Vui lòng tất toán trước ngày đến hạn",
+      "debtInfo": "Thông tin công nợ",
+      "debtCode": "Mã công nợ",
+      "systemOwes": "Số tiền hệ thống còn nợ",
+      "totalDebtValue": "Tổng giá trị công nợ",
+      "systemWillPay": "Hệ thống sẽ thanh toán trước ngày đáo hạn",
+      "fullyPaid": "Đã thanh toán đủ",
+      "paymentOverdue": "Quá hạn thanh toán",
+      "daysOverdue": "Quá hạn {days} ngày",
+      "daysUntilDuePayment": "Còn {days} ngày đến hạn thanh toán",
+      "overdueSimple": "Quá hạn",
+      "debtStatus": "Trạng thái công nợ"
     },
     "alertBanner": {
       "overdueTitle": "Hóa đơn đã quá hạn thanh toán",

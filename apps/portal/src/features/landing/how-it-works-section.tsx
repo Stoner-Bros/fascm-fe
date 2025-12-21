@@ -94,8 +94,8 @@ export function HowItWorksSection() {
       id: 1,
       titleKey: 'supplier.step1.title',
       descriptionKey: 'supplier.step1.description',
-      icon: IconBell,
-      icon2: BellIcon,
+      icon: IconCircleCheck,
+      icon2: CircleCheckIcon,
       color: 'from-blue-500 to-blue-600'
     },
     {
@@ -110,8 +110,8 @@ export function HowItWorksSection() {
       id: 3,
       titleKey: 'supplier.step3.title',
       descriptionKey: 'supplier.step3.description',
-      icon: IconCircleCheck,
-      icon2: CircleCheckIcon,
+      icon: IconBell,
+      icon2: BellIcon,
       color: 'from-orange-500 to-orange-600'
     },
     {
