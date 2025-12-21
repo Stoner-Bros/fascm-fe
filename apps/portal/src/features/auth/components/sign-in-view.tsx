@@ -96,7 +96,7 @@ export default function SignInViewPage() {
         </div>
       </div>
       <div className='flex h-full items-center justify-center p-4 lg:p-8'>
-        <div className='absolute top-4 right-4 z-10 h-16 w-16'>
+        <div className='absolute top-3 right-3 z-10'>
           <ModeToggle />
         </div>
         <div className='flex w-full max-w-md flex-col items-center justify-center space-y-6'>
@@ -166,7 +166,17 @@ export default function SignInViewPage() {
             </div>
           </div>
 
-          <p className='text-muted-foreground px-8 text-center text-sm'>
+          <p className='text-muted-foreground text-center text-xs'>
+            {t('dontHaveAccount') || 'Chưa có tài khoản?'}{' '}
+            <Link
+              href='/auth/sign-up'
+              className='hover:text-primary underline underline-offset-4'
+            >
+              {t('signUpLink') || 'Đăng ký'}
+            </Link>
+          </p>
+
+          <p className='text-muted-foreground px-8 text-center text-xs'>
             {t('agreement')}{' '}
             <Link
               href='/terms'
