@@ -210,7 +210,36 @@ export function AreaGraph() {
           </AreaChart>
         </ChartContainer>
       </CardContent>
-      <CardFooter>
+      <CardFooter className='flex-col items-start gap-4'>
+        <div className='flex w-full flex-wrap items-center gap-4'>
+          <div className='flex items-center gap-2'>
+            <div
+              className='h-3 w-3 rounded-full'
+              style={{ backgroundColor: chartConfig.revenue.color }}
+            />
+            <span className='text-sm font-medium'>
+              {chartConfig.revenue.label}
+            </span>
+          </div>
+          <div className='flex items-center gap-2'>
+            <div
+              className='h-3 w-3 rounded-full'
+              style={{ backgroundColor: chartConfig.profit.color }}
+            />
+            <span className='text-sm font-medium'>
+              {chartConfig.profit.label}
+            </span>
+          </div>
+          <div className='flex items-center gap-2'>
+            <div
+              className='h-3 w-3 rounded-full'
+              style={{ backgroundColor: chartConfig.cost.color }}
+            />
+            <span className='text-sm font-medium'>
+              {chartConfig.cost.label}
+            </span>
+          </div>
+        </div>
         <div className='flex w-full items-start gap-2 text-sm'>
           <div className='grid gap-2'>
             <div className='flex items-center gap-2 leading-none font-medium'>

@@ -1086,6 +1086,44 @@
       "close": "Đóng"
     }
   },
+  "ConsigneeDashboard": {
+    "welcome": "Xin chào, Chào mừng trở lại 👋",
+    "subtitle": "Tổng quan về các đơn hàng và hoạt động của bạn",
+    "stats": {
+      "totalOrders": "Tổng số đơn hàng",
+      "totalOrdersDescription": "Tất cả các đơn hàng đã tạo",
+      "pendingApproval": "Chờ duyệt",
+      "pendingApprovalDescription": "Đang chờ phê duyệt",
+      "processing": "Đang xử lý",
+      "processingDescription": "Đang trong quá trình xử lý",
+      "completed": "Hoàn thành",
+      "completedDescription": "Đã hoàn thành thành công"
+    },
+    "recentOrders": {
+      "title": "Đơn hàng gần đây",
+      "description": "Các đơn hàng mới nhất của bạn",
+      "viewAll": "Xem tất cả",
+      "noOrders": "Chưa có đơn hàng nào",
+      "deliveryDate": "Ngày giao hàng",
+      "viewAllOrders": "Xem tất cả đơn hàng"
+    },
+    "quickActions": {
+      "title": "Thao tác nhanh",
+      "description": "Các thao tác thường dùng",
+      "createNewOrder": "Tạo đơn hàng mới",
+      "viewProfile": "Xem hồ sơ",
+      "browseProducts": "Xem sản phẩm",
+      "trackDeliveries": "Theo dõi giao hàng"
+    },
+    "status": {
+      "pending": "Chờ duyệt",
+      "approved": "Đã duyệt",
+      "completed": "Hoàn thành",
+      "rejected": "Bị từ chối",
+      "canceled": "Đã hủy",
+      "processing": "Đang xử lý"
+    }
+  },
   "SupplierDashboard": {
     "welcome": "Xin chào, Chào mừng trở lại 👋",
     "subtitle": "Tổng quan về các lô thu hoạch và hoạt động của bạn",
