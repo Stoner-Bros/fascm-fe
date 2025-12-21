@@ -1516,6 +1516,7 @@
         "createManager": "Tạo Quản lý",
         "edit": "Sửa",
         "delete": "Xóa",
+        "accept": "Chấp nhận",
         "clearForm": "Xóa biểu mẫu",
         "refresh": "Làm mới",
         "saving": "Đang lưu...",
@@ -1549,6 +1550,10 @@
         "warehousePlaceholder": "Lọc theo kho",
         "allWarehouses": "Tất cả kho"
       },
+      "status": {
+        "active": "Hoạt động",
+        "inactive": "Ngưng hoạt động"
+      },
       "table": {
         "title": "Danh sách quản lý",
         "description": "Theo dõi và chỉnh sửa tài khoản quản lý.",
@@ -1561,7 +1566,9 @@
           "email": "Email",
           "warehouse": "Kho",
           "address": "Địa chỉ",
-          "actions": "Thao tác"
+          "status": "Trạng thái",
+          "actions": "Thao tác",
+          "status": "Trạng thái"
         }
       },
       "toast": {
@@ -1585,6 +1592,7 @@
         "createConsignee": "Tạo Consignee",
         "edit": "Sửa",
         "delete": "Xóa",
+        "accept": "Chấp nhận",
         "cancel": "Hủy",
         "refresh": "Làm mới",
         "saving": "Đang lưu...",
@@ -1636,6 +1644,10 @@
         "organizationPlaceholder": "Lọc theo tổ chức",
         "allOrganizations": "Tất cả tổ chức"
       },
+      "status": {
+        "active": "Hoạt động",
+        "inactive": "Ngưng hoạt động"
+      },
       "table": {
         "title": "Danh sách consignee",
         "description": "Theo dõi và chỉnh sửa tài khoản consignee.",
@@ -1647,6 +1659,7 @@
           "representative": "Đại diện",
           "contact": "Liên hệ",
           "email": "Email",
+          "status": "Trạng thái",
           "actions": "Thao tác"
         }
       },
@@ -1671,6 +1684,7 @@
         "createSupplier": "Tạo nhà cung cấp",
         "edit": "Sửa",
         "delete": "Xóa",
+        "accept": "Chấp nhận",
         "clear": "Xóa dữ liệu",
         "refresh": "Làm mới",
         "saving": "Đang lưu...",
@@ -1722,10 +1736,18 @@
         "lastName": "Văn C",
         "warehouse": "Chọn warehouse"
       },
+      "status": {
+        "active": "Hoạt động",
+        "inactive": "Ngưng hoạt động"
+      },
       "filters": {
         "searchPlaceholder": "Tìm theo vườn, đại diện, email...",
         "warehousePlaceholder": "Lọc theo kho",
-        "allWarehouses": "Tất cả kho"
+        "allWarehouses": "Tất cả kho",
+        "statusPlaceholder": "Lọc theo trạng thái",
+        "allStatuses": "Tất cả trạng thái",
+        "active": "Hoạt động",
+        "inactive": "Ngưng hoạt động"
       },
       "labels": {
         "unassigned": "Không gán"
@@ -1742,6 +1764,7 @@
           "email": "Email",
           "warehouse": "Kho",
           "address": "Địa chỉ",
+          "status": "Trạng thái",
           "actions": "Thao tác"
         }
       },
@@ -1766,6 +1789,7 @@
         "createDeliveryStaff": "Tạo Tài xế",
         "edit": "Sửa",
         "delete": "Xóa",
+        "accept": "Chấp nhận",
         "clearForm": "Xóa biểu mẫu",
         "refresh": "Làm mới",
         "saving": "Đang lưu...",
@@ -1815,6 +1839,10 @@
         "warehousePlaceholder": "Lọc theo kho",
         "allWarehouses": "Tất cả kho"
       },
+      "status": {
+        "active": "Hoạt động",
+        "inactive": "Ngưng hoạt động"
+      },
       "table": {
         "title": "Danh sách tài xế",
         "description": "Theo dõi và chỉnh sửa tài khoản tài xế.",
@@ -1828,6 +1856,7 @@
           "warehouse": "Kho",
           "truck": "Xe tải",
           "licenseExpired": "Hết hạn giấy phép",
+          "status": "Trạng thái",
           "actions": "Thao tác"
         }
       },
@@ -1852,6 +1881,7 @@
         "createStaff": "Tạo Nhân viên",
         "edit": "Sửa",
         "delete": "Xóa",
+        "accept": "Chấp nhận",
         "clearForm": "Xóa biểu mẫu",
         "refresh": "Làm mới",
         "saving": "Đang lưu...",
@@ -1888,6 +1918,10 @@
         "warehousePlaceholder": "Lọc theo kho",
         "allWarehouses": "Tất cả kho"
       },
+      "status": {
+        "active": "Hoạt động",
+        "inactive": "Ngưng hoạt động"
+      },
       "table": {
         "title": "Danh sách nhân viên",
         "description": "Theo dõi và chỉnh sửa tài khoản nhân viên.",
@@ -1901,7 +1935,8 @@
           "position": "Vị trí",
           "warehouse": "Kho",
           "createdAt": "Ngày tạo",
-          "actions": "Thao tác"
+          "actions": "Thao tác",
+          "status": "Trạng thái"
         }
       },
       "toast": {

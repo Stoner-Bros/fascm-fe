@@ -1517,6 +1517,7 @@
         "createManager": "Create Manager",
         "edit": "Edit",
         "delete": "Delete",
+        "accept": "Accept",
         "clearForm": "Clear form",
         "refresh": "Refresh",
         "saving": "Saving...",
@@ -1550,6 +1551,10 @@
         "warehousePlaceholder": "Filter by warehouse",
         "allWarehouses": "All warehouses"
       },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
       "table": {
         "title": "Managers",
         "description": "Track and edit manager accounts.",
@@ -1562,7 +1567,8 @@
           "email": "Email",
           "warehouse": "Warehouse",
           "address": "Address",
-          "actions": "Actions"
+          "actions": "Actions",
+          "status": "Status"
         }
       },
       "toast": {
@@ -1586,6 +1592,7 @@
         "createConsignee": "Create Consignee",
         "edit": "Edit",
         "delete": "Delete",
+        "accept": "Accept",
         "cancel": "Cancel",
         "refresh": "Refresh",
         "saving": "Saving...",
@@ -1636,6 +1643,10 @@
         "searchPlaceholder": "Search by organization, representative, email...",
         "organizationPlaceholder": "Filter by organization",
         "allOrganizations": "All organizations"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
       },
       "table": {
         "title": "Consignees",
@@ -1723,10 +1734,18 @@
         "lastName": "Van C",
         "warehouse": "Select warehouse"
       },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
       "filters": {
         "searchPlaceholder": "Search by garden, representative, email...",
         "warehousePlaceholder": "Filter by warehouse",
-        "allWarehouses": "All warehouses"
+        "allWarehouses": "All warehouses",
+        "statusPlaceholder": "Filter by status",
+        "allStatuses": "All statuses",
+        "active": "Active",
+        "inactive": "Inactive"
       },
       "labels": {
         "unassigned": "Unassigned"
@@ -1767,6 +1786,7 @@
         "createDeliveryStaff": "Create Delivery Staff",
         "edit": "Edit",
         "delete": "Delete",
+        "accept": "Accept",
         "clearForm": "Clear form",
         "refresh": "Refresh",
         "saving": "Saving...",
@@ -1816,6 +1836,10 @@
         "warehousePlaceholder": "Filter by warehouse",
         "allWarehouses": "All warehouses"
       },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
       "table": {
         "title": "Delivery Staff",
         "description": "Track and edit delivery staff accounts.",
@@ -1853,6 +1877,7 @@
         "createStaff": "Create Staff",
         "edit": "Edit",
         "delete": "Delete",
+        "accept": "Accept",
         "clearForm": "Clear form",
         "refresh": "Refresh",
         "saving": "Saving...",
@@ -1889,6 +1914,10 @@
         "warehousePlaceholder": "Filter by warehouse",
         "allWarehouses": "All warehouses"
       },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
       "table": {
         "title": "Staff",
         "description": "Track and edit staff accounts.",
@@ -1902,7 +1931,8 @@
           "position": "Position",
           "warehouse": "Warehouse",
           "createdAt": "Created At",
-          "actions": "Actions"
+          "actions": "Actions",
+          "status": "Status"
         }
       },
       "toast": {

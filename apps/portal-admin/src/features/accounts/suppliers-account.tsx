@@ -12,6 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -91,6 +92,9 @@ export default function SuppliersAccount() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [warehouseFilter, setWarehouseFilter] = useState<'ALL' | string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<
+    'ALL' | 'Active' | 'Inactive'
+  >('ALL');
   const [editingSupplier, setEditingSupplier] = useState<Supplier | null>(null);
   const [viewingSupplier, setViewingSupplier] = useState<Supplier | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
@@ -281,6 +285,7 @@ export default function SuppliersAccount() {
       warehouseName: supplier.warehouse?.name ?? t('labels.unassigned'),
       gardenNameDisplay: supplier.gardenName ?? '—',
       email: supplier.user?.email ?? '—',
+      statusName: supplier.user?.status?.name ?? 'Inactive',
       createdAtDisplay: formatDateTime(supplier.createdAt)
     }));
   }, [suppliers]);
@@ -297,9 +302,11 @@ export default function SuppliersAccount() {
         (supplier.taxCode ?? '').toLowerCase().includes(query);
       const matchesWarehouse =
         warehouseFilter === 'ALL' || supplier.warehouse?.id === warehouseFilter;
-      return matchesSearch && matchesWarehouse;
+      const matchesStatus =
+        statusFilter === 'ALL' || supplier.statusName === statusFilter;
+      return matchesSearch && matchesWarehouse && matchesStatus;
     });
-  }, [tableData, searchQuery, warehouseFilter]);
+  }, [tableData, searchQuery, warehouseFilter, statusFilter]);
 
   const handleViewDetails = (supplier: (typeof tableData)[number]) => {
     setViewingSupplier(supplier);
@@ -345,6 +352,24 @@ export default function SuppliersAccount() {
           <div className='max-w-[150px] break-words whitespace-normal'>
             {row.original.warehouseName}
           </div>
+        )
+      },
+      {
+        accessorKey: 'statusName',
+        header: t('table.columns.status'),
+        cell: ({ row }) => (
+          <Badge
+            variant={
+              row.original.statusName === 'Active' ? 'default' : 'secondary'
+            }
+            className={
+              row.original.statusName === 'Active'
+                ? 'bg-green-500 hover:bg-green-600'
+                : ''
+            }
+          >
+            {row.original.statusName}
+          </Badge>
         )
       },
       {
@@ -672,6 +697,25 @@ export default function SuppliersAccount() {
                       {warehouse.name}
                     </SelectItem>
                   ))}
+                </SelectContent>
+              </Select>
+              <Select
+                value={statusFilter}
+                onValueChange={(value) =>
+                  setStatusFilter(value as 'ALL' | 'Active' | 'Inactive')
+                }
+              >
+                <SelectTrigger className='md:w-[180px]'>
+                  <SelectValue placeholder={t('filters.statusPlaceholder')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value='ALL'>
+                    {t('filters.allStatuses')}
+                  </SelectItem>
+                  <SelectItem value='Active'>{t('filters.active')}</SelectItem>
+                  <SelectItem value='Inactive'>
+                    {t('filters.inactive')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>

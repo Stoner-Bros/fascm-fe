@@ -12,6 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 
 import {
   Dialog,
@@ -128,7 +129,6 @@ export default function ConsigneesAccount() {
     setForm(DEFAULT_FORM);
   };
 
-  // LOAD DATA – không phụ thuộc toast để tránh re-fetch
   const loadData = useCallback(async () => {
     if (isFetchingRef.current) return;
     isFetchingRef.current = true;
@@ -297,6 +297,7 @@ export default function ConsigneesAccount() {
       ...consignee,
       email: consignee.user?.email ?? '—',
       organizationLabel: consignee.organizationName ?? '—',
+      statusName: consignee.user?.status?.name ?? 'Inactive',
       createdAtDisplay: formatDateTime(consignee.createdAt)
     }));
   }, [consignees]);
@@ -383,6 +384,24 @@ export default function ConsigneesAccount() {
           <div className='max-w-[200px] break-words whitespace-normal'>
             {row.original.email}
           </div>
+        )
+      },
+      {
+        accessorKey: 'statusName',
+        header: t('table.columns.status'),
+        cell: ({ row }) => (
+          <Badge
+            variant={
+              row.original.statusName === 'Active' ? 'default' : 'secondary'
+            }
+            className={
+              row.original.statusName === 'Active'
+                ? 'bg-green-500 hover:bg-green-600'
+                : ''
+            }
+          >
+            {row.original.statusName}
+          </Badge>
         )
       },
       {

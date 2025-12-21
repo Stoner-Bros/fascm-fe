@@ -12,6 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -262,6 +263,7 @@ export default function ManagersAccount() {
       fullName: getManagerFullName(manager),
       email: manager.user?.email || '—',
       warehouseName: manager.warehouse?.name || 'Không gán',
+      statusName: manager.user?.status?.name ?? 'Inactive',
       createdAtDisplay: formatDateTime(manager.createdAt)
     }));
   }, [managers]);
@@ -339,6 +341,24 @@ export default function ManagersAccount() {
           <div className='max-w-[200px] break-words whitespace-normal'>
             {row.original.warehouse?.address || '—'}
           </div>
+        )
+      },
+      {
+        accessorKey: 'statusName',
+        header: t('table.columns.status'),
+        cell: ({ row }) => (
+          <Badge
+            variant={
+              row.original.statusName === 'Active' ? 'default' : 'secondary'
+            }
+            className={
+              row.original.statusName === 'Active'
+                ? 'bg-green-500 hover:bg-green-600'
+                : ''
+            }
+          >
+            {row.original.statusName}
+          </Badge>
         )
       },
       {

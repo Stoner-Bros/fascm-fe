@@ -12,6 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import {
   Dialog,
   DialogContent,
@@ -234,6 +235,7 @@ export default function StaffsAccount() {
       lastName: staff.user?.lastName ?? '—',
       email: staff.user?.email ?? '—',
       warehouseName: staff.warehouse?.name ?? 'Không gán',
+      statusName: staff.user?.status?.name ?? 'Inactive',
       createdAtDisplay: formatDateTime(staff.createdAt)
     }));
   }, [staffs]);
@@ -319,6 +321,24 @@ export default function StaffsAccount() {
           <div className='max-w-[150px] break-words whitespace-normal'>
             {row.original.createdAtDisplay}
           </div>
+        )
+      },
+      {
+        accessorKey: 'statusName',
+        header: t('table.columns.status'),
+        cell: ({ row }) => (
+          <Badge
+            variant={
+              row.original.statusName === 'Active' ? 'default' : 'secondary'
+            }
+            className={
+              row.original.statusName === 'Active'
+                ? 'bg-green-500 hover:bg-green-600'
+                : ''
+            }
+          >
+            {row.original.statusName}
+          </Badge>
         )
       },
       {
