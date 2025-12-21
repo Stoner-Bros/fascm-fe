@@ -3,10 +3,10 @@ import React from 'react';
 import { OverviewCards } from '@/features/overview/components/overview-cards';
 import { DebtGraph } from '@/features/overview/components/debt-graph';
 import { WarehouseGraph } from '@/features/overview/components/warehouse-graph';
-import { TruckGraph } from '@/features/overview/components/truck-graph';
 import { SupplierGraph } from '@/features/overview/components/supplier-graph';
 import { TopCustomersGraph } from '@/features/overview/components/top-customers-graph';
 import { getTranslations } from 'next-intl/server';
+import { InventoryGraph } from '@/features/overview/components/inventory-graph';
 
 export default async function OverViewLayout({
   sales,
@@ -40,7 +40,7 @@ export default async function OverViewLayout({
           <div className='col-span-4'>{bar_stats}</div>
 
           <div className='col-span-4 md:col-span-3'>
-            <TruckGraph />
+            <InventoryGraph />
           </div>
 
           <div className='col-span-4'>{area_stats}</div>
