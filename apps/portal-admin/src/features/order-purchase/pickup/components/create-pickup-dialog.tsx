@@ -27,7 +27,8 @@ import {
   Truck as TruckIcon,
   User
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/hooks/use-auth';
 
 interface CreatePickupDialogProps {
   open: boolean;
@@ -75,10 +76,17 @@ export function CreatePickupDialog({
   onSubmit,
   isSubmitting
 }: CreatePickupDialogProps) {
+  const { fullInfo } = useAuth();
   const [selectedTruckId, setSelectedTruckId] = useState<string>('');
   const [selectedStaffId, setSelectedStaffId] = useState<string>('');
   const [startAddress, setStartAddress] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
+
+  useEffect(() => {
+    if (open && fullInfo?.warehouse?.address) {
+      setStartAddress(fullInfo.warehouse.address);
+    }
+  }, [open, fullInfo]);
 
   // Filter available trucks
   const availableTrucks = trucks.filter(
@@ -322,14 +330,17 @@ export function CreatePickupDialog({
             className='flex items-center gap-1.5 text-sm'
           >
             <MapPin className='h-3.5 w-3.5' />
-            Điểm xuất phát (tùy chọn)
+            Điểm xuất phát (Kho)
           </Label>
           <Input
             id='startAddress'
             value={startAddress}
-            onChange={(e) => setStartAddress(e.target.value)}
-            placeholder={schedule?.address || 'Nhập địa chỉ xuất phát...'}
-            className='h-9'
+            disabled
+            readOnly
+            placeholder={
+              fullInfo?.warehouse?.address || 'Đang tải địa chỉ kho...'
+            }
+            className='bg-muted h-9'
           />
         </div>
 

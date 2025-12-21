@@ -26,7 +26,6 @@ type ViewMode = 'split' | 'list';
 export default function PickupPage() {
   const [viewMode, setViewMode] = useState<ViewMode>('split');
   const page = usePickupPage();
-
   // Stats calculations
   const stats = useMemo(() => {
     const totalSchedules = page.schedules.allSchedules.length;
