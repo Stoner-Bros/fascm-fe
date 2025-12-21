@@ -1011,7 +1011,7 @@
       "invoiceCode": "Mã hóa đơn",
       "amountToSettle": "Số tiền cần tất toán",
       "totalInvoiceValue": "Tổng giá trị hóa đơn",
-      "settleInvoice": "Tất toán hóa đơn",
+      "settleInvoice": "Thanh toán hóa đơn",
       "daysUntilDue": "Còn {days} ngày đến hạn",
       "debtOverview": "Tổng quan nợ",
       "originalAmount": "Số tiền gốc",
@@ -1063,7 +1063,7 @@
       "title": "Thanh toán hóa đơn",
       "description": "Nhập số tiền bạn muốn thanh toán và quét mã QR để hoàn tất giao dịch",
       "amountLabel": "Số tiền thanh toán",
-      "maxAmount": "Tối đa",
+      "maxAmount": "Tất toán",
       "enterAmount": "Nhập số tiền",
       "amountToPay": "Số tiền cần thanh toán",
       "enteredAmount": "Số tiền nhập",
@@ -1083,7 +1083,10 @@
       "status": "Trạng thái",
       "paid": "Đã thanh toán",
       "pending": "Đang chờ thanh toán",
-      "close": "Đóng"
+      "close": "Đóng",
+      "cancelSuccess": "Thanh toán đã hủy thành công",
+      "cancelSuccessDesc": "Giao dịch thanh toán đã được hủy.",
+      "canceling": "Đang hủy giao dịch..."
     }
   },
   "ConsigneeDashboard": {

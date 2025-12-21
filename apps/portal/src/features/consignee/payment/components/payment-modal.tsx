@@ -13,6 +13,8 @@ import { IconLoader2, IconCheck } from '@tabler/icons-react';
 import type { Debt } from '@/types/debt';
 import { cn } from '@/lib/utils';
 import { useTranslations } from 'next-intl';
+import { deletePayment } from '@/services/payment.service';
+import { useToast } from '@/hooks/use-toast';
 
 interface PaymentModalProps {
   debt: Debt;
@@ -28,10 +30,12 @@ export function PaymentModal({
   onSuccess
 }: PaymentModalProps) {
   const t = useTranslations('Debt.paymentModal');
+  const { toast } = useToast();
   const [amount, setAmount] = useState<string>('');
   const [errors, setErrors] = useState<{ amount?: string }>({});
   const [qrCodeDataURL, setQrCodeDataURL] = useState<string | null>(null);
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
   const { payment, isCreating, createPaymentWithQR, reset } = usePayment({
     onPaymentSuccess: () => {
       onSuccess?.();
@@ -73,13 +77,35 @@ export function PaymentModal({
     }
   }, [payment?.qrCode]);
 
-  const handleClose = () => {
-    if (!isCreating) {
-      setAmount('');
-      setErrors({});
-      reset();
-      onClose();
+  const handleClose = async () => {
+    if (isCreating || isCanceling) return;
+
+    // Nếu có payment đang pending, xóa nó trước khi đóng
+    if (payment && payment.status === 'pending' && payment.id) {
+      try {
+        setIsCanceling(true);
+        await deletePayment(payment.id);
+        toast({
+          title: t('cancelSuccess') || 'Payment canceled',
+          description:
+            t('cancelSuccessDesc') || 'Pending payment has been canceled'
+        });
+      } catch (error) {
+        console.error('Failed to cancel payment:', error);
+        toast({
+          title: t('cancelError') || 'Error',
+          description: t('cancelErrorDesc') || 'Failed to cancel payment',
+          variant: 'destructive'
+        });
+      } finally {
+        setIsCanceling(false);
+      }
     }
+
+    setAmount('');
+    setErrors({});
+    reset();
+    onClose();
   };
 
   const handleAmountChange = (value: string) => {
@@ -209,11 +235,18 @@ export function PaymentModal({
               type='button'
               variant='outline'
               onClick={handleClose}
-              disabled={isCreating}
+              disabled={isCreating || isCanceling}
             >
-              {t('cancel')}
+              {isCanceling ? (
+                <>
+                  <IconLoader2 className='mr-2 h-4 w-4 animate-spin' />
+                  {t('canceling') || 'Canceling...'}
+                </>
+              ) : (
+                t('cancel')
+              )}
             </Button>
-            <Button type='submit' disabled={isCreating}>
+            <Button type='submit' disabled={isCreating || isCanceling}>
               {isCreating ? (
                 <>
                   <IconLoader2 className='mr-2 h-4 w-4 animate-spin' />
@@ -311,8 +344,19 @@ export function PaymentModal({
           </div>
 
           <div className='flex justify-end gap-3'>
-            <Button variant='outline' onClick={handleClose}>
-              {t('close')}
+            <Button
+              variant='outline'
+              onClick={handleClose}
+              disabled={isCanceling}
+            >
+              {isCanceling ? (
+                <>
+                  <IconLoader2 className='mr-2 h-4 w-4 animate-spin' />
+                  {t('canceling') || 'Canceling...'}
+                </>
+              ) : (
+                t('cancel')
+              )}
             </Button>
           </div>
         </div>

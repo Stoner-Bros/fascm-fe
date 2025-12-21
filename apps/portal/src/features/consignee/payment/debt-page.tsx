@@ -5,14 +5,46 @@ import {
   DebtCard,
   DebtAlertBanner,
   DebtLoadingSkeleton,
-  DebtError
+  DebtError,
+  PaymentHistoryTable
 } from './components';
 import { useMyDebt } from './hooks';
 import { useTranslations } from 'next-intl';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { fetchPaymentsByDebtId } from '@/services/debt.service';
+import { useEffect, useState } from 'react';
+import type { Payment } from '@/types/payment';
 
 export default function DebtPage() {
   const { debt, isLoading, error, refetch } = useMyDebt();
   const t = useTranslations('Debt');
+
+  const [payments, setPayments] = useState<Payment[]>([]);
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [pageCount, setPageCount] = useState(1);
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    async function loadPayments() {
+      if (!debt?.id) return;
+      try {
+        const response = await fetchPaymentsByDebtId(debt.id, { page, limit });
+        setPayments(response.data);
+        if (response.hasNextPage) {
+          setPageCount((prev) => (page >= prev ? page + 1 : prev));
+        } else {
+          setPageCount(page);
+        }
+      } catch (err) {
+        console.error('Failed to load payments', err);
+      }
+    }
+
+    if (debt?.id) {
+      loadPayments();
+    }
+  }, [debt?.id, page, limit, refreshKey]);
 
   if (isLoading) {
     return (
@@ -62,8 +94,32 @@ export default function DebtPage() {
         {/* Alert Banner */}
         {Boolean(debt.remainingAmount) && <DebtAlertBanner debt={debt} />}
 
-        {/* Main Debt Card */}
-        <DebtCard debt={debt} onPaymentSuccess={refetch} />
+        {/* Main Content with Tabs */}
+        <Tabs defaultValue='debt' className='w-full'>
+          <TabsList>
+            <TabsTrigger value='debt'>{t('tabs.debt')}</TabsTrigger>
+            <TabsTrigger value='history'>{t('tabs.history')}</TabsTrigger>
+          </TabsList>
+          <TabsContent value='debt' className='mt-6'>
+            <DebtCard debt={debt} onPaymentSuccess={refetch} />
+          </TabsContent>
+          <TabsContent value='history' className='mt-6'>
+            <div className='rounded-md border'>
+              <PaymentHistoryTable
+                payments={payments}
+                page={page}
+                limit={limit}
+                pageCount={pageCount}
+                onPageChange={setPage}
+                onLimitChange={setLimit}
+                onPaymentConfirmed={() => {
+                  setRefreshKey((prev) => prev + 1);
+                  refetch();
+                }}
+              />
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </PageContainer>
   );

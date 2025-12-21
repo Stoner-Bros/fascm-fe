@@ -100,6 +100,26 @@
       },
       "na": "N/A"
     },
+    "type": {
+      "debit": "Debit",
+      "credit": "Credit",
+      "adjustment": "Adjustment"
+    },
+    "method": {
+      "cash": "Cash",
+      "bank_transfer": "Bank Transfer",
+      "qr_code": "QR Code"
+    },
+    "debtType": {
+      "payable": "Payable",
+      "receivable": "Receivable",
+      "unknown": "Unknown"
+    },
+    "partnerType": {
+      "supplier": "Supplier",
+      "consignee": "Consignee",
+      "unknown": "Unknown"
+    },
     "modal": {
       "title": "Create Payment",
       "description": "Enter the payment amount for this debt",
