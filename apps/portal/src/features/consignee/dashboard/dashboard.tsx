@@ -1,259 +1,401 @@
+'use client';
+
 import PageContainer from '@/components/layout/page-container';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardAction,
   CardContent,
-  CardFooter
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card';
+import { fetchMyOrderSchedules } from '@/services/order-schedule.service';
+import type { OrderSchedule } from '@/types/order';
 import {
-  IconTrendingUp,
+  IconCheck,
+  IconClock,
   IconPackage,
   IconShoppingCart,
-  IconClock,
-  IconCheck,
   IconTruck,
-  IconCoin
+  IconX
 } from '@tabler/icons-react';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
+import { useEffect, useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
+
+const normalizeStatus = (status?: string | null): string => {
+  if (!status || status.trim() === '') return 'pending';
+  return status.toLowerCase().trim();
+};
 
 export default function ConsigneeDashboardFeature() {
+  const t = useTranslations('ConsigneeDashboard');
+  const [schedules, setSchedules] = useState<OrderSchedule[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        const schedulesRes = await fetchMyOrderSchedules({
+          page: 1,
+          limit: 100,
+          sort: 'desc'
+        });
+
+        if (cancelled) return;
+
+        setSchedules(schedulesRes.data ?? []);
+      } catch (err) {
+        console.error('Failed to load dashboard data', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    loadData();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Calculate statistics
+  const stats = useMemo(() => {
+    const total = schedules.length;
+    const pending = schedules.filter(
+      (s) => normalizeStatus(s.status) === 'pending'
+    ).length;
+    const approved = schedules.filter(
+      (s) => normalizeStatus(s.status) === 'approved'
+    ).length;
+    const processing = schedules.filter(
+      (s) => normalizeStatus(s.status) === 'processing'
+    ).length;
+    const completed = schedules.filter(
+      (s) => normalizeStatus(s.status) === 'completed'
+    ).length;
+    const rejected = schedules.filter(
+      (s) => normalizeStatus(s.status) === 'rejected'
+    ).length;
+    const canceled = schedules.filter(
+      (s) => normalizeStatus(s.status) === 'canceled'
+    ).length;
+
+    return {
+      total,
+      pending,
+      approved,
+      processing,
+      completed,
+      rejected,
+      canceled
+    };
+  }, [schedules]);
+
+  // Get recent orders (sorted by date, latest first)
+  const recentOrders = useMemo(() => {
+    return [...schedules]
+      .sort((a, b) => {
+        const dateA = a.deliveryDate
+          ? new Date(a.deliveryDate as unknown as string).getTime()
+          : 0;
+        const dateB = b.deliveryDate
+          ? new Date(b.deliveryDate as unknown as string).getTime()
+          : 0;
+        return dateB - dateA;
+      })
+      .slice(0, 5);
+  }, [schedules]);
+
+  const getStatusBadge = (status: string) => {
+    const s = normalizeStatus(status);
+    switch (s) {
+      case 'pending':
+        return (
+          <Badge variant='outline' className='bg-yellow-50'>
+            <IconClock className='mr-1 h-3 w-3' />
+            {t('status.pending')}
+          </Badge>
+        );
+      case 'approved':
+        return (
+          <Badge variant='default' className='bg-blue-50 text-blue-700'>
+            <IconCheck className='mr-1 h-3 w-3' />
+            {t('status.approved')}
+          </Badge>
+        );
+      case 'processing':
+        return (
+          <Badge variant='secondary' className='bg-blue-50'>
+            <IconTruck className='mr-1 h-3 w-3' />
+            {t('status.processing')}
+          </Badge>
+        );
+      case 'completed':
+        return (
+          <Badge variant='default' className='bg-green-50 text-green-700'>
+            <IconCheck className='mr-1 h-3 w-3' />
+            {t('status.completed')}
+          </Badge>
+        );
+      case 'rejected':
+        return (
+          <Badge variant='destructive'>
+            <IconX className='mr-1 h-3 w-3' />
+            {t('status.rejected')}
+          </Badge>
+        );
+      case 'canceled':
+        return (
+          <Badge variant='destructive'>
+            <IconX className='mr-1 h-3 w-3' />
+            {t('status.canceled')}
+          </Badge>
+        );
+      default:
+        return <Badge variant='outline'>{status}</Badge>;
+    }
+  };
+
   return (
     <PageContainer>
-      <div className='flex w-full flex-1 flex-col space-y-2'>
-        <div className='flex items-center justify-between space-y-2'>
-          <h2 className='text-2xl font-bold tracking-tight'>
-            Hi, Welcome back 👋
-          </h2>
-          <div className='flex items-center space-x-2'>
-            <Link href='/consignee/products'>
-              <Button variant='outline'>
-                <IconPackage className='mr-2 h-4 w-4' />
-                Browse Products
-              </Button>
-            </Link>
-            <Link href='/consignee/orders/new'>
-              <Button>
-                <IconShoppingCart className='mr-2 h-4 w-4' />
-                New Order
-              </Button>
-            </Link>
+      <div className='flex w-full flex-1 flex-col space-y-6'>
+        <div className='flex items-center justify-between'>
+          <div>
+            <h2 className='text-3xl font-bold tracking-tight'>
+              {t('welcome')}
+            </h2>
+            <p className='text-muted-foreground mt-1'>{t('subtitle')}</p>
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats Cards with gradient backgrounds */}
         <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4'>
-          <Card className='@container/card'>
+          <Card className='relative overflow-hidden border-2 bg-gradient-to-br from-blue-50 to-blue-100/50 dark:from-blue-950/20 dark:to-blue-900/10'>
             <CardHeader>
-              <CardDescription>Total Orders</CardDescription>
-              <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                128
+              <CardDescription className='text-blue-700 dark:text-blue-400'>
+                {t('stats.totalOrders')}
+              </CardDescription>
+              <CardTitle className='text-3xl font-bold text-blue-900 tabular-nums dark:text-blue-100'>
+                {loading ? (
+                  <div className='h-8 w-16 animate-pulse rounded bg-blue-200 dark:bg-blue-800' />
+                ) : (
+                  stats.total
+                )}
               </CardTitle>
-              <CardAction>
-                <Badge variant='outline'>
-                  <IconTrendingUp className='h-3 w-3' />
-                  +8.2%
-                </Badge>
-              </CardAction>
             </CardHeader>
-            <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-              <div className='line-clamp-1 flex gap-2 font-medium'>
-                Growing this month <IconTrendingUp className='size-4' />
+            <CardFooter className='flex-col items-start gap-1 text-sm'>
+              <div className='text-muted-foreground'>
+                {t('stats.totalOrdersDescription')}
               </div>
-              <div className='text-muted-foreground'>Total orders placed</div>
             </CardFooter>
+            <div className='absolute -top-4 -right-4 h-24 w-24 rounded-full bg-blue-200/30 dark:bg-blue-800/20' />
           </Card>
 
-          <Card className='@container/card'>
+          <Card className='relative overflow-hidden border-2 bg-gradient-to-br from-yellow-50 to-amber-100/50 dark:from-yellow-950/20 dark:to-amber-900/10'>
             <CardHeader>
-              <CardDescription>Pending Orders</CardDescription>
-              <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                12
+              <CardDescription className='text-yellow-700 dark:text-yellow-400'>
+                {t('stats.pendingApproval')}
+              </CardDescription>
+              <CardTitle className='text-3xl font-bold text-yellow-900 tabular-nums dark:text-yellow-100'>
+                {loading ? (
+                  <div className='h-8 w-16 animate-pulse rounded bg-yellow-200 dark:bg-yellow-800' />
+                ) : (
+                  stats.pending
+                )}
               </CardTitle>
-              <CardAction>
-                <Badge
-                  variant='outline'
-                  className='bg-yellow-50 dark:bg-yellow-600'
-                >
-                  <IconClock className='h-3 w-3' />
-                  Pending
-                </Badge>
-              </CardAction>
             </CardHeader>
-            <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-              <div className='line-clamp-1 flex gap-2 font-medium'>
-                Awaiting confirmation <IconClock className='size-4' />
+            <CardFooter className='flex-col items-start gap-1 text-sm'>
+              <div className='text-muted-foreground'>
+                {t('stats.pendingApprovalDescription')}
               </div>
-              <div className='text-muted-foreground'>Orders in processing</div>
             </CardFooter>
+            <div className='absolute -top-4 -right-4 h-24 w-24 rounded-full bg-yellow-200/30 dark:bg-yellow-800/20' />
           </Card>
 
-          <Card className='@container/card'>
+          <Card className='relative overflow-hidden border-2 bg-gradient-to-br from-indigo-50 to-indigo-100/50 dark:from-indigo-950/20 dark:to-indigo-900/10'>
             <CardHeader>
-              <CardDescription>In Delivery</CardDescription>
-              <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                8
+              <CardDescription className='text-indigo-700 dark:text-indigo-400'>
+                {t('stats.processing')}
+              </CardDescription>
+              <CardTitle className='text-3xl font-bold text-indigo-900 tabular-nums dark:text-indigo-100'>
+                {loading ? (
+                  <div className='h-8 w-16 animate-pulse rounded bg-indigo-200 dark:bg-indigo-800' />
+                ) : (
+                  stats.processing
+                )}
               </CardTitle>
-              <CardAction>
-                <Badge
-                  variant='outline'
-                  className='bg-blue-50 dark:bg-blue-600'
-                >
-                  <IconTruck className='h-3 w-3' />
-                  Transit
-                </Badge>
-              </CardAction>
             </CardHeader>
-            <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-              <div className='line-clamp-1 flex gap-2 font-medium'>
-                Currently shipping <IconTruck className='size-4' />
+            <CardFooter className='flex-col items-start gap-1 text-sm'>
+              <div className='text-muted-foreground'>
+                {t('stats.processingDescription')}
               </div>
-              <div className='text-muted-foreground'>Orders en route</div>
             </CardFooter>
+            <div className='absolute -top-4 -right-4 h-24 w-24 rounded-full bg-indigo-200/30 dark:bg-indigo-800/20' />
           </Card>
 
-          <Card className='@container/card'>
+          <Card className='relative overflow-hidden border-2 bg-gradient-to-br from-green-50 to-emerald-100/50 dark:from-green-950/20 dark:to-emerald-900/10'>
             <CardHeader>
-              <CardDescription>This Month Spending</CardDescription>
-              <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                $45,230
+              <CardDescription className='text-green-700 dark:text-green-400'>
+                {t('stats.completed')}
+              </CardDescription>
+              <CardTitle className='text-3xl font-bold text-green-900 tabular-nums dark:text-green-100'>
+                {loading ? (
+                  <div className='h-8 w-16 animate-pulse rounded bg-green-200 dark:bg-green-800' />
+                ) : (
+                  stats.completed
+                )}
               </CardTitle>
-              <CardAction>
-                <Badge
-                  variant='outline'
-                  className='bg-green-50 dark:bg-green-600'
-                >
-                  <IconCoin className='h-3 w-3' />
-                  Budget
-                </Badge>
-              </CardAction>
             </CardHeader>
-            <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-              <div className='line-clamp-1 flex gap-2 font-medium'>
-                Total expenditure <IconCoin className='size-4' />
+            <CardFooter className='flex-col items-start gap-1 text-sm'>
+              <div className='text-muted-foreground'>
+                {t('stats.completedDescription')}
               </div>
-              <div className='text-muted-foreground'>Current month total</div>
             </CardFooter>
+            <div className='absolute -top-4 -right-4 h-24 w-24 rounded-full bg-green-200/30 dark:bg-green-800/20' />
           </Card>
         </div>
 
         {/* Recent Activity Section */}
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7'>
-          <Card className='col-span-4'>
+        <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+          <Card className='lg:col-span-2'>
             <CardHeader>
-              <CardTitle>Recent Orders</CardTitle>
-              <CardDescription>Your latest order submissions</CardDescription>
+              <div className='flex items-center justify-between'>
+                <div>
+                  <CardTitle>{t('recentOrders.title')}</CardTitle>
+                  <CardDescription>
+                    {t('recentOrders.description')}
+                  </CardDescription>
+                </div>
+                <Link href='/consignee/orders'>
+                  <Button variant='ghost' size='sm'>
+                    {t('recentOrders.viewAll')}
+                  </Button>
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
-              <div className='space-y-4'>
-                {[
-                  {
-                    id: 'ORD-001',
-                    items: 'Organic Tomatoes, Fresh Carrots',
-                    quantity: '800 kg',
-                    status: 'Pending',
-                    date: '2025-10-19',
-                    amount: '$2,000'
-                  },
-                  {
-                    id: 'ORD-002',
-                    items: 'Green Lettuce, Cucumbers',
-                    quantity: '500 kg',
-                    status: 'In Delivery',
-                    date: '2025-10-18',
-                    amount: '$1,250'
-                  },
-                  {
-                    id: 'ORD-003',
-                    items: 'Bell Peppers, Onions',
-                    quantity: '600 kg',
-                    status: 'Delivered',
-                    date: '2025-10-17',
-                    amount: '$1,500'
-                  }
-                ].map((order) => (
-                  <div
-                    key={order.id}
-                    className='flex items-center justify-between rounded-lg border p-4'
-                  >
-                    <div className='space-y-1'>
-                      <p className='text-sm font-medium'>{order.id}</p>
-                      <p className='text-muted-foreground text-sm'>
-                        {order.items}
-                      </p>
-                      <p className='text-muted-foreground text-xs'>
-                        {order.date}
-                      </p>
+              {loading ? (
+                <div className='space-y-4'>
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className='flex items-center justify-between rounded-lg border p-4'
+                    >
+                      <div className='flex-1 space-y-2'>
+                        <div className='bg-muted h-4 w-24 animate-pulse rounded' />
+                        <div className='bg-muted h-3 w-32 animate-pulse rounded' />
+                        <div className='bg-muted h-3 w-20 animate-pulse rounded' />
+                      </div>
+                      <div className='space-y-2'>
+                        <div className='bg-muted h-4 w-16 animate-pulse rounded' />
+                        <div className='bg-muted h-6 w-20 animate-pulse rounded' />
+                      </div>
                     </div>
-                    <div className='text-right'>
-                      <p className='text-sm font-medium'>{order.amount}</p>
-                      <p className='text-muted-foreground text-xs'>
-                        {order.quantity}
-                      </p>
-                      <Badge
-                        variant={
-                          order.status === 'Delivered'
-                            ? 'default'
-                            : order.status === 'In Delivery'
-                              ? 'secondary'
-                              : 'outline'
-                        }
-                        className='mt-1'
+                  ))}
+                </div>
+              ) : recentOrders.length === 0 ? (
+                <div className='flex flex-col items-center justify-center py-12'>
+                  <IconShoppingCart className='text-muted-foreground mb-4 h-12 w-12' />
+                  <p className='text-muted-foreground'>
+                    {t('recentOrders.noOrders')}
+                  </p>
+                </div>
+              ) : (
+                <div className='space-y-3'>
+                  {recentOrders.map((schedule) => {
+                    const deliveryDate = schedule.deliveryDate
+                      ? new Date(
+                          schedule.deliveryDate as unknown as string
+                        ).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric'
+                        })
+                      : '—';
+
+                    return (
+                      <Link
+                        key={schedule.id}
+                        href={`/consignee/orders/${schedule.id}`}
+                        className='block'
                       >
-                        {order.status}
-                      </Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                        <div className='group hover:border-primary flex items-center justify-between rounded-lg border p-4 transition-all hover:shadow-md'>
+                          <div className='flex-1 space-y-1'>
+                            <div className='flex items-center gap-2'>
+                              <p className='text-sm font-semibold'>
+                                {schedule.id}
+                              </p>
+                              {getStatusBadge(schedule.status ?? 'pending')}
+                            </div>
+                            <p className='text-muted-foreground text-sm'>
+                              {t('recentOrders.deliveryDate')}: {deliveryDate}
+                            </p>
+                          </div>
+                          <div className='text-right'>
+                            <IconShoppingCart className='text-muted-foreground group-hover:text-primary h-5 w-5 transition-colors' />
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
             <CardFooter>
               <Link href='/consignee/orders' className='w-full'>
                 <Button variant='outline' className='w-full'>
-                  View All Orders
+                  {t('recentOrders.viewAllOrders')}
                 </Button>
               </Link>
             </CardFooter>
           </Card>
 
-          <Card className='col-span-4 md:col-span-3'>
+          <Card className='lg:col-span-1'>
             <CardHeader>
-              <CardTitle>Quick Actions</CardTitle>
-              <CardDescription>Frequently used actions</CardDescription>
+              <CardTitle>{t('quickActions.title')}</CardTitle>
+              <CardDescription>{t('quickActions.description')}</CardDescription>
             </CardHeader>
-            <CardContent className='space-y-3'>
-              <Link href='/consignee/products'>
-                <Button variant='outline' className='w-full justify-start'>
-                  <IconPackage className='mr-2 h-4 w-4' />
-                  Browse Products
+            <CardContent className='space-y-2'>
+              <Link href='/consignee/orders/new'>
+                <Button
+                  variant='outline'
+                  className='hover:bg-primary hover:text-primary-foreground w-full justify-start'
+                >
+                  <IconShoppingCart className='mr-2 h-4 w-4' />
+                  {t('quickActions.createNewOrder')}
                 </Button>
               </Link>
-              <Link href='/consignee/orders/new'>
-                <Button variant='outline' className='w-full justify-start'>
-                  <IconShoppingCart className='mr-2 h-4 w-4' />
-                  Create New Order
+              <Link href='/consignee/products'>
+                <Button
+                  variant='outline'
+                  className='hover:bg-primary hover:text-primary-foreground w-full justify-start'
+                >
+                  <IconPackage className='mr-2 h-4 w-4' />
+                  {t('quickActions.browseProducts')}
                 </Button>
               </Link>
               <Link href='/consignee/deliveries'>
-                <Button variant='outline' className='w-full justify-start'>
+                <Button
+                  variant='outline'
+                  className='hover:bg-primary hover:text-primary-foreground w-full justify-start'
+                >
                   <IconTruck className='mr-2 h-4 w-4' />
-                  Track Deliveries
+                  {t('quickActions.trackDeliveries')}
                 </Button>
               </Link>
-              <Link href='/consignee/traceability'>
-                <Button variant='outline' className='w-full justify-start'>
+              <Link href='/consignee/profile'>
+                <Button
+                  variant='outline'
+                  className='hover:bg-primary hover:text-primary-foreground w-full justify-start'
+                >
                   <IconCheck className='mr-2 h-4 w-4' />
-                  View Traceability
-                </Button>
-              </Link>
-              <Link href='/consignee/payments'>
-                <Button variant='outline' className='w-full justify-start'>
-                  <IconCoin className='mr-2 h-4 w-4' />
-                  Manage Payments
+                  {t('quickActions.viewProfile')}
                 </Button>
               </Link>
             </CardContent>

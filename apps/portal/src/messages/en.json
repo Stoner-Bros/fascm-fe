@@ -1086,6 +1086,44 @@
       "close": "Close"
     }
   },
+  "ConsigneeDashboard": {
+    "welcome": "Hi, Welcome back 👋",
+    "subtitle": "Overview of your orders and activities",
+    "stats": {
+      "totalOrders": "Total Orders",
+      "totalOrdersDescription": "All orders created",
+      "pendingApproval": "Pending Approval",
+      "pendingApprovalDescription": "Awaiting approval",
+      "processing": "Processing",
+      "processingDescription": "Currently being processed",
+      "completed": "Completed",
+      "completedDescription": "Successfully completed"
+    },
+    "recentOrders": {
+      "title": "Recent Orders",
+      "description": "Your latest order submissions",
+      "viewAll": "View All",
+      "noOrders": "No orders yet",
+      "deliveryDate": "Delivery Date",
+      "viewAllOrders": "View All Orders"
+    },
+    "quickActions": {
+      "title": "Quick Actions",
+      "description": "Frequently used actions",
+      "createNewOrder": "Create New Order",
+      "viewProfile": "View Profile",
+      "browseProducts": "Browse Products",
+      "trackDeliveries": "Track Deliveries"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "completed": "Completed",
+      "rejected": "Rejected",
+      "canceled": "Canceled",
+      "processing": "Processing"
+    }
+  },
   "SupplierDashboard": {
     "welcome": "Hi, Welcome back 👋",
     "subtitle": "Overview of your harvest batches and activities",
