@@ -33,11 +33,9 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
 import { DataTable } from '@/components/ui/table/data-table';
 import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 import { useToast } from '@/components/ui/use-toast';
@@ -56,6 +54,7 @@ import {
   updateManager
 } from '@/services/manager.service';
 import { fetchWarehouses } from '@/services/warehouse.service';
+import { approveRegister } from '@/services/auth.service';
 import type { Manager, Warehouse } from '@/types';
 
 type ManagerRow = Manager & {
@@ -225,37 +224,34 @@ export default function ManagersAccount() {
     }
   };
 
-  const handleDelete = useCallback(
-    async (id: string) => {
-      const confirm = window.confirm(t('actions.confirmDelete'));
-      if (!confirm) return;
+  const handleApprove = useCallback(
+    async (manager: ManagerRow) => {
+      if (!manager.user?.id) {
+        toastRef.current?.({
+          variant: 'destructive',
+          title: t('toast.approveError'),
+          description: 'User ID not found'
+        });
+        return;
+      }
+
+      if (!window.confirm(t('actions.confirmApprove'))) return;
+
       try {
-        await deleteManager(id);
-        toastRef.current?.({ title: t('toast.deleteSuccess') });
+        await approveRegister(manager.user.id);
+        toastRef.current?.({ title: t('toast.approveSuccess') });
         await loadData();
       } catch (error) {
         toastRef.current?.({
           variant: 'destructive',
-          title: t('toast.deleteError'),
+          title: t('toast.approveError'),
           description:
             error instanceof Error ? error.message : t('toast.tryAgain')
         });
       }
     },
-    [loadData]
+    [loadData, t]
   );
-
-  const handleEdit = useCallback((manager: ManagerRow) => {
-    setForm({
-      firstName: manager.user?.firstName ?? '',
-      lastName: manager.user?.lastName ?? '',
-      email: manager.user?.email ?? '',
-      password: '',
-      warehouseId: manager.warehouse?.id ?? ''
-    });
-    setEditingManager(manager);
-    setIsDialogOpen(true);
-  }, []);
 
   // @ts-ignore
   const tableData = useMemo<ManagerRow[]>(() => {
@@ -374,31 +370,21 @@ export default function ManagersAccount() {
       },
       {
         id: 'actions',
+        header: t('table.columns.actions'),
         cell: ({ row }) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant='ghost' className='h-8 w-8 p-0'>
                 <span className='sr-only'>Open menu</span>
-                <MoreHorizontal className='h-4 w-4' />
+                <MoreVertical className='h-4 w-4' />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
-              <DropdownMenuLabel>
-                {t('table.columns.actions')}
-              </DropdownMenuLabel>
-              <DropdownMenuItem onClick={() => handleEdit(row.original)}>
-                {t('actions.edit')}
-              </DropdownMenuItem>
               {row.original.user?.status?.name !== 'Active' && (
-                <DropdownMenuItem onClick={() => {}}>Accept</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleApprove(row.original)}>
+                  {t('actions.approve')}
+                </DropdownMenuItem>
               )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className='text-red-600'
-                onClick={() => handleDelete(row.original.id)}
-              >
-                {t('actions.delete')}
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )

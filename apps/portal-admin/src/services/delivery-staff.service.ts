@@ -20,7 +20,6 @@ export async function fetchDeliveryStaffs({
   page = 1,
   limit = 10,
   warehouseId,
-  truckId,
   search
 }: FindAllDeliveryStaffsDto = {}) {
   const params = new URLSearchParams({
@@ -29,7 +28,6 @@ export async function fetchDeliveryStaffs({
   });
 
   if (warehouseId) params.set('warehouseId', warehouseId);
-  if (truckId) params.set('truckId', truckId);
   if (search) params.set('search', search);
 
   return fetchJSON<InfinityPaginationResponse<DeliveryStaff>>(

@@ -37,7 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
 import { DataTable } from '@/components/ui/table/data-table';
 import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 import { useToast } from '@/components/ui/use-toast';
@@ -57,14 +57,12 @@ import {
 } from '@/services/delivery-staff.service';
 import { fetchWarehouses } from '@/services/warehouse.service';
 import { fetchTrucks } from '@/services/truck.service';
+import { approveRegister } from '@/services/auth.service';
 import type { DeliveryStaff, Warehouse } from '@/types';
 import type { Truck } from '@/types/truck';
 
-const NONE_VALUE = 'none';
-
 const DEFAULT_FORM = {
   warehouseId: '',
-  truckId: '',
   licenseNumber: '',
   licensePhoto: '',
   licenseExpiredAt: '',
@@ -101,7 +99,6 @@ export default function DeliveryStaffsAccount() {
   const [form, setForm] = useState(DEFAULT_FORM);
   const [deliveryStaffs, setDeliveryStaffs] = useState<DeliveryStaff[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
-  const [trucks, setTrucks] = useState<Truck[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -125,14 +122,12 @@ export default function DeliveryStaffsAccount() {
     isFetchingRef.current = true;
     setIsLoading(true);
     try {
-      const [staffRes, warehouseRes, truckRes] = await Promise.all([
+      const [staffRes, warehouseRes] = await Promise.all([
         fetchDeliveryStaffs({ page: page ?? 1, limit: limit ?? 10 }),
-        fetchWarehouses({ page: 1, limit: 100 }),
-        fetchTrucks({ page: 1, limit: 100 })
+        fetchWarehouses({ page: 1, limit: 100 })
       ]);
       setDeliveryStaffs(staffRes.data);
       setWarehouses(warehouseRes.data);
-      setTrucks(truckRes.data);
       setPageCount((prev) => {
         const minimalTotal = staffRes.hasNextPage
           ? (page ?? 1) + 1
@@ -171,6 +166,7 @@ export default function DeliveryStaffsAccount() {
 
   const handleSubmit = async () => {
     if (
+      !form.warehouseId ||
       !form.licenseNumber ||
       !form.licenseExpiredAt ||
       !form.firstName ||
@@ -188,8 +184,7 @@ export default function DeliveryStaffsAccount() {
     setIsSubmitting(true);
     try {
       const payload = {
-        warehouse: form.warehouseId ? { id: form.warehouseId } : null,
-        truck: form.truckId ? { id: form.truckId } : null,
+        warehouse: { id: form.warehouseId },
         licenseNumber: form.licenseNumber,
         licensePhoto: form.licensePhoto || undefined,
         licenseExpiredAt: new Date(form.licenseExpiredAt).toISOString(),
@@ -241,10 +236,35 @@ export default function DeliveryStaffsAccount() {
     }
   };
 
+  const handleApprove = async (staff: DeliveryStaff) => {
+    if (!staff.user?.id) {
+      toast({
+        variant: 'destructive',
+        title: t('toast.approveError'),
+        description: 'User ID not found'
+      });
+      return;
+    }
+
+    if (!window.confirm(t('actions.confirmApprove'))) return;
+
+    try {
+      await approveRegister(staff.user.id);
+      toast({ title: t('toast.approveSuccess') });
+      await loadData();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: t('toast.approveError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
+      });
+    }
+  };
+
   const handleEdit = (staff: DeliveryStaff) => {
     setForm({
       warehouseId: staff.warehouse?.id ?? '',
-      truckId: staff.truck?.id ?? '',
       licenseNumber: staff.licenseNumber ?? '',
       licensePhoto: staff.licensePhoto ?? '',
       licenseExpiredAt: toInputDateTime(staff.licenseExpiredAt),
@@ -271,8 +291,7 @@ export default function DeliveryStaffsAccount() {
         firstName: first || '—',
         lastName: last || '—',
         email: staff.user?.email ?? '—',
-        warehouseName: staff.warehouse?.name ?? 'Không gán',
-        truckLabel: staff.truck?.licensePlate ?? 'Không gán',
+        warehouseName: staff.warehouse?.name ?? '—',
         statusName: staff.user?.status?.name ?? 'Inactive',
         createdAtDisplay: formatDateTime(staff.createdAt),
         licenseExpiredDisplay: formatDateTime(staff.licenseExpiredAt)
@@ -288,7 +307,6 @@ export default function DeliveryStaffsAccount() {
         staff.firstName.toLowerCase().includes(query) ||
         staff.lastName.toLowerCase().includes(query) ||
         staff.email.toLowerCase().includes(query) ||
-        staff.truckLabel.toLowerCase().includes(query) ||
         staff.licenseNumber.toLowerCase().includes(query);
       const matchesWarehouse =
         warehouseFilter === 'ALL' || staff.warehouse?.id === warehouseFilter;
@@ -352,15 +370,6 @@ export default function DeliveryStaffsAccount() {
         )
       },
       {
-        accessorKey: 'truckLabel',
-        header: t('table.columns.truck'),
-        cell: ({ row }) => (
-          <div className='max-w-[120px] break-words whitespace-normal'>
-            {row.original.truckLabel}
-          </div>
-        )
-      },
-      {
         accessorKey: 'licenseExpiredDisplay',
         header: t('table.columns.licenseExpired'),
         cell: ({ row }) => (
@@ -389,6 +398,7 @@ export default function DeliveryStaffsAccount() {
       },
       {
         id: 'actions',
+        header: t('table.columns.actions'),
         cell: ({ row }) => {
           const item = row.original;
           return (
@@ -396,29 +406,18 @@ export default function DeliveryStaffsAccount() {
               <DropdownMenuTrigger asChild>
                 <Button variant='ghost' className='h-8 w-8 p-0'>
                   <span className='sr-only'>Open menu</span>
-                  <MoreHorizontal className='h-4 w-4' />
+                  <MoreVertical className='h-4 w-4' />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align='end'>
-                <DropdownMenuLabel>
-                  {t('table.columns.actions')}
-                </DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => handleViewDetails(item)}>
                   {t('actions.viewDetails')}
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleEdit(item)}>
-                  {t('actions.edit')}
-                </DropdownMenuItem>
                 {item.statusName !== 'Active' && (
-                  <DropdownMenuItem onClick={() => {}}>Accept</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleApprove(item)}>
+                    {t('actions.approve')}
+                  </DropdownMenuItem>
                 )}
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className='text-red-600'
-                  onClick={() => handleDelete(item.id)}
-                >
-                  {t('actions.delete')}
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           );
@@ -488,13 +487,13 @@ export default function DeliveryStaffsAccount() {
               <div className='space-y-4'>
                 <div className='grid gap-4 md:grid-cols-2'>
                   <div className='space-y-2'>
-                    <Label>{t('form.warehouseOptional')}</Label>
+                    <Label>{t('form.warehouse')}</Label>
                     <Select
-                      value={form.warehouseId || NONE_VALUE}
+                      value={form.warehouseId}
                       onValueChange={(value) =>
                         setForm((prev) => ({
                           ...prev,
-                          warehouseId: value === NONE_VALUE ? '' : value
+                          warehouseId: value
                         }))
                       }
                     >
@@ -504,40 +503,9 @@ export default function DeliveryStaffsAccount() {
                         />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value={NONE_VALUE}>
-                          {t('placeholders.noWarehouse')}
-                        </SelectItem>
                         {warehouses.map((warehouse) => (
                           <SelectItem key={warehouse.id} value={warehouse.id}>
                             {warehouse.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className='space-y-2'>
-                    <Label>{t('form.truckOptional')}</Label>
-                    <Select
-                      value={form.truckId || NONE_VALUE}
-                      onValueChange={(value) =>
-                        setForm((prev) => ({
-                          ...prev,
-                          truckId: value === NONE_VALUE ? '' : value
-                        }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={t('placeholders.selectTruck')}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={NONE_VALUE}>
-                          {t('placeholders.noTruck')}
-                        </SelectItem>
-                        {trucks.map((truck) => (
-                          <SelectItem key={truck.id} value={truck.id}>
-                            {truck.licensePlate || truck.id}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -760,15 +728,6 @@ export default function DeliveryStaffsAccount() {
                     </Label>
                     <p className='text-sm'>
                       {viewingStaff.warehouse?.name || t('form.notAssigned')}
-                    </p>
-                  </div>
-                  <div className='space-y-2'>
-                    <Label className='font-semibold'>
-                      {t('form.truckOptional')}
-                    </Label>
-                    <p className='text-sm'>
-                      {viewingStaff.truck?.licensePlate ||
-                        t('form.notAssigned')}
                     </p>
                   </div>
                   <div className='space-y-2'>

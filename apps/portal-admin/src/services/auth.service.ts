@@ -292,6 +292,14 @@ export async function register(
   });
 }
 
+export async function approveRegister(userId: number): Promise<void> {
+  return fetchJSON<void>('/auth/email/register/approve', {
+    method: 'POST',
+    body: { userId },
+    auth: true
+  });
+}
+
 export async function confirmEmail(
   req: AuthConfirmEmailRequest
 ): Promise<AuthLoginResponse> {

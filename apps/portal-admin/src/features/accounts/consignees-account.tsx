@@ -40,7 +40,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreVertical } from 'lucide-react';
 
 import { DataTable } from '@/components/ui/table/data-table';
 import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
@@ -61,6 +61,7 @@ import {
   fetchConsignees,
   updateConsignee
 } from '@/services/consignee.service';
+import { approveRegister } from '@/services/auth.service';
 import type { Consignee } from '@/types/consignee';
 
 type ConsigneeForm = {
@@ -278,6 +279,32 @@ export default function ConsigneesAccount() {
     }
   };
 
+  const handleApprove = async (consignee: Consignee) => {
+    if (!consignee.user?.id) {
+      toast({
+        variant: 'destructive',
+        title: t('toast.approveError'),
+        description: 'User ID not found'
+      });
+      return;
+    }
+
+    if (!window.confirm(t('actions.confirmApprove'))) return;
+
+    try {
+      await approveRegister(consignee.user.id);
+      toast({ title: t('toast.approveSuccess') });
+      await loadData();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: t('toast.approveError'),
+        description:
+          error instanceof Error ? error.message : t('toast.tryAgain')
+      });
+    }
+  };
+
   const handleEdit = (consignee: Consignee) => {
     setForm({
       contact: consignee.contact ?? '',
@@ -416,18 +443,16 @@ export default function ConsigneesAccount() {
       },
       {
         id: 'actions',
+        header: t('table.columns.actions'),
         cell: ({ row }) => (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant='ghost' className='h-8 w-8 p-0'>
                 <span className='sr-only'>Open menu</span>
-                <MoreHorizontal className='h-4 w-4' />
+                <MoreVertical className='h-4 w-4' />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
-              <DropdownMenuLabel>
-                {t('table.columns.actions')}
-              </DropdownMenuLabel>
               <DropdownMenuItem onClick={() => handleViewDetails(row.original)}>
                 {t('actions.viewDetails')}
               </DropdownMenuItem>
@@ -435,15 +460,10 @@ export default function ConsigneesAccount() {
                 {t('actions.edit')}
               </DropdownMenuItem>
               {row.original.statusName !== 'Active' && (
-                <DropdownMenuItem onClick={() => {}}>Accept</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleApprove(row.original)}>
+                  {t('actions.approve')}
+                </DropdownMenuItem>
               )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                className='text-red-600'
-                onClick={() => handleDelete(row.original.id)}
-              >
-                {t('actions.delete')}
-              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )
