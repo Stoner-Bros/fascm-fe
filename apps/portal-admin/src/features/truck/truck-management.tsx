@@ -1,7 +1,8 @@
 'use client';
 
-import PageContainer from '@/components/layout/page-container';
 import { FileUploader } from '@/components/file-uploader';
+import { Modal } from '@/components/modal';
+import { PermissionGuard } from '@/components/permissions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,7 +22,6 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Modal } from '@/components/modal';
 import {
   Select,
   SelectContent,
@@ -32,6 +32,29 @@ import {
 import { DataTable } from '@/components/ui/table/data-table';
 import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 import { useToast } from '@/components/ui/use-toast';
+import { Permission } from '@/constants/permissions';
+import { uploadFile } from '@/services/file.service';
+import { connectIoTSocket } from '@/services/iotdevice.service';
+import {
+  createTruck,
+  deleteTruck,
+  fetchTruckAlerts,
+  fetchTrucks
+} from '@/services/truck.service';
+import type { Truck, TruckAlert, TruckStatusEnum } from '@/types/truck';
+import {
+  IconAlertTriangle,
+  IconCheck,
+  IconClock,
+  IconCpu,
+  IconLoader2,
+  IconPlus,
+  IconRefresh,
+  IconSearch,
+  IconTools,
+  IconTrash,
+  IconTruck
+} from '@tabler/icons-react';
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -39,33 +62,11 @@ import {
   type PaginationState,
   useReactTable
 } from '@tanstack/react-table';
-import { uploadFile } from '@/services/file.service';
-import {
-  createTruck,
-  deleteTruck,
-  fetchTrucks
-} from '@/services/truck.service';
-import type { Truck, TruckStatusEnum, TruckAlert } from '@/types/truck';
-import { fetchTruckAlerts } from '@/services/truck.service';
-import {
-  IconCpu,
-  IconLoader2,
-  IconPlus,
-  IconRefresh,
-  IconSearch,
-  IconTrash,
-  IconTruck,
-  IconAlertTriangle,
-  IconCheck,
-  IconClock,
-  IconTools
-} from '@tabler/icons-react';
-import { connectIoTSocket } from '@/services/iotdevice.service';
 import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 function getStatusBadge(status: TruckStatusEnum | null | undefined, t: any) {
   switch (status) {
@@ -401,18 +402,20 @@ export function TruckManagement() {
         header: '',
         cell: ({ row }) => (
           <div className='text-right'>
-            <Button
-              variant='ghost'
-              size='icon'
-              onClick={(e) => {
-                e.stopPropagation();
-                handleOpenDelete(row.original);
-              }}
-              title={t('actions.delete')}
-              className='text-destructive hover:text-destructive'
-            >
-              <IconTrash className='h-4 w-4' />
-            </Button>
+            <PermissionGuard permission={Permission.DELETE_TRUCK}>
+              <Button
+                variant='ghost'
+                size='icon'
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleOpenDelete(row.original);
+                }}
+                title={t('actions.delete')}
+                className='text-destructive hover:text-destructive'
+              >
+                <IconTrash className='h-4 w-4' />
+              </Button>
+            </PermissionGuard>
           </div>
         )
       }
@@ -601,10 +604,12 @@ export function TruckManagement() {
               />
               {t('actions.refresh')}
             </Button>
-            <Button onClick={handleOpenCreate}>
-              <IconPlus className='mr-2 h-4 w-4' />
-              {t('addTruck')}
-            </Button>
+            <PermissionGuard permission={Permission.CREATE_TRUCK}>
+              <Button onClick={handleOpenCreate}>
+                <IconPlus className='mr-2 h-4 w-4' />
+                {t('addTruck')}
+              </Button>
+            </PermissionGuard>
           </div>
         </div>
 

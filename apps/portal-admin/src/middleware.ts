@@ -5,12 +5,15 @@ import {
   getUserRole,
   isAuthenticated
 } from './lib/auth-utils';
+import { checkRouteAccessServer, hasPermission } from './lib/permissions';
+import { Permission } from './constants/permissions';
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const cookieGetter = new ServerCookieGetter(req);
   const isAuth = isAuthenticated(cookieGetter);
 
+  // Allow public routes and static files
   if (
     (pathname.startsWith('/auth') && !isAuth) ||
     pathname.startsWith('/_next') ||
@@ -20,11 +23,19 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  if (isAuth && !pathname.startsWith('/dashboard')) {
-    return NextResponse.redirect(new URL('/dashboard/overview', req.url));
+  // Redirect authenticated users away from auth pages
+  if (isAuth && pathname.startsWith('/auth')) {
+    const userRole = getUserRole(cookieGetter);
+    // Check if user has access to overview, otherwise redirect to profile
+    if (userRole && hasPermission(userRole, Permission.VIEW_OVERVIEW)) {
+      return NextResponse.redirect(new URL('/dashboard/overview', req.url));
+    } else {
+      // Redirect to profile if they don't have overview access
+      return NextResponse.redirect(new URL('/dashboard/profile', req.url));
+    }
   }
 
-  // Check if user is authenticated
+  // Redirect non-authenticated users to sign-in
   if (!isAuth) {
     return NextResponse.redirect(new URL('/auth/sign-in', req.url));
   }
@@ -32,12 +43,41 @@ export function middleware(req: NextRequest) {
   // Get user role
   const userRole = getUserRole(cookieGetter);
 
+  // Block unauthorized roles (CONSIGNEE and SUPPLIER should use portal, not admin)
   if (
     !userRole ||
     userRole === RoleEnum.CONSIGNEE ||
-    userRole === RoleEnum.SUPPLIER
+    userRole === RoleEnum.SUPPLIER ||
+    userRole === RoleEnum.USER
   ) {
     return NextResponse.redirect(new URL('/auth/sign-in', req.url));
+  }
+
+  // Check route-level permissions for dashboard routes
+  if (pathname.startsWith('/dashboard')) {
+    const hasAccess = checkRouteAccessServer(cookieGetter, pathname);
+
+    if (!hasAccess) {
+      // User doesn't have permission for this route
+      // If trying to access overview, redirect to profile
+      if (pathname === '/dashboard/overview' || pathname === '/dashboard') {
+        return NextResponse.redirect(new URL('/dashboard/profile', req.url));
+      }
+      // For other routes, redirect to profile (or first accessible route)
+      return NextResponse.redirect(new URL('/dashboard/profile', req.url));
+    }
+  }
+
+  // Redirect authenticated users to dashboard if they're on root
+  if (pathname === '/') {
+    const userRole = getUserRole(cookieGetter);
+    // Check if user has access to overview, otherwise redirect to profile
+    if (userRole && hasPermission(userRole, Permission.VIEW_OVERVIEW)) {
+      return NextResponse.redirect(new URL('/dashboard/overview', req.url));
+    } else {
+      // Redirect to profile if they don't have overview access
+      return NextResponse.redirect(new URL('/dashboard/profile', req.url));
+    }
   }
 
   return NextResponse.next();

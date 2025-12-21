@@ -28,6 +28,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { PriceDialog } from './_components/price-dialog';
 import { useTranslations } from 'next-intl';
+import { RouteGuard, PermissionGuard } from '@/components/permissions';
+import { Permission } from '@/constants/permissions';
 
 export default function ProductDetailPage() {
   const router = useRouter();
@@ -162,244 +164,269 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <PageContainer>
-      <div className='w-full space-y-6'>
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <Button variant='ghost' size='icon' onClick={() => router.back()}>
-              <IconArrowLeft className='h-5 w-5' />
-            </Button>
-            <div>
-              <h2 className='text-3xl font-bold tracking-tight'>
-                {t('detail.title')}
-              </h2>
-              <p className='text-muted-foreground'>
-                {t('detail.idLabel')}: {product.id}
-              </p>
-            </div>
-          </div>
-          <div className='flex gap-2'>
-            <Link href={`/dashboard/product/${productId}/edit`}>
-              <Button>
-                <IconEdit className='mr-2 h-4 w-4' />
-                {t('detail.edit')}
+    <RouteGuard permission={Permission.VIEW_PRODUCT}>
+      <PageContainer>
+        <div className='w-full space-y-6'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-4'>
+              <Button variant='ghost' size='icon' onClick={() => router.back()}>
+                <IconArrowLeft className='h-5 w-5' />
               </Button>
-            </Link>
-            <Button variant='destructive' onClick={handleDelete}>
-              <IconTrash className='mr-2 h-4 w-4' />
-              {t('detail.delete')}
-            </Button>
-          </div>
-        </div>
-
-        <Separator />
-
-        <div className='grid gap-6 md:grid-cols-3'>
-          <div className='space-y-6 md:col-span-2'>
-            {/* Product Image */}
-            <Card>
-              <CardContent className='p-0'>
-                {product.image ? (
-                  <img
-                    src={product.image}
-                    alt={product.name || t('common.product')}
-                    className='aspect-video w-full object-cover'
-                  />
-                ) : (
-                  <div className='bg-muted flex aspect-video items-center justify-center'>
-                    <IconLeaf className='text-muted-foreground h-24 w-24' />
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Product Information */}
-            <Card>
-              <CardHeader>
-                <div className='flex items-start justify-between'>
-                  <div>
-                    <CardTitle className='text-2xl'>
-                      {product.name || t('common.unnamedProduct')}
-                    </CardTitle>
-                    <CardDescription>
-                      {product.category?.name || t('common.noCategory')}
-                    </CardDescription>
-                  </div>
-                  {product.status && (
-                    <Badge
-                      variant={
-                        product.status === 'active' ? 'default' : 'secondary'
-                      }
-                    >
-                      {product.status}
-                    </Badge>
-                  )}
-                </div>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                {product.description && (
-                  <>
-                    <div>
-                      <h3 className='mb-2 font-semibold'>
-                        {t('detail.description.title')}
-                      </h3>
-                      <p className='text-muted-foreground text-sm'>
-                        {product.description}
-                      </p>
-                    </div>
-                    <Separator />
-                  </>
-                )}
-
-                {/* Price Tiers */}
-                <div>
-                  <div className='mb-3 flex items-center justify-between'>
-                    <h3 className='font-semibold'>{t('detail.price.title')}</h3>
-                    <Button size='sm' onClick={handleAddPrice}>
-                      <IconPlus className='mr-2 h-3 w-3' />
-                      {t('detail.price.add')}
-                    </Button>
-                  </div>
-                  {product.price && product.price.length > 0 ? (
-                    <div className='space-y-2'>
-                      {product.price.map((priceItem) => (
-                        <div
-                          key={priceItem.id}
-                          className='flex items-center justify-between rounded-lg border p-3'
-                        >
-                          <div className='flex-1'>
-                            <div className='flex items-baseline gap-2'>
-                              <span className='text-primary text-lg font-bold'>
-                                {priceItem.price?.toLocaleString('vi-VN')} ₫/kg
-                              </span>
-                              <span className='text-muted-foreground text-sm'>
-                                for {priceItem.quantity}{' '}
-                                {priceItem.unit || 'units'} purchased
-                              </span>
-                            </div>
-                          </div>
-                          <div className='flex gap-2'>
-                            <Button
-                              size='sm'
-                              variant='ghost'
-                              onClick={() =>
-                                handleEditPrice(priceItem as Price)
-                              }
-                            >
-                              <IconEdit className='h-4 w-4' />
-                            </Button>
-                            <Button
-                              size='sm'
-                              variant='ghost'
-                              onClick={() => handleDeletePrice(priceItem.id)}
-                            >
-                              <IconTrash className='h-4 w-4' />
-                            </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className='text-muted-foreground text-sm'>
-                      {t('detail.price.noTiers')}
-                    </p>
-                  )}
-                </div>
-
-                <Separator />
-
-                <div>
-                  <h3 className='mb-3 font-semibold'>
-                    {t('detail.meta.title')}
-                  </h3>
-                  <div className='grid grid-cols-2 gap-3'>
-                    <div>
-                      <p className='text-muted-foreground text-xs'>
-                        {t('detail.meta.created')}
-                      </p>
-                      <p className='text-sm font-medium'>
-                        {new Date(product.createdAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                    <div>
-                      <p className='text-muted-foreground text-xs'>
-                        {t('detail.meta.updated')}
-                      </p>
-                      <p className='text-sm font-medium'>
-                        {new Date(product.updatedAt).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Sidebar */}
-          <div className='space-y-6'>
-            {/* Category Info */}
-            {product.category && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('detail.categoryInfo.title')}</CardTitle>
-                </CardHeader>
-                <CardContent className='space-y-3'>
-                  <div>
-                    <p className='text-sm font-medium'>
-                      {product.category.name || t('common.unnamedCategory')}
-                    </p>
-                    {product.category.description && (
-                      <p className='text-muted-foreground mt-1 text-xs'>
-                        {product.category.description}
-                      </p>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('detail.sidebar.quickActions')}</CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-2'>
-                <Link
-                  href={`/dashboard/product/${productId}/edit`}
-                  className='block w-full'
-                >
-                  <Button className='w-full justify-start'>
+              <div>
+                <h2 className='text-3xl font-bold tracking-tight'>
+                  {t('detail.title')}
+                </h2>
+                <p className='text-muted-foreground'>
+                  {t('detail.idLabel')}: {product.id}
+                </p>
+              </div>
+            </div>
+            <div className='flex gap-2'>
+              <PermissionGuard permission={Permission.UPDATE_PRODUCT}>
+                <Link href={`/dashboard/product/${productId}/edit`}>
+                  <Button>
                     <IconEdit className='mr-2 h-4 w-4' />
                     {t('detail.edit')}
                   </Button>
                 </Link>
-                <Button
-                  variant='destructive'
-                  className='w-full justify-start'
-                  onClick={handleDelete}
-                >
+              </PermissionGuard>
+              <PermissionGuard permission={Permission.DELETE_PRODUCT}>
+                <Button variant='destructive' onClick={handleDelete}>
                   <IconTrash className='mr-2 h-4 w-4' />
                   {t('detail.delete')}
                 </Button>
-                <Link href='/dashboard/product' className='block w-full'>
-                  <Button variant='outline' className='w-full justify-start'>
-                    <IconArrowLeft className='mr-2 h-4 w-4' />
-                    {t('detail.back')}
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+              </PermissionGuard>
+            </div>
           </div>
-        </div>
 
-        <PriceDialog
-          open={priceDialogOpen}
-          onOpenChange={setPriceDialogOpen}
-          productId={productId}
-          price={editingPrice}
-          onSuccess={handlePriceSuccess}
-        />
-      </div>
-    </PageContainer>
+          <Separator />
+
+          <div className='grid gap-6 md:grid-cols-3'>
+            <div className='space-y-6 md:col-span-2'>
+              {/* Product Image */}
+              <Card>
+                <CardContent className='p-0'>
+                  {product.image ? (
+                    <img
+                      src={product.image}
+                      alt={product.name || t('common.product')}
+                      className='aspect-video w-full object-cover'
+                    />
+                  ) : (
+                    <div className='bg-muted flex aspect-video items-center justify-center'>
+                      <IconLeaf className='text-muted-foreground h-24 w-24' />
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Product Information */}
+              <Card>
+                <CardHeader>
+                  <div className='flex items-start justify-between'>
+                    <div>
+                      <CardTitle className='text-2xl'>
+                        {product.name || t('common.unnamedProduct')}
+                      </CardTitle>
+                      <CardDescription>
+                        {product.category?.name || t('common.noCategory')}
+                      </CardDescription>
+                    </div>
+                    {product.status && (
+                      <Badge
+                        variant={
+                          product.status === 'active' ? 'default' : 'secondary'
+                        }
+                      >
+                        {product.status}
+                      </Badge>
+                    )}
+                  </div>
+                </CardHeader>
+                <CardContent className='space-y-4'>
+                  {product.description && (
+                    <>
+                      <div>
+                        <h3 className='mb-2 font-semibold'>
+                          {t('detail.description.title')}
+                        </h3>
+                        <p className='text-muted-foreground text-sm'>
+                          {product.description}
+                        </p>
+                      </div>
+                      <Separator />
+                    </>
+                  )}
+
+                  {/* Price Tiers */}
+                  <div>
+                    <div className='mb-3 flex items-center justify-between'>
+                      <h3 className='font-semibold'>
+                        {t('detail.price.title')}
+                      </h3>
+                      <PermissionGuard permission={Permission.UPDATE_PRODUCT}>
+                        <Button size='sm' onClick={handleAddPrice}>
+                          <IconPlus className='mr-2 h-3 w-3' />
+                          {t('detail.price.add')}
+                        </Button>
+                      </PermissionGuard>
+                    </div>
+                    {product.price && product.price.length > 0 ? (
+                      <div className='space-y-2'>
+                        {product.price.map((priceItem) => (
+                          <div
+                            key={priceItem.id}
+                            className='flex items-center justify-between rounded-lg border p-3'
+                          >
+                            <div className='flex-1'>
+                              <div className='flex items-baseline gap-2'>
+                                <span className='text-primary text-lg font-bold'>
+                                  {priceItem.price?.toLocaleString('vi-VN')}{' '}
+                                  ₫/kg
+                                </span>
+                                <span className='text-muted-foreground text-sm'>
+                                  for {priceItem.quantity}{' '}
+                                  {priceItem.unit || 'units'} purchased
+                                </span>
+                              </div>
+                            </div>
+                            <div className='flex gap-2'>
+                              <PermissionGuard
+                                permission={Permission.UPDATE_PRODUCT}
+                              >
+                                <Button
+                                  size='sm'
+                                  variant='ghost'
+                                  onClick={() =>
+                                    handleEditPrice(priceItem as Price)
+                                  }
+                                >
+                                  <IconEdit className='h-4 w-4' />
+                                </Button>
+                              </PermissionGuard>
+                              <PermissionGuard
+                                permission={Permission.UPDATE_PRODUCT}
+                              >
+                                <Button
+                                  size='sm'
+                                  variant='ghost'
+                                  onClick={() =>
+                                    handleDeletePrice(priceItem.id)
+                                  }
+                                >
+                                  <IconTrash className='h-4 w-4' />
+                                </Button>
+                              </PermissionGuard>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className='text-muted-foreground text-sm'>
+                        {t('detail.price.noTiers')}
+                      </p>
+                    )}
+                  </div>
+
+                  <Separator />
+
+                  <div>
+                    <h3 className='mb-3 font-semibold'>
+                      {t('detail.meta.title')}
+                    </h3>
+                    <div className='grid grid-cols-2 gap-3'>
+                      <div>
+                        <p className='text-muted-foreground text-xs'>
+                          {t('detail.meta.created')}
+                        </p>
+                        <p className='text-sm font-medium'>
+                          {new Date(product.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <div>
+                        <p className='text-muted-foreground text-xs'>
+                          {t('detail.meta.updated')}
+                        </p>
+                        <p className='text-sm font-medium'>
+                          {new Date(product.updatedAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Sidebar */}
+            <div className='space-y-6'>
+              {/* Category Info */}
+              {product.category && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t('detail.categoryInfo.title')}</CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-3'>
+                    <div>
+                      <p className='text-sm font-medium'>
+                        {product.category.name || t('common.unnamedCategory')}
+                      </p>
+                      {product.category.description && (
+                        <p className='text-muted-foreground mt-1 text-xs'>
+                          {product.category.description}
+                        </p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>{t('detail.sidebar.quickActions')}</CardTitle>
+                </CardHeader>
+                <CardContent className='space-y-2'>
+                  <PermissionGuard permission={Permission.UPDATE_PRODUCT}>
+                    <Link
+                      href={`/dashboard/product/${productId}/edit`}
+                      className='block w-full'
+                    >
+                      <Button className='w-full justify-start'>
+                        <IconEdit className='mr-2 h-4 w-4' />
+                        {t('detail.edit')}
+                      </Button>
+                    </Link>
+                  </PermissionGuard>
+                  <PermissionGuard permission={Permission.DELETE_PRODUCT}>
+                    <Button
+                      variant='destructive'
+                      className='w-full justify-start'
+                      onClick={handleDelete}
+                    >
+                      <IconTrash className='mr-2 h-4 w-4' />
+                      {t('detail.delete')}
+                    </Button>
+                  </PermissionGuard>
+                  <Link href='/dashboard/product' className='block w-full'>
+                    <Button variant='outline' className='w-full justify-start'>
+                      <IconArrowLeft className='mr-2 h-4 w-4' />
+                      {t('detail.back')}
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          <PriceDialog
+            open={priceDialogOpen}
+            onOpenChange={setPriceDialogOpen}
+            productId={productId}
+            price={editingPrice}
+            onSuccess={handlePriceSuccess}
+          />
+        </div>
+      </PageContainer>
+    </RouteGuard>
   );
 }

@@ -1,9 +1,11 @@
 'use client';
 
+import { PermissionGuard } from '@/components/permissions';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { DataTable } from '@/components/ui/table/data-table';
 import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
+import { Permission } from '@/constants/permissions';
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -11,7 +13,7 @@ import {
   type PaginationState,
   useReactTable
 } from '@tanstack/react-table';
-import { Calendar, Loader2, MapPin, Package, Trash2 } from 'lucide-react';
+import { Calendar, MapPin, Package, Trash2 } from 'lucide-react';
 import { useMemo } from 'react';
 import type { ImportTicketRow } from '../types/types';
 
@@ -147,13 +149,15 @@ export function ImportTable({
         header: () => <div className='w-full pr-2 text-right'>Thao tác</div>,
         cell: ({ row }) => (
           <div className='text-right'>
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={() => onDeleteTicket(row.original.id)}
-            >
-              <Trash2 className='text-destructive h-4 w-4' />
-            </Button>
+            <PermissionGuard permission={Permission.MANAGE_PURCHASE_IMPORT}>
+              <Button
+                variant='ghost'
+                size='sm'
+                onClick={() => onDeleteTicket(row.original.id)}
+              >
+                <Trash2 className='text-destructive h-4 w-4' />
+              </Button>
+            </PermissionGuard>
           </div>
         )
       }

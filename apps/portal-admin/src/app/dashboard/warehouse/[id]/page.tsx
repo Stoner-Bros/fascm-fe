@@ -1,25 +1,23 @@
-import { Metadata } from 'next';
+'use client';
+
+import { RouteGuard } from '@/components/permissions';
+import { Permission } from '@/constants/permissions';
 import { notFound } from 'next/navigation';
 import WarehouseDetailPage from '@/features/warehouse/components/warehouse-detail-page';
+import { useParams } from 'next/navigation';
 
-export const metadata: Metadata = {
-  title: 'Chi tiết kho | FASCM',
-  description: 'Thông tin chi tiết kho hàng và các khu vực'
-};
-
-interface PageProps {
-  params: Promise<{
-    id: string;
-  }>;
-}
-
-export default async function Page({ params }: PageProps) {
-  const { id: warehouseId } = await params;
+export default function Page() {
+  const params = useParams();
+  const warehouseId = params.id as string;
 
   // Validate warehouse ID
   if (!warehouseId || warehouseId === 'undefined') {
     notFound();
   }
 
-  return <WarehouseDetailPage warehouseId={warehouseId} />;
+  return (
+    <RouteGuard permission={Permission.VIEW_WAREHOUSE}>
+      <WarehouseDetailPage warehouseId={warehouseId} />
+    </RouteGuard>
+  );
 }

@@ -1,5 +1,6 @@
 'use client';
 
+import { PermissionGuard } from '@/components/permissions';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -9,6 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { DataTable } from '@/components/ui/table/data-table';
 import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
+import { Permission } from '@/constants/permissions';
 import {
   type ColumnDef,
   getCoreRowModel,
@@ -165,36 +167,44 @@ export function OrderTable({
                 </DropdownMenuItem>
                 {normalizeStatus(row.original.status) === 'pending' && (
                   <>
-                    <DropdownMenuItem asChild>
-                      <Link
-                        href={`/dashboard/order-sale/order/${row.original.id}/edit`}
-                        className='hover:border-primary flex cursor-pointer items-center hover:bg-transparent'
+                    <PermissionGuard permission={Permission.UPDATE_SALE_ORDER}>
+                      <DropdownMenuItem asChild>
+                        <Link
+                          href={`/dashboard/order-sale/order/${row.original.id}/edit`}
+                          className='hover:border-primary flex cursor-pointer items-center hover:bg-transparent'
+                        >
+                          <Edit className='mr-2 h-4 w-4' />
+                          {t('actions.edit')}
+                        </Link>
+                      </DropdownMenuItem>
+                    </PermissionGuard>
+                    <PermissionGuard permission={Permission.UPDATE_SALE_ORDER}>
+                      <DropdownMenuItem
+                        onClick={() => onApproveOrder(row.original.id)}
+                        className='cursor-pointer hover:bg-transparent'
                       >
-                        <Edit className='mr-2 h-4 w-4' />
-                        {t('actions.edit')}
-                      </Link>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => onApproveOrder(row.original.id)}
-                      className='cursor-pointer hover:bg-transparent'
-                    >
-                      <Check className='mr-2 h-4 w-4' />
-                      {t('actions.approve')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => onOpenRejectDialog(row.original.id)}
-                      className='text-destructive cursor-pointer hover:bg-transparent'
-                    >
-                      <X className='text-destructive mr-2 h-4 w-4' />
-                      {t('actions.reject')}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => onOpenCancelDialog(row.original.id)}
-                      className='text-destructive cursor-pointer hover:bg-transparent'
-                    >
-                      <X className='text-destructive mr-2 h-4 w-4' />
-                      {t('actions.cancelOrder')}
-                    </DropdownMenuItem>
+                        <Check className='mr-2 h-4 w-4' />
+                        {t('actions.approve')}
+                      </DropdownMenuItem>
+                    </PermissionGuard>
+                    <PermissionGuard permission={Permission.UPDATE_SALE_ORDER}>
+                      <DropdownMenuItem
+                        onClick={() => onOpenRejectDialog(row.original.id)}
+                        className='text-destructive cursor-pointer hover:bg-transparent'
+                      >
+                        <X className='text-destructive mr-2 h-4 w-4' />
+                        {t('actions.reject')}
+                      </DropdownMenuItem>
+                    </PermissionGuard>
+                    <PermissionGuard permission={Permission.DELETE_SALE_ORDER}>
+                      <DropdownMenuItem
+                        onClick={() => onOpenCancelDialog(row.original.id)}
+                        className='text-destructive cursor-pointer hover:bg-transparent'
+                      >
+                        <X className='text-destructive mr-2 h-4 w-4' />
+                        {t('actions.cancelOrder')}
+                      </DropdownMenuItem>
+                    </PermissionGuard>
                   </>
                 )}
                 {normalizeStatus(row.original.status) === 'rejected' && (

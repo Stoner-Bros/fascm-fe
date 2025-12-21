@@ -1,6 +1,8 @@
 'use client';
 
+import { FileUploader } from '@/components/file-uploader';
 import PageContainer from '@/components/layout/page-container';
+import { RouteGuard } from '@/components/permissions';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -18,20 +20,20 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
+import { Permission } from '@/constants/permissions';
 import { fetchCategories } from '@/services/category.service';
-import { fetchProductById, updateProduct } from '@/services/product.service';
 import { uploadFile } from '@/services/file.service';
-import type { Category, Product } from '@/types/product';
+import { fetchProductById, updateProduct } from '@/services/product.service';
+import type { Category } from '@/types/product';
 import { IconArrowLeft, IconDeviceFloppy } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
+import Image from 'next/image';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { FileUploader } from '@/components/file-uploader';
-import Image from 'next/image';
-import { useTranslations } from 'next-intl';
 
 export default function EditProductPage() {
   const router = useRouter();
@@ -157,155 +159,160 @@ export default function EditProductPage() {
   }
 
   return (
-    <PageContainer>
-      <div className='w-full space-y-6'>
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <Button variant='ghost' size='icon' onClick={() => router.back()}>
-              <IconArrowLeft className='h-5 w-5' />
-            </Button>
-            <div>
-              <h2 className='text-3xl font-bold tracking-tight'>
-                {t('edit.title')}
-              </h2>
-              <p className='text-muted-foreground'>{t('edit.subtitle')}</p>
+    <RouteGuard permission={Permission.UPDATE_PRODUCT}>
+      <PageContainer>
+        <div className='w-full space-y-6'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-4'>
+              <Button variant='ghost' size='icon' onClick={() => router.back()}>
+                <IconArrowLeft className='h-5 w-5' />
+              </Button>
+              <div>
+                <h2 className='text-3xl font-bold tracking-tight'>
+                  {t('edit.title')}
+                </h2>
+                <p className='text-muted-foreground'>{t('edit.subtitle')}</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <form onSubmit={handleSubmit}>
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('edit.card.title')}</CardTitle>
-              <CardDescription>{t('edit.card.description')}</CardDescription>
-            </CardHeader>
-            <CardContent className='space-y-6'>
-              {/* Basic Information */}
-              <div className='space-y-4'>
-                <h3 className='text-lg font-semibold'>
-                  {t('edit.form.basicTitle')}
-                </h3>
-                <div className='grid gap-4 md:grid-cols-2'>
-                  <div className='space-y-2'>
-                    <Label htmlFor='name'>
-                      {t('edit.form.nameLabel')}{' '}
-                      <span className='text-red-500'>*</span>
-                    </Label>
-                    <Input
-                      id='name'
-                      placeholder={t('edit.form.namePlaceholder')}
-                      value={formData.name}
-                      onChange={(e) =>
-                        setFormData({ ...formData, name: e.target.value })
-                      }
-                      required
-                    />
-                  </div>
-
-                  <div className='space-y-2'>
-                    <Label htmlFor='category'>
-                      {t('edit.form.categoryLabel')}
-                    </Label>
-                    <Select
-                      value={
-                        formData.categoryId === ''
-                          ? undefined
-                          : formData.categoryId
-                      }
-                      onValueChange={(value) =>
-                        setFormData({ ...formData, categoryId: value })
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={t('edit.form.categoryPlaceholder')}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories
-                          .filter(
-                            (category) =>
-                              category.id && category.id.trim().length > 0
-                          )
-                          .map((category) => (
-                            <SelectItem key={category.id} value={category.id}>
-                              {category.name || t('common.unnamedCategory')}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className='space-y-2'>
-                  <Label htmlFor='description'>
-                    {t('edit.form.descriptionLabel')}
-                  </Label>
-                  <Textarea
-                    id='description'
-                    placeholder={t('edit.form.descriptionPlaceholder')}
-                    rows={4}
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-
-              {/* Product Image */}
-              <div className='space-y-4'>
-                <h3 className='text-lg font-semibold'>
-                  {t('edit.image.title')}
-                </h3>
-                <div className='space-y-2'>
-                  {uploadedImageUrl ? (
-                    <div className='space-y-4'>
-                      <div className='relative aspect-video w-full overflow-hidden rounded-lg border'>
-                        <Image
-                          src={uploadedImageUrl}
-                          alt={t('edit.image.previewAlt')}
-                          fill
-                          className='object-cover'
-                        />
-                      </div>
-                      <Button
-                        type='button'
-                        variant='outline'
-                        onClick={() => setUploadedImageUrl('')}
-                      >
-                        {t('edit.image.change')}
-                      </Button>
+          <form onSubmit={handleSubmit}>
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('edit.card.title')}</CardTitle>
+                <CardDescription>{t('edit.card.description')}</CardDescription>
+              </CardHeader>
+              <CardContent className='space-y-6'>
+                {/* Basic Information */}
+                <div className='space-y-4'>
+                  <h3 className='text-lg font-semibold'>
+                    {t('edit.form.basicTitle')}
+                  </h3>
+                  <div className='grid gap-4 md:grid-cols-2'>
+                    <div className='space-y-2'>
+                      <Label htmlFor='name'>
+                        {t('edit.form.nameLabel')}{' '}
+                        <span className='text-red-500'>*</span>
+                      </Label>
+                      <Input
+                        id='name'
+                        placeholder={t('edit.form.namePlaceholder')}
+                        value={formData.name}
+                        onChange={(e) =>
+                          setFormData({ ...formData, name: e.target.value })
+                        }
+                        required
+                      />
                     </div>
-                  ) : (
-                    <FileUploader
-                      value={imageFiles}
-                      onValueChange={setImageFiles}
-                      onUpload={handleImageUpload}
-                      maxFiles={1}
-                      maxSize={1024 * 1024 * 5}
-                      accept={{ 'image/*': [] }}
-                      disabled={uploading}
-                    />
-                  )}
-                </div>
-              </div>
 
-              <div className='flex justify-end gap-4'>
-                <Link href={`/dashboard/product/${productId}`}>
-                  <Button type='button' variant='outline'>
-                    {t('common.cancel')}
+                    <div className='space-y-2'>
+                      <Label htmlFor='category'>
+                        {t('edit.form.categoryLabel')}
+                      </Label>
+                      <Select
+                        value={
+                          formData.categoryId === ''
+                            ? undefined
+                            : formData.categoryId
+                        }
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, categoryId: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={t('edit.form.categoryPlaceholder')}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories
+                            .filter(
+                              (category) =>
+                                category.id && category.id.trim().length > 0
+                            )
+                            .map((category) => (
+                              <SelectItem key={category.id} value={category.id}>
+                                {category.name || t('common.unnamedCategory')}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className='space-y-2'>
+                    <Label htmlFor='description'>
+                      {t('edit.form.descriptionLabel')}
+                    </Label>
+                    <Textarea
+                      id='description'
+                      placeholder={t('edit.form.descriptionPlaceholder')}
+                      rows={4}
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+
+                {/* Product Image */}
+                <div className='space-y-4'>
+                  <h3 className='text-lg font-semibold'>
+                    {t('edit.image.title')}
+                  </h3>
+                  <div className='space-y-2'>
+                    {uploadedImageUrl ? (
+                      <div className='space-y-4'>
+                        <div className='relative aspect-video w-full overflow-hidden rounded-lg border'>
+                          <Image
+                            src={uploadedImageUrl}
+                            alt={t('edit.image.previewAlt')}
+                            fill
+                            className='object-cover'
+                          />
+                        </div>
+                        <Button
+                          type='button'
+                          variant='outline'
+                          onClick={() => setUploadedImageUrl('')}
+                        >
+                          {t('edit.image.change')}
+                        </Button>
+                      </div>
+                    ) : (
+                      <FileUploader
+                        value={imageFiles}
+                        onValueChange={setImageFiles}
+                        onUpload={handleImageUpload}
+                        maxFiles={1}
+                        maxSize={1024 * 1024 * 5}
+                        accept={{ 'image/*': [] }}
+                        disabled={uploading}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div className='flex justify-end gap-4'>
+                  <Link href={`/dashboard/product/${productId}`}>
+                    <Button type='button' variant='outline'>
+                      {t('common.cancel')}
+                    </Button>
+                  </Link>
+                  <Button type='submit' disabled={saving || uploading}>
+                    <IconDeviceFloppy className='mr-2 h-4 w-4' />
+                    {saving ? t('edit.form.saving') : t('edit.form.save')}
                   </Button>
-                </Link>
-                <Button type='submit' disabled={saving || uploading}>
-                  <IconDeviceFloppy className='mr-2 h-4 w-4' />
-                  {saving ? t('edit.form.saving') : t('edit.form.save')}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </form>
-      </div>
-    </PageContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </form>
+        </div>
+      </PageContainer>
+    </RouteGuard>
   );
 }

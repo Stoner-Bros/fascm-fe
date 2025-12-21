@@ -1,5 +1,7 @@
 'use client';
 
+import { RouteGuard, PermissionGuard } from '@/components/permissions';
+import { Permission } from '@/constants/permissions';
 import PageContainer from '@/components/layout/page-container';
 import { Button } from '@/components/ui/button';
 import {
@@ -162,191 +164,208 @@ export default function CategoryDetailPage() {
   }
 
   return (
-    <PageContainer>
-      <div className='w-full space-y-6'>
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center gap-4'>
-            <Button variant='ghost' size='icon' onClick={() => router.back()}>
-              <IconArrowLeft className='h-5 w-5' />
-            </Button>
-            <div>
-              <h2 className='text-3xl font-bold tracking-tight'>
-                {t('detail.title')}
-              </h2>
-              <p className='text-muted-foreground'>
-                {t('detail.idLabel')}: {category.id}
-              </p>
+    <RouteGuard permission={Permission.VIEW_CATEGORY}>
+      <PageContainer>
+        <div className='w-full space-y-6'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-4'>
+              <Button variant='ghost' size='icon' onClick={() => router.back()}>
+                <IconArrowLeft className='h-5 w-5' />
+              </Button>
+              <div>
+                <h2 className='text-3xl font-bold tracking-tight'>
+                  {t('detail.title')}
+                </h2>
+                <p className='text-muted-foreground'>
+                  {t('detail.idLabel')}: {category.id}
+                </p>
+              </div>
+            </div>
+            <div className='flex gap-2'>
+              {!isEditing ? (
+                <>
+                  <PermissionGuard permission={Permission.UPDATE_CATEGORY}>
+                    <Button onClick={() => setIsEditing(true)}>
+                      <IconTag className='mr-2 h-4 w-4' />
+                      {t('detail.edit')}
+                    </Button>
+                  </PermissionGuard>
+                  <PermissionGuard permission={Permission.DELETE_CATEGORY}>
+                    <Button variant='destructive' onClick={handleDelete}>
+                      <IconTrash className='mr-2 h-4 w-4' />
+                      {t('detail.delete')}
+                    </Button>
+                  </PermissionGuard>
+                </>
+              ) : (
+                <Button variant='outline' onClick={() => setIsEditing(false)}>
+                  {t('detail.cancel')}
+                </Button>
+              )}
             </div>
           </div>
-          <div className='flex gap-2'>
-            {!isEditing ? (
-              <>
-                <Button onClick={() => setIsEditing(true)}>
-                  <IconTag className='mr-2 h-4 w-4' />
-                  {t('detail.edit')}
-                </Button>
-                <Button variant='destructive' onClick={handleDelete}>
-                  <IconTrash className='mr-2 h-4 w-4' />
-                  {t('detail.delete')}
-                </Button>
-              </>
-            ) : (
-              <Button variant='outline' onClick={() => setIsEditing(false)}>
-                {t('detail.cancel')}
-              </Button>
-            )}
-          </div>
-        </div>
 
-        <Separator />
+          <Separator />
 
-        {isEditing ? (
-          <form onSubmit={handleUpdate}>
-            <Card>
-              <CardHeader>
-                <CardTitle>{t('detail.form.title')}</CardTitle>
-                <CardDescription>
-                  {t('detail.form.description')}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className='space-y-6'>
-                <div className='space-y-2'>
-                  <Label htmlFor='name'>{t('detail.form.nameLabel')}</Label>
-                  <Input
-                    id='name'
-                    placeholder={t('detail.form.namePlaceholder')}
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        name: e.target.value
-                      })
-                    }
-                    required
-                  />
-                </div>
-
-                <div className='flex justify-end gap-4'>
-                  <Button
-                    type='button'
-                    variant='outline'
-                    onClick={() => setIsEditing(false)}
-                  >
-                    {t('detail.form.cancel')}
-                  </Button>
-                  <Button type='submit' disabled={saving}>
-                    <IconDeviceFloppy className='mr-2 h-4 w-4' />
-                    {saving ? t('detail.form.saving') : t('detail.form.save')}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </form>
-        ) : (
-          <div className='grid gap-6 md:grid-cols-3'>
-            <div className='space-y-6 md:col-span-2'>
-              {/* Category Information */}
+          {isEditing ? (
+            <form onSubmit={handleUpdate}>
               <Card>
                 <CardHeader>
-                  <div className='flex items-start justify-between'>
-                    <div className='flex items-center gap-3'>
-                      <IconTag className='text-primary h-8 w-8' />
-                      <div>
-                        <CardTitle className='text-2xl'>
-                          {category.name || t('common.unnamed')}
-                        </CardTitle>
-                        {category.description && (
-                          <CardDescription className='mt-1'>
-                            {category.description}
-                          </CardDescription>
+                  <CardTitle>{t('detail.form.title')}</CardTitle>
+                  <CardDescription>
+                    {t('detail.form.description')}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className='space-y-6'>
+                  <div className='space-y-2'>
+                    <Label htmlFor='name'>{t('detail.form.nameLabel')}</Label>
+                    <Input
+                      id='name'
+                      placeholder={t('detail.form.namePlaceholder')}
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          name: e.target.value
+                        })
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className='flex justify-end gap-4'>
+                    <Button
+                      type='button'
+                      variant='outline'
+                      onClick={() => setIsEditing(false)}
+                    >
+                      {t('detail.form.cancel')}
+                    </Button>
+                    <Button type='submit' disabled={saving}>
+                      <IconDeviceFloppy className='mr-2 h-4 w-4' />
+                      {saving ? t('detail.form.saving') : t('detail.form.save')}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </form>
+          ) : (
+            <div className='grid gap-6 md:grid-cols-3'>
+              <div className='space-y-6 md:col-span-2'>
+                {/* Category Information */}
+                <Card>
+                  <CardHeader>
+                    <div className='flex items-start justify-between'>
+                      <div className='flex items-center gap-3'>
+                        <IconTag className='text-primary h-8 w-8' />
+                        <div>
+                          <CardTitle className='text-2xl'>
+                            {category.name || t('common.unnamed')}
+                          </CardTitle>
+                          {category.description && (
+                            <CardDescription className='mt-1'>
+                              {category.description}
+                            </CardDescription>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className='space-y-4'>
+                    <div>
+                      <h3 className='mb-3 font-semibold'>
+                        {t('detail.info.title')}
+                      </h3>
+                      <div className='space-y-1'>
+                        <p className='text-muted-foreground text-xs'>
+                          {t('detail.info.nameLabel')}
+                        </p>
+                        <p className='text-sm font-medium'>
+                          {category.name || t('detail.info.notSet')}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <h3 className='mb-3 font-semibold'>
+                        {t('detail.timestamps.title')}
+                      </h3>
+                      <div className='grid grid-cols-2 gap-3'>
+                        {category.createdAt && (
+                          <div>
+                            <p className='text-muted-foreground text-xs'>
+                              {t('detail.timestamps.created')}
+                            </p>
+                            <p className='text-sm font-medium'>
+                              {new Date(
+                                category.createdAt
+                              ).toLocaleDateString()}
+                            </p>
+                          </div>
+                        )}
+                        {category.updatedAt && (
+                          <div>
+                            <p className='text-muted-foreground text-xs'>
+                              {t('detail.timestamps.updated')}
+                            </p>
+                            <p className='text-sm font-medium'>
+                              {new Date(
+                                category.updatedAt
+                              ).toLocaleDateString()}
+                            </p>
+                          </div>
                         )}
                       </div>
                     </div>
-                  </div>
-                </CardHeader>
-                <CardContent className='space-y-4'>
-                  <div>
-                    <h3 className='mb-3 font-semibold'>
-                      {t('detail.info.title')}
-                    </h3>
-                    <div className='space-y-1'>
-                      <p className='text-muted-foreground text-xs'>
-                        {t('detail.info.nameLabel')}
-                      </p>
-                      <p className='text-sm font-medium'>
-                        {category.name || t('detail.info.notSet')}
-                      </p>
-                    </div>
-                  </div>
+                  </CardContent>
+                </Card>
+              </div>
 
-                  <Separator />
-
-                  <div>
-                    <h3 className='mb-3 font-semibold'>
-                      {t('detail.timestamps.title')}
-                    </h3>
-                    <div className='grid grid-cols-2 gap-3'>
-                      {category.createdAt && (
-                        <div>
-                          <p className='text-muted-foreground text-xs'>
-                            {t('detail.timestamps.created')}
-                          </p>
-                          <p className='text-sm font-medium'>
-                            {new Date(category.createdAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      )}
-                      {category.updatedAt && (
-                        <div>
-                          <p className='text-muted-foreground text-xs'>
-                            {t('detail.timestamps.updated')}
-                          </p>
-                          <p className='text-sm font-medium'>
-                            {new Date(category.updatedAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Sidebar */}
+              <div className='space-y-6'>
+                {/* Actions */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>{t('detail.sidebar.quickActions')}</CardTitle>
+                  </CardHeader>
+                  <CardContent className='space-y-2'>
+                    <PermissionGuard permission={Permission.UPDATE_CATEGORY}>
+                      <Button
+                        className='w-full justify-start'
+                        onClick={() => setIsEditing(true)}
+                      >
+                        <IconTag className='mr-2 h-4 w-4' />
+                        {t('detail.sidebar.edit')}
+                      </Button>
+                    </PermissionGuard>
+                    <PermissionGuard permission={Permission.DELETE_CATEGORY}>
+                      <Button
+                        variant='destructive'
+                        className='w-full justify-start'
+                        onClick={handleDelete}
+                      >
+                        <IconTrash className='mr-2 h-4 w-4' />
+                        {t('detail.sidebar.delete')}
+                      </Button>
+                    </PermissionGuard>
+                    <Link href='/dashboard/category' className='block w-full'>
+                      <Button
+                        variant='outline'
+                        className='w-full justify-start'
+                      >
+                        <IconArrowLeft className='mr-2 h-4 w-4' />
+                        {t('detail.sidebar.back')}
+                      </Button>
+                    </Link>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
-
-            {/* Sidebar */}
-            <div className='space-y-6'>
-              {/* Actions */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>{t('detail.sidebar.quickActions')}</CardTitle>
-                </CardHeader>
-                <CardContent className='space-y-2'>
-                  <Button
-                    className='w-full justify-start'
-                    onClick={() => setIsEditing(true)}
-                  >
-                    <IconTag className='mr-2 h-4 w-4' />
-                    {t('detail.sidebar.edit')}
-                  </Button>
-                  <Button
-                    variant='destructive'
-                    className='w-full justify-start'
-                    onClick={handleDelete}
-                  >
-                    <IconTrash className='mr-2 h-4 w-4' />
-                    {t('detail.sidebar.delete')}
-                  </Button>
-                  <Link href='/dashboard/category' className='block w-full'>
-                    <Button variant='outline' className='w-full justify-start'>
-                      <IconArrowLeft className='mr-2 h-4 w-4' />
-                      {t('detail.sidebar.back')}
-                    </Button>
-                  </Link>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
-      </div>
-    </PageContainer>
+          )}
+        </div>
+      </PageContainer>
+    </RouteGuard>
   );
 }
