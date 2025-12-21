@@ -29,6 +29,15 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+import { MoreHorizontal } from 'lucide-react';
 import { DataTable } from '@/components/ui/table/data-table';
 import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 import { useToast } from '@/components/ui/use-toast';
@@ -380,32 +389,40 @@ export default function DeliveryStaffsAccount() {
       },
       {
         id: 'actions',
-        header: t('table.columns.actions'),
-        cell: ({ row }) => (
-          <div className='flex justify-end gap-2'>
-            <Button
-              variant='outline'
-              size='sm'
-              onClick={() => handleViewDetails(row.original)}
-            >
-              {t('actions.viewDetails')}
-            </Button>
-            <Button
-              variant='secondary'
-              size='sm'
-              onClick={() => handleEdit(row.original)}
-            >
-              {t('actions.edit')}
-            </Button>
-            <Button
-              variant='destructive'
-              size='sm'
-              onClick={() => handleDelete(row.original.id)}
-            >
-              {t('actions.delete')}
-            </Button>
-          </div>
-        )
+        cell: ({ row }) => {
+          const item = row.original;
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant='ghost' className='h-8 w-8 p-0'>
+                  <span className='sr-only'>Open menu</span>
+                  <MoreHorizontal className='h-4 w-4' />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align='end'>
+                <DropdownMenuLabel>
+                  {t('table.columns.actions')}
+                </DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => handleViewDetails(item)}>
+                  {t('actions.viewDetails')}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleEdit(item)}>
+                  {t('actions.edit')}
+                </DropdownMenuItem>
+                {item.statusName !== 'Active' && (
+                  <DropdownMenuItem onClick={() => {}}>Accept</DropdownMenuItem>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className='text-red-600'
+                  onClick={() => handleDelete(item.id)}
+                >
+                  {t('actions.delete')}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        }
       }
     ],
     [t]
