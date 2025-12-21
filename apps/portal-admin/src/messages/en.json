@@ -50,6 +50,145 @@
       "billing": "Billing",
       "notifications": "Notifications",
       "logout": "Log out"
+    },
+    "payment": "Payment"
+  },
+  "Payment": {
+    "status": {
+      "paid": "Paid",
+      "partially_paid": "Partially Paid",
+      "overdue": "Overdue",
+      "unpaid": "Unpaid",
+      "pending": "Pending"
+    },
+    "page": {
+      "title": "Debt Management",
+      "subtitle": "View and manage supplier and consignee debts",
+      "tabs": {
+        "title": "Debts",
+        "supplier": "Supplier",
+        "consignee": "Consignee"
+      },
+      "empty": {
+        "supplier": "No supplier debts found",
+        "consignee": "No consignee debts found"
+      }
+    },
+    "table": {
+      "headers": {
+        "index": "#",
+        "partner": "Partner",
+        "status": "Status",
+        "originalAmount": "Original Amount",
+        "paidAmount": "Paid Amount",
+        "remainingAmount": "Remaining Amount",
+        "dueDate": "Due Date",
+        "actions": "Actions"
+      },
+      "actions": {
+        "viewDetails": "View Details"
+      }
+    },
+    "historyTable": {
+      "headers": {
+        "code": "Code",
+        "date": "Date",
+        "type": "Type",
+        "method": "Method",
+        "status": "Status",
+        "amount": "Amount"
+      },
+      "na": "N/A"
+    },
+    "modal": {
+      "title": "Create Payment",
+      "description": "Enter the payment amount for this debt",
+      "form": {
+        "amount": {
+          "label": "Amount",
+          "placeholder": "Enter amount",
+          "max": "Max: {amount}",
+          "error": {
+            "supplierOnly": "Can only pay for supplier debts"
+          }
+        },
+        "maxButton": "Max",
+        "summary": {
+          "remainingDebt": "Remaining Debt:",
+          "enteredAmount": "Entered Amount:",
+          "remainingAfterPayment": "Remaining After Payment:"
+        },
+        "buttons": {
+          "cancel": "Cancel",
+          "cash": "Cash",
+          "createQR": "Create Payment QR",
+          "creating": "Creating..."
+        }
+      },
+      "success": {
+        "paidTitle": "Payment Successful",
+        "createdTitle": "Transaction Created",
+        "cashMessage": "Cash transaction recorded",
+        "paidMessage": "Transaction completed",
+        "qrMessage": "Scan QR code to pay",
+        "qrError": "Unable to generate QR code",
+        "scanInstruction": "Scan QR code with your banking app",
+        "openPayOS": "Open PayOS Payment Page",
+        "transactionCode": "Transaction Code:",
+        "amount": "Amount:",
+        "status": "Status:",
+        "statusPaid": "Paid",
+        "statusPending": "Pending",
+        "close": "Close"
+      }
+    },
+    "detail": {
+      "title": "Debt Details",
+      "back": "Back",
+      "notFound": "Debt not found",
+      "loadError": "Failed to load details",
+      "paymentLoadError": "Failed to load payments",
+      "financial": {
+        "title": "Financial Summary",
+        "originalAmount": "Original Amount",
+        "paidAmount": "Paid Amount ({percentage}%)",
+        "remainingAmount": "Remaining Amount",
+        "payButton": "Pay"
+      },
+      "basic": {
+        "title": "Basic Information",
+        "description": "Debt identification and type",
+        "debtId": "Debt ID",
+        "partnerType": "Partner Type",
+        "debtType": "Debt Type"
+      },
+      "partner": {
+        "title": "Partner Information",
+        "supplierDescription": "Supplier details",
+        "consigneeDescription": "Consignee details",
+        "unknown": "Unknown Partner",
+        "gardenName": "Garden Name",
+        "representativeName": "Representative Name",
+        "warehouse": "Warehouse",
+        "contact": "Contact",
+        "organizationName": "Organization Name",
+        "address": "Address",
+        "noInfo": "No partner information available"
+      },
+      "credit": {
+        "title": "Credit Information",
+        "limit": "Credit Limit"
+      },
+      "dates": {
+        "title": "Important Dates",
+        "description": "Timeline for this debt",
+        "dueDate": "Due Date",
+        "createdAt": "Created At",
+        "lastUpdated": "Last Updated"
+      },
+      "history": {
+        "title": "Payment History"
+      }
     }
   },
   "Category": {

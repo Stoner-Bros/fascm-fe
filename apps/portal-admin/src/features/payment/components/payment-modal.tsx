@@ -12,6 +12,7 @@ import { generateQRCodeDataURL } from '../utils/qr-code';
 import { Loader2, Check } from 'lucide-react';
 import type { Debt } from '@/types/debt';
 import { cn } from '@/lib/utils';
+import { useTranslations } from 'next-intl';
 
 interface PaymentModalProps {
   debt: Debt;
@@ -26,18 +27,20 @@ export function PaymentModal({
   onClose,
   onSuccess
 }: PaymentModalProps) {
+  const t = useTranslations('Payment.modal');
   const [amount, setAmount] = useState<string>('');
   const [errors, setErrors] = useState<{ amount?: string }>({});
   const [qrCodeDataURL, setQrCodeDataURL] = useState<string | null>(null);
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
-  const { payment, isCreating, createPaymentWithQR, reset } = usePayment({
-    onPaymentSuccess: () => {
-      onSuccess?.();
-      setTimeout(() => {
-        handleClose();
-      }, 2000);
-    }
-  });
+  const { payment, isCreating, createPaymentWithQR, createCashPayment, reset } =
+    usePayment({
+      onPaymentSuccess: () => {
+        onSuccess?.();
+        setTimeout(() => {
+          handleClose();
+        }, 2000);
+      }
+    });
 
   const maxAmount = debt.remainingAmount ?? 0;
 
@@ -112,7 +115,7 @@ export function PaymentModal({
       // Only allow payment for supplier debts
       if (debt.partnerType !== 'supplier' || !debt.supplier) {
         setErrors({
-          amount: 'Chỉ có thể thanh toán cho khoản nợ của nhà cung cấp'
+          amount: t('form.amount.error.supplierOnly')
         });
         return;
       }
@@ -125,6 +128,34 @@ export function PaymentModal({
     }
   };
 
+  const handleCashPayment = async () => {
+    const numAmount = parseFloat(amount) || 0;
+    const validationErrors = validatePaymentForm(
+      { amount: numAmount, paymentMethod: 'cash' },
+      maxAmount
+    );
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    try {
+      // Only allow payment for supplier debts
+      if (debt.partnerType !== 'supplier' || !debt.supplier) {
+        setErrors({
+          amount: t('form.amount.error.supplierOnly')
+        });
+        return;
+      }
+
+      const supplierId = debt.supplier.id;
+      await createCashPayment(numAmount, supplierId, undefined);
+    } catch (error) {
+      // Error handling is done in the hook
+    }
+  };
+
   const handleMaxAmount = () => {
     setAmount(maxAmount.toString());
     setErrors({});
@@ -132,8 +163,8 @@ export function PaymentModal({
 
   return (
     <Modal
-      title='Tạo thanh toán'
-      description='Nhập số tiền thanh toán cho khoản nợ này'
+      title={t('title')}
+      description={t('description')}
       isOpen={isOpen}
       onClose={handleClose}
       className='lg:max-w-2xl'
@@ -142,9 +173,9 @@ export function PaymentModal({
         <form onSubmit={handleSubmit} className='space-y-6'>
           <div className='space-y-2'>
             <div className='flex items-center justify-between'>
-              <Label htmlFor='amount'>Số tiền</Label>
+              <Label htmlFor='amount'>{t('form.amount.label')}</Label>
               <span className='text-muted-foreground text-sm'>
-                Tối đa: {formatDebtAmount(maxAmount)}
+                {t('form.amount.max', { amount: formatDebtAmount(maxAmount) })}
               </span>
             </div>
             <div className='relative'>
@@ -153,7 +184,7 @@ export function PaymentModal({
                 type='text'
                 value={amount}
                 onChange={(e) => handleAmountChange(e.target.value)}
-                placeholder='Nhập số tiền'
+                placeholder={t('form.amount.placeholder')}
                 className={cn('pr-20', errors.amount && 'border-destructive')}
                 disabled={isCreating}
                 aria-invalid={!!errors.amount}
@@ -166,7 +197,7 @@ export function PaymentModal({
                 className='absolute top-1/2 right-1 h-7 -translate-y-1/2 px-2 text-xs'
                 disabled={isCreating}
               >
-                Tối đa
+                {t('form.maxButton')}
               </Button>
             </div>
             {errors.amount && (
@@ -176,20 +207,24 @@ export function PaymentModal({
 
           <div className='bg-muted/50 space-y-2 rounded-lg p-4'>
             <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>Số tiền còn nợ:</span>
+              <span className='text-muted-foreground'>
+                {t('form.summary.remainingDebt')}
+              </span>
               <span className='font-semibold'>
                 {formatDebtAmount(maxAmount)}
               </span>
             </div>
             <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>Số tiền nhập:</span>
+              <span className='text-muted-foreground'>
+                {t('form.summary.enteredAmount')}
+              </span>
               <span className='font-semibold'>
                 {formatDebtAmount(parseFloat(amount) || 0)}
               </span>
             </div>
             <div className='flex justify-between border-t pt-2'>
               <span className='font-medium'>
-                Số tiền còn lại sau thanh toán:
+                {t('form.summary.remainingAfterPayment')}
               </span>
               <span className='font-bold text-orange-600 dark:text-orange-400'>
                 {formatDebtAmount(
@@ -206,16 +241,24 @@ export function PaymentModal({
               onClick={handleClose}
               disabled={isCreating}
             >
-              Hủy
+              {t('form.buttons.cancel')}
+            </Button>
+            <Button
+              type='button'
+              variant='secondary'
+              onClick={handleCashPayment}
+              disabled={isCreating}
+            >
+              {t('form.buttons.cash')}
             </Button>
             <Button type='submit' disabled={isCreating}>
               {isCreating ? (
                 <>
                   <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                  Đang tạo...
+                  {t('form.buttons.creating')}
                 </>
               ) : (
-                'Tạo QR thanh toán'
+                t('form.buttons.createQR')
               )}
             </Button>
           </div>
@@ -225,10 +268,18 @@ export function PaymentModal({
           <div className='rounded-lg border border-green-200 bg-green-50 p-4 dark:border-green-900 dark:bg-green-950/20'>
             <div className='flex items-center gap-2 text-green-700 dark:text-green-300'>
               <Check className='h-5 w-5' />
-              <span className='font-semibold'>Giao dịch đã được tạo</span>
+              <span className='font-semibold'>
+                {payment.status === 'paid'
+                  ? t('success.paidTitle')
+                  : t('success.createdTitle')}
+              </span>
             </div>
             <p className='mt-2 text-sm text-green-600 dark:text-green-400'>
-              Quét mã QR để thanh toán
+              {payment.paymentMethod === 'cash'
+                ? t('success.cashMessage')
+                : payment.status === 'paid'
+                  ? t('success.paidMessage')
+                  : t('success.qrMessage')}
             </p>
           </div>
 
@@ -247,12 +298,12 @@ export function PaymentModal({
                   />
                 ) : (
                   <div className='text-muted-foreground flex h-64 w-64 items-center justify-center text-sm'>
-                    Không thể tạo mã QR
+                    {t('success.qrError')}
                   </div>
                 )}
               </div>
               <p className='text-muted-foreground text-center text-sm'>
-                Quét mã QR bằng ứng dụng ngân hàng của bạn
+                {t('success.scanInstruction')}
               </p>
             </div>
           )}
@@ -269,7 +320,7 @@ export function PaymentModal({
                   target='_blank'
                   rel='noopener noreferrer'
                 >
-                  Mở trang thanh toán PayOS
+                  {t('success.openPayOS')}
                 </a>
               </Button>
             </div>
@@ -277,19 +328,25 @@ export function PaymentModal({
 
           <div className='bg-muted/50 space-y-2 rounded-lg p-4'>
             <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>Mã giao dịch:</span>
+              <span className='text-muted-foreground'>
+                {t('success.transactionCode')}
+              </span>
               <span className='font-mono font-semibold'>
                 {payment.paymentCode || payment.id.slice(0, 8)}
               </span>
             </div>
             <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>Số tiền:</span>
+              <span className='text-muted-foreground'>
+                {t('success.amount')}
+              </span>
               <span className='font-semibold'>
                 {formatDebtAmount(payment.amount ?? 0)}
               </span>
             </div>
             <div className='flex justify-between text-sm'>
-              <span className='text-muted-foreground'>Trạng thái:</span>
+              <span className='text-muted-foreground'>
+                {t('success.status')}
+              </span>
               <span
                 className={cn(
                   'font-semibold',
@@ -298,14 +355,16 @@ export function PaymentModal({
                     : 'text-orange-600 dark:text-orange-400'
                 )}
               >
-                {payment.status === 'paid' ? 'Đã thanh toán' : 'Đang chờ'}
+                {payment.status === 'paid'
+                  ? t('success.statusPaid')
+                  : t('success.statusPending')}
               </span>
             </div>
           </div>
 
           <div className='flex justify-end gap-3'>
             <Button variant='outline' onClick={handleClose}>
-              Đóng
+              {t('success.close')}
             </Button>
           </div>
         </div>

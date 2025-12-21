@@ -50,6 +50,145 @@
       "billing": "Thanh toán",
       "notifications": "Thông báo",
       "logout": "Đăng xuất"
+    },
+    "payment": "Thanh toán"
+  },
+  "Payment": {
+    "status": {
+      "paid": "Đã thanh toán",
+      "partially_paid": "Thanh toán một phần",
+      "overdue": "Quá hạn",
+      "unpaid": "Chưa thanh toán",
+      "pending": "Đang chờ"
+    },
+    "page": {
+      "title": "Quản lý công nợ",
+      "subtitle": "Xem và quản lý công nợ nhà cung cấp và người nhận hàng",
+      "tabs": {
+        "title": "Công nợ",
+        "supplier": "Nhà cung cấp",
+        "consignee": "Người nhận hàng"
+      },
+      "empty": {
+        "supplier": "Không tìm thấy công nợ nhà cung cấp",
+        "consignee": "Không tìm thấy công nợ người nhận hàng"
+      }
+    },
+    "table": {
+      "headers": {
+        "index": "#",
+        "partner": "Đối tác",
+        "status": "Trạng thái",
+        "originalAmount": "Số tiền gốc",
+        "paidAmount": "Số tiền đã trả",
+        "remainingAmount": "Số tiền còn lại",
+        "dueDate": "Ngày đáo hạn",
+        "actions": "Thao tác"
+      },
+      "actions": {
+        "viewDetails": "Xem chi tiết"
+      }
+    },
+    "historyTable": {
+      "headers": {
+        "code": "Mã",
+        "date": "Ngày",
+        "type": "Loại",
+        "method": "Phương thức",
+        "status": "Trạng thái",
+        "amount": "Số tiền"
+      },
+      "na": "N/A"
+    },
+    "modal": {
+      "title": "Tạo thanh toán",
+      "description": "Nhập số tiền thanh toán cho khoản nợ này",
+      "form": {
+        "amount": {
+          "label": "Số tiền",
+          "placeholder": "Nhập số tiền",
+          "max": "Tối đa: {amount}",
+          "error": {
+            "supplierOnly": "Chỉ có thể thanh toán cho khoản nợ của nhà cung cấp"
+          }
+        },
+        "maxButton": "Tối đa",
+        "summary": {
+          "remainingDebt": "Số tiền còn nợ:",
+          "enteredAmount": "Số tiền nhập:",
+          "remainingAfterPayment": "Số tiền còn lại sau thanh toán:"
+        },
+        "buttons": {
+          "cancel": "Hủy",
+          "cash": "Tiền mặt",
+          "createQR": "Tạo QR thanh toán",
+          "creating": "Đang tạo..."
+        }
+      },
+      "success": {
+        "paidTitle": "Thanh toán thành công",
+        "createdTitle": "Giao dịch đã được tạo",
+        "cashMessage": "Giao dịch tiền mặt đã được ghi nhận",
+        "paidMessage": "Giao dịch đã hoàn tất",
+        "qrMessage": "Quét mã QR để thanh toán",
+        "qrError": "Không thể tạo mã QR",
+        "scanInstruction": "Quét mã QR bằng ứng dụng ngân hàng của bạn",
+        "openPayOS": "Mở trang thanh toán PayOS",
+        "transactionCode": "Mã giao dịch:",
+        "amount": "Số tiền:",
+        "status": "Trạng thái:",
+        "statusPaid": "Đã thanh toán",
+        "statusPending": "Đang chờ",
+        "close": "Đóng"
+      }
+    },
+    "detail": {
+      "title": "Chi tiết công nợ",
+      "back": "Quay lại",
+      "notFound": "Không tìm thấy công nợ",
+      "loadError": "Không thể tải chi tiết",
+      "paymentLoadError": "Không thể tải lịch sử thanh toán",
+      "financial": {
+        "title": "Tổng quan tài chính",
+        "originalAmount": "Số tiền gốc",
+        "paidAmount": "Số tiền đã trả ({percentage}%)",
+        "remainingAmount": "Số tiền còn lại",
+        "payButton": "Thanh toán"
+      },
+      "basic": {
+        "title": "Thông tin cơ bản",
+        "description": "Định danh và loại công nợ",
+        "debtId": "Mã công nợ",
+        "partnerType": "Loại đối tác",
+        "debtType": "Loại nợ"
+      },
+      "partner": {
+        "title": "Thông tin đối tác",
+        "supplierDescription": "Chi tiết nhà cung cấp",
+        "consigneeDescription": "Chi tiết người nhận hàng",
+        "unknown": "Đối tác không xác định",
+        "gardenName": "Tên nhà vườn",
+        "representativeName": "Người đại diện",
+        "warehouse": "Kho hàng",
+        "contact": "Liên hệ",
+        "organizationName": "Tên tổ chức",
+        "address": "Địa chỉ",
+        "noInfo": "Không có thông tin đối tác"
+      },
+      "credit": {
+        "title": "Thông tin tín dụng",
+        "limit": "Hạn mức tín dụng"
+      },
+      "dates": {
+        "title": "Mốc thời gian quan trọng",
+        "description": "Lịch trình cho khoản nợ này",
+        "dueDate": "Ngày đáo hạn",
+        "createdAt": "Ngày tạo",
+        "lastUpdated": "Cập nhật lần cuối"
+      },
+      "history": {
+        "title": "Lịch sử thanh toán"
+      }
     }
   },
   "Category": {

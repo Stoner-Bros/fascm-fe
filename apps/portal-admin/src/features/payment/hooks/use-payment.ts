@@ -3,7 +3,8 @@
 import { useToast } from '@/components/ui/use-toast';
 import {
   createPayment,
-  subscribeToPaymentStatus
+  subscribeToPaymentStatus,
+  confirmCashPayment
 } from '@/services/payment.service';
 import type { Payment } from '@/types/payment';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -93,6 +94,45 @@ export function usePayment(options?: UsePaymentOptions) {
     [options, toast]
   );
 
+  const createCashPayment = useCallback(
+    async (amount: number, supplierId?: string, consigneeId?: string) => {
+      try {
+        setIsCreating(true);
+
+        // Cleanup previous subscription if exists
+        if (unsubscribeRef.current) {
+          unsubscribeRef.current();
+          unsubscribeRef.current = null;
+        }
+
+        // 1. Create payment with method CASH
+        const newPayment = await createPayment({
+          amount,
+          paymentMethod: 'cash',
+          supplierId: supplierId || null,
+          consigneeId: consigneeId || null
+        });
+
+        setPayment(newPayment);
+      } catch (error) {
+        const err =
+          error instanceof Error
+            ? error
+            : new Error('Failed to create cash payment');
+        options?.onPaymentError?.(err);
+        toast({
+          title: 'Lỗi',
+          description: err.message,
+          variant: 'destructive'
+        });
+        throw err;
+      } finally {
+        setIsCreating(false);
+      }
+    },
+    [options, toast]
+  );
+
   const reset = useCallback(() => {
     if (unsubscribeRef.current) {
       unsubscribeRef.current();
@@ -108,6 +148,7 @@ export function usePayment(options?: UsePaymentOptions) {
     isCreating,
     isSubscribed,
     createPaymentWithQR,
+    createCashPayment,
     reset
   };
 }

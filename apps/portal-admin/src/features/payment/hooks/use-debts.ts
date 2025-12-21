@@ -7,21 +7,26 @@ import type { Debt, PartnerType } from '@/types/debt';
 
 interface UseDebtsOptions {
   partnerType?: PartnerType;
+  enabled?: boolean;
 }
 
 export function useDebts(options?: UseDebtsOptions) {
-  const { partnerType } = options || {};
+  const { partnerType, enabled = true } = options || {};
   const [page, setPage] = useQueryState(
     partnerType ? `page-${partnerType}` : 'page',
     parseAsInteger.withDefault(1)
   );
-  const [limit] = useQueryState('limit', parseAsInteger.withDefault(10));
+  const [limit, setLimit] = useQueryState(
+    partnerType ? `limit-${partnerType}` : 'limit',
+    parseAsInteger.withDefault(10)
+  );
   const [debts, setDebts] = useState<Debt[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [pageCount, setPageCount] = useState(1);
 
   const loadDebts = useCallback(async () => {
+    if (!enabled) return;
     setLoading(true);
     try {
       const response = await fetchDebts({
@@ -29,20 +34,14 @@ export function useDebts(options?: UseDebtsOptions) {
         limit: limit ?? 10,
         partnerType
       });
-      // Filter by partnerType on client side as fallback if API doesn't filter
-      let filteredDebts = response.data ?? [];
-      if (partnerType) {
-        filteredDebts = filteredDebts.filter(
-          (debt) => debt.partnerType === partnerType
-        );
-      }
-      setDebts(filteredDebts);
+
+      setDebts(response.data ?? []);
       setHasNextPage(response.hasNextPage ?? false);
       setPageCount((prev) => {
-        const minimalTotal = response.hasNextPage
-          ? (page ?? 1) + 1
-          : (page ?? 1);
-        return Math.max(prev, minimalTotal);
+        if (response.hasNextPage) {
+          return Math.max(prev, (page ?? 1) + 1);
+        }
+        return page ?? 1;
       });
     } catch (error) {
       console.error('Failed to fetch debts:', error);
@@ -51,7 +50,7 @@ export function useDebts(options?: UseDebtsOptions) {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, partnerType]);
+  }, [page, limit, partnerType, enabled]);
 
   useEffect(() => {
     loadDebts();
@@ -64,6 +63,7 @@ export function useDebts(options?: UseDebtsOptions) {
     pageCount,
     page: page ?? 1,
     limit: limit ?? 10,
-    setPage
+    setPage,
+    setLimit
   };
 }

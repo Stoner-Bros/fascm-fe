@@ -34,6 +34,8 @@ interface DebtTableProps {
   limit: number;
   pageCount: number;
   onPageChange: (page: number) => void;
+  onLimitChange?: (limit: number) => void;
+  partnerType?: string;
 }
 
 export function DebtTable({
@@ -41,16 +43,17 @@ export function DebtTable({
   page,
   limit,
   pageCount,
-  onPageChange
+  onPageChange,
+  onLimitChange
 }: DebtTableProps) {
-  const t = useTranslations('Orders.list');
+  const t = useTranslations('Payment.table');
   const router = useRouter();
 
   const columns = useMemo<ColumnDef<Debt>[]>(
     () => [
       {
         accessorKey: 'index',
-        header: '#',
+        header: t('headers.index'),
         cell: ({ row, table }) => {
           const pageIndex = table.getState().pagination.pageIndex;
           const pageSize = table.getState().pagination.pageSize;
@@ -64,7 +67,7 @@ export function DebtTable({
       {
         accessorKey: 'partnerName',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title='Partner' />
+          <DataTableColumnHeader column={column} title={t('headers.partner')} />
         ),
         cell: ({ row }) => {
           const debt = row.original;
@@ -108,7 +111,7 @@ export function DebtTable({
       {
         accessorKey: 'status',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title='Status' />
+          <DataTableColumnHeader column={column} title={t('headers.status')} />
         ),
         cell: ({ row }) => {
           const status = row.original.status;
@@ -126,7 +129,10 @@ export function DebtTable({
       {
         accessorKey: 'originalAmount',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title='Original Amount' />
+          <DataTableColumnHeader
+            column={column}
+            title={t('headers.originalAmount')}
+          />
         ),
         cell: ({ row }) => {
           return (
@@ -139,7 +145,10 @@ export function DebtTable({
       {
         accessorKey: 'paidAmount',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title='Paid Amount' />
+          <DataTableColumnHeader
+            column={column}
+            title={t('headers.paidAmount')}
+          />
         ),
         cell: ({ row }) => {
           return (
@@ -152,7 +161,10 @@ export function DebtTable({
       {
         accessorKey: 'remainingAmount',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title='Remaining Amount' />
+          <DataTableColumnHeader
+            column={column}
+            title={t('headers.remainingAmount')}
+          />
         ),
         cell: ({ row }) => {
           const amount = row.original.remainingAmount || 0;
@@ -170,7 +182,7 @@ export function DebtTable({
       {
         accessorKey: 'dueDate',
         header: ({ column }) => (
-          <DataTableColumnHeader column={column} title='Due Date' />
+          <DataTableColumnHeader column={column} title={t('headers.dueDate')} />
         ),
         cell: ({ row }) => {
           const dueDate = row.original.dueDate;
@@ -180,7 +192,9 @@ export function DebtTable({
       },
       {
         id: 'actions',
-        header: () => <div className='w-full pr-2 text-right'>Actions</div>,
+        header: () => (
+          <div className='w-full pr-2 text-right'>{t('headers.actions')}</div>
+        ),
         cell: ({ row }) => (
           <div className='text-right'>
             <DropdownMenu>
@@ -224,9 +238,20 @@ export function DebtTable({
     onPaginationChange: (updater) => {
       if (typeof updater === 'function') {
         const next = updater(pagination);
-        onPageChange(next.pageIndex + 1);
+        if (next.pageSize !== limit && onLimitChange) {
+          onLimitChange(next.pageSize);
+          onPageChange(1); // Reset to page 1 on limit change
+        } else {
+          onPageChange(next.pageIndex + 1);
+        }
       } else {
-        onPageChange(updater.pageIndex + 1);
+        const next = updater;
+        if (next.pageSize !== limit && onLimitChange) {
+          onLimitChange(next.pageSize);
+          onPageChange(1);
+        } else {
+          onPageChange(next.pageIndex + 1);
+        }
       }
     },
     getCoreRowModel: getCoreRowModel(),

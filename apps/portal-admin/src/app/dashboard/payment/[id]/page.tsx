@@ -11,15 +11,16 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { PaymentHistoryTable } from '@/features/payment/components/payment-history-table';
 import {
   formatDebtAmount,
   getDebtStatusColor,
-  getDebtStatusLabel,
   getDebtTypeLabel,
   getPartnerTypeLabel
 } from '@/features/payment/utils/utils';
-import { fetchDebtById } from '@/services/debt.service';
+import { fetchDebtById, fetchPaymentsByDebtId } from '@/services/debt.service';
 import type { Debt } from '@/types/debt';
+import type { Payment } from '@/types/payment';
 import {
   ArrowLeft,
   Building2,
@@ -35,25 +36,34 @@ import {
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { PaymentModal } from '@/features/payment/components/payment-modal';
+import { useTranslations } from 'next-intl';
 
 export default function DebtDetailPage() {
+  const t = useTranslations('Payment.detail');
+  const tStatus = useTranslations('Payment.status');
   const params = useParams();
   const router = useRouter();
   const debtId = params.id as string;
   const [debt, setDebt] = useState<Debt | null>(null);
+  const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [pageCount, setPageCount] = useState(1);
 
   useEffect(() => {
     async function loadDebt() {
       try {
         setLoading(true);
-        const data = await fetchDebtById(debtId);
-        setDebt(data);
+        const debtData = await fetchDebtById(debtId);
+        setDebt(debtData);
         setError(null);
       } catch (err: any) {
-        setError(err?.message ?? 'Failed to load debt details');
+        setError(err?.message ?? t('loadError'));
       } finally {
         setLoading(false);
       }
@@ -62,7 +72,27 @@ export default function DebtDetailPage() {
     if (debtId) {
       loadDebt();
     }
-  }, [debtId]);
+  }, [debtId, t]);
+
+  useEffect(() => {
+    async function loadPayments() {
+      try {
+        const response = await fetchPaymentsByDebtId(debtId, { page, limit });
+        setPayments(response.data);
+        if (response.hasNextPage) {
+          setPageCount((prev) => (page >= prev ? page + 1 : prev));
+        } else {
+          setPageCount(page);
+        }
+      } catch (err) {
+        console.error(t('paymentLoadError'), err);
+      }
+    }
+
+    if (debtId) {
+      loadPayments();
+    }
+  }, [debtId, page, limit, t]);
 
   if (loading) {
     return (
@@ -80,11 +110,11 @@ export default function DebtDetailPage() {
         <div className='flex-1 space-y-4'>
           <Button variant='ghost' onClick={() => router.back()}>
             <ArrowLeft className='mr-2 h-4 w-4' />
-            Back
+            {t('back')}
           </Button>
           <Card>
             <CardContent className='pt-6'>
-              <p className='text-destructive'>{error || 'Debt not found'}</p>
+              <p className='text-destructive'>{error || t('notFound')}</p>
             </CardContent>
           </Card>
         </div>
@@ -107,18 +137,18 @@ export default function DebtDetailPage() {
           <div className='flex items-start gap-4'>
             <Button variant='ghost' size='sm' onClick={() => router.back()}>
               <ArrowLeft className='mr-2 h-4 w-4' />
-              Back
+              {t('back')}
             </Button>
             <div>
               <div className='flex items-center gap-3'>
                 <h1 className='text-3xl font-bold tracking-tight'>
-                  Debt Details
+                  {t('title')}
                 </h1>
                 <Badge
                   variant='outline'
                   className={`${statusColors.bg} ${statusColors.text} ${statusColors.border} text-sm capitalize`}
                 >
-                  {getDebtStatusLabel(debt.status)}
+                  {tStatus(debt.status || 'unpaid')}
                 </Badge>
               </div>
               <p className='text-muted-foreground mt-1'>
@@ -128,7 +158,7 @@ export default function DebtDetailPage() {
                     ? debt.consignee.organizationName ||
                       `${debt.consignee.user?.firstName || ''} ${debt.consignee.user?.lastName || ''}`.trim() ||
                       'N/A'
-                    : 'Unknown Partner'}
+                    : t('partner.unknown')}
               </p>
             </div>
           </div>
@@ -140,7 +170,7 @@ export default function DebtDetailPage() {
             <div className='flex items-center justify-between'>
               <CardTitle className='flex items-center gap-2'>
                 <DollarSign className='h-5 w-5' />
-                Financial Summary
+                {t('financial.title')}
               </CardTitle>
               {(debt.remainingAmount ?? 0) > 0 &&
                 debt.partnerType !== 'consignee' &&
@@ -150,7 +180,7 @@ export default function DebtDetailPage() {
                     className='flex items-center gap-2'
                   >
                     <CreditCard className='h-4 w-4' />
-                    Thanh toán
+                    {t('financial.payButton')}
                   </Button>
                 )}
             </div>
@@ -159,7 +189,7 @@ export default function DebtDetailPage() {
             <div className='grid gap-6 md:grid-cols-3'>
               <div className='space-y-2'>
                 <p className='text-muted-foreground text-sm font-medium'>
-                  Original Amount
+                  {t('financial.originalAmount')}
                 </p>
                 <p className='text-2xl font-bold'>
                   {formatDebtAmount(debt.originalAmount)}
@@ -167,7 +197,7 @@ export default function DebtDetailPage() {
               </div>
               <div className='space-y-2'>
                 <p className='text-muted-foreground text-sm font-medium'>
-                  Paid Amount ({paidPercentage}%)
+                  {t('financial.paidAmount', { percentage: paidPercentage })}
                 </p>
                 <p className='text-2xl font-bold text-green-600'>
                   {formatDebtAmount(debt.paidAmount)}
@@ -181,7 +211,7 @@ export default function DebtDetailPage() {
               </div>
               <div className='space-y-2'>
                 <p className='text-muted-foreground text-sm font-medium'>
-                  Remaining Amount
+                  {t('financial.remainingAmount')}
                 </p>
                 <p
                   className={`text-2xl font-bold ${
@@ -204,14 +234,14 @@ export default function DebtDetailPage() {
             <CardHeader>
               <CardTitle className='flex items-center gap-2'>
                 <CreditCard className='h-5 w-5' />
-                Basic Information
+                {t('basic.title')}
               </CardTitle>
-              <CardDescription>Debt identification and type</CardDescription>
+              <CardDescription>{t('basic.description')}</CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
               <div className='space-y-1'>
                 <label className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
-                  Debt ID
+                  {t('basic.debtId')}
                 </label>
                 <p className='font-mono text-sm'>{debt.id}</p>
               </div>
@@ -219,7 +249,7 @@ export default function DebtDetailPage() {
               <div className='space-y-3'>
                 <div className='space-y-1'>
                   <label className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
-                    Partner Type
+                    {t('basic.partnerType')}
                   </label>
                   <div>
                     <Badge variant='outline' className='capitalize'>
@@ -229,7 +259,7 @@ export default function DebtDetailPage() {
                 </div>
                 <div className='space-y-1'>
                   <label className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
-                    Debt Type
+                    {t('basic.debtType')}
                   </label>
                   <div>
                     <Badge variant='outline' className='capitalize'>
@@ -250,11 +280,12 @@ export default function DebtDetailPage() {
                 ) : (
                   <User className='h-5 w-5' />
                 )}
-                Partner Information
+                {t('partner.title')}
               </CardTitle>
               <CardDescription>
-                {debt.partnerType === 'supplier' ? 'Supplier' : 'Consignee'}{' '}
-                details
+                {debt.partnerType === 'supplier'
+                  ? t('partner.supplierDescription')
+                  : t('partner.consigneeDescription')}
               </CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
@@ -262,7 +293,7 @@ export default function DebtDetailPage() {
                 <>
                   <div className='space-y-1'>
                     <label className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
-                      Garden Name
+                      {t('partner.gardenName')}
                     </label>
                     <p className='text-base font-semibold'>
                       {debt.supplier.gardenName}
@@ -271,7 +302,7 @@ export default function DebtDetailPage() {
                   <Separator />
                   <div className='space-y-1'>
                     <label className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
-                      Representative Name
+                      {t('partner.representativeName')}
                     </label>
                     <p className='text-sm'>
                       {debt.supplier.representativeName}
@@ -283,7 +314,7 @@ export default function DebtDetailPage() {
                       <div className='space-y-1'>
                         <label className='text-muted-foreground flex items-center gap-1 text-xs font-medium tracking-wide uppercase'>
                           <Warehouse className='h-3 w-3' />
-                          Warehouse
+                          {t('partner.warehouse')}
                         </label>
                         <p className='text-sm font-medium'>
                           {debt.supplier.warehouse.name}
@@ -301,7 +332,7 @@ export default function DebtDetailPage() {
                       <div className='space-y-1'>
                         <label className='text-muted-foreground flex items-center gap-1 text-xs font-medium tracking-wide uppercase'>
                           <Phone className='h-3 w-3' />
-                          Contact
+                          {t('partner.contact')}
                         </label>
                         <p className='text-sm'>{debt.supplier.contact}</p>
                       </div>
@@ -312,7 +343,7 @@ export default function DebtDetailPage() {
                 <>
                   <div className='space-y-1'>
                     <label className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
-                      Organization Name
+                      {t('partner.organizationName')}
                     </label>
                     <p className='text-base font-semibold'>
                       {debt.consignee.organizationName ||
@@ -325,7 +356,7 @@ export default function DebtDetailPage() {
                       <Separator />
                       <div className='space-y-1'>
                         <label className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
-                          Representative Name
+                          {t('partner.representativeName')}
                         </label>
                         <p className='text-sm'>
                           {debt.consignee.representativeName}
@@ -339,7 +370,7 @@ export default function DebtDetailPage() {
                       <div className='space-y-1'>
                         <label className='text-muted-foreground flex items-center gap-1 text-xs font-medium tracking-wide uppercase'>
                           <MapPin className='h-3 w-3' />
-                          Address
+                          {t('partner.address')}
                         </label>
                         <p className='text-sm'>{debt.consignee.address}</p>
                       </div>
@@ -351,7 +382,7 @@ export default function DebtDetailPage() {
                       <div className='space-y-1'>
                         <label className='text-muted-foreground flex items-center gap-1 text-xs font-medium tracking-wide uppercase'>
                           <Phone className='h-3 w-3' />
-                          Contact
+                          {t('partner.contact')}
                         </label>
                         <p className='text-sm'>{debt.consignee.contact}</p>
                       </div>
@@ -359,9 +390,7 @@ export default function DebtDetailPage() {
                   )}
                 </>
               ) : (
-                <p className='text-muted-foreground'>
-                  No partner information available
-                </p>
+                <p className='text-muted-foreground'>{t('partner.noInfo')}</p>
               )}
             </CardContent>
           </Card>
@@ -372,13 +401,13 @@ export default function DebtDetailPage() {
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
                   <CreditCard className='h-5 w-5' />
-                  Credit Information
+                  {t('credit.title')}
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className='space-y-1'>
                   <label className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
-                    Credit Limit
+                    {t('credit.limit')}
                   </label>
                   <p className='text-lg font-semibold'>
                     {formatDebtAmount(debt.creditLimit)}
@@ -393,16 +422,16 @@ export default function DebtDetailPage() {
             <CardHeader>
               <CardTitle className='flex items-center gap-2'>
                 <Calendar className='h-5 w-5' />
-                Important Dates
+                {t('dates.title')}
               </CardTitle>
-              <CardDescription>Timeline for this debt</CardDescription>
+              <CardDescription>{t('dates.description')}</CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
               {debt.dueDate && (
                 <>
                   <div className='space-y-1'>
                     <label className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
-                      Due Date
+                      {t('dates.dueDate')}
                     </label>
                     <p className='text-sm font-medium'>
                       {new Date(debt.dueDate).toLocaleDateString('vi-VN', {
@@ -417,7 +446,7 @@ export default function DebtDetailPage() {
               )}
               <div className='space-y-1'>
                 <label className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
-                  Created At
+                  {t('dates.createdAt')}
                 </label>
                 <p className='text-sm'>
                   {new Date(debt.createdAt).toLocaleDateString('vi-VN', {
@@ -432,7 +461,7 @@ export default function DebtDetailPage() {
               <Separator />
               <div className='space-y-1'>
                 <label className='text-muted-foreground text-xs font-medium tracking-wide uppercase'>
-                  Last Updated
+                  {t('dates.lastUpdated')}
                 </label>
                 <p className='text-sm'>
                   {new Date(debt.updatedAt).toLocaleDateString('vi-VN', {
@@ -448,6 +477,25 @@ export default function DebtDetailPage() {
           </Card>
         </div>
 
+        {/* Payment History */}
+        <div className='space-y-4'>
+          <h2 className='text-xl font-semibold tracking-tight'>
+            {t('history.title')}
+          </h2>
+          <Card>
+            <CardContent className='p-0'>
+              <PaymentHistoryTable
+                payments={payments}
+                page={page}
+                limit={limit}
+                pageCount={pageCount}
+                onPageChange={setPage}
+                onLimitChange={setLimit}
+              />
+            </CardContent>
+          </Card>
+        </div>
+
         {/* Payment Modal */}
         {debt && (
           <PaymentModal
@@ -456,9 +504,18 @@ export default function DebtDetailPage() {
             onClose={() => setPaymentModalOpen(false)}
             onSuccess={() => {
               // Reload debt data after successful payment
-              fetchDebtById(debtId)
-                .then((updatedDebt) => {
+              Promise.all([
+                fetchDebtById(debtId),
+                fetchPaymentsByDebtId(debtId, { page, limit })
+              ])
+                .then(([updatedDebt, updatedPaymentsResponse]) => {
                   setDebt(updatedDebt);
+                  setPayments(updatedPaymentsResponse.data);
+                  if (updatedPaymentsResponse.hasNextPage) {
+                    setPageCount((prev) => (page >= prev ? page + 1 : prev));
+                  } else {
+                    setPageCount(page);
+                  }
                 })
                 .catch(() => {
                   // Silently handle error - user can manually refresh

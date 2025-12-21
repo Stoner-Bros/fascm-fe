@@ -1,4 +1,44 @@
 {
+  "Payment": {
+    "title": "Payment History",
+    "table": {
+      "code": "Code",
+      "date": "Date",
+      "type": "Type",
+      "method": "Method",
+      "status": "Status",
+      "amount": "Amount",
+      "actions": "Actions",
+      "confirmPayment": "Confirm Payment",
+      "openMenu": "Open menu",
+      "na": "N/A"
+    },
+    "status": {
+      "paid": "Paid",
+      "pending": "Pending"
+    },
+    "type": {
+      "in": "In",
+      "out": "Out"
+    },
+    "method": {
+      "bank_transfer": "Bank Transfer",
+      "cash": "Cash"
+    },
+    "dialog": {
+      "title": "Confirm Cash Payment",
+      "description": "Are you sure you want to confirm that you have received {amount} for payment code {code}? This action cannot be undone.",
+      "cancel": "Cancel",
+      "confirm": "Confirm",
+      "confirming": "Confirming..."
+    },
+    "toast": {
+      "successTitle": "Success",
+      "successDescription": "Payment confirmed successfully",
+      "errorTitle": "Error",
+      "errorDescription": "Failed to confirm payment"
+    }
+  },
   "Landing": {
     "header": {
       "home": "Home",
@@ -137,20 +177,20 @@
       },
       "supplier": {
         "step1": {
-          "title": "Receive Notifications",
-          "description": "Get notified when warehouse staff creates orders that require your products."
+          "title": "Confirm Availability",
+          "description": "Confirm product availability and accept or decline orders based on your desired price."
         },
         "step2": {
           "title": "Review & Negotiate",
           "description": "Check order details and negotiate prices with managers."
         },
         "step3": {
-          "title": "Confirm Availability",
-          "description": "Confirm product availability and accept or decline orders based on your inventory."
+          "title": "Receive Notifications",
+          "description": "Get notified when warehouse staff approves your requested order."
         },
         "step4": {
           "title": "Quality Inspection",
-          "description": "Observe and verify the product quality inspection process."
+          "description": "Observe and confirm the product quality inspection process after delivery."
         },
         "step5": {
           "title": "Fulfill Order",
@@ -906,6 +946,10 @@
     "title": "Settle Invoice",
     "subtitle": "Please settle invoices before the due date",
     "noDebt": "No debt information",
+    "tabs": {
+      "debt": "Debt",
+      "history": "Payment History"
+    },
     "status": {
       "paid": "Paid",
       "partiallyPaid": "Partially Paid",
@@ -943,7 +987,18 @@
       "partiallyPaid": "Partially Paid",
       "overdueSettleNow": "Overdue - Settle immediately",
       "notSettled": "Not Settled",
-      "pleaseSettleBeforeDue": "Please settle before the due date"
+      "pleaseSettleBeforeDue": "Please settle before the due date",
+      "debtInfo": "Debt Information",
+      "debtCode": "Debt Code",
+      "systemOwes": "Amount system owes",
+      "totalDebtValue": "Total debt value",
+      "systemWillPay": "System will pay before due date",
+      "fullyPaid": "Fully Paid",
+      "paymentOverdue": "Payment Overdue",
+      "daysOverdue": "Overdue {days} days",
+      "daysUntilDuePayment": "{days} days until due payment",
+      "overdueSimple": "Overdue",
+      "debtStatus": "Debt Status"
     },
     "alertBanner": {
       "overdueTitle": "Invoice is overdue",
