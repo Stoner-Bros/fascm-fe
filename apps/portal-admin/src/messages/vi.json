@@ -1960,10 +1960,13 @@
       },
       "debt": {
         "title": "Tổng quan công nợ",
-        "receivableVsPayable": "Phải thu vs Phải trả",
+        "description": "Phân bổ công nợ theo trạng thái",
+        "receivableVsPayable": "Phải thu và Phải trả",
         "receivable": "Phải thu",
         "payable": "Phải trả",
-        "labelAmount": "Số tiền"
+        "labelAmount": "Số tiền",
+        "overdue": "Quá hạn",
+        "debts": "khoản nợ"
       },
       "warehouse": {
         "title": "Tồn kho theo kho",
@@ -1976,6 +1979,13 @@
         "labelTrucks": "Xe tải",
         "centerLabel": "Xe tải"
       },
+      "inventory": {
+        "title": "Trạng thái kho hàng",
+        "description": "Số lượng tồn kho theo sản phẩm",
+        "labelQuantity": "Số lượng",
+        "labelValue": "Giá trị",
+        "expiringSoon": "lô sắp hết hạn"
+      },
       "topCustomers": {
         "title": "Khách hàng hàng đầu",
         "description": "Theo tổng giá trị mua hàng",
@@ -1985,6 +1995,11 @@
         "title": "Nhà cung cấp hàng đầu",
         "description": "Theo tổng giá trị mua hàng",
         "totalAmount": "Tổng giá trị"
+      },
+      "topSellingProducts": {
+        "title": "Sản phẩm bán chạy nhất",
+        "description": "Theo tổng doanh số",
+        "totalAmount": "Tổng doanh số"
       },
       "loading": "Đang tải..."
     }

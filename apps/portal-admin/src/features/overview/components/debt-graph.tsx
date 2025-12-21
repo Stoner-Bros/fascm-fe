@@ -22,22 +22,23 @@ import {
 
 export function DebtGraph() {
   const t = useTranslations('Overview.charts.debt');
+  const tStatus = useTranslations('Payment.status');
   const tCommon = useTranslations('Overview.charts');
   const [data, setData] = React.useState<DebtStatisticsDto | null>(null);
   const [loading, setLoading] = React.useState(true);
+
+  const STATUS_COLORS: Record<string, string> = {
+    paid: '#22c55e',
+    partially_paid: '#f97316',
+    overdue: '#ef4444',
+    unpaid: '#64748b',
+    pending: '#eab308'
+  };
 
   const chartConfig = {
     amount: {
       label: t('labelAmount'),
       color: 'hsl(var(--primary))'
-    },
-    receivable: {
-      label: t('receivable'),
-      color: '#22c55e'
-    },
-    payable: {
-      label: t('payable'),
-      color: '#ef4444'
     }
   } satisfies ChartConfig;
 
@@ -64,30 +65,38 @@ export function DebtGraph() {
     );
   }
 
-  const chartData = [
-    {
-      type: 'receivable',
-      amount: data?.totalDebtReceivable || 0,
-      fill: 'var(--color-receivable)',
-      label: t('receivable')
-    },
-    {
-      type: 'payable',
-      amount: data?.totalDebtPayable || 0,
-      fill: 'var(--color-payable)',
-      label: t('payable')
-    }
-  ];
+  const chartData = (data?.debtsByStatus || []).map((item) => ({
+    status: item.status,
+    amount: item.totalAmount,
+    fill: STATUS_COLORS[item.status] || '#94a3b8',
+    label: tStatus(item.status as any)
+  }));
+
+  const overdueAmount = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'VND',
+    notation: 'compact'
+  }).format(data?.totalOverdueAmount || 0);
 
   return (
-    <Card className='@container/card'>
+    <Card className='@container/card flex h-full flex-col'>
       <CardHeader className='items-center pb-0 sm:flex-row sm:justify-between sm:pb-4'>
         <div className='flex flex-col gap-1'>
           <CardTitle>{t('title')}</CardTitle>
-          <CardDescription>{t('receivableVsPayable')}</CardDescription>
+          <CardDescription>{t('description')}</CardDescription>
         </div>
+        {data?.overdueDebts ? (
+          <div className='flex flex-col items-end'>
+            <span className='text-destructive text-sm font-medium'>
+              {t('overdue')}: {overdueAmount}
+            </span>
+            <span className='text-muted-foreground text-xs'>
+              {data.overdueDebts} {t('debts')}
+            </span>
+          </div>
+        ) : null}
       </CardHeader>
-      <CardContent>
+      <CardContent className='flex-1'>
         <ChartContainer config={chartConfig} className='min-h-[200px] w-full'>
           <BarChart accessibilityLayer data={chartData}>
             <CartesianGrid vertical={false} />
