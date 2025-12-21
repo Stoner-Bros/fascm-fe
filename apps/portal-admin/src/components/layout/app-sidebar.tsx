@@ -130,7 +130,8 @@ export default function AppSidebar() {
       Staff: t('staff'),
       'Delivery Staff': t('deliveryStaff'),
       Supplier: t('supplier'),
-      Consignee: t('consignee')
+      Consignee: t('consignee'),
+      Payment: t('payment')
     };
     return translationMap[title] || title;
   };
