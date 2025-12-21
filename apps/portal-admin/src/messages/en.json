@@ -1659,7 +1659,8 @@
           "representative": "Representative",
           "contact": "Contact",
           "email": "Email",
-          "actions": "Actions"
+          "actions": "Actions",
+          "status": "Status"
         }
       },
       "toast": {
@@ -1762,7 +1763,8 @@
           "email": "Email",
           "warehouse": "Warehouse",
           "address": "Address",
-          "actions": "Actions"
+          "actions": "Actions",
+          "status": "Status"
         }
       },
       "toast": {
@@ -1853,7 +1855,8 @@
           "warehouse": "Warehouse",
           "truck": "Truck",
           "licenseExpired": "License Expired",
-          "actions": "Actions"
+          "actions": "Actions",
+          "status": "Status"
         }
       },
       "toast": {
