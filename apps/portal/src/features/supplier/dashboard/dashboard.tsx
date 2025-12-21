@@ -11,7 +11,14 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { fetchHarvestSchedules } from '@/features/supplier';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
+import { fetchMyHarvestSchedules } from '@/services/harvest-schedule.service';
 import type { HarvestSchedule } from '@/types/harvest-schedule';
 import {
   IconCheck,
@@ -33,6 +40,15 @@ export default function SupplierDashboardFeature() {
   const t = useTranslations('SupplierDashboard');
   const [schedules, setSchedules] = useState<HarvestSchedule[]>([]);
   const [loading, setLoading] = useState(true);
+  const [statusFilter, setStatusFilter] = useState<
+    | 'ALL'
+    | 'pending'
+    | 'rejected'
+    | 'approved'
+    | 'processing'
+    | 'completed'
+    | 'canceled'
+  >('ALL');
 
   useEffect(() => {
     let cancelled = false;
@@ -40,10 +56,16 @@ export default function SupplierDashboardFeature() {
     const loadData = async () => {
       setLoading(true);
       try {
-        // Fetch schedules và tickets
-        const [schedulesRes] = await Promise.all([
-          fetchHarvestSchedules({ page: 1, limit: 50 })
-        ]);
+        // Fetch schedules using /mine endpoint
+        const schedulesRes = await fetchMyHarvestSchedules({
+          page: 1,
+          limit: 100,
+          status:
+            statusFilter === 'ALL'
+              ? undefined
+              : (statusFilter.toUpperCase() as any),
+          sort: 'desc'
+        });
 
         if (cancelled) return;
 
@@ -60,7 +82,7 @@ export default function SupplierDashboardFeature() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [statusFilter]);
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -71,11 +93,8 @@ export default function SupplierDashboardFeature() {
     const approved = schedules.filter(
       (s) => normalizeStatus(s.status) === 'approved'
     ).length;
-    const preparing = schedules.filter(
-      (s) => normalizeStatus(s.status) === 'preparing'
-    ).length;
-    const delivering = schedules.filter(
-      (s) => normalizeStatus(s.status) === 'delivering'
+    const processing = schedules.filter(
+      (s) => normalizeStatus(s.status) === 'processing'
     ).length;
     const completed = schedules.filter(
       (s) => normalizeStatus(s.status) === 'completed'
@@ -83,16 +102,18 @@ export default function SupplierDashboardFeature() {
     const rejected = schedules.filter(
       (s) => normalizeStatus(s.status) === 'rejected'
     ).length;
+    const canceled = schedules.filter(
+      (s) => normalizeStatus(s.status) === 'canceled'
+    ).length;
 
     return {
       total,
       pending,
       approved,
-      preparing,
-      delivering,
+      processing,
       completed,
       rejected,
-      inTransit: preparing + delivering
+      canceled
     };
   }, [schedules]);
 
@@ -128,12 +149,11 @@ export default function SupplierDashboardFeature() {
             {t('status.approved')}
           </Badge>
         );
-      case 'preparing':
-      case 'delivering':
+      case 'processing':
         return (
           <Badge variant='secondary' className='bg-blue-50'>
             <IconTruck className='mr-1 h-3 w-3' />
-            {t('status.inTransit')}
+            {t('status.processing')}
           </Badge>
         );
       case 'completed':
@@ -150,6 +170,13 @@ export default function SupplierDashboardFeature() {
             {t('status.rejected')}
           </Badge>
         );
+      case 'canceled':
+        return (
+          <Badge variant='destructive'>
+            <IconX className='mr-1 h-3 w-3' />
+            {t('status.canceled')}
+          </Badge>
+        );
       default:
         return <Badge variant='outline'>{status}</Badge>;
     }
@@ -164,14 +191,6 @@ export default function SupplierDashboardFeature() {
               {t('welcome')}
             </h2>
             <p className='text-muted-foreground mt-1'>{t('subtitle')}</p>
-          </div>
-          <div className='flex items-center space-x-2'>
-            <Link href='/supplier/harvest-batches/new'>
-              <Button>
-                <IconPackage className='mr-2 h-4 w-4' />
-                {t('newHarvestBatch')}
-              </Button>
-            </Link>
           </div>
         </div>
 
@@ -222,19 +241,19 @@ export default function SupplierDashboardFeature() {
           <Card className='relative overflow-hidden border-2 bg-gradient-to-br from-indigo-50 to-indigo-100/50 dark:from-indigo-950/20 dark:to-indigo-900/10'>
             <CardHeader>
               <CardDescription className='text-indigo-700 dark:text-indigo-400'>
-                {t('stats.inTransit')}
+                {t('stats.processing')}
               </CardDescription>
               <CardTitle className='text-3xl font-bold text-indigo-900 tabular-nums dark:text-indigo-100'>
                 {loading ? (
                   <div className='h-8 w-16 animate-pulse rounded bg-indigo-200 dark:bg-indigo-800' />
                 ) : (
-                  stats.inTransit
+                  stats.processing
                 )}
               </CardTitle>
             </CardHeader>
             <CardFooter className='flex-col items-start gap-1 text-sm'>
               <div className='text-muted-foreground'>
-                {t('stats.inTransitDescription')}
+                {t('stats.processingDescription')}
               </div>
             </CardFooter>
             <div className='absolute -top-4 -right-4 h-24 w-24 rounded-full bg-indigo-200/30 dark:bg-indigo-800/20' />

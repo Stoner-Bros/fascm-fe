@@ -160,7 +160,7 @@ export default function SupplierHarvestBatchesFeature() {
   const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1));
   const [limit, setLimit] = useQueryState(
     'limit',
-    parseAsInteger.withDefault(7)
+    parseAsInteger.withDefault(10)
   );
   const [pageCount, setPageCount] = useState(1);
 
@@ -311,7 +311,7 @@ export default function SupplierHarvestBatchesFeature() {
   const pagination: PaginationState = useMemo(
     () => ({
       pageIndex: (page ?? 1) - 1,
-      pageSize: limit ?? 7
+      pageSize: limit ?? 10
     }),
     [page, limit]
   );
@@ -477,79 +477,6 @@ export default function SupplierHarvestBatchesFeature() {
           </Link>
         </div>
 
-        {/* Status Cards */}
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-4'>
-          <Card
-            className='hover:border-primary cursor-pointer'
-            onClick={() => setStatusFilter('ALL')}
-          >
-            <CardHeader className='pb-3'>
-              <CardDescription>{t('cards.total')}</CardDescription>
-              <CardTitle className='text-3xl'>
-                {loading ? (
-                  <div className='bg-muted h-8 w-16 animate-pulse rounded' />
-                ) : (
-                  statusCounts.all
-                )}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-          <Card
-            className='hover:border-primary cursor-pointer'
-            onClick={() => setStatusFilter('pending')}
-          >
-            <CardHeader className='pb-3'>
-              <CardDescription className='flex items-center gap-2'>
-                <IconClock className='h-4 w-4' />
-                {t('statuses.pending')}
-              </CardDescription>
-              <CardTitle className='text-3xl'>
-                {loading ? (
-                  <div className='bg-muted h-8 w-16 animate-pulse rounded' />
-                ) : (
-                  statusCounts.pending
-                )}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-          <Card
-            className='hover:border-primary cursor-pointer'
-            onClick={() => setStatusFilter('approved')}
-          >
-            <CardHeader className='pb-3'>
-              <CardDescription className='flex items-center gap-2'>
-                <IconCheck className='h-4 w-4' />
-                {t('statuses.approved')}
-              </CardDescription>
-              <CardTitle className='text-3xl'>
-                {loading ? (
-                  <div className='bg-muted h-8 w-16 animate-pulse rounded' />
-                ) : (
-                  statusCounts.approved
-                )}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-          <Card
-            className='hover:border-primary cursor-pointer'
-            onClick={() => setStatusFilter('completed')}
-          >
-            <CardHeader className='pb-3'>
-              <CardDescription className='flex items-center gap-2'>
-                <IconCheck className='h-4 w-4' />
-                {t('statuses.completed')}
-              </CardDescription>
-              <CardTitle className='text-3xl'>
-                {loading ? (
-                  <div className='bg-muted h-8 w-16 animate-pulse rounded' />
-                ) : (
-                  statusCounts.completed
-                )}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-        </div>
-
         {/* Filters and Search */}
         <Card>
           <CardHeader>
@@ -611,7 +538,7 @@ export default function SupplierHarvestBatchesFeature() {
           </CardHeader>
           <CardContent>
             {loading ? (
-              <DataTableSkeleton columnCount={6} rowCount={7} />
+              <DataTableSkeleton columnCount={6} rowCount={10} />
             ) : filteredBatches.length === 0 ? (
               <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
                 {t('table.empty')}

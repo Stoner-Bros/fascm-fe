@@ -289,12 +289,12 @@
   },
   "SupplierHarvestBatches": {
     "header": {
-      "title": "Harvest Batches",
-      "subtitle": "Manage and track your harvest batches",
-      "newBatch": "New Batch"
+      "title": "Sales Offer Batches",
+      "subtitle": "Manage and track your sales offer batches",
+      "newBatch": "New Sales Offer"
     },
     "cards": {
-      "total": "Total Batches",
+      "total": "Total Sales Offers",
       "pending": "Pending",
       "inProgress": "In Progress",
       "completed": "Completed"
@@ -997,7 +997,9 @@
       "inTransit": "In Transit",
       "inTransitDescription": "Being prepared or delivered",
       "completed": "Completed",
-      "completedDescription": "Successfully completed"
+      "completedDescription": "Successfully completed",
+      "processing": "Processing",
+      "processingDescription": "Currently being processed"
     },
     "recentBatches": {
       "title": "Recent Harvest Batches",
@@ -1018,7 +1020,9 @@
       "approved": "Approved",
       "inTransit": "In Transit",
       "completed": "Completed",
-      "rejected": "Rejected"
+      "rejected": "Rejected",
+      "cancelled": "Cancelled",
+      "processing": "Processing"
     }
   },
   "common": {

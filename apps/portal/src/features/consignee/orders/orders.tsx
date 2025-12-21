@@ -330,7 +330,7 @@ export default function ConsigneeOrdersFeature() {
   const pagination: PaginationState = useMemo(
     () => ({
       pageIndex: (page ?? 1) - 1,
-      pageSize: limit ?? 5
+      pageSize: limit ?? 10
     }),
     [page, limit]
   );
@@ -636,7 +636,7 @@ export default function ConsigneeOrdersFeature() {
           </CardHeader>
           <CardContent>
             {state.loading ? (
-              <DataTableSkeleton columnCount={7} rowCount={5} />
+              <DataTableSkeleton columnCount={7} rowCount={10} />
             ) : filteredSchedules.length === 0 ? (
               <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
                 {t('table.empty')}

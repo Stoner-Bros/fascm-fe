@@ -289,12 +289,12 @@
   },
   "SupplierHarvestBatches": {
     "header": {
-      "title": "Lô thu hoạch",
-      "subtitle": "Quản lý và theo dõi các lô thu hoạch của bạn",
-      "newBatch": "Tạo lô mới"
+      "title": "Đơn chào hàng",
+      "subtitle": "Quản lý và theo dõi các đơn chào hàng của bạn",
+      "newBatch": "Tạo đơn mới"
     },
     "cards": {
-      "total": "Tổng số lô",
+      "total": "Tổng số đơn",
       "pending": "Đang chờ",
       "inProgress": "Đang thực hiện",
       "completed": "Hoàn thành"
@@ -997,7 +997,9 @@
       "inTransit": "Đang vận chuyển",
       "inTransitDescription": "Đang được chuẩn bị hoặc giao hàng",
       "completed": "Hoàn thành",
-      "completedDescription": "Đã hoàn thành thành công"
+      "completedDescription": "Đã hoàn thành thành công",
+      "processing": "Đang xử lý",
+      "processingDescription": "Đang trong quá trình xử lý"
     },
     "recentBatches": {
       "title": "Lô thu hoạch gần đây",
@@ -1018,7 +1020,9 @@
       "approved": "Đã duyệt",
       "inTransit": "Đang vận chuyển",
       "completed": "Hoàn thành",
-      "rejected": "Bị từ chối"
+      "rejected": "Bị từ chối",
+      "cancelled": "Đã hủy",
+      "processing": "Đang xử lý"
     }
   },
   "common": {
