@@ -21,11 +21,43 @@ export default function CtaNotify() {
   const rootRef = useRef<HTMLDivElement>(null);
   const tUi = useTranslations('Notifications.ui');
   const tNoti = useTranslations('Notifications');
+  const [ephemeral, setEphemeral] = useState<NotificationItem | null>(null);
+  const lastSeenIdRef = useRef<string | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const unreadCount = useMemo(
     () => items.filter((n) => !n.isRead).length,
     [items]
   );
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const ce = e as CustomEvent<NotificationItem>;
+      const data = ce.detail;
+      if (!data) return;
+      const id = String(data.id || '');
+      if (id && id === lastSeenIdRef.current) return;
+      lastSeenIdRef.current = id;
+      setEphemeral(data);
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        setEphemeral(null);
+        timerRef.current = null;
+      }, 5000);
+    };
+    if (typeof window !== 'undefined') {
+      window.addEventListener('notifications:new', handler);
+    }
+    return () => {
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('notifications:new', handler);
+      }
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, []);
 
   const load = async (nextPage = 1) => {
     setLoading(true);
@@ -80,6 +112,51 @@ export default function CtaNotify() {
           </span>
         )}
       </Button>
+
+      {ephemeral && (
+        <div className='border-border bg-card text-card-foreground animate-in fade-in slide-in-from-top-2 absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-md border shadow-xl'>
+          <div className='px-3 py-2'>
+            <div
+              className={`text-sm font-medium ${ephemeral.type === 'system' ? 'text-red-500' : 'text-foreground'}`}
+            >
+              {(() => {
+                const typeMap: Record<string, string> = {
+                  'order-approved': 'orderScheduleApproved',
+                  'order-completed': 'orderScheduleCompleted',
+                  'order-canceled': 'orderScheduleCanceled',
+                  'order-rejected': 'orderScheduleRejected',
+                  'harvest-approved': 'harvestScheduleApproved',
+                  'harvest-completed': 'harvestScheduleCompleted'
+                };
+                const keyFromType = typeMap[String(ephemeral.type || '')];
+                if (keyFromType) {
+                  try {
+                    return tNoti(keyFromType);
+                  } catch {}
+                }
+                const looksLikeKey =
+                  typeof ephemeral.title === 'string' &&
+                  /^[A-Za-z0-9_.-]+$/.test(ephemeral.title || '');
+                if (looksLikeKey) {
+                  try {
+                    return tNoti(ephemeral.title || 'defaultTitle');
+                  } catch {}
+                }
+                return ephemeral.title || tUi('title');
+              })()}
+            </div>
+            <div className='text-muted-foreground mt-1 text-xs'>
+              {ephemeral.message}
+            </div>
+            <div className='text-muted-foreground mt-2 text-[11px]'>
+              {format(
+                new Date(ephemeral.createdAt || Date.now()),
+                'HH:mm dd/MM/yyyy'
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {open && (
         <div className='border-border bg-card text-card-foreground absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-md border shadow-lg'>

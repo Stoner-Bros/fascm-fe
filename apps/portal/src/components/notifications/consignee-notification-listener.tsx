@@ -5,7 +5,6 @@ import {
   fetchNotifications
 } from '@/services/notifications.service';
 import { fetchMyConsignee } from '@/services/consignee.service';
-import { toast } from 'sonner';
 import useAuth from '@/hooks/use-auth';
 import { useNotificationsStore } from '@/stores/notifications.store';
 import { useTranslations } from 'next-intl';
@@ -55,16 +54,23 @@ export default function ConsigneeNotificationListener() {
       const orderScheduleId = parsed?.orderScheduleId ?? '';
       const title = t(p.title ?? 'defaultTitle');
       const desc = t(p.message ?? 'defaultMessage', { orderScheduleId });
-      toast(title, { description: desc });
       const genId = `tmp_${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      addItem({
+      const item = {
         id: p.id ?? genId,
         type: p.type,
         title,
         message: desc,
         isRead: false,
         createdAt: p.timestamp ?? new Date().toISOString()
-      });
+      };
+      addItem(item);
+      if (typeof window !== 'undefined') {
+        try {
+          window.dispatchEvent(
+            new CustomEvent('notifications:new', { detail: item })
+          );
+        } catch {}
+      }
     });
     return () => {
       unsub();

@@ -173,6 +173,7 @@ export default function HarvestBatchDetailPage() {
   const [activeDeliveryId, setActiveDeliveryId] = useState<string>('');
   const [activeDeliveryStatus, setActiveDeliveryStatus] =
     useState<HarvestPhaseStatus>();
+  const [activePhaseId, setActivePhaseId] = useState<string>('');
   const [acceptingPriceId, setAcceptingPriceId] = useState<string | null>(null);
   const [rejectingPriceId, setRejectingPriceId] = useState<string | null>(null);
 
@@ -323,6 +324,15 @@ export default function HarvestBatchDetailPage() {
           setActiveDeliveryStatus(
             String(prefer.status ?? '').toLowerCase() as HarvestPhaseStatus
           );
+          const preferPhaseId = String(prefer.harvestPhase?.id ?? '');
+          if (preferPhaseId) {
+            setActivePhaseId(preferPhaseId);
+            setPhases((prev) =>
+              prev.map((p) =>
+                p.id === preferPhaseId ? { ...p, status: 'delivering' } : p
+              )
+            );
+          }
         }
       })
       .catch(() => {});
@@ -360,6 +370,15 @@ export default function HarvestBatchDetailPage() {
       if (d) {
         setActiveDeliveryId(d.id);
         setActiveDeliveryStatus('delivering');
+        const phaseId = String(d.harvestPhase?.id ?? '');
+        if (phaseId) {
+          setActivePhaseId(phaseId);
+          setPhases((prev) =>
+            prev.map((p) =>
+              p.id === phaseId ? { ...p, status: 'delivering' } : p
+            )
+          );
+        }
       }
     };
 
@@ -374,6 +393,22 @@ export default function HarvestBatchDetailPage() {
         setActiveDeliveryStatus(
           String(data.status).toLowerCase() as HarvestPhaseStatus
         );
+        const d =
+          deliveries.find((x) => x.id === activeDeliveryId) ||
+          deliveries.find((x) => x.id === data.id) ||
+          deliveries.find((x) => x.id === data.deliveryId);
+        const phaseId = String(d?.harvestPhase?.id ?? '');
+        if (phaseId) {
+          setActivePhaseId(phaseId);
+          const nextStatus = String(
+            data.status
+          ).toLowerCase() as HarvestPhaseStatus;
+          setPhases((prev) =>
+            prev.map((p) =>
+              p.id === phaseId ? { ...p, status: nextStatus } : p
+            )
+          );
+        }
       }
     };
 
@@ -383,6 +418,19 @@ export default function HarvestBatchDetailPage() {
         (data.id === activeDeliveryId || data.deliveryId === activeDeliveryId)
       ) {
         setActiveDeliveryStatus('completed');
+        const d =
+          deliveries.find((x) => x.id === activeDeliveryId) ||
+          deliveries.find((x) => x.id === data.id) ||
+          deliveries.find((x) => x.id === data.deliveryId);
+        const phaseId = String(d?.harvestPhase?.id ?? '');
+        if (phaseId) {
+          setActivePhaseId(phaseId);
+          setPhases((prev) =>
+            prev.map((p) =>
+              p.id === phaseId ? { ...p, status: 'completed' } : p
+            )
+          );
+        }
       }
     };
 
