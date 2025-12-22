@@ -46,6 +46,7 @@ export type Action =
 
 // New Order Types
 export type OrderLine = {
+  lineId: string; // Unique identifier for each line
   productId?: string;
   quantity: number;
   unit: string;
@@ -86,9 +87,20 @@ export type NewOrderAction =
   | { type: 'ADD_ORDER_LINE'; payload: OrderLine }
   | {
       type: 'UPDATE_ORDER_LINE';
-      payload: { productId: string; field: keyof OrderLine; value: any };
+      payload: { lineId: string; field: keyof OrderLine; value: any };
     }
   | { type: 'REMOVE_ORDER_LINE'; payload: string }
+  | {
+      type: 'ADD_BATCH_LINE';
+      payload: {
+        productId: string;
+        batch: Batch;
+        quantity: number;
+        unitPrice: number;
+        unit: string;
+      };
+    }
+  | { type: 'REMOVE_BATCH_LINE'; payload: string }
   | {
       type: 'TOGGLE_PRODUCT';
       payload: { product: Product; orderLine: OrderLine };
