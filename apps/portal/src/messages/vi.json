@@ -618,6 +618,10 @@
   },
   "Sidebar": {
     "overview": "Tổng quan",
+    "roleDisplay": {
+      "Supplier": "Nhà Vườn",
+      "Consignee": "Người nhận hàng"
+    },
     "navigation": {
       "dashboard": "Bảng điều khiển",
       "products": "Sản phẩm",

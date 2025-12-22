@@ -65,6 +65,11 @@ export default function ConsigneeSidebar() {
 
   const activeTenant = tenants[0];
 
+  // Get role display name
+  const getRoleDisplayName = React.useCallback(() => {
+    return t('roleDisplay.Consignee');
+  }, [t]);
+
   // Translation map for nav items
   const getTranslatedTitle = (title: string): string => {
     const translationMap: { [key: string]: string } = {
@@ -88,6 +93,7 @@ export default function ConsigneeSidebar() {
           tenants={tenants}
           defaultTenant={activeTenant}
           onTenantSwitch={handleSwitchTenant}
+          displayName={getRoleDisplayName()}
         />
       </SidebarHeader>
       <SidebarContent className='overflow-x-hidden'>

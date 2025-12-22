@@ -618,6 +618,10 @@
   },
   "Sidebar": {
     "overview": "Overview",
+    "roleDisplay": {
+      "Supplier": "Supplier",
+      "Consignee": "Consignee"
+    },
     "navigation": {
       "dashboard": "Dashboard",
       "products": "Products",
