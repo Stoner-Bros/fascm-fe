@@ -990,10 +990,10 @@
   },
   "HarvestOrders": {
     "list": {
-      "title": "Lịch thu hoạch",
-      "subtitle": "Quản lý các lịch thu hoạch từ nhà cung cấp",
+      "title": "Đơn mua hàng",
+      "subtitle": "Quản lý các đơn mua hàng từ nhà cung cấp",
       "cards": {
-        "totalSchedules": "Tổng số lịch",
+        "totalSchedules": "Tổng số đơn",
         "pending": "Chờ duyệt",
         "approved": "Đã duyệt",
         "processing": "Đang xử lý",
@@ -1072,7 +1072,7 @@
       "header": {
         "reject": "Từ chối",
         "approve": "Duyệt",
-        "createPhase": "Tạo đợt thu hoạch",
+        "createPhase": "Tạo phiên đi lấy hàng",
         "markComplete": "Đánh dấu hoàn thành"
       },
       "statusStepper": {
@@ -1146,10 +1146,10 @@
         "processing": "Đang xử lý..."
       },
       "createPhase": {
-        "title": "Tạo đợt thu hoạch mới",
-        "descriptionHeader": "Nhập thông tin cho đợt thu hoạch mới. Vui lòng chọn số lượng sản phẩm cần nhận.",
-        "phaseNumber": "Số đợt",
-        "phaseNumberHelper": "Số thứ tự đợt thu hoạch",
+        "title": "Tạo phiên đi lấy mới",
+        "descriptionHeader": "Nhập thông tin cho phiên đi lấy mới. Vui lòng chọn số lượng sản phẩm cần nhận.",
+        "phaseNumber": "Số phiên",
+        "phaseNumberHelper": "Số thứ tự phiên đi lấy hàng",
         "taxRate": "Mức thuế (%)",
         "taxRateHelper": "Tỷ lệ thuế VAT",
         "totalAmount": "Tổng tiền",
@@ -1170,11 +1170,11 @@
         "totalPayment": "Tổng thanh toán",
         "validation": {
           "title": "Lưu ý",
-          "message": "Vui lòng nhập số lượng cho ít nhất một sản phẩm để tạo đợt thu hoạch."
+          "message": "Vui lòng nhập số lượng cho ít nhất một sản phẩm để tạo phiên đi lấy."
         },
         "exceedsRemaining": "Vượt quá số lượng còn lại",
         "cancel": "Hủy",
-        "create": "Tạo đợt thu hoạch",
+        "create": "Tạo phiên đi lấy",
         "creating": "Đang tạo..."
       },
       "toast": {

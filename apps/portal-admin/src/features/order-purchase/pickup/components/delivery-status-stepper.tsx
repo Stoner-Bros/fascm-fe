@@ -35,15 +35,15 @@ const statusSteps: Array<{
   },
   {
     status: 'delivering',
-    label: 'Đang giao',
+    label: 'Đang tới nhà vườn',
     icon: <Truck className='h-4 w-4' />,
-    description: 'Đang trên đường giao hàng'
+    description: 'Đang trên đường tới nhà vườn'
   },
   {
     status: 'delivered',
-    label: 'Đã giao',
+    label: 'Đã lấy hàng',
     icon: <PackageCheck className='h-4 w-4' />,
-    description: 'Hàng đã được giao thành công'
+    description: 'Hàng đã được lấy thành công'
   },
   {
     status: 'returning',
