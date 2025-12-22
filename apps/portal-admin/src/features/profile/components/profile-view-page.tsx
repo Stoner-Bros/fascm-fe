@@ -36,12 +36,14 @@ import {
   IconUser,
   IconX
 } from '@tabler/icons-react';
+import { useTranslations } from 'next-intl';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
 
 export default function ProfileViewPage() {
   const { user, fullInfo, userRole, updateProfile } = useAuth();
   const { toast } = useToast();
+  const t = useTranslations('Profile');
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [userPhotoFiles, setUserPhotoFiles] = useState<File[]>([]);
@@ -182,8 +184,8 @@ export default function ProfileViewPage() {
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'File Upload Failed',
-        description: `Failed to upload ${type} file. Please try again.`
+        title: t('toast.uploadError'),
+        description: t('toast.uploadErrorDesc', { type })
       });
       return null;
     }
@@ -195,8 +197,8 @@ export default function ProfileViewPage() {
     if (!roleBasedInfo?.id && userRole !== RoleEnum.ADMIN) {
       toast({
         variant: 'destructive',
-        title: 'Error',
-        description: 'Profile information not found.'
+        title: t('toast.profileNotFound'),
+        description: t('toast.profileNotFoundDesc')
       });
       return;
     }
@@ -283,16 +285,16 @@ export default function ProfileViewPage() {
       setLicensePhotoFiles([]);
 
       toast({
-        title: 'Profile Updated',
-        description: 'Your profile has been successfully updated.'
+        title: t('toast.updateSuccess'),
+        description: t('toast.updateSuccessDesc')
       });
 
       setIsEditing(false);
     } catch (error) {
       toast({
         variant: 'destructive',
-        title: 'Update Failed',
-        description: 'Failed to update profile. Please try again.'
+        title: t('toast.updateError'),
+        description: t('toast.updateErrorDesc')
       });
     } finally {
       setIsSubmitting(false);
@@ -362,9 +364,9 @@ export default function ProfileViewPage() {
             <CardHeader>
               <CardTitle className='flex items-center space-x-2'>
                 <IconUser className='h-5 w-5' />
-                <span>Staff Information</span>
+                <span>{t('staffInfo.title')}</span>
               </CardTitle>
-              <CardDescription>Your position and work details</CardDescription>
+              <CardDescription>{t('staffInfo.description')}</CardDescription>
             </CardHeader>
             <CardContent className='space-y-4'>
               <div className='space-y-2'>
@@ -373,7 +375,7 @@ export default function ProfileViewPage() {
                   className='flex items-center space-x-1'
                 >
                   <IconShield className='h-4 w-4' />
-                  <span>Position</span>
+                  <span>{t('staffInfo.position')}</span>
                 </Label>
                 {isEditing ? (
                   <Input
@@ -381,13 +383,13 @@ export default function ProfileViewPage() {
                     name='position'
                     value={formData.position || ''}
                     onChange={handleInputChange}
-                    placeholder='Enter your position'
+                    placeholder={t('staffInfo.enterPosition')}
                     className='h-[42px] !text-base'
                   />
                 ) : (
                   <div className='flex items-center space-x-2 rounded-md border p-2'>
                     <IconShield className='text-muted-foreground h-4 w-4' />
-                    <span>{formData.position || 'Not set'}</span>
+                    <span>{formData.position || t('personalInfo.notSet')}</span>
                   </div>
                 )}
               </div>
@@ -402,9 +404,11 @@ export default function ProfileViewPage() {
               <CardHeader>
                 <CardTitle className='flex items-center space-x-2'>
                   <IconFileText className='h-5 w-5' />
-                  <span>License Information</span>
+                  <span>{t('licenseInfo.title')}</span>
                 </CardTitle>
-                <CardDescription>Your driving license details</CardDescription>
+                <CardDescription>
+                  {t('licenseInfo.description')}
+                </CardDescription>
               </CardHeader>
               <CardContent className='space-y-4'>
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
@@ -414,7 +418,7 @@ export default function ProfileViewPage() {
                       className='flex items-center space-x-1'
                     >
                       <IconId className='h-4 w-4' />
-                      <span>License Number</span>
+                      <span>{t('licenseInfo.licenseNumber')}</span>
                     </Label>
                     {isEditing ? (
                       <Input
@@ -422,13 +426,15 @@ export default function ProfileViewPage() {
                         name='licenseNumber'
                         value={formData.licenseNumber || ''}
                         onChange={handleInputChange}
-                        placeholder='Enter license number'
+                        placeholder={t('licenseInfo.enterLicenseNumber')}
                         className='h-[42px] !text-base'
                       />
                     ) : (
                       <div className='flex items-center space-x-2 rounded-md border p-2'>
                         <IconId className='text-muted-foreground h-4 w-4' />
-                        <span>{formData.licenseNumber || 'Not set'}</span>
+                        <span>
+                          {formData.licenseNumber || t('personalInfo.notSet')}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -438,7 +444,7 @@ export default function ProfileViewPage() {
                       className='flex items-center space-x-1'
                     >
                       <IconFileText className='h-4 w-4' />
-                      <span>License Expiry Date</span>
+                      <span>{t('licenseInfo.licenseExpiryDate')}</span>
                     </Label>
                     {isEditing ? (
                       <Input
@@ -452,7 +458,10 @@ export default function ProfileViewPage() {
                     ) : (
                       <div className='flex items-center space-x-2 rounded-md border p-2'>
                         <IconFileText className='text-muted-foreground h-4 w-4' />
-                        <span>{formData.licenseExpiredAt || 'Not set'}</span>
+                        <span>
+                          {formData.licenseExpiredAt ||
+                            t('personalInfo.notSet')}
+                        </span>
                       </div>
                     )}
                   </div>
@@ -462,7 +471,7 @@ export default function ProfileViewPage() {
                 <div className='space-y-2'>
                   <Label className='flex items-center space-x-1'>
                     <IconFileText className='h-4 w-4' />
-                    <span>License Photo</span>
+                    <span>{t('licenseInfo.licensePhoto')}</span>
                   </Label>
                   {formData.licensePhoto && (
                     <div className='mb-4'>
@@ -496,35 +505,36 @@ export default function ProfileViewPage() {
               <CardHeader>
                 <CardTitle className='flex items-center space-x-2'>
                   <IconBuilding className='h-5 w-5' />
-                  <span>Truck Information</span>
+                  <span>{t('truckInfo.title')}</span>
                 </CardTitle>
-                <CardDescription>Assigned truck details</CardDescription>
+                <CardDescription>{t('truckInfo.description')}</CardDescription>
               </CardHeader>
               <CardContent className='space-y-4'>
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                   <div className='space-y-2'>
                     <Label className='flex items-center space-x-1'>
                       <IconId className='h-4 w-4' />
-                      <span>Truck License Plate</span>
+                      <span>{t('truckInfo.licensePlate')}</span>
                     </Label>
                     <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
                       <IconId className='text-muted-foreground h-4 w-4' />
                       <span>
-                        {formData.truckLicensePlate || 'Not assigned'}
+                        {formData.truckLicensePlate ||
+                          t('truckInfo.notAssigned')}
                       </span>
                     </div>
                   </div>
                   <div className='space-y-2'>
                     <Label className='flex items-center space-x-1'>
                       <IconShield className='h-4 w-4' />
-                      <span>Truck Capacity</span>
+                      <span>{t('truckInfo.capacity')}</span>
                     </Label>
                     <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
                       <IconShield className='text-muted-foreground h-4 w-4' />
                       <span>
                         {formData.truckCapacity
                           ? `${formData.truckCapacity} kg`
-                          : 'Not assigned'}
+                          : t('truckInfo.notAssigned')}
                       </span>
                     </div>
                   </div>
@@ -566,15 +576,13 @@ export default function ProfileViewPage() {
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
           <div>
-            <h2 className='text-3xl font-bold tracking-tight'>Profile</h2>
-            <p className='text-muted-foreground'>
-              Manage your account information and profile details
-            </p>
+            <h2 className='text-3xl font-bold tracking-tight'>{t('title')}</h2>
+            <p className='text-muted-foreground'>{t('subtitle')}</p>
           </div>
           {!isEditing && (
             <Button onClick={() => setIsEditing(true)}>
               <IconEdit className='mr-2 h-4 w-4' />
-              Edit Profile
+              {t('editProfile')}
             </Button>
           )}
           {isEditing && (
@@ -586,18 +594,18 @@ export default function ProfileViewPage() {
                 disabled={isSubmitting}
               >
                 <IconX className='mr-2 h-4 w-4' />
-                Cancel
+                {t('cancel')}
               </Button>
               <Button onClick={handleSubmit} disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
                     <div className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
-                    Saving...
+                    {t('saving')}
                   </>
                 ) : (
                   <>
                     <IconCheck className='mr-2 h-4 w-4' />
-                    Save Changes
+                    {t('saveChanges')}
                   </>
                 )}
               </Button>
@@ -611,9 +619,9 @@ export default function ProfileViewPage() {
           <div className='grid gap-6'>
             <Card>
               <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
+                <CardTitle>{t('personalInfo.title')}</CardTitle>
                 <CardDescription>
-                  Your basic account information and profile picture
+                  {t('personalInfo.description')}
                 </CardDescription>
               </CardHeader>
               <CardContent className='space-y-6'>
@@ -656,115 +664,131 @@ export default function ProfileViewPage() {
                 </div>
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                   <div className='space-y-2'>
-                    <Label htmlFor='firstName'>First Name</Label>
+                    <Label htmlFor='firstName'>
+                      {t('personalInfo.firstName')}
+                    </Label>
                     {isEditing ? (
                       <Input
                         id='firstName'
                         name='firstName'
                         value={formData.firstName}
                         onChange={handleInputChange}
-                        placeholder='Enter first name'
+                        placeholder={t('personalInfo.firstName')}
                         className='h-[42px] !text-base'
                         required
                       />
                     ) : (
                       <div className='flex items-center space-x-2 rounded-md border p-2'>
                         <IconUser className='text-muted-foreground h-4 w-4' />
-                        <span>{formData.firstName || 'Not set'}</span>
+                        <span>
+                          {formData.firstName || t('personalInfo.notSet')}
+                        </span>
                       </div>
                     )}
                   </div>
 
                   <div className='space-y-2'>
-                    <Label htmlFor='lastName'>Last Name</Label>
+                    <Label htmlFor='lastName'>
+                      {t('personalInfo.lastName')}
+                    </Label>
                     {isEditing ? (
                       <Input
                         id='lastName'
                         name='lastName'
                         value={formData.lastName}
                         onChange={handleInputChange}
-                        placeholder='Enter last name'
+                        placeholder={t('personalInfo.lastName')}
                         className='h-[42px] !text-base'
                         required
                       />
                     ) : (
                       <div className='flex items-center space-x-2 rounded-md border p-2'>
                         <IconUser className='text-muted-foreground h-4 w-4' />
-                        <span>{formData.lastName || 'Not set'}</span>
+                        <span>
+                          {formData.lastName || t('personalInfo.notSet')}
+                        </span>
                       </div>
                     )}
                   </div>
                 </div>
 
                 <div className='space-y-2'>
-                  <Label htmlFor='email'>Email</Label>
+                  <Label htmlFor='email'>{t('personalInfo.email')}</Label>
                   <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
                     <IconMail className='text-muted-foreground h-4 w-4' />
                     <span>{formData.email}</span>
                   </div>
                   <p className='text-muted-foreground text-xs'>
-                    Email cannot be changed here. Contact support if needed.
+                    {t('personalInfo.emailNote')}
                   </p>
                 </div>
                 {isEditing && (
                   <div className='space-y-2'>
-                    <Label htmlFor='oldPassword'>Old Password</Label>
+                    <Label htmlFor='oldPassword'>
+                      {t('personalInfo.oldPassword')}
+                    </Label>
                     <Input
                       id='oldPassword'
                       name='oldPassword'
                       type='password'
                       value={formData.oldPassword}
                       onChange={handleInputChange}
-                      placeholder='Enter old password (optional)'
+                      placeholder={t('personalInfo.oldPassword')}
                       className='h-[42px] !text-base'
                     />
                     <p className='text-muted-foreground text-xs'>
-                      Leave blank if you don&apos;t want to change password
+                      {t('personalInfo.passwordNote')}
                     </p>
                   </div>
                 )}
 
                 {isEditing && (
                   <div className='space-y-2'>
-                    <Label htmlFor='password'>New Password</Label>
+                    <Label htmlFor='password'>
+                      {t('personalInfo.newPassword')}
+                    </Label>
                     <Input
                       id='password'
                       name='password'
                       type='password'
                       value={formData.password}
                       onChange={handleInputChange}
-                      placeholder='Enter new password (optional)'
+                      placeholder={t('personalInfo.newPassword')}
                       className='h-[42px] !text-base'
                     />
                     <p className='text-muted-foreground text-xs'>
-                      Leave blank if you don&apos;t want to change password
+                      {t('personalInfo.passwordNote')}
                     </p>
                   </div>
                 )}
 
                 <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
                   <div className='space-y-2'>
-                    <Label htmlFor='role'>Role</Label>
+                    <Label htmlFor='role'>{t('personalInfo.role')}</Label>
                     <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
                       <IconShield className='text-muted-foreground h-4 w-4' />
                       <span className='capitalize'>
-                        {user?.role?.name || 'Not set'}
+                        {user?.role?.name || t('personalInfo.notSet')}
                       </span>
                     </div>
                   </div>
 
                   <div className='space-y-2'>
-                    <Label htmlFor='status'>Account Status</Label>
+                    <Label htmlFor='status'>
+                      {t('personalInfo.accountStatus')}
+                    </Label>
                     <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
                       <IconCheck className='text-muted-foreground h-4 w-4' />
                       <span className='capitalize'>
-                        {user?.status?.name || 'Not set'}
+                        {user?.status?.name || t('personalInfo.notSet')}
                       </span>
                     </div>
                   </div>
 
                   <div className='space-y-2'>
-                    <Label htmlFor='provider'>Account Provider</Label>
+                    <Label htmlFor='provider'>
+                      {t('personalInfo.accountProvider')}
+                    </Label>
                     <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
                       <IconShield className='text-muted-foreground h-4 w-4' />
                       <span className='capitalize'>
@@ -784,29 +808,35 @@ export default function ProfileViewPage() {
                 <CardHeader>
                   <CardTitle className='flex items-center space-x-2'>
                     <IconBuilding className='h-5 w-5' />
-                    <span>Warehouse Information</span>
+                    <span>{t('warehouseInfo.title')}</span>
                   </CardTitle>
                   <CardDescription>
-                    Associated warehouse details
+                    {t('warehouseInfo.description')}
                   </CardDescription>
                 </CardHeader>
                 <CardContent className='space-y-4'>
                   <div className='space-y-2'>
-                    <Label htmlFor='warehouseName'>Warehouse Name</Label>
+                    <Label htmlFor='warehouseName'>
+                      {t('warehouseInfo.warehouseName')}
+                    </Label>
                     <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
                       <IconBuilding className='text-muted-foreground h-4 w-4' />
                       <span>
-                        {formData.warehouseName || 'No warehouse assigned'}
+                        {formData.warehouseName ||
+                          t('warehouseInfo.noWarehouse')}
                       </span>
                     </div>
                   </div>
 
                   <div className='space-y-2'>
-                    <Label htmlFor='warehouseAddress'>Warehouse Address</Label>
+                    <Label htmlFor='warehouseAddress'>
+                      {t('warehouseInfo.warehouseAddress')}
+                    </Label>
                     <div className='bg-muted flex items-center space-x-2 rounded-md border p-2'>
                       <IconMapPin className='text-muted-foreground h-4 w-4' />
                       <span>
-                        {formData.warehouseAddress || 'No warehouse address'}
+                        {formData.warehouseAddress ||
+                          t('warehouseInfo.noAddress')}
                       </span>
                     </div>
                   </div>
@@ -825,18 +855,18 @@ export default function ProfileViewPage() {
                       disabled={isSubmitting}
                     >
                       <IconX className='mr-2 h-4 w-4' />
-                      Cancel
+                      {t('cancel')}
                     </Button>
                     <Button type='submit' disabled={isSubmitting}>
                       {isSubmitting ? (
                         <>
                           <div className='mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent' />
-                          Saving...
+                          {t('saving')}
                         </>
                       ) : (
                         <>
                           <IconCheck className='mr-2 h-4 w-4' />
-                          Save Changes
+                          {t('saveChanges')}
                         </>
                       )}
                     </Button>

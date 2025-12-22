@@ -59,6 +59,68 @@
       "logout": "Đăng xuất"
     }
   },
+  "Profile": {
+    "title": "Hồ sơ",
+    "subtitle": "Quản lý thông tin tài khoản và chi tiết hồ sơ",
+    "editProfile": "Sửa hồ sơ",
+    "cancel": "Hủy",
+    "saveChanges": "Lưu thay đổi",
+    "saving": "Đang lưu...",
+    "personalInfo": {
+      "title": "Thông tin cá nhân",
+      "description": "Thông tin tài khoản cơ bản và ảnh đại diện",
+      "firstName": "Tên",
+      "lastName": "Họ",
+      "email": "Email",
+      "emailNote": "Email không thể thay đổi ở đây. Liên hệ hỗ trợ nếu cần.",
+      "oldPassword": "Mật khẩu cũ",
+      "newPassword": "Mật khẩu mới",
+      "passwordNote": "Để trống nếu bạn không muốn thay đổi mật khẩu",
+      "role": "Vai trò",
+      "accountStatus": "Trạng thái tài khoản",
+      "accountProvider": "Nhà cung cấp tài khoản",
+      "notSet": "Chưa thiết lập"
+    },
+    "staffInfo": {
+      "title": "Thông tin nhân viên",
+      "description": "Vị trí và chi tiết công việc của bạn",
+      "position": "Vị trí",
+      "enterPosition": "Nhập vị trí của bạn"
+    },
+    "licenseInfo": {
+      "title": "Thông tin giấy phép",
+      "description": "Chi tiết giấy phép lái xe của bạn",
+      "licenseNumber": "Số giấy phép",
+      "enterLicenseNumber": "Nhập số giấy phép",
+      "licenseExpiryDate": "Ngày hết hạn giấy phép",
+      "licensePhoto": "Ảnh giấy phép"
+    },
+    "truckInfo": {
+      "title": "Thông tin xe tải",
+      "description": "Chi tiết xe tải được phân công",
+      "licensePlate": "Biển số xe",
+      "capacity": "Tải trọng xe",
+      "notAssigned": "Chưa được phân công"
+    },
+    "warehouseInfo": {
+      "title": "Thông tin kho",
+      "description": "Chi tiết kho liên kết",
+      "warehouseName": "Tên kho",
+      "warehouseAddress": "Địa chỉ kho",
+      "noWarehouse": "Chưa có kho được gán",
+      "noAddress": "Chưa có địa chỉ kho"
+    },
+    "toast": {
+      "updateSuccess": "Cập nhật hồ sơ",
+      "updateSuccessDesc": "Hồ sơ của bạn đã được cập nhật thành công.",
+      "updateError": "Cập nhật thất bại",
+      "updateErrorDesc": "Không thể cập nhật hồ sơ. Vui lòng thử lại.",
+      "uploadError": "Tải lên tệp thất bại",
+      "uploadErrorDesc": "Không thể tải lên tệp {type}. Vui lòng thử lại.",
+      "profileNotFound": "Lỗi",
+      "profileNotFoundDesc": "Không tìm thấy thông tin hồ sơ."
+    }
+  },
   "Payment": {
     "status": {
       "paid": "Đã thanh toán",

@@ -59,6 +59,68 @@
       "logout": "Log out"
     }
   },
+  "Profile": {
+    "title": "Profile",
+    "subtitle": "Manage your account information and profile details",
+    "editProfile": "Edit Profile",
+    "cancel": "Cancel",
+    "saveChanges": "Save Changes",
+    "saving": "Saving...",
+    "personalInfo": {
+      "title": "Personal Information",
+      "description": "Your basic account information and profile picture",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "email": "Email",
+      "emailNote": "Email cannot be changed here. Contact support if needed.",
+      "oldPassword": "Old Password",
+      "newPassword": "New Password",
+      "passwordNote": "Leave blank if you don't want to change password",
+      "role": "Role",
+      "accountStatus": "Account Status",
+      "accountProvider": "Account Provider",
+      "notSet": "Not set"
+    },
+    "staffInfo": {
+      "title": "Staff Information",
+      "description": "Your position and work details",
+      "position": "Position",
+      "enterPosition": "Enter your position"
+    },
+    "licenseInfo": {
+      "title": "License Information",
+      "description": "Your driving license details",
+      "licenseNumber": "License Number",
+      "enterLicenseNumber": "Enter license number",
+      "licenseExpiryDate": "License Expiry Date",
+      "licensePhoto": "License Photo"
+    },
+    "truckInfo": {
+      "title": "Truck Information",
+      "description": "Assigned truck details",
+      "licensePlate": "Truck License Plate",
+      "capacity": "Truck Capacity",
+      "notAssigned": "Not assigned"
+    },
+    "warehouseInfo": {
+      "title": "Warehouse Information",
+      "description": "Associated warehouse details",
+      "warehouseName": "Warehouse Name",
+      "warehouseAddress": "Warehouse Address",
+      "noWarehouse": "No warehouse assigned",
+      "noAddress": "No warehouse address"
+    },
+    "toast": {
+      "updateSuccess": "Profile Updated",
+      "updateSuccessDesc": "Your profile has been successfully updated.",
+      "updateError": "Update Failed",
+      "updateErrorDesc": "Failed to update profile. Please try again.",
+      "uploadError": "File Upload Failed",
+      "uploadErrorDesc": "Failed to upload {type} file. Please try again.",
+      "profileNotFound": "Error",
+      "profileNotFoundDesc": "Profile information not found."
+    }
+  },
   "Payment": {
     "status": {
       "paid": "Paid",
