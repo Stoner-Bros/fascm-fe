@@ -12,7 +12,6 @@ interface RouteGuardProps {
   permissions?: string[];
   requireAll?: boolean;
   minRole?: string;
-  redirectTo?: string;
   showError?: boolean;
 }
 
@@ -26,7 +25,6 @@ export function RouteGuard({
   permissions,
   requireAll = false,
   minRole,
-  redirectTo = '/dashboard/overview',
   showError = false
 }: RouteGuardProps) {
   const router = useRouter();
@@ -34,18 +32,17 @@ export function RouteGuard({
   const { userRole, isAuthenticated } = useAuth();
 
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.push('/auth/sign-in');
-      return;
-    }
+    // Chưa xác định trạng thái đăng nhập hoặc role thì không redirect
+    if (!isAuthenticated || !userRole) return;
 
     // Check route access
     const hasAccess = canAccessRoute(userRole, pathname);
 
     if (!hasAccess) {
-      router.push(redirectTo);
+      router.push('/dashboard/profile');
+      return;
     }
-  }, [pathname, userRole, isAuthenticated, router, redirectTo]);
+  }, [pathname, userRole, isAuthenticated, router]);
 
   // Use PermissionGuard for permission-based checks
   if (permission || permissions || minRole) {
