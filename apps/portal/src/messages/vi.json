@@ -652,12 +652,12 @@
       "unknown": "Không xác định"
     },
     "phaseStatuses": {
-      "notStarted": "Chưa bắt đầu",
       "preparing": "Đang chuẩn bị",
       "delivering": "Đang giao hàng",
       "delivered": "Đã giao hàng",
       "completed": "Hoàn thành",
-      "canceled": "Đã hủy"
+      "canceled": "Đã hủy",
+      "notStarted": "Chưa bắt đầu"
     },
     "cards": {
       "totalOrders": "Tổng đơn hàng",
@@ -781,7 +781,7 @@
         "imageProof": "Hình ảnh minh chứng",
         "created": "Tạo lúc",
         "updated": "Cập nhật",
-        "confirmDelivery": "Xác nhận hoàn thành",
+        "confirmDelivery": "Xác nhận nhận hàng",
         "trackingTitle": "Theo dõi vận chuyển",
         "cargo": "Khối lượng {quantity} {unit}",
         "startAddressDefault": "Kho trung tâm",

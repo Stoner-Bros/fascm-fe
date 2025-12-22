@@ -112,7 +112,8 @@ export default function DeliveryRouteSim({
   startLat,
   startLng,
   endLat,
-  endLng
+  endLng,
+  status
 }: {
   cargo: string;
   startAddress?: string;
@@ -125,6 +126,7 @@ export default function DeliveryRouteSim({
   startLng?: number;
   endLat?: number;
   endLng?: number;
+  status?: string;
 }) {
   const [from, setFrom] = useState<LatLng | undefined>(undefined);
   const [to, setTo] = useState<LatLng | undefined>(undefined);
@@ -265,22 +267,44 @@ export default function DeliveryRouteSim({
   }, [from?.lat, from?.lng, to?.lat, to?.lng, activeDeliveryId]);
 
   useEffect(() => {
-    if (!running || route.length === 0 || activeDeliveryId) return;
+    if (!running || route.length === 0) return;
+    const shouldSimulate =
+      !activeDeliveryId ||
+      (activeDeliveryId && (status === 'delivering' || status === 'returning'));
+    if (!shouldSimulate) return;
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
       setSubT((t) => {
-        const nt = Math.min(1, t + 0.25);
-        if (nt >= 1) {
-          setIdx((i) => Math.min(i + 1, route.length - 1));
-          return 0;
+        if (activeDeliveryId && status === 'returning') {
+          const nt = Math.max(0, t - 0.25);
+          if (nt <= 0) {
+            setIdx((i) => Math.max(i - 1, 0));
+            return 1;
+          }
+          return nt;
+        } else {
+          const nt = Math.min(1, t + 0.25);
+          if (nt >= 1) {
+            setIdx((i) => Math.min(i + 1, route.length - 1));
+            return 0;
+          }
+          return nt;
         }
-        return nt;
       });
     }, 120);
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [running, route.length, activeDeliveryId]);
+  }, [running, route.length, activeDeliveryId, status]);
+
+  useEffect(() => {
+    if (
+      route.length > 0 &&
+      (status === 'delivered' || status === 'completed')
+    ) {
+      setIdx(route.length - 1);
+    }
+  }, [status, route.length]);
 
   useEffect(() => {
     if (!activeDeliveryId) return;

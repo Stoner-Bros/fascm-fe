@@ -5,7 +5,6 @@ import {
   fetchNotifications
 } from '@/services/notifications.service';
 import { fetchSupplier } from '@/services/supplier.service';
-import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
 import { useNotificationsStore } from '@/stores/notifications.store';
 import { useTranslations } from 'next-intl';
@@ -60,16 +59,23 @@ export default function SupplierNotificationListener() {
         orderScheduleId,
         harvestScheduleId
       });
-      toast(title, { description: desc });
       const genId = `tmp_${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      addItem({
+      const item = {
         id: p.id ?? genId,
         type: p.type,
         title,
         message: desc,
         isRead: false,
         createdAt: p.timestamp ?? new Date().toISOString()
-      });
+      };
+      addItem(item);
+      if (typeof window !== 'undefined') {
+        try {
+          window.dispatchEvent(
+            new CustomEvent('notifications:new', { detail: item })
+          );
+        } catch {}
+      }
     });
     return () => {
       unsub();

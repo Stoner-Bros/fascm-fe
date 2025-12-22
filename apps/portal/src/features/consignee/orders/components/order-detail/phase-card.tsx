@@ -17,6 +17,7 @@ import {
   getPhaseStatusBadge,
   getPhaseStatusIcon
 } from '../../utils/status-badge';
+import type { OrderPhaseStatus } from '@/types/order';
 
 const DeliveryRouteSim = dynamic(
   () => import('@/components/map/delivery-route-sim'),
@@ -37,19 +38,41 @@ export function PhaseCard({
   isConfirming
 }: PhaseCardProps) {
   const t = useTranslations('Orders');
+  const normalizedStatus = (() => {
+    const raw = String(phase.status ?? '')
+      .trim()
+      .toLowerCase();
+    const synonyms: Record<string, OrderPhaseStatus> = {
+      deliverd: 'delivered',
+      delivered: 'delivered',
+      complete: 'completed',
+      cancelled: 'canceled'
+    };
+    const mapped = synonyms[raw] ?? raw;
+    const allowed: OrderPhaseStatus[] = [
+      'preparing',
+      'delivering',
+      'delivered',
+      'completed',
+      'canceled'
+    ];
+    return (
+      allowed.includes(mapped as OrderPhaseStatus) ? mapped : 'preparing'
+    ) as OrderPhaseStatus;
+  })();
 
   return (
     <Card key={phase.id}>
       <CardHeader>
         <div className='flex items-center justify-between'>
           <CardTitle className='flex items-center gap-2'>
-            {getPhaseStatusIcon(phase.status)}
+            {getPhaseStatusIcon(normalizedStatus)}
             {t('detail.phases.phase')} {phase.phaseNumber}
           </CardTitle>
           <div className='flex gap-2'>
-            {getPhaseStatusBadge(phase.status, t)}
+            {getPhaseStatusBadge(normalizedStatus, t)}
             {/* Confirm button */}
-            {phase.status === 'delivered' && onConfirmDelivery && (
+            {String(normalizedStatus) === 'delivered' && onConfirmDelivery && (
               <Button
                 variant='default'
                 onClick={() => onConfirmDelivery(phase.id)}
@@ -66,9 +89,7 @@ export function PhaseCard({
         )}
       </CardHeader>
       <CardContent className='space-y-6'>
-        {['delivering', 'delivered'].includes(
-          String(phase.status ?? '').toLowerCase()
-        ) && (
+        {['delivering', 'delivered'].includes(String(normalizedStatus)) && (
           <Card>
             <CardHeader>
               <CardTitle className='flex items-center gap-2'>
@@ -92,6 +113,7 @@ export function PhaseCard({
                 endAddress={String(orderSchedule.address ?? '')}
                 orderScheduleId={String(orderSchedule.id ?? '')}
                 phaseId={phase.id}
+                status={String(normalizedStatus)}
                 productName={(phase.orderInvoiceDetails || [])
                   .map((d) => d.product?.name)
                   .filter(Boolean)

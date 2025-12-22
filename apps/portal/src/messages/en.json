@@ -652,12 +652,12 @@
       "unknown": "Unknown"
     },
     "phaseStatuses": {
-      "notStarted": "Not Started",
       "preparing": "Preparing",
       "delivering": "Delivering",
       "delivered": "Delivered",
       "completed": "Completed",
-      "canceled": "Canceled"
+      "canceled": "Canceled",
+      "notStarted": "Not Started"
     },
     "cards": {
       "totalOrders": "Total Orders",
@@ -781,7 +781,7 @@
         "imageProof": "Image Proof",
         "created": "Created",
         "updated": "Updated",
-        "confirmDelivery": "Confirm Completion",
+        "confirmDelivery": "Confirm Delivery",
         "trackingTitle": "Transport Tracking",
         "cargo": "Cargo {quantity} {unit}",
         "startAddressDefault": "Central Warehouse",
