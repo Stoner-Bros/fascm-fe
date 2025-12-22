@@ -1174,5 +1174,19 @@
     "unit": {
       "kg": "kg"
     }
+  },
+  "Breadcrumbs": {
+    "dashboard": "Dashboard",
+    "products": "Products",
+    "harvestBatches": "Harvest Batches",
+    "newHarvestBatch": "New Harvest Batch",
+    "harvestBatchDetails": "Harvest Batch Details",
+    "profile": "Profile",
+    "orders": "Orders",
+    "newOrder": "New Order",
+    "orderDetails": "Order Details",
+    "productDetails": "Product Details",
+    "payment": "Payment",
+    "supplier": "Supplier"
   }
 }

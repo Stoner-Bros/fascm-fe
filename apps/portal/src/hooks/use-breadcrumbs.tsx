@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import { useMemo } from 'react';
 
@@ -8,52 +9,64 @@ type BreadcrumbItem = {
   link: string;
 };
 
-// This allows to add custom title as well
-const routeMapping: Record<string, BreadcrumbItem[]> = {
-  // Supplier routes
-  '/supplier/dashboard': [{ title: 'Dashboard', link: '/supplier/dashboard' }],
-  '/supplier/products': [{ title: 'Products', link: '/supplier/products' }],
-  '/supplier/harvest-batches': [
-    { title: 'Harvest Batches', link: '/supplier/harvest-batches' }
-  ],
-  '/supplier/harvest-batches/new': [
-    { title: 'Harvest Batches', link: '/supplier/harvest-batches' },
-    { title: 'New Harvest Batch', link: '/supplier/harvest-batches/new' }
-  ],
-  '/supplier/harvest-batches/[id]': [
-    { title: 'Harvest Batches', link: '/supplier/harvest-batches' },
-    { title: 'Harvest Batch Details', link: '/supplier/harvest-batches/[id]' }
-  ],
-  '/supplier/profile': [{ title: 'Profile', link: '/supplier/profile' }],
-
-  // Consignee routes
-  '/consignee/dashboard': [
-    { title: 'Dashboard', link: '/consignee/dashboard' }
-  ],
-  '/consignee/products': [{ title: 'Products', link: '/consignee/products' }],
-  '/consignee/orders': [{ title: 'Orders', link: '/consignee/orders' }],
-  '/consignee/orders/new': [
-    { title: 'Orders', link: '/consignee/orders' },
-    { title: 'New Order', link: '/consignee/orders/new' }
-  ],
-  '/consignee/orders/[id]': [
-    { title: 'Orders', link: '/consignee/orders' },
-    { title: 'Order Details', link: '/consignee/orders/[id]' }
-  ],
-  '/consignee/products/[id]': [
-    { title: 'Products', link: '/consignee/products' },
-    { title: 'Product Details', link: '/consignee/products/[id]' }
-  ],
-
-  '/consignee/profile': [{ title: 'Profile', link: '/consignee/profile' }]
-
-  // Add more custom mappings as needed
-};
-
 export function useBreadcrumbs() {
+  const t = useTranslations('Breadcrumbs');
   const pathname = usePathname();
 
   const breadcrumbs = useMemo(() => {
+    // This allows to add custom title as well
+    const routeMapping: Record<string, BreadcrumbItem[]> = {
+      // Supplier routes
+      '/supplier/dashboard': [
+        { title: t('dashboard'), link: '/supplier/dashboard' }
+      ],
+      '/supplier/products': [
+        { title: t('products'), link: '/supplier/products' }
+      ],
+      '/supplier/harvest-batches': [
+        { title: t('harvestBatches'), link: '/supplier/harvest-batches' }
+      ],
+      '/supplier/harvest-batches/new': [
+        { title: t('harvestBatches'), link: '/supplier/harvest-batches' },
+        { title: t('newHarvestBatch'), link: '/supplier/harvest-batches/new' }
+      ],
+      '/supplier/harvest-batches/[id]': [
+        { title: t('harvestBatches'), link: '/supplier/harvest-batches' },
+        {
+          title: t('harvestBatchDetails'),
+          link: '/supplier/harvest-batches/[id]'
+        }
+      ],
+      '/supplier/profile': [{ title: t('profile'), link: '/supplier/profile' }],
+
+      // Consignee routes
+      '/consignee/dashboard': [
+        { title: t('dashboard'), link: '/consignee/dashboard' }
+      ],
+      '/consignee/products': [
+        { title: t('products'), link: '/consignee/products' }
+      ],
+      '/consignee/orders': [{ title: t('orders'), link: '/consignee/orders' }],
+      '/consignee/orders/new': [
+        { title: t('orders'), link: '/consignee/orders' },
+        { title: t('newOrder'), link: '/consignee/orders/new' }
+      ],
+      '/consignee/orders/[id]': [
+        { title: t('orders'), link: '/consignee/orders' },
+        { title: t('orderDetails'), link: '/consignee/orders/[id]' }
+      ],
+      '/consignee/products/[id]': [
+        { title: t('products'), link: '/consignee/products' },
+        { title: t('productDetails'), link: '/consignee/products/[id]' }
+      ],
+
+      '/consignee/profile': [
+        { title: t('profile'), link: '/consignee/profile' }
+      ]
+
+      // Add more custom mappings as needed
+    };
+
     // Check if we have a custom mapping for this exact path
     if (routeMapping[pathname]) {
       return routeMapping[pathname];
@@ -63,12 +76,17 @@ export function useBreadcrumbs() {
     const segments = pathname.split('/').filter(Boolean);
     return segments.map((segment, index) => {
       const path = `/${segments.slice(0, index + 1).join('/')}`;
+      const titleKey = segment.charAt(0).toLowerCase() + segment.slice(1);
+      // Try to translate if key exists, otherwise format segment
+      const title = t.has(titleKey)
+        ? t(titleKey)
+        : segment.charAt(0).toUpperCase() + segment.slice(1);
       return {
-        title: segment.charAt(0).toUpperCase() + segment.slice(1),
+        title,
         link: path
       };
     });
-  }, [pathname]);
+  }, [pathname, t]);
 
   return breadcrumbs;
 }
