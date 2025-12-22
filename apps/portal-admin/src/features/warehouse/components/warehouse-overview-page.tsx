@@ -369,27 +369,6 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
     }
   };
 
-  const criticalAlerts = [
-    {
-      id: 1,
-      type: 'temperature',
-      message: 'Khu vực A2 nhiệt độ cao bất thường (7.2°C)',
-      severity: 'high'
-    },
-    {
-      id: 2,
-      type: 'expiry',
-      message: '8 sản phẩm sắp hết hạn trong 2 ngày',
-      severity: 'medium'
-    },
-    {
-      id: 3,
-      type: 'stock',
-      message: '23 sản phẩm sắp hết hàng',
-      severity: 'low'
-    }
-  ];
-
   const resetForms = () => {
     setWarehouseForm({ name: '', address: '' });
     setSelectedManagerId('');
