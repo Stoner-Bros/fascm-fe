@@ -45,13 +45,19 @@
     "deliveryStaff": "Delivery Staff",
     "supplier": "Supplier",
     "consignee": "Consignee",
+    "payment": "Payment",
+    "roleDisplay": {
+      "Admin": "FASCM Admin",
+      "Manager": "FASCM Manager",
+      "Staff": "FASCM Staff",
+      "Delivery Staff": "FASCM Driver"
+    },
     "userMenu": {
       "profile": "Profile",
       "billing": "Billing",
       "notifications": "Notifications",
       "logout": "Log out"
-    },
-    "payment": "Payment"
+    }
   },
   "Payment": {
     "status": {
