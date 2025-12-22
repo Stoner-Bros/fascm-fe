@@ -1,12 +1,12 @@
 import { fetchJSON } from '@/lib/client';
+import { getCookie } from '@/lib/cookie';
+import type { InfinityPaginationResponse } from '@/types/common';
 import type {
   CreateInboundBatchDto,
   FindAllInboundBatchesDto,
   InboundBatch,
   UpdateInboundBatchDto
 } from '@/types/inbound-batch';
-import type { InfinityPaginationResponse } from '@/types/common';
-import { useAuthStore } from '@/stores/auth.store';
 
 const BASE_PATH = '/inbound-batches';
 
@@ -19,8 +19,8 @@ export async function fetchInboundBatches({
     limit: String(limit)
   });
 
-  const warehouseId = useAuthStore.getState()?.fullInfo?.warehouse?.id;
-  if (warehouseId) params.set('warehouseId', warehouseId);
+  const warehouseId = getCookie('warehouseId');
+  if (warehouseId) params.set('warehouseId', warehouseId as string);
 
   return fetchJSON<InfinityPaginationResponse<InboundBatch>>(
     `${BASE_PATH}?${params.toString()}`

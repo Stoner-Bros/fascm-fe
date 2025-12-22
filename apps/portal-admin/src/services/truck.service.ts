@@ -1,20 +1,18 @@
 import { fetchJSON } from '@/lib/client';
-import type {
-  Truck,
-  CreateTruckDto,
-  UpdateTruckDto,
-  FindAllTrucksDto
-} from '@/types/truck';
+import { getCookie } from '@/lib/cookie';
 import type { InfinityPaginationResponse } from '@/types/common';
 import type {
-  TruckSetting,
+  CreateTruckDto,
   CreateTruckSettingDto,
-  UpdateTruckSettingDto,
+  FindAllTruckAlertsDto,
+  FindAllTrucksDto,
   FindAllTruckSettingsDto,
+  Truck,
   TruckAlert,
-  FindAllTruckAlertsDto
+  TruckSetting,
+  UpdateTruckDto,
+  UpdateTruckSettingDto
 } from '@/types/truck';
-import { useAuthStore } from '@/stores/auth.store';
 
 const BASE_PATH = '/trucks';
 const SETTINGS_PATH = '/truck-settings';
@@ -36,7 +34,7 @@ export async function fetchTrucks({
     limit: String(limit)
   });
 
-  const warehouseId = useAuthStore.getState().fullInfo?.warehouse?.id;
+  const warehouseId = getCookie('warehouseId');
   if (warehouseId) params.set('warehouseId', warehouseId as string);
 
   return fetchJSON<InfinityPaginationResponse<Truck>>(

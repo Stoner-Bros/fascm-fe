@@ -85,10 +85,11 @@ export function CreatePickupDialog({
   const [notes, setNotes] = useState<string>('');
 
   useEffect(() => {
-    if (open && fullInfo?.warehouse?.address) {
-      setStartAddress(fullInfo.warehouse.address);
-    }
-  }, [open, fullInfo]);
+    setStartAddress(fullInfo?.warehouse?.address);
+  }, [fullInfo?.warehouse?.address]);
+
+  console.log('startAddress: ', startAddress);
+  console.log('fullInfo?.warehouse?.address: ', fullInfo?.warehouse?.address);
 
   // Filter available trucks
   const availableTrucks = trucks.filter(
@@ -117,14 +118,12 @@ export function CreatePickupDialog({
     // Reset form
     setSelectedTruckId('');
     setSelectedStaffId('');
-    setStartAddress('');
     setNotes('');
   };
 
   const handleClose = () => {
     setSelectedTruckId('');
     setSelectedStaffId('');
-    setStartAddress('');
     setNotes('');
     onOpenChange(false);
   };
@@ -344,9 +343,7 @@ export function CreatePickupDialog({
             value={startAddress}
             disabled
             readOnly
-            placeholder={
-              fullInfo?.warehouse?.address || t('loadingWarehouseAddress')
-            }
+            placeholder={startAddress || t('loadingWarehouseAddress')}
             className='bg-muted h-9'
           />
         </div>

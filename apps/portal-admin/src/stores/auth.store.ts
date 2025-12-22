@@ -149,7 +149,7 @@ export const useAuthStore = create<AuthState>()(
       },
 
       updateUserProfile: (updates) => {
-        const currentUser = get().user;
+        const currentUser = get()?.user;
         if (currentUser) {
           set({
             user: { ...currentUser, ...updates },
@@ -162,31 +162,31 @@ export const useAuthStore = create<AuthState>()(
       name: 'auth-store', // Name for Redux DevTools
       partialize: (state: any) => ({
         // Only persist certain fields in DevTools
-        user: state.user,
-        lastSyncTime: state.lastSyncTime
+        user: state?.user,
+        lastSyncTime: state?.lastSyncTime
       })
     }
   )
 );
 
 // Helper hooks for common use cases
-export const useUser = () => useAuthStore((state) => state.user);
-export const useFullInfo = () => useAuthStore((state) => state.fullInfo);
+export const useUser = () => useAuthStore((state) => state?.user);
+export const useFullInfo = () => useAuthStore((state) => state?.fullInfo);
 export const useIsAuthenticated = () =>
-  useAuthStore((state) => !!state.user && checkIsAuthenticated());
+  useAuthStore((state) => !!state?.user && checkIsAuthenticated());
 export const useUserDisplayName = () =>
   useAuthStore((state) => {
-    const user = state.user;
+    const user = state?.user;
     if (!user) return '';
     return user.firstName && user.lastName
       ? `${user.firstName} ${user.lastName}`.trim()
       : user.email;
   });
 export const useUserRole = () =>
-  useAuthStore((state) => state.user?.role?.name || null);
-export const useAuthLoading = () => useAuthStore((state) => state.isLoading);
+  useAuthStore((state) => state?.user?.role?.name || null);
+export const useAuthLoading = () => useAuthStore((state) => state?.isLoading);
 
 // Initialize the store when the module loads
 if (typeof window !== 'undefined') {
-  useAuthStore.getState().initialize();
+  useAuthStore.getState()?.initialize();
 }

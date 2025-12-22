@@ -1,25 +1,26 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { RoleEnum } from '@/constants/enums';
+import { useAuth } from '@/hooks/use-auth';
+import { setCookie } from '@/lib/cookie';
+import { fetchMine } from '@/services/auth.service';
+import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
 import {
+  subscribeDeliveryStaffNotifications,
   subscribeGlobalNotifications,
   subscribeManagerNotifications,
   subscribeStaffNotifications,
-  subscribeDeliveryStaffNotifications,
   subscribeWarehouseNotifications,
   type NotificationPayload
 } from '@/services/notifications.service';
 import { useNotificationsStore } from '@/stores/notifications.store';
-import { RoleEnum } from '@/constants/enums';
-import { fetchMine } from '@/services/auth.service';
-import { useAuthStore } from '@/stores/auth.store';
 import { useTranslations } from 'next-intl';
-import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
+import { useEffect, useState } from 'react';
 
 export default function NotificationListener() {
   const addItem = useNotificationsStore((s) => s.addItem);
   const removeBy = useNotificationsStore((s) => s.removeBy);
   const updateBy = useNotificationsStore((s) => s.updateBy);
-  const user = useAuthStore((s) => s.user);
+  const { user, setFullInfo } = useAuth();
   const [entityId, setEntityId] = useState<string>('');
   const [warehouseId, setWarehouseId] = useState<string>('');
   const [subType, setSubType] = useState<
@@ -85,35 +86,40 @@ export default function NotificationListener() {
   }, [addItem]);
 
   useEffect(() => {
-    const roleName = user?.role?.name as string | undefined;
-    if (!roleName) return;
-    if (roleName === RoleEnum.MANAGER) {
-      setSubType('manager');
-      fetchMine(RoleEnum.MANAGER)
-        .then((r: any) => {
-          setEntityId(String(r?.id ?? ''));
-          setWarehouseId(String(r?.warehouse?.id ?? ''));
-        })
-        .catch(() => {});
-    } else if (roleName === RoleEnum.STAFF) {
-      setSubType('staff');
-      fetchMine(RoleEnum.STAFF)
-        .then((r: any) => {
-          setEntityId(String(r?.id ?? ''));
-          setWarehouseId(String(r?.warehouse?.id ?? ''));
-        })
-        .catch(() => {});
-    } else if (roleName === RoleEnum.DELIVERY_STAFF) {
-      setSubType('delivery');
-      fetchMine(RoleEnum.DELIVERY_STAFF)
-        .then((r: any) => {
-          setEntityId(String(r?.id ?? ''));
-          setWarehouseId(String(r?.warehouse?.id ?? ''));
-        })
-        .catch(() => {});
-    } else {
-      setSubType('global');
-    }
+    const fetchUserInfo = async () => {
+      const roleName = user?.role?.name as RoleEnum | undefined;
+
+      if (!roleName || roleName === RoleEnum.ADMIN) {
+        setSubType('global');
+        setEntityId('');
+        setWarehouseId('');
+        return;
+      }
+
+      try {
+        const fullInfo = await fetchMine(roleName);
+        setFullInfo(fullInfo);
+        setCookie('warehouseId', String(fullInfo?.warehouse?.id ?? ''), {
+          expires: 120
+        });
+        setEntityId(String(fullInfo?.id ?? ''));
+        setWarehouseId(String(fullInfo?.warehouse?.id ?? ''));
+
+        if (roleName === RoleEnum.MANAGER) {
+          setSubType('manager');
+        } else if (roleName === RoleEnum.STAFF) {
+          setSubType('staff');
+        } else if (roleName === RoleEnum.DELIVERY_STAFF) {
+          setSubType('delivery');
+        } else {
+          setSubType('global');
+        }
+      } catch (error) {
+        console.error('Error fetching user info:', error);
+      }
+    };
+
+    fetchUserInfo();
   }, [user?.role?.name]);
 
   useEffect(() => {

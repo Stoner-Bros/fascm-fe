@@ -1,14 +1,13 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { IconBellRinging } from '@tabler/icons-react';
 import {
   fetchNotifications,
-  markNotificationRead,
-  type NotificationItem
+  markNotificationRead
 } from '@/services/notifications.service';
-import { format } from 'date-fns';
 import { useNotificationsStore } from '@/stores/notifications.store';
+import { IconBellRinging } from '@tabler/icons-react';
+import { format } from 'date-fns';
 import { useTranslations } from 'next-intl';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 export default function CtaNotify() {
   const [open, setOpen] = useState(false);

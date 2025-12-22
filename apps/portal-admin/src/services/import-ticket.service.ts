@@ -1,12 +1,12 @@
 import { fetchJSON } from '@/lib/client';
+import { getCookie } from '@/lib/cookie';
+import type { InfinityPaginationResponse } from '@/types/common';
 import type {
   CreateImportTicketDto,
   FindAllImportTicketsDto,
   ImportTicket,
   UpdateImportTicketDto
 } from '@/types/import-ticket';
-import type { InfinityPaginationResponse } from '@/types/common';
-import { useAuthStore } from '@/stores/auth.store';
 
 const BASE_PATH = '/import-tickets';
 
@@ -18,7 +18,7 @@ export async function fetchImportTickets({
     page: String(page),
     limit: String(limit)
   });
-  const warehouseId = useAuthStore.getState().fullInfo?.warehouse?.id;
+  const warehouseId = getCookie('warehouseId');
 
   if (warehouseId) params.set('warehouseId', warehouseId as string);
 

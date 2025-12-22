@@ -1,5 +1,5 @@
 import { fetchJSON } from '@/lib/client';
-import { useAuthStore } from '@/stores/auth.store';
+import { getCookie } from '@/lib/cookie';
 import type {
   Area,
   CreateAreaDto,
@@ -28,12 +28,12 @@ export async function fetchAreas({
     limit: String(limit)
   });
 
-  const warehouse = useAuthStore.getState()?.fullInfo?.warehouse;
+  const warehouse = getCookie('warehouseId');
   if (!warehouseId && warehouse) {
-    warehouseId = warehouse.id;
+    warehouseId = warehouse;
   }
 
-  if (warehouseId) params.set('warehouseId', warehouseId);
+  if (warehouseId) params.set('warehouseId', warehouseId as string);
 
   return fetchJSON<InfinityPaginationResponse<Area>>(
     `${BASE_PATH}?${params.toString()}`
