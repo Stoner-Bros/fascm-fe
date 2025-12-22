@@ -2211,5 +2211,58 @@
     "delivery-staffs": "Delivery Staffs",
     "suppliers": "Suppliers",
     "consignees": "Consignees"
+  },
+  "ImportList": {
+    "title": "Import Tickets",
+    "subtitle": "Manage warehouse import tickets",
+    "qualityCheck": "Quality Check",
+    "createTicket": "Create Import Ticket",
+    "totalTickets": "Total Tickets",
+    "products": "Products",
+    "areas": "Areas",
+    "searchPlaceholder": "Search by ticket code, batch, product...",
+    "noData": "No data",
+    "requiredFieldsNote": "Fields marked with * are required",
+    "cancel": "Cancel",
+    "processing": "Processing...",
+    "createImport": "Create Import Ticket",
+    "modal": {
+      "qualityCheckTitle": "Warehouse Import Quality Check",
+      "qualityCheckDescription": "Check and confirm goods quality before importing to warehouse",
+      "createTitle": "Create Import Ticket",
+      "createDescription": "Enter information to create warehouse import ticket"
+    },
+    "form": {
+      "batchSection": "Select Batch",
+      "batchSectionDesc": "Select batch to import",
+      "batch": "Batch",
+      "batchPlaceholder": "Select batch to import...",
+      "noBatches": "No batches available for import",
+      "batchInfoTitle": "Selected Batch Information",
+      "product": "Product",
+      "quantity": "Quantity",
+      "areaSection": "Storage Area",
+      "areaSectionDesc": "Select storage area for goods",
+      "area": "Area",
+      "areaPlaceholder": "Select storage area...",
+      "noAreas": "No areas available",
+      "quantitySection": "Import Information",
+      "quantitySectionDesc": "Enter damaged quantity and expiry date",
+      "damagedQuantity": "Damaged Quantity",
+      "damagedQuantityPlaceholder": "Enter damaged quantity",
+      "batchQuantityLabel": "Batch Quantity",
+      "damagedQuantityLabel": "Damaged Quantity",
+      "realityQuantityLabel": "Actual Import Quantity",
+      "noDamage": "No damage",
+      "damagePercent": "Damaged {percent}%",
+      "invalidDamagedQuantity": "Invalid damaged quantity",
+      "expiredAt": "Expiry Date",
+      "expiredAtPlaceholder": "Select expiry date..."
+    },
+    "deleteDialog": {
+      "title": "Confirm Delete",
+      "description": "Are you sure you want to delete this import ticket? This action cannot be undone.",
+      "confirm": "Delete"
+    }
   }
 }

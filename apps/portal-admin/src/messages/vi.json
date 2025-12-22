@@ -2210,5 +2210,58 @@
     "suppliers": "Nhà Vườn",
     "consignees": "Người Mua Hàng",
     "iot-device": "Thiết bị IoT"
+  },
+  "ImportList": {
+    "title": "Phiếu nhập kho",
+    "subtitle": "Quản lý các phiếu nhập hàng vào kho",
+    "qualityCheck": "Kiểm định chất lượng",
+    "createTicket": "Tạo phiếu nhập",
+    "totalTickets": "Tổng phiếu nhập",
+    "products": "Sản phẩm",
+    "areas": "Khu vực",
+    "searchPlaceholder": "Tìm kiếm theo mã phiếu, lô hàng, sản phẩm...",
+    "noData": "Không có dữ liệu",
+    "requiredFieldsNote": "Các trường có dấu * là bắt buộc",
+    "cancel": "Hủy",
+    "processing": "Đang xử lý...",
+    "createImport": "Tạo phiếu nhập",
+    "modal": {
+      "qualityCheckTitle": "Kiểm định chất lượng nhập kho",
+      "qualityCheckDescription": "Kiểm tra và xác nhận chất lượng hàng hóa trước khi nhập kho",
+      "createTitle": "Tạo phiếu nhập kho",
+      "createDescription": "Nhập thông tin để tạo phiếu nhập hàng vào kho"
+    },
+    "form": {
+      "batchSection": "Chọn lô hàng",
+      "batchSectionDesc": "Chọn lô hàng cần nhập kho",
+      "batch": "Lô hàng",
+      "batchPlaceholder": "Chọn lô hàng cần nhập...",
+      "noBatches": "Không có lô hàng nào chưa nhập kho",
+      "batchInfoTitle": "Thông tin lô hàng đã chọn",
+      "product": "Sản phẩm",
+      "quantity": "Số lượng",
+      "areaSection": "Khu vực lưu trữ",
+      "areaSectionDesc": "Chọn khu vực để lưu trữ hàng hóa",
+      "area": "Khu vực",
+      "areaPlaceholder": "Chọn khu vực lưu trữ...",
+      "noAreas": "Không có khu vực nào",
+      "quantitySection": "Thông tin nhập kho",
+      "quantitySectionDesc": "Nhập số lượng hư hỏng và ngày hết hạn",
+      "damagedQuantity": "Số lượng hư hỏng",
+      "damagedQuantityPlaceholder": "Nhập số lượng hư hỏng",
+      "batchQuantityLabel": "Số lượng lô hàng",
+      "damagedQuantityLabel": "Số lượng hư hỏng",
+      "realityQuantityLabel": "Số lượng thực tế nhập",
+      "noDamage": "Không có hư hỏng",
+      "damagePercent": "Hư hỏng {percent}%",
+      "invalidDamagedQuantity": "Số lượng hư hỏng không hợp lệ",
+      "expiredAt": "Ngày hết hạn",
+      "expiredAtPlaceholder": "Chọn ngày hết hạn..."
+    },
+    "deleteDialog": {
+      "title": "Xác nhận xóa",
+      "description": "Bạn có chắc chắn muốn xóa phiếu nhập kho này? Hành động này không thể hoàn tác.",
+      "confirm": "Xóa"
+    }
   }
 }

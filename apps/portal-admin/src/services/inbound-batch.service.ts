@@ -6,24 +6,21 @@ import type {
   UpdateInboundBatchDto
 } from '@/types/inbound-batch';
 import type { InfinityPaginationResponse } from '@/types/common';
+import { useAuthStore } from '@/stores/auth.store';
 
 const BASE_PATH = '/inbound-batches';
 
 export async function fetchInboundBatches({
   page = 1,
-  limit = 10,
-  search,
-  productId,
-  harvestDetailId
+  limit = 10
 }: FindAllInboundBatchesDto = {}) {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit)
   });
 
-  if (search) params.set('search', search);
-  if (productId) params.set('productId', productId);
-  if (harvestDetailId) params.set('harvestDetailId', harvestDetailId);
+  const warehouseId = useAuthStore.getState()?.fullInfo?.warehouse?.id;
+  if (warehouseId) params.set('warehouseId', warehouseId);
 
   return fetchJSON<InfinityPaginationResponse<InboundBatch>>(
     `${BASE_PATH}?${params.toString()}`
