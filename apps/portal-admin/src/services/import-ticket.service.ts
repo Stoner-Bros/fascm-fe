@@ -6,23 +6,21 @@ import type {
   UpdateImportTicketDto
 } from '@/types/import-ticket';
 import type { InfinityPaginationResponse } from '@/types/common';
+import { useAuthStore } from '@/stores/auth.store';
 
 const BASE_PATH = '/import-tickets';
 
 export async function fetchImportTickets({
   page = 1,
-  limit = 10,
-  search,
-  inboundBatchId,
-  areaId
+  limit = 10
 }: FindAllImportTicketsDto = {}) {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit)
   });
-  if (search) params.set('search', search);
-  if (inboundBatchId) params.set('inboundBatchId', inboundBatchId);
-  if (areaId) params.set('areaId', areaId);
+  const warehouseId = useAuthStore.getState().fullInfo?.warehouse?.id;
+
+  if (warehouseId) params.set('warehouseId', warehouseId as string);
 
   return fetchJSON<InfinityPaginationResponse<ImportTicket>>(
     `${BASE_PATH}?${params.toString()}`

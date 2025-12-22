@@ -29,7 +29,4 @@ export type UpdateImportTicketDto = Partial<CreateImportTicketDto>;
 export type FindAllImportTicketsDto = {
   page?: number;
   limit?: number;
-  search?: string;
-  inboundBatchId?: string;
-  areaId?: string;
 };
