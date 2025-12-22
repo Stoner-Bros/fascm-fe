@@ -14,6 +14,7 @@ import type {
   TruckAlert,
   FindAllTruckAlertsDto
 } from '@/types/truck';
+import { useAuthStore } from '@/stores/auth.store';
 
 const BASE_PATH = '/trucks';
 const SETTINGS_PATH = '/truck-settings';
@@ -28,12 +29,15 @@ export async function createTruck(body: CreateTruckDto) {
 
 export async function fetchTrucks({
   page = 1,
-  limit = 10
+  limit = 50
 }: FindAllTrucksDto = {}) {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit)
   });
+
+  const warehouseId = useAuthStore.getState().fullInfo?.warehouse?.id;
+  if (warehouseId) params.set('warehouseId', warehouseId as string);
 
   return fetchJSON<InfinityPaginationResponse<Truck>>(
     `${BASE_PATH}?${params.toString()}`
