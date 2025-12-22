@@ -38,7 +38,8 @@ import {
   IconCheck,
   IconPackage,
   IconArrowRight,
-  IconArrowLeft
+  IconArrowLeft,
+  IconReceipt
 } from '@tabler/icons-react';
 import { Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -46,6 +47,11 @@ import { DateTimePicker } from '@/components/ui/date-time-picker';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger
+} from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 
 // Services
@@ -141,7 +147,7 @@ const newOrderReducer = (
       return {
         ...state,
         orderLines: state.orderLines.map((line) =>
-          line.productId === action.payload.productId
+          line.lineId === action.payload.lineId
             ? { ...line, [action.payload.field]: action.payload.value }
             : line
         )
@@ -150,9 +156,30 @@ const newOrderReducer = (
     case 'REMOVE_ORDER_LINE':
       return {
         ...state,
-        orderLines: state.orderLines.filter(
-          (l) => l.productId !== action.payload
-        )
+        orderLines: state.orderLines.filter((l) => l.lineId !== action.payload)
+      };
+
+    case 'ADD_BATCH_LINE': {
+      const { productId, batch, quantity, unitPrice, unit } = action.payload;
+      const newLine: OrderLine = {
+        lineId: `${productId}-${batch.id}-${Date.now()}`,
+        productId,
+        quantity,
+        unit,
+        unitPrice,
+        batchId: batch.id,
+        batchCode: batch.batchCode
+      };
+      return {
+        ...state,
+        orderLines: [...state.orderLines, newLine]
+      };
+    }
+
+    case 'REMOVE_BATCH_LINE':
+      return {
+        ...state,
+        orderLines: state.orderLines.filter((l) => l.lineId !== action.payload)
       };
 
     case 'TOGGLE_PRODUCT': {
@@ -169,10 +196,14 @@ const newOrderReducer = (
         };
       } else {
         newSelected.add(product.id);
+        const newLine: OrderLine = {
+          ...orderLine,
+          lineId: `${product.id}-${Date.now()}`
+        };
         return {
           ...state,
           selectedProducts: newSelected,
-          orderLines: [...state.orderLines, orderLine]
+          orderLines: [...state.orderLines, newLine]
         };
       }
     }
@@ -238,6 +269,7 @@ const newOrderReducer = (
           }
 
           return {
+            lineId: `${p.id}-${Date.now()}`,
             productId: p.id,
             quantity: 1,
             unit,
@@ -487,8 +519,29 @@ export default function NewOrderPage() {
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  // Handle batch change
+  // Handle adding a new batch line for a product
+  const handleAddBatchLine = (productId: string, batchId: string) => {
+    const batches = state.productBatches[productId] || [];
+    const batch = batches.find((b) => b.id === batchId);
+
+    if (batch) {
+      const { unitPrice, unit } = calculateBatchPrice(batch, 1);
+      dispatch({
+        type: 'ADD_BATCH_LINE',
+        payload: {
+          productId,
+          batch,
+          quantity: 1,
+          unitPrice,
+          unit
+        }
+      });
+    }
+  };
+
+  // Handle batch change for existing line
   const handleBatchChange = (
+    lineId: string,
     productId: string,
     batchId: string,
     providedBatches?: Batch[]
@@ -497,28 +550,26 @@ export default function NewOrderPage() {
     const batch = batches.find((b) => b.id === batchId);
 
     if (batch) {
-      const currentLine = state.orderLines.find(
-        (l) => l.productId === productId
-      );
+      const currentLine = state.orderLines.find((l) => l.lineId === lineId);
       const quantity = currentLine?.quantity || 1;
 
       const { unitPrice, unit } = calculateBatchPrice(batch, quantity);
 
       dispatch({
         type: 'UPDATE_ORDER_LINE',
-        payload: { productId, field: 'batchId', value: batch.id }
+        payload: { lineId, field: 'batchId', value: batch.id }
       });
       dispatch({
         type: 'UPDATE_ORDER_LINE',
-        payload: { productId, field: 'batchCode', value: batch.batchCode }
+        payload: { lineId, field: 'batchCode', value: batch.batchCode }
       });
       dispatch({
         type: 'UPDATE_ORDER_LINE',
-        payload: { productId, field: 'unitPrice', value: unitPrice }
+        payload: { lineId, field: 'unitPrice', value: unitPrice }
       });
       dispatch({
         type: 'UPDATE_ORDER_LINE',
-        payload: { productId, field: 'unit', value: unit }
+        payload: { lineId, field: 'unit', value: unit }
       });
     }
   };
@@ -543,16 +594,19 @@ export default function NewOrderPage() {
 
       fetchBatches(fetchParams)
         .then((res) => {
-          const batches = res?.data || [];
+          const allBatches = res?.data || [];
+          // Filter out batches with currentQuantity = 0 or empty price list
+          const batches = allBatches.filter(
+            (batch) =>
+              (batch.currentQuantity ?? 0) > 0 &&
+              batch.price &&
+              Array.isArray(batch.price) &&
+              batch.price.length > 0
+          );
           dispatch({
             type: 'SET_PRODUCT_BATCHES',
             payload: { productId: product.id, batches }
           });
-
-          // Auto-select first batch if available
-          if (batches.length > 0) {
-            handleBatchChange(product.id, batches[0].id, batches);
-          }
         })
         .catch((err) => {
           console.error('Failed to fetch batches', err);
@@ -561,6 +615,7 @@ export default function NewOrderPage() {
 
     const { unitPrice, unit } = calculatePriceForQuantity(product, 1);
     const orderLine: OrderLine = {
+      lineId: '', // Will be set in reducer
       productId: product.id,
       quantity: 1,
       unit,
@@ -572,6 +627,7 @@ export default function NewOrderPage() {
 
   // Update order line
   const updateOrderLine = (
+    lineId: string,
     productId: string,
     field: keyof OrderLine,
     value: any
@@ -579,9 +635,7 @@ export default function NewOrderPage() {
     // If quantity is being updated, recalculate the price
     if (field === 'quantity') {
       const product = state.products.find((p) => p.id === productId);
-      const currentLine = state.orderLines.find(
-        (l) => l.productId === productId
-      );
+      const currentLine = state.orderLines.find((l) => l.lineId === lineId);
 
       if (product) {
         let unitPrice = 0;
@@ -606,15 +660,15 @@ export default function NewOrderPage() {
         // Update both quantity and unitPrice
         dispatch({
           type: 'UPDATE_ORDER_LINE',
-          payload: { productId, field: 'quantity', value }
+          payload: { lineId, field: 'quantity', value }
         });
         dispatch({
           type: 'UPDATE_ORDER_LINE',
-          payload: { productId, field: 'unitPrice', value: unitPrice }
+          payload: { lineId, field: 'unitPrice', value: unitPrice }
         });
         dispatch({
           type: 'UPDATE_ORDER_LINE',
-          payload: { productId, field: 'unit', value: unit }
+          payload: { lineId, field: 'unit', value: unit }
         });
         return;
       }
@@ -622,7 +676,7 @@ export default function NewOrderPage() {
 
     dispatch({
       type: 'UPDATE_ORDER_LINE',
-      payload: { productId, field, value }
+      payload: { lineId, field, value }
     });
   };
 
@@ -638,7 +692,20 @@ export default function NewOrderPage() {
   const canProceedToDelivery = () => {
     return (
       state.orderLines.length > 0 &&
-      state.orderLines.every((l) => l.quantity > 0)
+      state.orderLines.every((l) => {
+        if (l.quantity <= 0) return false;
+
+        // Check if quantity exceeds batch currentQuantity
+        if (l.batchId && l.productId) {
+          const batches = state.productBatches[l.productId];
+          const batch = batches?.find((b) => b.id === l.batchId);
+          if (batch && l.quantity > (batch.currentQuantity || 0)) {
+            return false;
+          }
+        }
+
+        return true;
+      })
     );
   };
 
@@ -964,46 +1031,49 @@ export default function NewOrderPage() {
                 </CardHeader>
                 <CardContent>
                   <div className='space-y-4'>
-                    {state.orderLines.map((line) => {
+                    {/* Group lines by productId for display */}
+                    {Array.from(state.selectedProducts).map((productId) => {
                       const product = state.products.find(
-                        (p) => p.id === line.productId
+                        (p) => p.id === productId
                       );
                       if (!product) return null;
 
-                      const lineTotal = line.quantity * line.unitPrice;
+                      const productLines = state.orderLines.filter(
+                        (l) => l.productId === productId
+                      );
+                      const availableBatches =
+                        state.productBatches[productId] || [];
+                      const usedBatchIds = productLines
+                        .map((l) => l.batchId)
+                        .filter(Boolean);
+                      const unusedBatches = availableBatches.filter(
+                        (b) => !usedBatchIds.includes(b.id)
+                      );
 
                       return (
                         <div
-                          key={line.productId}
-                          className='bg-muted/50 flex flex-col gap-4 rounded-lg p-4 sm:flex-row sm:items-center'
+                          key={productId}
+                          className='bg-muted/50 rounded-lg p-4'
                         >
-                          <div className='flex flex-1 items-center gap-3'>
-                            {product.image ? (
-                              <div className='relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md'>
-                                <Image
-                                  src={product.image}
-                                  alt={product.name || 'Product'}
-                                  fill
-                                  className='object-cover'
-                                />
-                              </div>
-                            ) : (
-                              <div className='bg-muted flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md'>
-                                <IconPackage className='text-muted-foreground h-5 w-5' />
-                              </div>
-                            )}
-                            <div className='min-w-0 flex-1'>
-                              <h4 className='line-clamp-1 font-medium'>
-                                {product.name}
-                              </h4>
-                              <div className='space-y-0.5'>
-                                <p className='text-muted-foreground text-sm'>
-                                  {new Intl.NumberFormat('vi-VN', {
-                                    style: 'currency',
-                                    currency: 'VND'
-                                  }).format(line.unitPrice)}
-                                  /{line.unit}
-                                </p>
+                          {/* Product Header */}
+                          <div className='mb-4 flex items-center justify-between'>
+                            <div className='flex items-center gap-3'>
+                              {product.image ? (
+                                <div className='relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-md'>
+                                  <Image
+                                    src={product.image}
+                                    alt={product.name || 'Product'}
+                                    fill
+                                    className='object-cover'
+                                  />
+                                </div>
+                              ) : (
+                                <div className='bg-muted flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md'>
+                                  <IconPackage className='text-muted-foreground h-5 w-5' />
+                                </div>
+                              )}
+                              <div>
+                                <h4 className='font-medium'>{product.name}</h4>
                                 {getPriceTiers(product).length > 1 && (
                                   <p className='text-muted-foreground/70 text-xs'>
                                     {getPriceTiers(product).length} bậc giá có
@@ -1011,244 +1081,7 @@ export default function NewOrderPage() {
                                   </p>
                                 )}
                               </div>
-                              {state.productBatches[product.id] &&
-                                state.productBatches[product.id].length > 0 && (
-                                  <div className='mt-2'>
-                                    <Select
-                                      value={line.batchId}
-                                      onValueChange={(val) =>
-                                        handleBatchChange(product.id, val)
-                                      }
-                                    >
-                                      <SelectTrigger className='h-8 w-full max-w-[400px] text-xs'>
-                                        <SelectValue placeholder='Select batch' />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {state.productBatches[product.id].map(
-                                          (batch) => (
-                                            <SelectItem
-                                              key={batch.id}
-                                              value={batch.id}
-                                              className='text-xs'
-                                            >
-                                              {batch.batchCode}
-                                              {batch.expiredAt &&
-                                                ` - Exp: ${new Date(
-                                                  batch.expiredAt
-                                                ).toLocaleDateString('vi-VN')}`}
-                                              {batch.currentQuantity !==
-                                                undefined &&
-                                                ` - Qty: ${batch.currentQuantity}`}
-                                            </SelectItem>
-                                          )
-                                        )}
-                                      </SelectContent>
-                                    </Select>
-
-                                    {(() => {
-                                      const selectedBatch =
-                                        state.productBatches[product.id]?.find(
-                                          (b) => b.id === line.batchId
-                                        );
-
-                                      if (!selectedBatch) return null;
-
-                                      return (
-                                        <div className='mt-2 max-w-[400px]'>
-                                          <Tabs
-                                            defaultValue='batch'
-                                            className='w-full'
-                                          >
-                                            <TabsList className='grid h-8 w-full grid-cols-2'>
-                                              <TabsTrigger
-                                                value='batch'
-                                                className='h-6 text-xs'
-                                              >
-                                                {t(
-                                                  'newOrder.products.batchInfo'
-                                                )}
-                                              </TabsTrigger>
-                                              <TabsTrigger
-                                                value='supplier'
-                                                className='h-6 text-xs'
-                                              >
-                                                {t(
-                                                  'newOrder.products.supplierInfo'
-                                                )}
-                                              </TabsTrigger>
-                                            </TabsList>
-                                            <TabsContent
-                                              value='batch'
-                                              className='bg-muted/30 mt-2 h-[400px] space-y-1 rounded-md p-2 text-xs'
-                                            >
-                                              <div className='flex justify-between'>
-                                                <span className='text-muted-foreground'>
-                                                  {t(
-                                                    'newOrder.products.createdAt'
-                                                  )}
-                                                  :
-                                                </span>
-                                                <span className='font-medium'>
-                                                  {selectedBatch.createdAt
-                                                    ? new Date(
-                                                        selectedBatch.createdAt
-                                                      ).toLocaleDateString(
-                                                        'vi-VN'
-                                                      )
-                                                    : t('common.notSpecified')}
-                                                </span>
-                                              </div>
-                                              <div className='flex justify-between'>
-                                                <span className='text-muted-foreground'>
-                                                  {t(
-                                                    'newOrder.products.expiryDate'
-                                                  )}
-                                                  :
-                                                </span>
-                                                <span className='font-medium'>
-                                                  {selectedBatch.expiredAt
-                                                    ? new Date(
-                                                        selectedBatch.expiredAt
-                                                      ).toLocaleDateString(
-                                                        'vi-VN'
-                                                      )
-                                                    : 'N/A'}
-                                                </span>
-                                              </div>
-                                              <div className='flex justify-between'>
-                                                <span className='text-muted-foreground'>
-                                                  {t(
-                                                    'newOrder.products.quantity'
-                                                  )}
-                                                  :
-                                                </span>
-                                                <span className='font-medium'>
-                                                  {
-                                                    selectedBatch.currentQuantity
-                                                  }{' '}
-                                                  {selectedBatch.unit}
-                                                </span>
-                                              </div>
-                                            </TabsContent>
-                                            <TabsContent
-                                              value='supplier'
-                                              className='bg-muted/30 mt-2 h-[400px] space-y-1 rounded-md p-2 text-xs'
-                                            >
-                                              <div className='flex justify-between'>
-                                                <span className='text-muted-foreground'>
-                                                  {t(
-                                                    'newOrder.products.gardenName'
-                                                  )}
-                                                  :
-                                                </span>
-                                                <span className='font-medium'>
-                                                  {selectedBatch.gardenName ||
-                                                    'N/A'}
-                                                </span>
-                                              </div>
-                                              <div className='flex justify-between'>
-                                                <span className='text-muted-foreground'>
-                                                  {t(
-                                                    'newOrder.products.harvestDate'
-                                                  )}
-                                                  :
-                                                </span>
-                                                <span className='font-medium'>
-                                                  {selectedBatch.harvestDate
-                                                    ? new Date(
-                                                        selectedBatch.harvestDate
-                                                      ).toLocaleDateString(
-                                                        'vi-VN'
-                                                      )
-                                                    : 'N/A'}
-                                                </span>
-                                              </div>
-                                              <div className='flex justify-between'>
-                                                <span className='text-muted-foreground'>
-                                                  {t(
-                                                    'newOrder.products.updatedAt'
-                                                  )}
-                                                  :
-                                                </span>
-                                                <span className='font-medium'>
-                                                  {selectedBatch.updatedAt
-                                                    ? new Date(
-                                                        selectedBatch.updatedAt
-                                                      ).toLocaleDateString(
-                                                        'vi-VN'
-                                                      )
-                                                    : 'N/A'}
-                                                </span>
-                                              </div>
-                                            </TabsContent>
-                                          </Tabs>
-                                        </div>
-                                      );
-                                    })()}
-                                  </div>
-                                )}
                             </div>
-                          </div>
-
-                          <div className='flex items-center gap-3'>
-                            <div className='flex items-center gap-2'>
-                              <Label className='text-sm'>
-                                {t('newOrder.products.quantity')}:
-                              </Label>
-                              <Input
-                                type='number'
-                                min='1'
-                                step='1'
-                                value={line.quantity}
-                                onChange={(e) =>
-                                  updateOrderLine(
-                                    line.productId!,
-                                    'quantity',
-                                    parseFloat(e.target.value) || 0
-                                  )
-                                }
-                                onKeyDown={(e) => {
-                                  // Prevent arrow keys from incrementing/decrementing the value
-                                  if (
-                                    e.key === 'ArrowUp' ||
-                                    e.key === 'ArrowDown'
-                                  ) {
-                                    e.preventDefault();
-                                  }
-                                }}
-                                className='w-24 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none'
-                              />
-                            </div>
-
-                            <div className='flex items-center gap-2'>
-                              <Select
-                                value={line.unit}
-                                onValueChange={(value) =>
-                                  updateOrderLine(
-                                    line.productId!,
-                                    'unit',
-                                    value
-                                  )
-                                }
-                              >
-                                <SelectTrigger className='w-20'>
-                                  <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value='kg'>Kg</SelectItem>
-                                  {/* <SelectItem value='tấn'>Tấn</SelectItem>
-                                  <SelectItem value='l'>L</SelectItem> */}
-                                </SelectContent>
-                              </Select>
-                            </div>
-
-                            <div className='text-primary min-w-[100px] text-right font-semibold'>
-                              {new Intl.NumberFormat('vi-VN', {
-                                style: 'currency',
-                                currency: 'VND'
-                              }).format(lineTotal)}
-                            </div>
-
                             <Button
                               variant='ghost'
                               size='icon'
@@ -1257,6 +1090,490 @@ export default function NewOrderPage() {
                             >
                               <IconTrash className='h-4 w-4' />
                             </Button>
+                          </div>
+
+                          {/* Batch Lines */}
+                          <div className='space-y-3'>
+                            {productLines.map((line) => {
+                              const lineTotal = line.quantity * line.unitPrice;
+                              const selectedBatch = availableBatches.find(
+                                (b) => b.id === line.batchId
+                              );
+
+                              return (
+                                <div
+                                  key={line.lineId}
+                                  className='bg-background flex flex-col gap-3 rounded-md border p-3 sm:flex-row sm:items-center'
+                                >
+                                  <div className='min-w-0 flex-1'>
+                                    {/* Batch selector */}
+                                    {availableBatches.length > 0 && (
+                                      <div className='mb-2'>
+                                        <Select
+                                          value={line.batchId || ''}
+                                          onValueChange={(val) =>
+                                            handleBatchChange(
+                                              line.lineId,
+                                              productId,
+                                              val
+                                            )
+                                          }
+                                        >
+                                          <SelectTrigger className='h-8 w-full max-w-[400px] text-xs'>
+                                            <SelectValue placeholder='Chọn lô hàng (batch)' />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            {availableBatches.map((batch) => (
+                                              <SelectItem
+                                                key={batch.id}
+                                                value={batch.id}
+                                                className='text-xs'
+                                                disabled={
+                                                  usedBatchIds.includes(
+                                                    batch.id
+                                                  ) && batch.id !== line.batchId
+                                                }
+                                              >
+                                                {batch.batchCode}
+                                                {batch.expiredAt &&
+                                                  ` - Exp: ${new Date(
+                                                    batch.expiredAt
+                                                  ).toLocaleDateString(
+                                                    'vi-VN'
+                                                  )}`}
+                                                {batch.currentQuantity !==
+                                                  undefined &&
+                                                  ` - Qty: ${batch.currentQuantity}`}
+                                                {usedBatchIds.includes(
+                                                  batch.id
+                                                ) &&
+                                                  batch.id !== line.batchId &&
+                                                  ' (đã chọn)'}
+                                              </SelectItem>
+                                            ))}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    )}
+
+                                    {/* Price table button when batch is selected */}
+                                    {selectedBatch &&
+                                      selectedBatch.price &&
+                                      selectedBatch.price.length > 0 && (
+                                        <div className='mt-2'>
+                                          <Popover>
+                                            <PopoverTrigger asChild>
+                                              <Button
+                                                variant='outline'
+                                                size='sm'
+                                                className='h-7 gap-1 text-xs'
+                                              >
+                                                <IconReceipt className='h-3.5 w-3.5' />
+                                                Xem bảng giá
+                                              </Button>
+                                            </PopoverTrigger>
+                                            <PopoverContent
+                                              className='w-80'
+                                              align='start'
+                                            >
+                                              <div className='space-y-2'>
+                                                <h4 className='font-medium'>
+                                                  Bảng giá lô:{' '}
+                                                  {selectedBatch.batchCode}
+                                                </h4>
+                                                <div className='rounded-md border'>
+                                                  <table className='w-full text-sm'>
+                                                    <thead>
+                                                      <tr className='bg-muted/50 border-b'>
+                                                        <th className='px-3 py-2 text-left font-medium'>
+                                                          Số lượng tối thiểu
+                                                        </th>
+                                                        <th className='px-3 py-2 text-right font-medium'>
+                                                          Đơn giá
+                                                        </th>
+                                                      </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                      {[...selectedBatch.price]
+                                                        .sort(
+                                                          (a, b) =>
+                                                            (a.quantity || 0) -
+                                                            (b.quantity || 0)
+                                                        )
+                                                        .map(
+                                                          (tier, idx, arr) => (
+                                                            <tr
+                                                              key={idx}
+                                                              className={cn(
+                                                                'border-b last:border-b-0',
+                                                                line.quantity >=
+                                                                  (tier.quantity ||
+                                                                    0) &&
+                                                                  (idx ===
+                                                                    arr.length -
+                                                                      1 ||
+                                                                    line.quantity <
+                                                                      (arr[
+                                                                        idx + 1
+                                                                      ]
+                                                                        ?.quantity ||
+                                                                        Infinity)) &&
+                                                                  'bg-primary/10'
+                                                              )}
+                                                            >
+                                                              <td className='px-3 py-2'>
+                                                                ≥{' '}
+                                                                {tier.quantity ||
+                                                                  0}{' '}
+                                                                {tier.unit ||
+                                                                  'kg'}
+                                                              </td>
+                                                              <td className='text-primary px-3 py-2 text-right font-medium'>
+                                                                {new Intl.NumberFormat(
+                                                                  'vi-VN',
+                                                                  {
+                                                                    style:
+                                                                      'currency',
+                                                                    currency:
+                                                                      'VND'
+                                                                  }
+                                                                ).format(
+                                                                  tier.price ||
+                                                                    0
+                                                                )}
+                                                                /
+                                                                {tier.unit ||
+                                                                  'kg'}
+                                                              </td>
+                                                            </tr>
+                                                          )
+                                                        )}
+                                                    </tbody>
+                                                  </table>
+                                                </div>
+                                                <p className='text-muted-foreground text-xs'>
+                                                  * Giá áp dụng theo số lượng
+                                                  đặt hàng
+                                                </p>
+                                              </div>
+                                            </PopoverContent>
+                                          </Popover>
+                                        </div>
+                                      )}
+
+                                    {/* Batch info tabs */}
+                                    {selectedBatch && (
+                                      <div className='mt-2 max-w-[400px]'>
+                                        <Tabs
+                                          defaultValue='batch'
+                                          className='w-full'
+                                        >
+                                          <TabsList className='grid h-8 w-full grid-cols-2'>
+                                            <TabsTrigger
+                                              value='batch'
+                                              className='h-6 text-xs'
+                                            >
+                                              {t('newOrder.products.batchInfo')}
+                                            </TabsTrigger>
+                                            <TabsTrigger
+                                              value='supplier'
+                                              className='h-6 text-xs'
+                                            >
+                                              {t(
+                                                'newOrder.products.supplierInfo'
+                                              )}
+                                            </TabsTrigger>
+                                          </TabsList>
+                                          <TabsContent
+                                            value='batch'
+                                            className='bg-muted/30 mt-2 space-y-1 rounded-md p-2 text-xs'
+                                          >
+                                            <div className='flex justify-between'>
+                                              <span className='text-muted-foreground'>
+                                                {t(
+                                                  'newOrder.products.createdAt'
+                                                )}
+                                                :
+                                              </span>
+                                              <span className='font-medium'>
+                                                {selectedBatch.createdAt
+                                                  ? new Date(
+                                                      selectedBatch.createdAt
+                                                    ).toLocaleDateString(
+                                                      'vi-VN'
+                                                    )
+                                                  : t('common.notSpecified')}
+                                              </span>
+                                            </div>
+                                            <div className='flex justify-between'>
+                                              <span className='text-muted-foreground'>
+                                                {t(
+                                                  'newOrder.products.expiryDate'
+                                                )}
+                                                :
+                                              </span>
+                                              <span className='font-medium'>
+                                                {selectedBatch.expiredAt
+                                                  ? new Date(
+                                                      selectedBatch.expiredAt
+                                                    ).toLocaleDateString(
+                                                      'vi-VN'
+                                                    )
+                                                  : 'N/A'}
+                                              </span>
+                                            </div>
+                                            <div className='flex justify-between'>
+                                              <span className='text-muted-foreground'>
+                                                {t(
+                                                  'newOrder.products.quantity'
+                                                )}
+                                                :
+                                              </span>
+                                              <span className='font-medium'>
+                                                {selectedBatch.currentQuantity}{' '}
+                                                {selectedBatch.unit}
+                                              </span>
+                                            </div>
+                                          </TabsContent>
+                                          <TabsContent
+                                            value='supplier'
+                                            className='bg-muted/30 mt-2 space-y-1 rounded-md p-2 text-xs'
+                                          >
+                                            <div className='flex justify-between'>
+                                              <span className='text-muted-foreground'>
+                                                {t(
+                                                  'newOrder.products.gardenName'
+                                                )}
+                                                :
+                                              </span>
+                                              <span className='font-medium'>
+                                                {selectedBatch.gardenName ||
+                                                  'N/A'}
+                                              </span>
+                                            </div>
+                                            <div className='flex justify-between'>
+                                              <span className='text-muted-foreground'>
+                                                {t(
+                                                  'newOrder.products.harvestDate'
+                                                )}
+                                                :
+                                              </span>
+                                              <span className='font-medium'>
+                                                {selectedBatch.harvestDate
+                                                  ? new Date(
+                                                      selectedBatch.harvestDate
+                                                    ).toLocaleDateString(
+                                                      'vi-VN'
+                                                    )
+                                                  : 'N/A'}
+                                              </span>
+                                            </div>
+                                            <div className='flex justify-between'>
+                                              <span className='text-muted-foreground'>
+                                                {t(
+                                                  'newOrder.products.updatedAt'
+                                                )}
+                                                :
+                                              </span>
+                                              <span className='font-medium'>
+                                                {selectedBatch.updatedAt
+                                                  ? new Date(
+                                                      selectedBatch.updatedAt
+                                                    ).toLocaleDateString(
+                                                      'vi-VN'
+                                                    )
+                                                  : 'N/A'}
+                                              </span>
+                                            </div>
+                                          </TabsContent>
+                                        </Tabs>
+                                      </div>
+                                    )}
+
+                                    {/* Price display */}
+                                    <p className='text-muted-foreground mt-2 text-sm'>
+                                      {new Intl.NumberFormat('vi-VN', {
+                                        style: 'currency',
+                                        currency: 'VND'
+                                      }).format(line.unitPrice)}
+                                      /{line.unit}
+                                    </p>
+                                  </div>
+
+                                  {/* Quantity & Actions */}
+                                  <div className='flex flex-col gap-2'>
+                                    <div className='flex items-center gap-3'>
+                                      <div className='flex items-center gap-2'>
+                                        <Label className='text-sm'>
+                                          {t('newOrder.products.quantity')}:
+                                        </Label>
+                                        <Input
+                                          type='number'
+                                          min='1'
+                                          step='1'
+                                          max={
+                                            selectedBatch?.currentQuantity ||
+                                            undefined
+                                          }
+                                          value={line.quantity}
+                                          onChange={(e) => {
+                                            const value =
+                                              parseFloat(e.target.value) || 0;
+                                            // Validate against batch currentQuantity
+                                            if (
+                                              selectedBatch?.currentQuantity &&
+                                              value >
+                                                selectedBatch.currentQuantity
+                                            ) {
+                                              // Still update but will show error
+                                              updateOrderLine(
+                                                line.lineId,
+                                                productId,
+                                                'quantity',
+                                                value
+                                              );
+                                            } else {
+                                              updateOrderLine(
+                                                line.lineId,
+                                                productId,
+                                                'quantity',
+                                                value
+                                              );
+                                            }
+                                          }}
+                                          onKeyDown={(e) => {
+                                            if (
+                                              e.key === 'ArrowUp' ||
+                                              e.key === 'ArrowDown'
+                                            ) {
+                                              e.preventDefault();
+                                            }
+                                          }}
+                                          className={cn(
+                                            'w-24 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none',
+                                            selectedBatch &&
+                                              line.quantity >
+                                                (selectedBatch.currentQuantity ||
+                                                  0) &&
+                                              'border-destructive focus-visible:ring-destructive'
+                                          )}
+                                        />
+                                      </div>
+
+                                      <div className='flex items-center gap-2'>
+                                        <Select
+                                          value={line.unit}
+                                          onValueChange={(value) =>
+                                            updateOrderLine(
+                                              line.lineId,
+                                              productId,
+                                              'unit',
+                                              value
+                                            )
+                                          }
+                                        >
+                                          <SelectTrigger className='w-20'>
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value='kg'>
+                                              Kg
+                                            </SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+
+                                      <div className='text-primary min-w-[100px] text-right font-semibold'>
+                                        {new Intl.NumberFormat('vi-VN', {
+                                          style: 'currency',
+                                          currency: 'VND'
+                                        }).format(lineTotal)}
+                                      </div>
+
+                                      {/* Only show delete for individual batch lines if there are multiple */}
+                                      {productLines.length > 1 && (
+                                        <Button
+                                          variant='ghost'
+                                          size='icon'
+                                          onClick={() =>
+                                            dispatch({
+                                              type: 'REMOVE_BATCH_LINE',
+                                              payload: line.lineId
+                                            })
+                                          }
+                                          className='text-destructive hover:text-destructive'
+                                        >
+                                          <IconTrash className='h-4 w-4' />
+                                        </Button>
+                                      )}
+                                    </div>
+
+                                    {/* Error message when quantity exceeds available */}
+                                    {selectedBatch &&
+                                      line.quantity >
+                                        (selectedBatch.currentQuantity ||
+                                          0) && (
+                                        <p className='text-destructive text-xs'>
+                                          Số lượng vượt quá tồn kho (tối đa:{' '}
+                                          {selectedBatch.currentQuantity}{' '}
+                                          {selectedBatch.unit})
+                                        </p>
+                                      )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Add new batch button */}
+                          {unusedBatches.length > 0 && (
+                            <div className='mt-3'>
+                              <Select
+                                value=''
+                                onValueChange={(val) =>
+                                  handleAddBatchLine(productId, val)
+                                }
+                              >
+                                <SelectTrigger className='h-9 w-full max-w-[300px] border-dashed'>
+                                  <SelectValue placeholder='+ Thêm lô hàng khác' />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {unusedBatches.map((batch) => (
+                                    <SelectItem
+                                      key={batch.id}
+                                      value={batch.id}
+                                      className='text-xs'
+                                    >
+                                      {batch.batchCode}
+                                      {batch.expiredAt &&
+                                        ` - Exp: ${new Date(
+                                          batch.expiredAt
+                                        ).toLocaleDateString('vi-VN')}`}
+                                      {batch.currentQuantity !== undefined &&
+                                        ` - Qty: ${batch.currentQuantity}`}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                          )}
+
+                          {/* Product subtotal */}
+                          <div className='mt-3 flex justify-end border-t pt-3'>
+                            <span className='text-muted-foreground text-sm'>
+                              Tạm tính:{' '}
+                              <span className='text-primary font-semibold'>
+                                {new Intl.NumberFormat('vi-VN', {
+                                  style: 'currency',
+                                  currency: 'VND'
+                                }).format(
+                                  productLines.reduce(
+                                    (sum, l) => sum + l.quantity * l.unitPrice,
+                                    0
+                                  )
+                                )}
+                              </span>
+                            </span>
                           </div>
                         </div>
                       );
@@ -1477,7 +1794,7 @@ export default function NewOrderPage() {
 
                       return (
                         <div
-                          key={line.productId}
+                          key={line.lineId}
                           className='flex items-center justify-between rounded-lg border p-3'
                         >
                           <div className='flex items-center gap-3'>
