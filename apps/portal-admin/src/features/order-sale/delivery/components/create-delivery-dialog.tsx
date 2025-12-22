@@ -85,10 +85,8 @@ export function CreateDeliveryDialog({
   const [notes, setNotes] = useState<string>('');
 
   useEffect(() => {
-    if (open && fullInfo?.warehouse?.address) {
-      setStartAddress(fullInfo.warehouse.address);
-    }
-  }, [open, fullInfo]);
+    setStartAddress(fullInfo?.warehouse?.address);
+  }, [fullInfo?.warehouse?.address]);
 
   // Filter available trucks
   const availableTrucks = trucks.filter(

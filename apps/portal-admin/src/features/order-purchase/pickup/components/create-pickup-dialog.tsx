@@ -88,9 +88,6 @@ export function CreatePickupDialog({
     setStartAddress(fullInfo?.warehouse?.address);
   }, [fullInfo?.warehouse?.address]);
 
-  console.log('startAddress: ', startAddress);
-  console.log('fullInfo?.warehouse?.address: ', fullInfo?.warehouse?.address);
-
   // Filter available trucks
   const availableTrucks = trucks.filter(
     (t) => t.status === 'available' || t.status === 'in_use'
