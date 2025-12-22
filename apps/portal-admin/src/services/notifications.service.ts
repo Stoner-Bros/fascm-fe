@@ -164,3 +164,21 @@ export function subscribeDeliveryStaffNotifications(
     socket.disconnect();
   };
 }
+
+export function subscribeWarehouseNotifications(
+  warehouseId: string,
+  onNotify: (p: NotificationPayload) => void
+): () => void {
+  const socket = connectNotifications();
+  const handler = (p: any) => {
+    if (p && typeof p === 'object' && typeof p.type === 'string') {
+      onNotify(p as NotificationPayload);
+    }
+  };
+  socket.emit('notify:subscribeWarehouse', { warehouseId });
+  socket.on('notify', handler);
+  return () => {
+    socket.off('notify', handler);
+    socket.disconnect();
+  };
+}

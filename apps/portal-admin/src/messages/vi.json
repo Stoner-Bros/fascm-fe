@@ -1246,7 +1246,12 @@
     "orderScheduleCanceled": "Đã hủy đơn",
     "orderScheduleHasBeenCanceled": "Lịch đặt hàng {orderScheduleId} đã bị hủy",
     "orderScheduleRejected": "Đã từ chối đơn",
-    "orderScheduleHasBeenRejected": "Lịch đặt hàng {orderScheduleId} đã bị từ chối"
+    "orderScheduleHasBeenRejected": "Lịch đặt hàng {orderScheduleId} đã bị từ chối",
+    "areaAlert": "Cảnh báo khu vực",
+    "areaAlertActive": "Khu vực {areaId} đang có cảnh báo",
+    "areaAlertActiveWithMetrics": "Khu vực {areaId} đang có cảnh báo (Nhiệt độ {temperature}°C{sep}Độ ẩm {humidity}%)",
+    "areaAlertResolved": "Cảnh báo khu vực {areaId} đã được xử lý",
+    "areaAlertResolvedWithMetrics": "Cảnh báo khu vực {areaId} đã được xử lý (Nhiệt độ {temperature}°C{sep}Độ ẩm {humidity}%)"
   },
   "WarehouseDetail": {
     "loading": "Đang tải...",

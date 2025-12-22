@@ -15,6 +15,9 @@ export default function CtaNotify() {
   const items = useNotificationsStore((s) => s.items);
   const setItemsStore = useNotificationsStore((s) => s.setItems);
   const markReadStore = useNotificationsStore((s) => s.markRead);
+  const ephemeral = useNotificationsStore((s) => s.ephemeral);
+  const ephemeralVisible = useNotificationsStore((s) => s.ephemeralVisible);
+  const hideEphemeral = useNotificationsStore((s) => s.hideEphemeral);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(1);
   const [hasNextPage, setHasNextPage] = useState(false);
@@ -67,6 +70,13 @@ export default function CtaNotify() {
     await markNotificationRead(id);
     markReadStore(id);
   };
+  useEffect(() => {
+    if (!ephemeralVisible) return;
+    const tm = setTimeout(() => {
+      hideEphemeral();
+    }, 5000);
+    return () => clearTimeout(tm);
+  }, [ephemeralVisible, hideEphemeral]);
   return (
     <div ref={rootRef} className='relative'>
       <Button
@@ -81,6 +91,132 @@ export default function CtaNotify() {
         )}
       </Button>
 
+      {!open && ephemeralVisible && ephemeral && (
+        <div className='border-border bg-card text-card-foreground absolute right-0 z-50 mt-2 w-[420px] overflow-hidden rounded-md border shadow-lg sm:w-[480px]'>
+          <div className='flex items-center justify-between px-3 py-2'>
+            <span className='text-sm font-medium'>{tUi('title')}</span>
+            <Button variant='ghost' size='sm' onClick={hideEphemeral}>
+              {tUi('close')}
+            </Button>
+          </div>
+          <div className='px-3 py-2'>
+            <div
+              className={`text-sm font-medium ${ephemeral.type === 'system' ? 'text-red-500' : 'text-foreground'}`}
+            >
+              {(() => {
+                const typeMap: Record<string, string> = {
+                  'order-approved': 'orderScheduleApproved',
+                  'order-completed': 'orderScheduleCompleted',
+                  'order-canceled': 'orderScheduleCanceled',
+                  'order-rejected': 'orderScheduleRejected',
+                  'harvest-approved': 'harvestScheduleApproved',
+                  'harvest-completed': 'harvestScheduleCompleted',
+                  'area-alert': 'areaAlert'
+                };
+                const keyFromType = typeMap[String(ephemeral.type || '')];
+                if (keyFromType) {
+                  try {
+                    return tNoti(keyFromType);
+                  } catch {}
+                }
+                const looksLikeKey =
+                  typeof ephemeral.title === 'string' &&
+                  /^[A-Za-z0-9_.-]+$/.test(ephemeral.title);
+                if (looksLikeKey) {
+                  try {
+                    const raw = ephemeral.title || 'defaultTitle';
+                    const sanitized = raw.startsWith('Notifications.')
+                      ? raw.slice('Notifications.'.length)
+                      : raw;
+                    return tNoti(sanitized);
+                  } catch {}
+                }
+                return ephemeral.title || tNoti('defaultTitle');
+              })()}
+            </div>
+            {ephemeral.message && (
+              <div className='text-muted-foreground mt-1 text-xs'>
+                {(() => {
+                  let vars: any = {};
+                  if (typeof (ephemeral as any).data === 'string') {
+                    try {
+                      const parsed = JSON.parse((ephemeral as any).data);
+                      vars.orderScheduleId = parsed?.orderScheduleId ?? '';
+                      vars.harvestScheduleId = parsed?.harvestScheduleId ?? '';
+                      vars.areaId = parsed?.areaId ?? '';
+                      vars.temperature =
+                        typeof parsed?.temperature === 'number'
+                          ? parsed.temperature
+                          : undefined;
+                      vars.humidity =
+                        typeof parsed?.humidity === 'number'
+                          ? parsed.humidity
+                          : undefined;
+                    } catch {}
+                  } else if (
+                    ephemeral &&
+                    typeof (ephemeral as any).data === 'object' &&
+                    (ephemeral as any).data !== null
+                  ) {
+                    vars.orderScheduleId =
+                      (ephemeral as any).data.orderScheduleId ?? '';
+                    vars.harvestScheduleId =
+                      (ephemeral as any).data.harvestScheduleId ?? '';
+                    vars.areaId = (ephemeral as any).data.areaId ?? '';
+                    vars.temperature =
+                      typeof (ephemeral as any).data.temperature === 'number'
+                        ? (ephemeral as any).data.temperature
+                        : undefined;
+                    vars.humidity =
+                      typeof (ephemeral as any).data.humidity === 'number'
+                        ? (ephemeral as any).data.humidity
+                        : undefined;
+                  }
+                  vars.sep = ' • ';
+                  const msgMap: Record<string, string> = {
+                    'order-approved': 'orderScheduleHasBeenApproved',
+                    'order-completed': 'orderScheduleHasBeenCompleted',
+                    'order-canceled': 'orderScheduleHasBeenCanceled',
+                    'order-rejected': 'orderScheduleHasBeenRejected',
+                    'harvest-approved': 'harvestScheduleHasBeenApproved',
+                    'harvest-completed': 'harvestScheduleHasBeenCompleted',
+                    'area-alert':
+                      typeof vars.temperature === 'number' ||
+                      typeof vars.humidity === 'number'
+                        ? 'areaAlertActiveWithMetrics'
+                        : 'areaAlertActive',
+                    'area-alert-resolved':
+                      typeof vars.temperature === 'number' ||
+                      typeof vars.humidity === 'number'
+                        ? 'areaAlertResolvedWithMetrics'
+                        : 'areaAlertResolved'
+                  };
+                  const keyFromType = msgMap[String(ephemeral.type || '')];
+                  if (keyFromType) {
+                    try {
+                      return tNoti(keyFromType, vars);
+                    } catch {}
+                  }
+                  const looksLikeKey =
+                    typeof ephemeral.message === 'string' &&
+                    /^[A-Za-z0-9_.-]+$/.test(ephemeral.message);
+                  if (looksLikeKey) {
+                    try {
+                      const raw = ephemeral.message || 'defaultMessage';
+                      const sanitized = raw.startsWith('Notifications.')
+                        ? raw.slice('Notifications.'.length)
+                        : raw;
+                      return tNoti(sanitized, vars);
+                    } catch {}
+                  }
+                  return ephemeral.message;
+                })()}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {open && (
         <div className='border-border bg-card text-card-foreground absolute right-0 z-50 mt-2 w-80 overflow-hidden rounded-md border shadow-lg'>
           <div className='flex items-center justify-between px-3 py-2'>
@@ -91,7 +227,7 @@ export default function CtaNotify() {
               </span>
             )}
           </div>
-          <div className='max-h-80 overflow-auto'>
+          <div className='max-h-[28rem] overflow-auto'>
             {items.length === 0 && !loading ? (
               <div className='text-muted-foreground px-3 py-8 text-center text-sm'>
                 {tUi('empty')}
@@ -140,7 +276,7 @@ export default function CtaNotify() {
                       })()}
                     </div>
                     {n.message && (
-                      <div className='text-muted-foreground line-clamp-2 text-xs'>
+                      <div className='text-muted-foreground text-xs break-words whitespace-normal'>
                         {(() => {
                           let vars: any = {};
                           if (typeof (n as any).data === 'string') {
@@ -150,9 +286,19 @@ export default function CtaNotify() {
                                 parsed?.orderScheduleId ?? '';
                               vars.harvestScheduleId =
                                 parsed?.harvestScheduleId ?? '';
+                              vars.areaId = parsed?.areaId ?? '';
+                              vars.temperature =
+                                typeof parsed?.temperature === 'number'
+                                  ? parsed.temperature
+                                  : undefined;
+                              vars.humidity =
+                                typeof parsed?.humidity === 'number'
+                                  ? parsed.humidity
+                                  : undefined;
                             } catch {
                               vars.orderScheduleId = '';
                               vars.harvestScheduleId = '';
+                              vars.areaId = '';
                             }
                           } else if (
                             n &&
@@ -163,10 +309,21 @@ export default function CtaNotify() {
                               (n as any).data.orderScheduleId ?? '';
                             vars.harvestScheduleId =
                               (n as any).data.harvestScheduleId ?? '';
+                            vars.areaId = (n as any).data.areaId ?? '';
+                            vars.temperature =
+                              typeof (n as any).data.temperature === 'number'
+                                ? (n as any).data.temperature
+                                : undefined;
+                            vars.humidity =
+                              typeof (n as any).data.humidity === 'number'
+                                ? (n as any).data.humidity
+                                : undefined;
                           } else {
                             vars.orderScheduleId = '';
                             vars.harvestScheduleId = '';
+                            vars.areaId = '';
                           }
+                          vars.sep = ' • ';
                           const msgMap: Record<string, string> = {
                             'order-approved': 'orderScheduleHasBeenApproved',
                             'order-completed': 'orderScheduleHasBeenCompleted',
@@ -175,7 +332,17 @@ export default function CtaNotify() {
                             'harvest-approved':
                               'harvestScheduleHasBeenApproved',
                             'harvest-completed':
-                              'harvestScheduleHasBeenCompleted'
+                              'harvestScheduleHasBeenCompleted',
+                            'area-alert':
+                              typeof vars.temperature === 'number' ||
+                              typeof vars.humidity === 'number'
+                                ? 'areaAlertActiveWithMetrics'
+                                : 'areaAlertActive',
+                            'area-alert-resolved':
+                              typeof vars.temperature === 'number' ||
+                              typeof vars.humidity === 'number'
+                                ? 'areaAlertResolvedWithMetrics'
+                                : 'areaAlertResolved'
                           };
                           const keyFromType = msgMap[String(n.type || '')];
                           if (keyFromType) {
@@ -245,7 +412,7 @@ export default function CtaNotify() {
                         : ''}
                     </div>
                   </div>
-                  {!n.isRead && (
+                  {!n.isRead && String(n.type || '') !== 'area-alert' && (
                     <Button
                       variant='ghost'
                       size='sm'

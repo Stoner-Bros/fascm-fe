@@ -44,11 +44,7 @@ import {
   fetchAreaSettings,
   updateAreaSetting
 } from '@/services/area-setting.service';
-import {
-  fetchActiveAreaAlertByAreaId,
-  fetchAreaById,
-  fetchAreaTickets
-} from '@/services/area.service';
+import { fetchAreaById, fetchAreaTickets } from '@/services/area.service';
 import { fetchBatchesByArea } from '@/services/batch.service';
 import {
   createPrice,
@@ -90,7 +86,7 @@ import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
 import { useRouter } from 'next/navigation';
 import { useTranslations, useLocale } from 'next-intl';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
 import { io } from 'socket.io-client';
 
@@ -151,6 +147,7 @@ export default function AreaDetailView({
   const [isLoadingIoT, setIsLoadingIoT] = useState(false);
   const [allImportTickets, setAllImportTickets] = useState<ImportTicket[]>([]);
   const [allExportTickets, setAllExportTickets] = useState<any[]>([]);
+  const offlineTimersRef = useRef<Record<string, any>>({});
 
   // Pagination for batches table
   const [batchesPage, setBatchesPage] = useQueryState(
@@ -309,15 +306,7 @@ export default function AreaDetailView({
   }, [areaId, warehouseId]);
 
   useEffect(() => {
-    if (!areaId) return;
-    (async () => {
-      try {
-        const alert = await fetchActiveAreaAlertByAreaId(areaId);
-        const isActive =
-          alert && String(alert.status ?? '').toLowerCase() === 'active';
-        setActiveAlert(isActive ? alert : null);
-      } catch {}
-    })();
+    setActiveAlert(null);
   }, [areaId]);
 
   // tạm thời vẫn dùng mock area/warehouse, nhưng ngưỡng cảnh báo lấy theo API area-settings
@@ -1093,6 +1082,7 @@ export default function AreaDetailView({
           next[idx] = {
             ...next[idx],
             data: parsed,
+            status: String((payload as any)?.status ?? 'online'),
             lastDataTime: String(
               (payload as any)?.timestamp ?? new Date().toISOString()
             )
@@ -1101,11 +1091,36 @@ export default function AreaDetailView({
         }
         return prev;
       });
+      if (payloadDeviceId) {
+        const prevTimer = offlineTimersRef.current[payloadDeviceId];
+        if (prevTimer) clearTimeout(prevTimer);
+        offlineTimersRef.current[payloadDeviceId] = setTimeout(() => {
+          setIotDevices((prev) => {
+            const idx = prev.findIndex((d) => String(d.id) === payloadDeviceId);
+            if (idx >= 0) {
+              const next = [...prev];
+              next[idx] = { ...next[idx], status: 'offline' };
+              return next;
+            }
+            return prev;
+          });
+        }, 60000);
+      }
     });
     return () => {
       unsubscribe();
     };
   }, [areaId, areaDeviceIds]);
+
+  useEffect(() => {
+    return () => {
+      Object.values(offlineTimersRef.current).forEach((t) => {
+        try {
+          clearTimeout(t);
+        } catch {}
+      });
+    };
+  }, []);
 
   const handleSaveSettings = async () => {
     if (
