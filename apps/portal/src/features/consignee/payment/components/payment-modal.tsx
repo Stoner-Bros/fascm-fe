@@ -49,7 +49,8 @@ export function PaymentModal({
 
   useEffect(() => {
     if (isOpen) {
-      setAmount(maxAmount.toString());
+      // Keep amount input empty for user to enter manually
+      setAmount('');
       setErrors({});
       setQrCodeDataURL(null);
       reset();

@@ -962,6 +962,31 @@
         "title": "Delivery schedule not found",
         "back": "Go Back"
       }
+    },
+    "createDeliveryDialog": {
+      "title": "Create Delivery Trip - Phase {phaseNumber}",
+      "description": "Create a new delivery trip for delivery phase #{phaseNumber}",
+      "phaseInfo": "Delivery Phase Information",
+      "phase": "Phase",
+      "phaseNumber": "Phase {number}",
+      "customer": "Customer",
+      "deliveryDate": "Delivery Date",
+      "address": "Address",
+      "products": "Products",
+      "productLabel": "Product",
+      "selectTruck": "Select Truck",
+      "noTrucksAvailable": "No trucks available",
+      "selectTruckPlaceholder": "Select delivery truck",
+      "selectStaff": "Select Delivery Staff",
+      "selectStaffPlaceholder": "Select staff member",
+      "noStaffAvailable": "No active staff available",
+      "startAddress": "Starting Point (Warehouse)",
+      "loadingWarehouseAddress": "Loading warehouse address...",
+      "notes": "Notes (optional)",
+      "notesPlaceholder": "Enter notes for the delivery...",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "createDelivery": "Create Delivery"
     }
   },
   "HarvestOrders": {
@@ -2151,6 +2176,35 @@
         "totalAmount": "Total Amount"
       },
       "loading": "Loading..."
+    }
+  },
+  "DeliveryPage": {
+    "title": "Delivery Management",
+    "description": "Create and track delivery trips to customers",
+    "viewMode": {
+      "split": "Split View",
+      "list": "List View"
+    },
+    "reload": "Reload",
+    "stats": {
+      "deliverySchedules": "Delivery Schedules",
+      "deliveries": "Deliveries",
+      "inDelivery": "In Delivery",
+      "completed": "Completed"
+    },
+    "listView": {
+      "title": "Delivery List",
+      "description": "All delivery trips to customers"
+    },
+    "empty": {
+      "title": "No deliveries yet",
+      "description": "Select a delivery schedule and create a new delivery",
+      "switchToSplit": "Switch to Split View"
+    },
+    "card": {
+      "phase": "Phase {number}",
+      "delivery": "Delivery",
+      "from": "From"
     }
   },
   "PickupPage": {
