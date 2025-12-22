@@ -6,6 +6,7 @@ import type {
   HarvestSchedule,
   UpdateHarvestScheduleDto
 } from '../types/harvest-schedule';
+import { useAuthStore } from '@/stores/auth.store';
 
 export async function createHarvestSchedule(body: CreateHarvestScheduleDto) {
   return fetchJSON<HarvestSchedule>('/harvest-schedules', {
@@ -24,8 +25,12 @@ export async function fetchHarvestSchedules({
     page: String(page),
     limit: String(limit)
   });
+
+  const warehouseId = useAuthStore.getState().fullInfo?.warehouse?.id;
+
   if (status) params.set('status', status);
   if (sort) params.set('sort', sort);
+  if (warehouseId) params.set('warehouseId', warehouseId as string);
 
   return fetchJSON<InfinityPaginationResponse<HarvestSchedule>>(
     `/harvest-schedules?${params.toString()}`

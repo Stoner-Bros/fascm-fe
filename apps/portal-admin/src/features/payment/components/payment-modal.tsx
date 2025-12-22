@@ -53,22 +53,34 @@ export function PaymentModal({
     }
   }, [isOpen, maxAmount, reset]);
 
-  // Generate QR code when payment.qrCode is available (client-side only)
+  // Handle QR code when payment.qrCode is available (client-side only)
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
     if (payment?.qrCode && typeof payment.qrCode === 'string') {
-      setIsGeneratingQR(true);
-      generateQRCodeDataURL(payment.qrCode)
-        .then((dataURL) => {
-          setQrCodeDataURL(dataURL);
-        })
-        .catch((error) => {
-          console.error('Failed to generate QR code:', error);
-        })
-        .finally(() => {
-          setIsGeneratingQR(false);
-        });
+      // Check if qrCode is already a URL (starts with http:// or https://)
+      const isUrl =
+        payment.qrCode.startsWith('http://') ||
+        payment.qrCode.startsWith('https://');
+
+      if (isUrl) {
+        // If it's already a URL, use it directly
+        setQrCodeDataURL(payment.qrCode);
+        setIsGeneratingQR(false);
+      } else {
+        // Otherwise, generate QR code from the data
+        setIsGeneratingQR(true);
+        generateQRCodeDataURL(payment.qrCode)
+          .then((dataURL) => {
+            setQrCodeDataURL(dataURL);
+          })
+          .catch((error) => {
+            console.error('Failed to generate QR code:', error);
+          })
+          .finally(() => {
+            setIsGeneratingQR(false);
+          });
+      }
     } else {
       setQrCodeDataURL(null);
     }
@@ -83,9 +95,17 @@ export function PaymentModal({
     }
   };
 
+  const formatAmountDisplay = (value: string) => {
+    if (!value) return '';
+    const numericValue = value.replace(/[^\d]/g, '');
+    if (!numericValue) return '';
+    return Number(numericValue).toLocaleString('vi-VN');
+  };
+
   const handleAmountChange = (value: string) => {
     const numericValue = value.replace(/[^\d]/g, '');
-    setAmount(numericValue);
+    const formatted = formatAmountDisplay(numericValue);
+    setAmount(formatted);
 
     if (errors.amount) {
       const numValue = parseFloat(numericValue) || 0;
@@ -100,7 +120,8 @@ export function PaymentModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const numAmount = parseFloat(amount) || 0;
+    const numAmount =
+      parseFloat((amount || '').toString().replace(/[^\d]/g, '')) || 0;
     const validationErrors = validatePaymentForm(
       { amount: numAmount, paymentMethod: 'bank_transfer' },
       maxAmount
@@ -129,7 +150,8 @@ export function PaymentModal({
   };
 
   const handleCashPayment = async () => {
-    const numAmount = parseFloat(amount) || 0;
+    const numAmount =
+      parseFloat((amount || '').toString().replace(/[^\d]/g, '')) || 0;
     const validationErrors = validatePaymentForm(
       { amount: numAmount, paymentMethod: 'cash' },
       maxAmount
@@ -219,7 +241,10 @@ export function PaymentModal({
                 {t('form.summary.enteredAmount')}
               </span>
               <span className='font-semibold'>
-                {formatDebtAmount(parseFloat(amount) || 0)}
+                {formatDebtAmount(
+                  (parseFloat((amount || '').replace(/[^\d]/g, '')) ||
+                    0) as number
+                )}
               </span>
             </div>
             <div className='flex justify-between border-t pt-2'>
@@ -228,7 +253,11 @@ export function PaymentModal({
               </span>
               <span className='font-bold text-orange-600 dark:text-orange-400'>
                 {formatDebtAmount(
-                  Math.max(0, maxAmount - (parseFloat(amount) || 0))
+                  Math.max(
+                    0,
+                    maxAmount -
+                      (parseFloat((amount || '').replace(/[^\d]/g, '')) || 0)
+                  )
                 )}
               </span>
             </div>
