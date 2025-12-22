@@ -1,4 +1,5 @@
 import { fetchJSON } from '@/lib/client';
+import { useAuthStore } from '@/stores/auth.store';
 import type {
   Area,
   CreateAreaDto,
@@ -20,7 +21,6 @@ export async function createArea(body: CreateAreaDto) {
 export async function fetchAreas({
   page = 1,
   limit = 50,
-  search,
   warehouseId
 }: FindAllAreasDto = {}): Promise<InfinityPaginationResponse<Area>> {
   const params = new URLSearchParams({
@@ -28,7 +28,11 @@ export async function fetchAreas({
     limit: String(limit)
   });
 
-  if (search) params.set('search', search);
+  const warehouse = useAuthStore.getState()?.fullInfo?.warehouse;
+  if (!warehouseId && warehouse) {
+    warehouseId = warehouse.id;
+  }
+
   if (warehouseId) params.set('warehouseId', warehouseId);
 
   return fetchJSON<InfinityPaginationResponse<Area>>(

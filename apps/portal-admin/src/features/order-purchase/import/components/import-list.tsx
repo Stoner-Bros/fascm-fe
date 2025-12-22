@@ -51,8 +51,10 @@ import { useArea, useImport, useInboundBatch } from '../hooks/use-import';
 import { ImportTable } from './import-table';
 import { PermissionGuard } from '@/components/permissions';
 import { Permission } from '@/constants/permissions';
+import { useTranslations } from 'next-intl';
 
 export default function ImportList() {
+  const t = useTranslations('ImportList');
   const {
     state,
     dispatch,
@@ -70,23 +72,26 @@ export default function ImportList() {
   const [formData, setFormData] = useState({
     inboundBatchId: '',
     areaId: '',
-    realityQuantity: 0,
+    damagedQuantity: 0,
     expiredAt: null as string | null
   });
 
   const handleCreate = async () => {
-    if (
-      !formData.inboundBatchId ||
-      !formData.areaId ||
-      !formData.realityQuantity
-    ) {
+    if (!formData.inboundBatchId || !formData.areaId || !selectedBatch) {
+      return;
+    }
+
+    // Calculate reality quantity by subtracting damaged quantity from batch quantity
+    const realityQuantity = selectedBatch.quantity - formData.damagedQuantity;
+
+    if (realityQuantity <= 0) {
       return;
     }
 
     const payload: any = {
       inboundBatch: { id: formData.inboundBatchId },
       area: { id: formData.areaId },
-      realityQuantity: formData.realityQuantity
+      realityQuantity: realityQuantity
     };
 
     if (formData.expiredAt) {
@@ -97,7 +102,7 @@ export default function ImportList() {
     setFormData({
       inboundBatchId: '',
       areaId: '',
-      realityQuantity: 0,
+      damagedQuantity: 0,
       expiredAt: null
     });
   };
@@ -142,12 +147,8 @@ export default function ImportList() {
       <div className='w-full space-y-6'>
         <div className='flex items-center justify-between'>
           <div>
-            <h2 className='text-3xl font-bold tracking-tight'>
-              Phiếu nhập kho
-            </h2>
-            <p className='text-muted-foreground'>
-              Quản lý các phiếu nhập hàng vào kho
-            </p>
+            <h2 className='text-3xl font-bold tracking-tight'>{t('title')}</h2>
+            <p className='text-muted-foreground'>{t('subtitle')}</p>
           </div>
           <div className='flex items-center gap-2'>
             <PermissionGuard permission={Permission.MANAGE_PURCHASE_IMPORT}>
@@ -156,13 +157,13 @@ export default function ImportList() {
                 onClick={() => dispatch({ type: 'OPEN_QUALITY_CHECK' })}
               >
                 <CheckCircle2 className='mr-2 h-4 w-4' />
-                Kiểm định chất lượng
+                {t('qualityCheck')}
               </Button>
             </PermissionGuard>
             <PermissionGuard permission={Permission.MANAGE_PURCHASE_IMPORT}>
               <Button onClick={() => dispatch({ type: 'OPEN_CREATE_DIALOG' })}>
                 <Plus className='mr-2 h-4 w-4' />
-                Tạo phiếu nhập
+                {t('createTicket')}
               </Button>
             </PermissionGuard>
           </div>
@@ -172,7 +173,7 @@ export default function ImportList() {
         <div className='grid grid-cols-1 gap-4 md:grid-cols-3'>
           <Card className='hover:border-primary cursor-pointer'>
             <CardHeader>
-              <CardDescription>Tổng phiếu nhập</CardDescription>
+              <CardDescription>{t('totalTickets')}</CardDescription>
               <CardTitle className='text-3xl'>
                 {state.loading ? (
                   <div className='bg-muted h-8 w-16 animate-pulse rounded' />
@@ -186,7 +187,7 @@ export default function ImportList() {
             <CardHeader>
               <CardDescription className='flex items-center gap-2'>
                 <Package className='h-4 w-4' />
-                Sản phẩm
+                {t('products')}
               </CardDescription>
               <CardTitle className='text-3xl'>
                 {state.loading ? (
@@ -201,7 +202,7 @@ export default function ImportList() {
             <CardHeader>
               <CardDescription className='flex items-center gap-2'>
                 <MapPin className='h-4 w-4' />
-                Khu vực
+                {t('areas')}
               </CardDescription>
               <CardTitle className='text-3xl'>
                 {state.loading ? (
@@ -222,7 +223,7 @@ export default function ImportList() {
                 <div className='relative flex-1'>
                   <Search className='text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4' />
                   <Input
-                    placeholder='Tìm kiếm theo mã phiếu, lô hàng, sản phẩm...'
+                    placeholder={t('searchPlaceholder')}
                     className='pl-8'
                     value={state.searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -236,7 +237,7 @@ export default function ImportList() {
               <DataTableSkeleton columnCount={9} rowCount={10} />
             ) : filteredTickets.length === 0 ? (
               <div className='text-muted-foreground rounded-md border p-6 text-center text-sm'>
-                Không có dữ liệu
+                {t('noData')}
               </div>
             ) : (
               <ImportTable
@@ -255,8 +256,8 @@ export default function ImportList() {
 
       {/* Quality Check Modal */}
       <Modal
-        title='Kiểm định chất lượng nhập kho'
-        description='Kiểm tra và xác nhận chất lượng hàng hóa trước khi nhập kho'
+        title={t('modal.qualityCheckTitle')}
+        description={t('modal.qualityCheckDescription')}
         isOpen={state.isQualityCheckOpen}
         onClose={() => dispatch({ type: 'CLOSE_QUALITY_CHECK' })}
         className='h-[98vh] lg:max-w-6xl'
@@ -266,15 +267,15 @@ export default function ImportList() {
 
       {/* Create Modal */}
       <Modal
-        title='Tạo phiếu nhập kho'
-        description='Nhập thông tin để tạo phiếu nhập hàng vào kho'
+        title={t('modal.createTitle')}
+        description={t('modal.createDescription')}
         isOpen={state.isCreateDialogOpen}
         onClose={() => {
           dispatch({ type: 'CLOSE_CREATE_DIALOG' });
           setFormData({
             inboundBatchId: '',
             areaId: '',
-            realityQuantity: 0,
+            damagedQuantity: 0,
             expiredAt: null
           });
         }}
@@ -282,7 +283,7 @@ export default function ImportList() {
           <div className='flex w-full items-center justify-between'>
             <div className='text-muted-foreground flex items-center gap-2 text-sm'>
               <Info className='h-4 w-4' />
-              <span>Các trường có dấu * là bắt buộc</span>
+              <span>{t('requiredFieldsNote')}</span>
             </div>
             <div className='flex gap-3'>
               <Button
@@ -292,19 +293,21 @@ export default function ImportList() {
                   setFormData({
                     inboundBatchId: '',
                     areaId: '',
-                    realityQuantity: 0,
+                    damagedQuantity: 0,
                     expiredAt: null
                   });
                 }}
               >
-                Hủy
+                {t('cancel')}
               </Button>
               <Button
                 onClick={handleCreate}
                 disabled={
                   !formData.inboundBatchId ||
                   !formData.areaId ||
-                  !formData.realityQuantity ||
+                  !selectedBatch ||
+                  (selectedBatch &&
+                    formData.damagedQuantity >= selectedBatch.quantity) ||
                   state.loading
                 }
                 className='min-w-[140px]'
@@ -312,12 +315,12 @@ export default function ImportList() {
                 {state.loading ? (
                   <>
                     <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                    Đang xử lý...
+                    {t('processing')}
                   </>
                 ) : (
                   <>
                     <Plus className='mr-2 h-4 w-4' />
-                    Tạo phiếu nhập
+                    {t('createImport')}
                   </>
                 )}
               </Button>
@@ -333,9 +336,9 @@ export default function ImportList() {
                 <ClipboardList className='h-4 w-4' />
               </div>
               <div>
-                <h3 className='font-semibold'>Chọn lô hàng</h3>
+                <h3 className='font-semibold'>{t('form.batchSection')}</h3>
                 <p className='text-muted-foreground text-sm'>
-                  Chọn lô hàng cần nhập kho
+                  {t('form.batchSectionDesc')}
                 </p>
               </div>
             </div>
@@ -346,7 +349,7 @@ export default function ImportList() {
                 className='mb-2 flex items-center gap-2'
               >
                 <Package className='text-muted-foreground h-4 w-4' />
-                Lô hàng <span className='text-destructive'>*</span>
+                {t('form.batch')} <span className='text-destructive'>*</span>
               </Label>
               <Select
                 value={formData.inboundBatchId}
@@ -355,12 +358,12 @@ export default function ImportList() {
                 }
               >
                 <SelectTrigger id='inboundBatch' className='h-11'>
-                  <SelectValue placeholder='Chọn lô hàng cần nhập...' />
+                  <SelectValue placeholder={t('form.batchPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {availableBatches.length === 0 ? (
                     <div className='text-muted-foreground p-4 text-center text-sm'>
-                      Không có lô hàng nào chưa nhập kho
+                      {t('form.noBatches')}
                     </div>
                   ) : (
                     availableBatches.map((batch) => (
@@ -391,7 +394,7 @@ export default function ImportList() {
                   <div className='mb-3 flex items-center gap-2'>
                     <CheckCircle2 className='h-5 w-5 text-green-600' />
                     <h4 className='font-semibold text-green-800 dark:text-green-200'>
-                      Thông tin lô hàng đã chọn
+                      {t('form.batchInfoTitle')}
                     </h4>
                   </div>
                   <div className='grid grid-cols-1 gap-3 md:grid-cols-2'>
@@ -399,7 +402,7 @@ export default function ImportList() {
                       <Package className='h-5 w-5 text-green-600' />
                       <div>
                         <p className='text-muted-foreground text-xs'>
-                          Sản phẩm
+                          {t('form.product')}
                         </p>
                         <p className='font-medium'>
                           {selectedBatch.harvestInvoiceDetail.product?.name}
@@ -410,7 +413,7 @@ export default function ImportList() {
                       <Hash className='h-5 w-5 text-green-600' />
                       <div>
                         <p className='text-muted-foreground text-xs'>
-                          Số lượng
+                          {t('form.quantity')}
                         </p>
                         <p className='font-medium'>
                           {selectedBatch.quantity} {selectedBatch.unit}
@@ -430,9 +433,9 @@ export default function ImportList() {
                 <Warehouse className='h-4 w-4' />
               </div>
               <div>
-                <h3 className='font-semibold'>Khu vực lưu trữ</h3>
+                <h3 className='font-semibold'>{t('form.areaSection')}</h3>
                 <p className='text-muted-foreground text-sm'>
-                  Chọn khu vực để lưu trữ hàng hóa
+                  {t('form.areaSectionDesc')}
                 </p>
               </div>
             </div>
@@ -440,7 +443,7 @@ export default function ImportList() {
             <div className='rounded-lg border p-4'>
               <Label htmlFor='area' className='mb-2 flex items-center gap-2'>
                 <MapPin className='text-muted-foreground h-4 w-4' />
-                Khu vực <span className='text-destructive'>*</span>
+                {t('form.area')} <span className='text-destructive'>*</span>
               </Label>
               <Select
                 value={formData.areaId}
@@ -449,12 +452,12 @@ export default function ImportList() {
                 }
               >
                 <SelectTrigger id='area' className='h-11'>
-                  <SelectValue placeholder='Chọn khu vực lưu trữ...' />
+                  <SelectValue placeholder={t('form.areaPlaceholder')} />
                 </SelectTrigger>
                 <SelectContent>
                   {areas.length === 0 ? (
                     <div className='text-muted-foreground p-4 text-center text-sm'>
-                      Không có khu vực nào
+                      {t('form.noAreas')}
                     </div>
                   ) : (
                     areas.map((area) => (
@@ -478,9 +481,9 @@ export default function ImportList() {
                 <Hash className='h-4 w-4' />
               </div>
               <div>
-                <h3 className='font-semibold'>Thông tin nhập kho</h3>
+                <h3 className='font-semibold'>{t('form.quantitySection')}</h3>
                 <p className='text-muted-foreground text-sm'>
-                  Nhập số lượng thực tế và ngày hết hạn
+                  {t('form.quantitySectionDesc')}
                 </p>
               </div>
             </div>
@@ -488,48 +491,78 @@ export default function ImportList() {
             <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
               <div className='rounded-lg border p-4'>
                 <Label
-                  htmlFor='realityQuantity'
+                  htmlFor='damagedQuantity'
                   className='mb-2 flex items-center gap-2'
                 >
                   <Hash className='text-muted-foreground h-4 w-4' />
-                  Số lượng thực tế <span className='text-destructive'>*</span>
+                  {t('form.damagedQuantity')}
                 </Label>
                 <Input
-                  id='realityQuantity'
+                  id='damagedQuantity'
                   type='number'
                   min={0}
+                  max={selectedBatch?.quantity || 0}
                   step='1'
-                  value={formData.realityQuantity || ''}
+                  value={formData.damagedQuantity || ''}
                   onChange={(e) =>
                     setFormData({
                       ...formData,
-                      realityQuantity: parseFloat(e.target.value) || 0
+                      damagedQuantity: parseFloat(e.target.value) || 0
                     })
                   }
-                  placeholder='Nhập số lượng'
+                  placeholder={t('form.damagedQuantityPlaceholder')}
                   className='h-11'
+                  disabled={!selectedBatch}
                 />
-                {selectedBatch && formData.realityQuantity > 0 && (
-                  <div className='mt-2'>
-                    {formData.realityQuantity === selectedBatch.quantity ? (
+                {selectedBatch && (
+                  <div className='mt-3 space-y-2'>
+                    <div className='flex items-center justify-between rounded-md bg-gray-50 p-2 dark:bg-gray-900'>
+                      <span className='text-muted-foreground text-sm'>
+                        {t('form.batchQuantityLabel')}:
+                      </span>
+                      <span className='font-medium'>
+                        {selectedBatch.quantity} {selectedBatch.unit}
+                      </span>
+                    </div>
+                    <div className='flex items-center justify-between rounded-md bg-gray-50 p-2 dark:bg-gray-900'>
+                      <span className='text-muted-foreground text-sm'>
+                        {t('form.damagedQuantityLabel')}:
+                      </span>
+                      <span className='font-medium text-red-600'>
+                        -{formData.damagedQuantity} {selectedBatch.unit}
+                      </span>
+                    </div>
+                    <div className='flex items-center justify-between rounded-md bg-green-50 p-2 dark:bg-green-900/30'>
+                      <span className='text-sm font-medium'>
+                        {t('form.realityQuantityLabel')}:
+                      </span>
+                      <span className='font-bold text-green-600'>
+                        {(
+                          selectedBatch.quantity - formData.damagedQuantity
+                        ).toFixed(2)}{' '}
+                        {selectedBatch.unit}
+                      </span>
+                    </div>
+                    {formData.damagedQuantity === 0 && (
                       <Badge className='bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'>
-                        Khớp với số lượng lô hàng
+                        {t('form.noDamage')}
                       </Badge>
-                    ) : formData.realityQuantity < selectedBatch.quantity ? (
-                      <Badge className='bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'>
-                        Thiếu{' '}
-                        {(
-                          selectedBatch.quantity - formData.realityQuantity
-                        ).toFixed(2)}{' '}
-                        {selectedBatch.unit}
-                      </Badge>
-                    ) : (
-                      <Badge className='bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300'>
-                        Dư{' '}
-                        {(
-                          formData.realityQuantity - selectedBatch.quantity
-                        ).toFixed(2)}{' '}
-                        {selectedBatch.unit}
+                    )}
+                    {formData.damagedQuantity > 0 &&
+                      formData.damagedQuantity < selectedBatch.quantity && (
+                        <Badge className='bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300'>
+                          {t('form.damagePercent', {
+                            percent: (
+                              (formData.damagedQuantity /
+                                selectedBatch.quantity) *
+                              100
+                            ).toFixed(1)
+                          })}
+                        </Badge>
+                      )}
+                    {formData.damagedQuantity >= selectedBatch.quantity && (
+                      <Badge className='bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'>
+                        {t('form.invalidDamagedQuantity')}
                       </Badge>
                     )}
                   </div>
@@ -542,7 +575,8 @@ export default function ImportList() {
                   className='mb-2 flex items-center gap-2'
                 >
                   <Calendar className='text-muted-foreground h-4 w-4' />
-                  Ngày hết hạn <span className='text-destructive'>*</span>
+                  {t('form.expiredAt')}{' '}
+                  <span className='text-destructive'>*</span>
                 </Label>
                 <DateTimePicker
                   value={formData.expiredAt ?? undefined}
@@ -552,7 +586,7 @@ export default function ImportList() {
                       expiredAt: value || null
                     })
                   }
-                  placeholder='Chọn ngày hết hạn...'
+                  placeholder={t('form.expiredAtPlaceholder')}
                   className='h-11'
                 />
               </div>
@@ -568,16 +602,15 @@ export default function ImportList() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+            <AlertDialogTitle>{t('deleteDialog.title')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Bạn có chắc chắn muốn xóa phiếu nhập kho này? Hành động này không
-              thể hoàn tác.
+              {t('deleteDialog.description')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogCancel>{t('cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={confirmDeleteTicket}>
-              Xóa
+              {t('deleteDialog.confirm')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
