@@ -435,11 +435,11 @@
       "confirm": "Có, hủy lô"
     },
     "new": {
-      "title": "Tạo lô thu hoạch mới",
+      "title": "Tạo đơn chào hàng mới",
       "subtitle": "Chọn sản phẩm và nhập thông tin thu hoạch",
       "steps": {
         "products": "Chọn sản phẩm",
-        "schedule": "Lịch thu hoạch",
+        "schedule": "Đơn chào hàng",
         "review": "Xác nhận"
       },
       "products": {
@@ -457,7 +457,7 @@
         "total": "Tổng cộng"
       },
       "schedule": {
-        "title": "Lịch thu hoạch",
+        "title": "Đơn chào hàng",
         "description": "Nhập thời gian và địa điểm thu hoạch",
         "harvestDate": "Ngày thu hoạch",
         "harvestAddress": "Địa chỉ thu hoạch",
@@ -478,7 +478,7 @@
         "previous": "Quay lại",
         "next": "Tiếp theo",
         "closeMap": "Đóng bản đồ",
-        "submit": "Tạo lô thu hoạch",
+        "submit": "Tạo đơn chào hàng",
         "submitting": "Đang tạo..."
       },
       "toast": {
@@ -540,9 +540,9 @@
         "amount": "Giá trị",
         "productsLabel": "Sản phẩm trong đợt này",
         "taxWithRate": "Thuế ({rate}%):",
-        "emptyTitle": "Chưa có đợt thu hoạch",
-        "emptyDescription": "Các đợt thu hoạch sẽ xuất hiện sau khi được tạo",
-        "loading": "Đang tải đợt thu hoạch...",
+        "emptyTitle": "Chưa có đơn chào hàng",
+        "emptyDescription": "Các đơn chào hàng sẽ xuất hiện sau khi được tạo",
+        "loading": "Đang tải đơn chào hàng...",
         "invoiceInformation": "Thông tin hóa đơn",
         "totalAmount": "Tổng tiền hàng",
         "vat": "VAT",
@@ -575,7 +575,7 @@
         "totalQuantity": "Tổng khối lượng",
         "totalPriceBeforeTax": "Tổng giá trị (Chưa thuế)",
         "productsCount": "Số sản phẩm",
-        "phasesCount": "Số đợt thu hoạch"
+        "phasesCount": "Số phiên đi lấy hàng"
       },
       "extra": {
         "title": "Thông tin bổ sung",
@@ -899,10 +899,10 @@
   "Notifications": {
     "defaultTitle": "Thông báo",
     "defaultMessage": "",
-    "harvestScheduleApproved": "Đã duyệt lịch thu hoạch",
-    "harvestScheduleHasBeenApproved": "Lịch thu hoạch {harvestScheduleId} đã được duyệt",
-    "harvestScheduleCompleted": "Đã hoàn thành lịch thu hoạch",
-    "harvestScheduleHasBeenCompleted": "Lịch thu hoạch {harvestScheduleId} đã hoàn thành",
+    "harvestScheduleApproved": "Đã duyệt đơn chào hàng",
+    "harvestScheduleHasBeenApproved": "Đơn chào hàng {harvestScheduleId} đã được duyệt",
+    "harvestScheduleCompleted": "Đã hoàn thành đơn chào hàng",
+    "harvestScheduleHasBeenCompleted": "Đơn chào hàng {harvestScheduleId} đã hoàn thành",
     "orderScheduleApproved": "Đã duyệt đơn",
     "orderScheduleHasBeenApproved": "Lịch đặt hàng {orderScheduleId} đã được duyệt",
     "orderScheduleCompleted": "Đã hoàn thành đơn",
@@ -1184,9 +1184,9 @@
   "Breadcrumbs": {
     "dashboard": "Bảng điều khiển",
     "products": "Sản phẩm",
-    "harvestBatches": "Đợt thu hoạch",
-    "newHarvestBatch": "Tạo đợt thu hoạch mới",
-    "harvestBatchDetails": "Chi tiết đợt thu hoạch",
+    "harvestBatches": "Đơn chào hàng",
+    "newHarvestBatch": "Tạo đơn chào hàng mới",
+    "harvestBatchDetails": "Chi tiết đơn chào hàng",
     "profile": "Hồ sơ",
     "orders": "Đơn hàng",
     "newOrder": "Tạo đơn hàng mới",
