@@ -1197,6 +1197,31 @@
         "success": "Thương lượng giá thành công",
         "error": "Không thể thương lượng giá"
       }
+    },
+    "createPickupDialog": {
+      "title": "Tạo chuyến giao hàng - Đợt {phaseNumber}",
+      "description": "Tạo chuyến giao hàng mới cho đợt thu hoạch #{phaseNumber}",
+      "phaseInfo": "Thông tin đợt thu hoạch",
+      "phase": "Đợt",
+      "phaseNumber": "Đợt {number}",
+      "supplier": "Nhà vườn",
+      "harvestDate": "Ngày thu hoạch",
+      "address": "Địa chỉ",
+      "products": "Sản phẩm",
+      "productLabel": "Sản phẩm",
+      "selectTruck": "Chọn xe",
+      "noTrucksAvailable": "Không có xe khả dụng",
+      "selectTruckPlaceholder": "Chọn xe giao hàng",
+      "selectStaff": "Chọn nhân viên giao hàng",
+      "selectStaffPlaceholder": "Chọn nhân viên",
+      "noStaffAvailable": "Không có nhân viên hoạt động khả dụng",
+      "startAddress": "Điểm xuất phát (Kho)",
+      "loadingWarehouseAddress": "Đang tải địa chỉ kho...",
+      "notes": "Ghi chú (tùy chọn)",
+      "notesPlaceholder": "Nhập ghi chú cho chuyến giao...",
+      "cancel": "Hủy",
+      "creating": "Đang tạo...",
+      "createDelivery": "Tạo chuyến giao"
     }
   },
   "Notifications": {
@@ -2120,6 +2145,35 @@
         "totalAmount": "Tổng doanh số"
       },
       "loading": "Đang tải..."
+    }
+  },
+  "PickupPage": {
+    "title": "Quản lý giao hàng",
+    "description": "Tạo và theo dõi các chuyến thu mua hàng từ nhà vườn",
+    "viewMode": {
+      "split": "Chia đôi",
+      "list": "Danh sách"
+    },
+    "reload": "Tải lại",
+    "stats": {
+      "harvestSchedules": "Lịch thu hoạch",
+      "deliveries": "Chuyến giao",
+      "inDelivery": "Đang giao",
+      "completed": "Hoàn thành"
+    },
+    "listView": {
+      "title": "Danh sách chuyến giao hàng",
+      "description": "Tất cả các chuyến thu mua từ nhà vườn"
+    },
+    "empty": {
+      "title": "Chưa có chuyến giao hàng nào",
+      "description": "Chọn một lịch thu hoạch và tạo chuyến giao mới",
+      "switchToSplit": "Chuyển sang chế độ chia đôi"
+    },
+    "card": {
+      "phase": "Đợt {number}",
+      "delivery": "Chuyến giao",
+      "from": "Từ"
     }
   },
   "Breadcrumbs": {

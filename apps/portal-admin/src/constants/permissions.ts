@@ -193,12 +193,14 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     Permission.CREATE_PURCHASE_ORDER,
     Permission.UPDATE_PURCHASE_ORDER,
     Permission.MANAGE_PURCHASE_IMPORT,
+    Permission.MANAGE_PURCHASE_PICKUP,
 
     // Sale Order
     Permission.VIEW_SALE_ORDER,
     Permission.CREATE_SALE_ORDER,
     Permission.UPDATE_SALE_ORDER,
     Permission.MANAGE_SALE_EXPORT,
+    Permission.MANAGE_SALE_DELIVERY,
 
     // Warehouse
     Permission.VIEW_WAREHOUSE,

@@ -20,10 +20,12 @@ import { LayoutGrid, List, RefreshCw, Truck } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { RouteGuard } from '@/components/permissions';
 import { Permission } from '@/constants/permissions';
+import { useTranslations } from 'next-intl';
 
 type ViewMode = 'split' | 'list';
 
 export default function PickupPage() {
+  const t = useTranslations('PickupPage');
   const [viewMode, setViewMode] = useState<ViewMode>('split');
   const page = usePickupPage();
   // Stats calculations
@@ -68,9 +70,9 @@ export default function PickupPage() {
           {/* Header */}
           <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
             <div>
-              <h1 className='text-2xl font-bold'>Quản lý giao hàng</h1>
+              <h1 className='text-2xl font-bold'>{t('title')}</h1>
               <p className='text-muted-foreground text-sm'>
-                Tạo và theo dõi các chuyến thu mua hàng từ nhà vườn
+                {t('description')}
               </p>
             </div>
             <div className='flex items-center gap-2'>
@@ -86,14 +88,14 @@ export default function PickupPage() {
                     className='h-7 cursor-pointer gap-1.5 px-2 text-xs'
                   >
                     <LayoutGrid className='h-3.5 w-3.5' />
-                    Chia đôi
+                    {t('viewMode.split')}
                   </TabsTrigger>
                   <TabsTrigger
                     value='list'
                     className='h-7 cursor-pointer gap-1.5 px-2 text-xs'
                   >
                     <List className='h-3.5 w-3.5' />
-                    Danh sách
+                    {t('viewMode.list')}
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -107,7 +109,7 @@ export default function PickupPage() {
                 <RefreshCw
                   className={`mr-1.5 h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`}
                 />
-                Tải lại
+                {t('reload')}
               </Button>
             </div>
           </div>
@@ -117,7 +119,7 @@ export default function PickupPage() {
             <Card className='p-3'>
               <div className='flex items-center justify-between'>
                 <span className='text-muted-foreground text-xs font-medium'>
-                  Lịch thu hoạch
+                  {t('stats.harvestSchedules')}
                 </span>
                 <div className='mt-1 text-xl font-bold'>
                   {stats.totalSchedules}
@@ -128,7 +130,7 @@ export default function PickupPage() {
             <Card className='p-3'>
               <div className='flex items-center justify-between'>
                 <span className='text-muted-foreground text-xs font-medium'>
-                  Chuyến giao
+                  {t('stats.deliveries')}
                 </span>
                 <div className='mt-1 text-xl font-bold'>
                   {stats.totalPickups}
@@ -139,7 +141,7 @@ export default function PickupPage() {
             <Card className='p-3'>
               <div className='flex items-center justify-between'>
                 <span className='text-muted-foreground text-xs font-medium'>
-                  Đang giao
+                  {t('stats.inDelivery')}
                 </span>
                 <div className='mt-1 text-xl font-bold'>
                   {stats.activePickups}
@@ -150,7 +152,7 @@ export default function PickupPage() {
             <Card className='p-3'>
               <div className='flex items-center justify-between'>
                 <span className='text-muted-foreground text-xs font-medium'>
-                  Hoàn thành
+                  {t('stats.completed')}
                 </span>
                 <div className='mt-1 text-xl font-bold'>
                   {stats.completedPickups}
@@ -211,10 +213,10 @@ export default function PickupPage() {
             <Card className='flex-1 overflow-hidden'>
               <CardHeader className='px-4 py-3'>
                 <CardTitle className='text-base'>
-                  Danh sách chuyến giao hàng
+                  {t('listView.title')}
                 </CardTitle>
                 <CardDescription className='text-xs'>
-                  Tất cả các chuyến thu mua từ nhà vườn
+                  {t('listView.description')}
                 </CardDescription>
               </CardHeader>
               <CardContent className='overflow-auto px-4 py-2'>
@@ -227,10 +229,10 @@ export default function PickupPage() {
                     <div className='flex flex-col items-center justify-center py-8 text-center'>
                       <Truck className='text-muted-foreground/50 mb-2 h-12 w-12' />
                       <h3 className='text-muted-foreground text-sm font-medium'>
-                        Chưa có chuyến giao hàng nào
+                        {t('empty.title')}
                       </h3>
                       <p className='text-muted-foreground mt-1 text-xs'>
-                        Chọn một lịch thu hoạch và tạo chuyến giao mới
+                        {t('empty.description')}
                       </p>
                       <Button
                         variant='outline'
@@ -239,7 +241,7 @@ export default function PickupPage() {
                         onClick={() => setViewMode('split')}
                       >
                         <LayoutGrid className='mr-1.5 h-3.5 w-3.5' />
-                        Chuyển sang chế độ chia đôi
+                        {t('empty.switchToSplit')}
                       </Button>
                     </div>
                   ) : (
@@ -265,8 +267,11 @@ export default function PickupPage() {
                           </div>
                           <p className='text-sm font-medium'>
                             {pickup.harvestPhase?.harvestSchedule?.id
-                              ? `Đợt ${pickup.harvestPhase.phaseNumber}`
-                              : 'Chuyến giao'}
+                              ? t('card.phase', {
+                                  phaseNumber:
+                                    pickup.harvestPhase.phaseNumber ?? 0
+                                })
+                              : t('card.delivery')}
                           </p>
                           <div className='mt-2 space-y-1 text-xs'>
                             {pickup.truck && (
@@ -277,7 +282,7 @@ export default function PickupPage() {
                             )}
                             {pickup.startAddress && (
                               <div className='text-muted-foreground flex items-start gap-1.5'>
-                                <span>Từ:</span>
+                                <span>{t('card.from')}:</span>
                                 <span className='truncate'>
                                   {pickup.startAddress}
                                 </span>

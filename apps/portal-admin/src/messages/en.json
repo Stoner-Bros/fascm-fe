@@ -1199,6 +1199,31 @@
         "success": "Negotiated Price successfully",
         "error": "Failed to negotiate price"
       }
+    },
+    "createPickupDialog": {
+      "title": "Create Delivery Trip - Phase {phaseNumber}",
+      "description": "Create a new delivery trip for harvest phase #{phaseNumber}",
+      "phaseInfo": "Harvest Phase Information",
+      "phase": "Phase",
+      "phaseNumber": "Phase {number}",
+      "supplier": "Supplier",
+      "harvestDate": "Harvest Date",
+      "address": "Address",
+      "products": "Products",
+      "productLabel": "Product",
+      "selectTruck": "Select Truck",
+      "noTrucksAvailable": "No trucks available",
+      "selectTruckPlaceholder": "Select delivery truck",
+      "selectStaff": "Select Delivery Staff",
+      "selectStaffPlaceholder": "Select staff member",
+      "noStaffAvailable": "No active staff available",
+      "startAddress": "Starting Point (Warehouse)",
+      "loadingWarehouseAddress": "Loading warehouse address...",
+      "notes": "Notes (optional)",
+      "notesPlaceholder": "Enter notes for the delivery...",
+      "cancel": "Cancel",
+      "creating": "Creating...",
+      "createDelivery": "Create Delivery"
     }
   },
   "Notifications": {
@@ -2121,6 +2146,35 @@
         "totalAmount": "Total Amount"
       },
       "loading": "Loading..."
+    }
+  },
+  "PickupPage": {
+    "title": "Delivery Management",
+    "description": "Create and track pickup trips from suppliers",
+    "viewMode": {
+      "split": "Split View",
+      "list": "List View"
+    },
+    "reload": "Reload",
+    "stats": {
+      "harvestSchedules": "Harvest Schedules",
+      "deliveries": "Deliveries",
+      "inDelivery": "In Delivery",
+      "completed": "Completed"
+    },
+    "listView": {
+      "title": "Delivery List",
+      "description": "All pickup trips from suppliers"
+    },
+    "empty": {
+      "title": "No deliveries yet",
+      "description": "Select a harvest schedule and create a new delivery",
+      "switchToSplit": "Switch to Split View"
+    },
+    "card": {
+      "phase": "Phase {number}",
+      "delivery": "Delivery",
+      "from": "From"
     }
   },
   "Breadcrumbs": {
