@@ -42,8 +42,8 @@
     "export": "Xuất kho",
     "manager": "Nhà Quản lý",
     "staff": "Nhân viên kho",
-    "deliveryStaff": "Tài xế",
-    "supplier": "Nhà cung cấp",
+    "deliveryStaff": "Nhân viên vận chuyển",
+    "supplier": "Nhà Vườn",
     "consignee": "Người nhận hàng",
     "payment": "Thanh toán",
     "roleDisplay": {
@@ -57,6 +57,68 @@
       "billing": "Thanh toán",
       "notifications": "Thông báo",
       "logout": "Đăng xuất"
+    }
+  },
+  "Profile": {
+    "title": "Hồ sơ",
+    "subtitle": "Quản lý thông tin tài khoản và chi tiết hồ sơ",
+    "editProfile": "Sửa hồ sơ",
+    "cancel": "Hủy",
+    "saveChanges": "Lưu thay đổi",
+    "saving": "Đang lưu...",
+    "personalInfo": {
+      "title": "Thông tin cá nhân",
+      "description": "Thông tin tài khoản cơ bản và ảnh đại diện",
+      "firstName": "Tên",
+      "lastName": "Họ",
+      "email": "Email",
+      "emailNote": "Email không thể thay đổi ở đây. Liên hệ hỗ trợ nếu cần.",
+      "oldPassword": "Mật khẩu cũ",
+      "newPassword": "Mật khẩu mới",
+      "passwordNote": "Để trống nếu bạn không muốn thay đổi mật khẩu",
+      "role": "Vai trò",
+      "accountStatus": "Trạng thái tài khoản",
+      "accountProvider": "Nhà cung cấp tài khoản",
+      "notSet": "Chưa thiết lập"
+    },
+    "staffInfo": {
+      "title": "Thông tin nhân viên",
+      "description": "Vị trí và chi tiết công việc của bạn",
+      "position": "Vị trí",
+      "enterPosition": "Nhập vị trí của bạn"
+    },
+    "licenseInfo": {
+      "title": "Thông tin giấy phép",
+      "description": "Chi tiết giấy phép lái xe của bạn",
+      "licenseNumber": "Số giấy phép",
+      "enterLicenseNumber": "Nhập số giấy phép",
+      "licenseExpiryDate": "Ngày hết hạn giấy phép",
+      "licensePhoto": "Ảnh giấy phép"
+    },
+    "truckInfo": {
+      "title": "Thông tin xe tải",
+      "description": "Chi tiết xe tải được phân công",
+      "licensePlate": "Biển số xe",
+      "capacity": "Tải trọng xe",
+      "notAssigned": "Chưa được phân công"
+    },
+    "warehouseInfo": {
+      "title": "Thông tin kho",
+      "description": "Chi tiết kho liên kết",
+      "warehouseName": "Tên kho",
+      "warehouseAddress": "Địa chỉ kho",
+      "noWarehouse": "Chưa có kho được gán",
+      "noAddress": "Chưa có địa chỉ kho"
+    },
+    "toast": {
+      "updateSuccess": "Cập nhật hồ sơ",
+      "updateSuccessDesc": "Hồ sơ của bạn đã được cập nhật thành công.",
+      "updateError": "Cập nhật thất bại",
+      "updateErrorDesc": "Không thể cập nhật hồ sơ. Vui lòng thử lại.",
+      "uploadError": "Tải lên tệp thất bại",
+      "uploadErrorDesc": "Không thể tải lên tệp {type}. Vui lòng thử lại.",
+      "profileNotFound": "Lỗi",
+      "profileNotFoundDesc": "Không tìm thấy thông tin hồ sơ."
     }
   },
   "Payment": {
@@ -1660,10 +1722,10 @@
         "inactive": "Ngưng hoạt động"
       },
       "table": {
-        "title": "Danh sách consignee",
-        "description": "Theo dõi và chỉnh sửa tài khoản consignee.",
+        "title": "Danh sách Người nhận hàng",
+        "description": "Theo dõi và chỉnh sửa tài khoản Người nhận hàng.",
         "loading": "Đang tải dữ liệu...",
-        "empty": "Không có consignee phù hợp",
+        "empty": "Không có Người nhận hàng phù hợp",
         "columns": {
           "index": "STT",
           "organization": "Tổ chức",
@@ -1688,12 +1750,12 @@
     },
     "Suppliers": {
       "header": {
-        "title": "Quản lý tài khoản nhà cung cấp",
-        "description": "Quản lý tài khoản và thông tin nhà cung cấp"
+        "title": "Quản lý tài khoản nhà Vườn",
+        "description": "Quản lý tài khoản và thông tin nhà Vườn"
       },
       "actions": {
-        "editSupplier": "Chỉnh sửa nhà cung cấp",
-        "createSupplier": "Tạo nhà cung cấp",
+        "editSupplier": "Chỉnh sửa nhà Vườn",
+        "createSupplier": "Tạo nhà Vườn",
         "edit": "Sửa",
         "delete": "Xóa",
         "accept": "Chấp nhận",
@@ -1795,12 +1857,12 @@
     },
     "DeliveryStaffs": {
       "header": {
-        "title": "Quản lý tài khoản Tài xế",
-        "description": "Quản lý tài khoản tài xế, giấy phép và phân công"
+        "title": "Quản lý tài khoản Nhân viên vận chuyển",
+        "description": "Quản lý tài khoản nhân viên vận chuyển, giấy phép và phân công"
       },
       "actions": {
-        "editDeliveryStaff": "Chỉnh sửa Tài xế",
-        "createDeliveryStaff": "Tạo Tài xế",
+        "editDeliveryStaff": "Chỉnh sửa Nhân viên vận chuyển",
+        "createDeliveryStaff": "Tạo Nhân viên vận chuyển",
         "edit": "Sửa",
         "delete": "Xóa",
         "accept": "Chấp nhận",
@@ -1810,19 +1872,19 @@
         "creating": "Đang tạo...",
         "saveChanges": "Lưu thay đổi",
         "create": "Tạo",
-        "confirmDelete": "Bạn có chắc chắn muốn xóa tài xế này?",
+        "confirmDelete": "Bạn có chắc chắn muốn xóa nhân viên vận chuyển này?",
         "viewDetails": "Xem chi tiết",
         "close": "Đóng",
         "approve": "Duyệt",
-        "confirmApprove": "Bạn có chắc chắn muốn duyệt tài xế này?"
+        "confirmApprove": "Bạn có chắc chắn muốn duyệt nhân viên vận chuyển này?"
       },
       "dialog": {
-        "editTitle": "Cập nhật tài khoản tài xế",
-        "createTitle": "Tạo tài khoản tài xế",
+        "editTitle": "Cập nhật tài khoản nhân viên vận chuyển",
+        "createTitle": "Tạo tài khoản nhân viên vận chuyển",
         "editDescription": "Điều chỉnh thông tin giấy phép, kho/xe (tùy chọn) và tài khoản đăng nhập.",
         "createDescription": "Nhập thông tin giấy phép, kho/xe (tùy chọn) và tài khoản đăng nhập.",
-        "viewTitle": "Chi tiết Tài xế",
-        "viewDescription": "Xem thông tin chi tiết của tài xế này"
+        "viewTitle": "Chi tiết nhân viên vận chuyển",
+        "viewDescription": "Xem thông tin chi tiết của nhân viên vận chuyển này"
       },
       "form": {
         "warehouseOptional": "Kho (tùy chọn)",
@@ -1861,10 +1923,10 @@
         "inactive": "Ngưng hoạt động"
       },
       "table": {
-        "title": "Danh sách tài xế",
-        "description": "Theo dõi và chỉnh sửa tài khoản tài xế.",
+        "title": "Danh sách nhân viên vận chuyển",
+        "description": "Theo dõi và chỉnh sửa tài khoản nhân viên vận chuyển.",
         "loading": "Đang tải dữ liệu...",
-        "empty": "Không có tài xế phù hợp",
+        "empty": "Không có nhân viên vận chuyển phù hợp",
         "columns": {
           "index": "STT",
           "firstName": "Họ",
@@ -1878,15 +1940,15 @@
         }
       },
       "toast": {
-        "loadError": "Không thể tải danh sách tài xế",
+        "loadError": "Không thể tải danh sách nhân viên vận chuyển",
         "tryAgain": "Vui lòng thử lại",
-        "updateSuccess": "Đã cập nhật tài xế",
-        "createSuccess": "Đã tạo tài xế",
-        "updateError": "Không thể cập nhật tài xế",
-        "createError": "Không thể tạo tài xế",
-        "deleteSuccess": "Đã xóa tài xế",
-        "deleteError": "Không thể xóa tài xế",
-        "approveSuccess": "Đã duyệt tài xế"
+        "updateSuccess": "Đã cập nhật nhân viên vận chuyển",
+        "createSuccess": "Đã tạo nhân viên vận chuyển",
+        "updateError": "Không thể cập nhật nhân viên vận chuyển",
+        "createError": "Không thể tạo nhân viên vận chuyển",
+        "deleteSuccess": "Đã xóa nhân viên vận chuyển",
+        "deleteError": "Không thể xóa nhân viên vận chuyển",
+        "approveSuccess": "Đã duyệt nhân viên vận chuyển"
       }
     },
     "Staffs": {
@@ -2059,5 +2121,40 @@
       },
       "loading": "Đang tải..."
     }
+  },
+  "Breadcrumbs": {
+    "dashboard": "Bảng điều khiển",
+    "employee": "Nhân viên",
+    "product": "Sản phẩm",
+    "order-purchase": "Đề nghị mua hàng",
+    "order-sale": "Đơn bán hàng",
+    "order": "Đơn hàng",
+    "pickup": "Lấy hàng",
+    "delivery": "Giao hàng",
+    "import": "Nhập kho",
+    "export": "Xuất kho",
+    "payment": "Thanh toán",
+    "stock-management": "Quản lý tồn kho",
+    "category": "Danh mục",
+    "account": "Tài khoản",
+    "manager": "Nhà quản lý",
+    "staff": "Nhân viên kho",
+    "delivery-staff": "Nhân viên giao hàng",
+    "supplier": "Nhà cung cấp",
+    "consignee": "Người nhận hàng",
+    "profile": "Hồ sơ",
+    "inbound": "Nhập kho",
+    "outbound": "Xuất kho",
+    "truck": "Xe tải",
+    "kanban": "Bảng Kanban",
+    "warehouse": "Kho hàng",
+    "overview": "Tổng quan",
+    "iot-devices": "Thiết bị IoT",
+    "managers": "Nhà quản lý",
+    "staffs": "Nhân viên kho",
+    "delivery-staffs": "Nhân viên giao hàng",
+    "suppliers": "Nhà Vườn",
+    "consignees": "Người Mua Hàng",
+    "iot-device": "Thiết bị IoT"
   }
 }

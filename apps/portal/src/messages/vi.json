@@ -618,6 +618,10 @@
   },
   "Sidebar": {
     "overview": "Tổng quan",
+    "roleDisplay": {
+      "Supplier": "Nhà Vườn",
+      "Consignee": "Người nhận hàng"
+    },
     "navigation": {
       "dashboard": "Bảng điều khiển",
       "products": "Sản phẩm",
@@ -1176,5 +1180,19 @@
     "unit": {
       "kg": "kg"
     }
+  },
+  "Breadcrumbs": {
+    "dashboard": "Bảng điều khiển",
+    "products": "Sản phẩm",
+    "harvestBatches": "Đợt thu hoạch",
+    "newHarvestBatch": "Tạo đợt thu hoạch mới",
+    "harvestBatchDetails": "Chi tiết đợt thu hoạch",
+    "profile": "Hồ sơ",
+    "orders": "Đơn hàng",
+    "newOrder": "Tạo đơn hàng mới",
+    "orderDetails": "Chi tiết đơn hàng",
+    "productDetails": "Chi tiết sản phẩm",
+    "payment": "Thanh toán",
+    "supplier": " Nhà cung cấp"
   }
 }

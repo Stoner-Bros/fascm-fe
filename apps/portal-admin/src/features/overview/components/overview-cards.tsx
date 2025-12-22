@@ -139,8 +139,9 @@ export function OverviewCards() {
               </CardTitle>
               <CardAction>
                 <Badge variant='outline'>
-                  <IconChartBar className='mr-1 size-4' />
-                  {t('profitLabel')}
+                  <span className='hidden @[260px]/card:inline'>
+                    {t('profitLabel')}
+                  </span>
                 </Badge>
               </CardAction>
             </CardHeader>
