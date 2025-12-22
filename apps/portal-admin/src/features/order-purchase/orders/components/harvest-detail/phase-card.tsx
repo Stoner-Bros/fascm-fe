@@ -36,13 +36,7 @@ export function PhaseCard({ phase }: PhaseCardProps) {
           <div>
             <CardTitle className='text-lg'>
               {t('phase')} {phase.phaseNumber}:{' '}
-              {phase.description || t('noDescription')}
             </CardTitle>
-            {phase.harvestInvoice?.invoiceNumber && (
-              <p className='text-muted-foreground mt-1 text-sm'>
-                {t('invoiceNumber')}: {phase.harvestInvoice.invoiceNumber}
-              </p>
-            )}
           </div>
           <div className='flex items-center gap-2'>
             {getPhaseStatusBadge(phase.status, (key) =>
@@ -62,6 +56,11 @@ export function PhaseCard({ phase }: PhaseCardProps) {
             )}
           </div>
         </div>
+        {phase.description && (
+          <p className='text-muted-foreground mt-1 text-sm'>
+            {phase.description || t('noDescription')}
+          </p>
+        )}
       </CardHeader>
       <CardContent>
         <div className='overflow-x-auto rounded-md border'>
