@@ -45,13 +45,19 @@
     "deliveryStaff": "Tài xế",
     "supplier": "Nhà cung cấp",
     "consignee": "Người nhận hàng",
+    "payment": "Thanh toán",
+    "roleDisplay": {
+      "Admin": "Quản trị viên",
+      "Manager": "Nhà Quản lý",
+      "Staff": "Nhân viên Kho",
+      "Delivery Staff": "Nhân viên vận chuyển"
+    },
     "userMenu": {
       "profile": "Hồ sơ",
       "billing": "Thanh toán",
       "notifications": "Thông báo",
       "logout": "Đăng xuất"
-    },
-    "payment": "Thanh toán"
+    }
   },
   "Payment": {
     "status": {

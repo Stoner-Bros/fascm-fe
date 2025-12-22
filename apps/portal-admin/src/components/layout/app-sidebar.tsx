@@ -136,6 +136,13 @@ export default function AppSidebar() {
     return translationMap[title] || title;
   };
 
+  // Get role display name
+  const getRoleDisplayName = React.useCallback(() => {
+    if (!userRole) return 'FASCM';
+    const roleKey = `roleDisplay.${userRole}` as const;
+    return t(roleKey);
+  }, [userRole, t]);
+
   return (
     <Sidebar collapsible='icon'>
       <SidebarHeader>
@@ -143,6 +150,7 @@ export default function AppSidebar() {
           tenants={tenants}
           defaultTenant={activeTenant}
           onTenantSwitch={handleSwitchTenant}
+          displayName={getRoleDisplayName()}
         />
       </SidebarHeader>
       <SidebarContent className='overflow-x-hidden'>
