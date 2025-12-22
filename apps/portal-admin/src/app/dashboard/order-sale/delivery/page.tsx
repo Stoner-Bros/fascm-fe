@@ -20,10 +20,12 @@ import { LayoutGrid, List, RefreshCw, Truck } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { RouteGuard } from '@/components/permissions';
 import { Permission } from '@/constants/permissions';
+import { useTranslations } from 'next-intl';
 
 type ViewMode = 'split' | 'list';
 
 export default function DeliveryPage() {
+  const t = useTranslations('DeliveryPage');
   const [viewMode, setViewMode] = useState<ViewMode>('split');
   const page = useDeliveryPage();
 
@@ -69,9 +71,9 @@ export default function DeliveryPage() {
           {/* Header */}
           <div className='flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
             <div>
-              <h1 className='text-2xl font-bold'>Quản lý giao hàng</h1>
+              <h1 className='text-2xl font-bold'>{t('title')}</h1>
               <p className='text-muted-foreground text-sm'>
-                Tạo và theo dõi các chuyến giao hàng cho khách hàng
+                {t('description')}
               </p>
             </div>
             <div className='flex items-center gap-2'>
@@ -87,14 +89,14 @@ export default function DeliveryPage() {
                     className='h-7 cursor-pointer gap-1.5 px-2 text-xs'
                   >
                     <LayoutGrid className='h-3.5 w-3.5' />
-                    Chia đôi
+                    {t('viewMode.split')}
                   </TabsTrigger>
                   <TabsTrigger
                     value='list'
                     className='h-7 cursor-pointer gap-1.5 px-2 text-xs'
                   >
                     <List className='h-3.5 w-3.5' />
-                    Danh sách
+                    {t('viewMode.list')}
                   </TabsTrigger>
                 </TabsList>
               </Tabs>
@@ -108,7 +110,7 @@ export default function DeliveryPage() {
                 <RefreshCw
                   className={`mr-1.5 h-3.5 w-3.5 ${isLoading ? 'animate-spin' : ''}`}
                 />
-                Tải lại
+                {t('reload')}
               </Button>
             </div>
           </div>
@@ -118,7 +120,7 @@ export default function DeliveryPage() {
             <Card className='p-3'>
               <div className='flex items-center justify-between'>
                 <span className='text-muted-foreground text-xs font-medium'>
-                  Lịch giao hàng
+                  {t('stats.deliverySchedules')}
                 </span>
                 <div className='mt-1 text-xl font-bold'>
                   {stats.totalSchedules}
@@ -129,7 +131,7 @@ export default function DeliveryPage() {
             <Card className='p-3'>
               <div className='flex items-center justify-between'>
                 <span className='text-muted-foreground text-xs font-medium'>
-                  Chuyến giao
+                  {t('stats.deliveries')}
                 </span>
                 <div className='mt-1 text-xl font-bold'>
                   {stats.totalDeliveries}
@@ -140,7 +142,7 @@ export default function DeliveryPage() {
             <Card className='p-3'>
               <div className='flex items-center justify-between'>
                 <span className='text-muted-foreground text-xs font-medium'>
-                  Đang giao
+                  {t('stats.inDelivery')}
                 </span>
                 <div className='mt-1 text-xl font-bold'>
                   {stats.activeDeliveries}
@@ -151,7 +153,7 @@ export default function DeliveryPage() {
             <Card className='p-3'>
               <div className='flex items-center justify-between'>
                 <span className='text-muted-foreground text-xs font-medium'>
-                  Hoàn thành
+                  {t('stats.completed')}
                 </span>
                 <div className='mt-1 text-xl font-bold'>
                   {stats.completedDeliveries}
@@ -214,10 +216,10 @@ export default function DeliveryPage() {
             <Card className='flex-1 overflow-hidden'>
               <CardHeader className='px-4 py-3'>
                 <CardTitle className='text-base'>
-                  Danh sách chuyến giao hàng
+                  {t('listView.title')}
                 </CardTitle>
                 <CardDescription className='text-xs'>
-                  Tất cả các chuyến giao hàng cho khách hàng
+                  {t('listView.description')}
                 </CardDescription>
               </CardHeader>
               <CardContent className='overflow-auto px-4 py-2'>
@@ -230,10 +232,10 @@ export default function DeliveryPage() {
                     <div className='flex flex-col items-center justify-center py-8 text-center'>
                       <Truck className='text-muted-foreground/50 mb-2 h-12 w-12' />
                       <h3 className='text-muted-foreground text-sm font-medium'>
-                        Chưa có chuyến giao hàng nào
+                        {t('empty.title')}
                       </h3>
                       <p className='text-muted-foreground mt-1 text-xs'>
-                        Chọn một lịch giao hàng và tạo chuyến giao mới
+                        {t('empty.description')}
                       </p>
                       <Button
                         variant='outline'
@@ -242,7 +244,7 @@ export default function DeliveryPage() {
                         onClick={() => setViewMode('split')}
                       >
                         <LayoutGrid className='mr-1.5 h-3.5 w-3.5' />
-                        Chuyển sang chế độ chia đôi
+                        {t('empty.switchToSplit')}
                       </Button>
                     </div>
                   ) : (
@@ -268,8 +270,10 @@ export default function DeliveryPage() {
                           </div>
                           <p className='text-sm font-medium'>
                             {delivery.orderPhase?.phaseNumber
-                              ? `Đợt ${delivery.orderPhase.phaseNumber}`
-                              : 'Chuyến giao'}
+                              ? t('card.phase', {
+                                  number: delivery.orderPhase.phaseNumber
+                                })
+                              : t('card.delivery')}
                           </p>
                           <div className='mt-2 space-y-1 text-xs'>
                             {delivery.truck && (
@@ -280,7 +284,7 @@ export default function DeliveryPage() {
                             )}
                             {delivery.startAddress && (
                               <div className='text-muted-foreground flex items-start gap-1.5'>
-                                <span>Từ:</span>
+                                <span>{t('card.from')}:</span>
                                 <span className='truncate'>
                                   {delivery.startAddress}
                                 </span>

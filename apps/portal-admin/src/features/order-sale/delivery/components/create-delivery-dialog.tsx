@@ -29,6 +29,7 @@ import {
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
+import { useTranslations } from 'next-intl';
 
 interface CreateDeliveryDialogProps {
   open: boolean;
@@ -77,6 +78,7 @@ export function CreateDeliveryDialog({
   isSubmitting
 }: CreateDeliveryDialogProps) {
   const { fullInfo } = useAuth();
+  const t = useTranslations('Orders.createDeliveryDialog');
   const [selectedTruckId, setSelectedTruckId] = useState<string>('');
   const [selectedStaffId, setSelectedStaffId] = useState<string>('');
   const [startAddress, setStartAddress] = useState<string>('');
@@ -91,6 +93,11 @@ export function CreateDeliveryDialog({
   // Filter available trucks
   const availableTrucks = trucks.filter(
     (t) => t.status === 'available' || t.status === 'in_use'
+  );
+
+  // Filter active delivery staff only
+  const activeDeliveryStaffs = deliveryStaffs.filter(
+    (staff) => staff.user?.status?.id === 1
   );
 
   const handleSubmit = async () => {
@@ -125,7 +132,7 @@ export function CreateDeliveryDialog({
   const footerContent = (
     <div className='flex items-center justify-end gap-2'>
       <Button variant='outline' onClick={handleClose} disabled={isSubmitting}>
-        Hủy
+        {t('cancel')}
       </Button>
       <Button
         onClick={handleSubmit}
@@ -134,12 +141,12 @@ export function CreateDeliveryDialog({
         {isSubmitting ? (
           <>
             <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-            Đang tạo...
+            {t('creating')}
           </>
         ) : (
           <>
             <TruckIcon className='mr-2 h-4 w-4' />
-            Tạo chuyến giao
+            {t('createDelivery')}
           </>
         )}
       </Button>
@@ -148,8 +155,8 @@ export function CreateDeliveryDialog({
 
   return (
     <Modal
-      title={`Tạo chuyến giao hàng - Đợt ${phase.phaseNumber}`}
-      description={`Tạo chuyến giao hàng mới cho đợt giao hàng #${phase.phaseNumber}`}
+      title={t('title', { phaseNumber: phase.phaseNumber ?? 0 })}
+      description={t('description', { phaseNumber: phase.phaseNumber ?? 0 })}
       isOpen={open}
       onClose={handleClose}
       footer={footerContent}
@@ -157,7 +164,7 @@ export function CreateDeliveryDialog({
       <div className='space-y-4'>
         {/* Phase Info Summary */}
         <div className='bg-muted/30 rounded-md border p-3'>
-          <h4 className='mb-2 text-sm font-medium'>Thông tin đợt giao hàng</h4>
+          <h4 className='mb-2 text-sm font-medium'>{t('phaseInfo')}</h4>
           <div className='grid gap-2 text-sm'>
             <div className='flex items-center justify-between'>
               <span className='text-muted-foreground'>Đợt:</span>
@@ -188,7 +195,7 @@ export function CreateDeliveryDialog({
               <div className='flex items-start justify-between gap-4'>
                 <span className='text-muted-foreground flex items-center gap-1'>
                   <MapPin className='h-3 w-3' />
-                  Địa chỉ:
+                  {t('address')}:
                 </span>
                 <span className='text-right text-xs'>{schedule.address}</span>
               </div>
@@ -198,7 +205,7 @@ export function CreateDeliveryDialog({
                 <div className='mt-1 border-t pt-2'>
                   <span className='text-muted-foreground mb-1.5 flex items-center gap-1'>
                     <Package className='h-3 w-3' />
-                    Sản phẩm:
+                    {t('products')}:
                   </span>
                   <div className='space-y-1'>
                     {phase.orderInvoiceDetails.map((detail, idx) => (
@@ -206,7 +213,7 @@ export function CreateDeliveryDialog({
                         key={detail.id || idx}
                         className='flex items-center justify-between text-xs'
                       >
-                        <span>{detail.product?.name || 'Sản phẩm'}</span>
+                        <span>{detail.product?.name || t('productLabel')}</span>
                         <span className='font-medium'>
                           {detail.quantity} {detail.unit}
                         </span>
@@ -222,7 +229,7 @@ export function CreateDeliveryDialog({
         <div className='space-y-1.5'>
           <Label htmlFor='truck' className='flex items-center gap-1.5 text-sm'>
             <TruckIcon className='h-3.5 w-3.5' />
-            Chọn xe <span className='text-destructive'>*</span>
+            {t('selectTruck')} <span className='text-destructive'>*</span>
           </Label>
           {trucksLoading ? (
             <Skeleton className='h-9 w-full' />
@@ -236,15 +243,15 @@ export function CreateDeliveryDialog({
                 <SelectValue
                   placeholder={
                     availableTrucks.length === 0
-                      ? 'Không có xe khả dụng'
-                      : 'Chọn xe giao hàng'
+                      ? t('noTrucksAvailable')
+                      : t('selectTruckPlaceholder')
                   }
                 />
               </SelectTrigger>
               <SelectContent>
                 {availableTrucks.length === 0 ? (
                   <div className='text-muted-foreground p-3 text-center text-sm'>
-                    Không có xe khả dụng
+                    {t('noTrucksAvailable')}
                   </div>
                 ) : (
                   availableTrucks.map((truck) => (
@@ -289,22 +296,22 @@ export function CreateDeliveryDialog({
         <div className='space-y-1.5'>
           <Label htmlFor='staff' className='flex items-center gap-1.5 text-sm'>
             <User className='h-3.5 w-3.5' />
-            Chọn nhân viên giao hàng <span className='text-destructive'>*</span>
+            {t('selectStaff')} <span className='text-destructive'>*</span>
           </Label>
           {deliveryStaffsLoading ? (
             <Skeleton className='h-9 w-full' />
           ) : (
             <Select value={selectedStaffId} onValueChange={setSelectedStaffId}>
               <SelectTrigger id='staff' className='h-9'>
-                <SelectValue placeholder='Chọn nhân viên' />
+                <SelectValue placeholder={t('selectStaffPlaceholder')} />
               </SelectTrigger>
               <SelectContent>
-                {deliveryStaffs.length === 0 ? (
+                {activeDeliveryStaffs.length === 0 ? (
                   <div className='text-muted-foreground p-3 text-center text-sm'>
-                    Không có nhân viên khả dụng
+                    {t('noStaffAvailable')}
                   </div>
                 ) : (
-                  deliveryStaffs.map((staff) => (
+                  activeDeliveryStaffs.map((staff) => (
                     <SelectItem key={staff.id} value={staff.id}>
                       <div className='flex items-center gap-2'>
                         <User className='text-muted-foreground h-3.5 w-3.5' />
@@ -330,7 +337,7 @@ export function CreateDeliveryDialog({
             className='flex items-center gap-1.5 text-sm'
           >
             <MapPin className='h-3.5 w-3.5' />
-            Điểm xuất phát (Kho)
+            {t('startAddress')}
           </Label>
           <Input
             id='startAddress'
@@ -338,7 +345,7 @@ export function CreateDeliveryDialog({
             disabled
             readOnly
             placeholder={
-              fullInfo?.warehouse?.address || 'Đang tải địa chỉ kho...'
+              fullInfo?.warehouse?.address || t('loadingWarehouseAddress')
             }
             className='bg-muted h-9'
           />
@@ -347,13 +354,13 @@ export function CreateDeliveryDialog({
         {/* Notes (Optional) */}
         <div className='space-y-1.5'>
           <Label htmlFor='notes' className='text-sm'>
-            Ghi chú (tùy chọn)
+            {t('notes')}
           </Label>
           <Textarea
             id='notes'
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder='Nhập ghi chú cho chuyến giao...'
+            placeholder={t('notesPlaceholder')}
             rows={2}
           />
         </div>
