@@ -52,12 +52,12 @@ export function OrderInfoCard({ schedule }: OrderInfoCardProps) {
             <p className='mt-2 font-medium'>{schedule.address || '-'}</p>
           </div>
         </div>
-        {schedule.description && (
+        {schedule?.description?.split(' --wh-- ')[0] && (
           <div>
             <Label className='text-muted-foreground text-sm'>
               {t('description')}
             </Label>
-            <p className='mt-2'>{schedule.description}</p>
+            <p className='mt-2'>{schedule.description.split(' --wh-- ')[0]}</p>
           </div>
         )}
         {schedule.reason && (

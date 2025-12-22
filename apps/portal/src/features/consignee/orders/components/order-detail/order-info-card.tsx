@@ -134,13 +134,13 @@ export function OrderInfoCard({
               </p>
             </div>
           </div>
-          {orderSchedule.description && (
+          {orderSchedule?.description?.split(' --wh-- ')[0] && (
             <div className='mt-3'>
               <p className='text-muted-foreground mb-1 text-xs'>
                 {t('detail.overview.description')}
               </p>
               <p className='bg-muted/50 rounded-md border p-3 text-sm'>
-                {orderSchedule.description}
+                {orderSchedule.description.split(' --wh-- ')[0]}
               </p>
             </div>
           )}

@@ -1,6 +1,7 @@
 import { OrderScheduleStatus } from '@/types/order';
 import type { Product } from '@/types/product';
 import type { Batch } from '@/types/batch';
+import type { Warehouse } from '@/types/warehouse';
 
 // Order List Types
 export type OrderScheduleRow = {
@@ -58,6 +59,8 @@ export type Step = 'products' | 'delivery' | 'review';
 export type NewOrderState = {
   currentStep: Step;
   products: Product[];
+  warehouses: Warehouse[];
+  selectedWarehouseId: string;
   productBatches: Record<string, Batch[]>;
   orderLines: OrderLine[];
   selectedProducts: Set<string>;
@@ -73,6 +76,8 @@ export type NewOrderState = {
 export type NewOrderAction =
   | { type: 'SET_STEP'; payload: Step }
   | { type: 'SET_PRODUCTS'; payload: Product[] }
+  | { type: 'SET_WAREHOUSES'; payload: Warehouse[] }
+  | { type: 'SET_SELECTED_WAREHOUSE'; payload: string }
   | {
       type: 'SET_PRODUCT_BATCHES';
       payload: { productId: string; batches: Batch[] };

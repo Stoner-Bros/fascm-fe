@@ -1,4 +1,5 @@
 import { fetchJSON } from '@/lib/client';
+import { useAuthStore } from '@/stores/auth.store';
 import type { InfinityPaginationResponse } from '@/types/common';
 
 export type ExportTicket = {
@@ -40,6 +41,8 @@ export async function fetchExportTickets({
     page: String(page),
     limit: String(limit)
   });
+  const warehouseId = useAuthStore.getState().fullInfo?.warehouse?.id;
+  if (warehouseId) params.set('warehouseId', warehouseId);
   return fetchJSON<InfinityPaginationResponse<ExportTicket>>(
     `${BASE_PATH}?${params.toString()}`
   );

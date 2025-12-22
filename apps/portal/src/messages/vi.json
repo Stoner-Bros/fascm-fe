@@ -827,6 +827,9 @@
       "products": {
         "title": "Chọn sản phẩm",
         "description": "Chọn các sản phẩm bạn muốn đặt hàng",
+        "selectWarehouse": "Chọn kho hàng",
+        "selectWarehousePlaceholder": "Chọn kho hàng...",
+        "selectWarehouseFirst": "Vui lòng chọn kho hàng trước để xem các sản phẩm có sẵn",
         "selected": "Đã chọn",
         "empty": "Không có sản phẩm nào",
         "name": "Tên sản phẩm",

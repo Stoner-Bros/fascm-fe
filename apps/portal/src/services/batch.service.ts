@@ -20,7 +20,7 @@ export async function createBatch(body: CreateBatchDto) {
 export async function fetchBatches({
   page = 1,
   limit = 10,
-  importTicketId,
+  warehouseId,
   productId,
   areaId
 }: FindAllBatchesDto = {}) {
@@ -29,28 +29,12 @@ export async function fetchBatches({
     limit: String(limit)
   });
 
-  if (importTicketId) params.set('importTicketId', importTicketId);
+  if (warehouseId) params.set('warehouseId', warehouseId);
   if (productId) params.set('productId', productId);
   if (areaId) params.set('areaId', areaId);
 
   return fetchJSON<InfinityPaginationResponse<Batch>>(
     `${BASE_PATH}/filter/by-params?${params.toString()}`
-  );
-}
-
-export async function fetchBatchesGroupedByWeight({
-  importTicketId,
-  productId,
-  areaId
-}: Omit<FindAllBatchesDto, 'page' | 'limit' | 'search'> = {}) {
-  const params = new URLSearchParams();
-
-  if (importTicketId) params.set('importTicketId', importTicketId);
-  if (productId) params.set('productId', productId);
-  if (areaId) params.set('areaId', areaId);
-
-  return fetchJSON<any[]>(
-    `${BASE_PATH}/grouped/by-weight?${params.toString()}`
   );
 }
 

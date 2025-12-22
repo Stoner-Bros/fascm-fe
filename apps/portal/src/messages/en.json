@@ -827,6 +827,9 @@
       "products": {
         "title": "Select Products",
         "description": "Select the products you want to order",
+        "selectWarehouse": "Select Warehouse",
+        "selectWarehousePlaceholder": "Choose a warehouse...",
+        "selectWarehouseFirst": "Please select a warehouse first to view available products",
         "selected": "Selected",
         "empty": "No products available",
         "name": "Product Name",

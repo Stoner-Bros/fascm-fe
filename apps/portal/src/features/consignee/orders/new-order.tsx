@@ -52,6 +52,7 @@ import { cn } from '@/lib/utils';
 import { createOrderSchedule } from '@/services/order-schedule.service';
 import { fetchProducts } from '@/services/product.service';
 import { fetchBatches } from '@/services/batch.service';
+import { fetchWarehouses } from '@/services/warehouse.service';
 
 // Types
 import type { Product, ProductPrice } from '@/types/product';
@@ -82,6 +83,8 @@ const getInitialState = (): NewOrderState => {
   return {
     currentStep: 'products',
     products: [],
+    warehouses: [],
+    selectedWarehouseId: '',
     productBatches: {},
     orderLines: [],
     selectedProducts: new Set<string>(),
@@ -106,6 +109,18 @@ const newOrderReducer = (
 
     case 'SET_PRODUCTS':
       return { ...state, products: action.payload, loading: false };
+
+    case 'SET_WAREHOUSES':
+      return { ...state, warehouses: action.payload };
+
+    case 'SET_SELECTED_WAREHOUSE':
+      return {
+        ...state,
+        selectedWarehouseId: action.payload,
+        productBatches: {},
+        orderLines: [],
+        selectedProducts: new Set<string>()
+      };
 
     case 'SET_PRODUCT_BATCHES':
       return {
@@ -432,6 +447,18 @@ export default function NewOrderPage() {
     if (didFetchRef.current) return;
     didFetchRef.current = true;
 
+    // Fetch warehouses
+    fetchWarehouses({ page: 1, limit: 100 })
+      .then((warehousesRes) => {
+        const warehousesData = Array.isArray(warehousesRes?.data)
+          ? warehousesRes.data
+          : [];
+        dispatch({ type: 'SET_WAREHOUSES', payload: warehousesData });
+      })
+      .catch((err) => {
+        console.error('Failed to fetch warehouses', err);
+      });
+
     fetchProducts({ page: 1, limit: 100 })
       .then((productsRes) => {
         const productsData = Array.isArray(productsRes?.data)
@@ -501,8 +528,20 @@ export default function NewOrderPage() {
     const isSelected = state.selectedProducts.has(product.id);
 
     if (!isSelected) {
-      // Fetch batches
-      fetchBatches({ productId: product.id, limit: 100 })
+      // Fetch batches with warehouseId if selected
+      const fetchParams: {
+        productId: string;
+        limit: number;
+        warehouseId?: string;
+      } = {
+        productId: product.id,
+        limit: 100
+      };
+      if (state.selectedWarehouseId) {
+        fetchParams.warehouseId = state.selectedWarehouseId;
+      }
+
+      fetchBatches(fetchParams)
         .then((res) => {
           const batches = res?.data || [];
           dispatch({
@@ -653,8 +692,14 @@ export default function NewOrderPage() {
 
       const orderDetails: CreateOrderDetailDto[] = Object.values(groupedLines);
 
+      // Build description with warehouseId appended
+      let finalDescription = state.orderDescription || '';
+      if (state.selectedWarehouseId) {
+        finalDescription = `${finalDescription} --wh-- ${state.selectedWarehouseId}`;
+      }
+
       const payload: CreateOrderScheduleDto = {
-        description: state.orderDescription || null,
+        description: finalDescription || null,
         deliveryDate: new Date(state.deliveryDate).toISOString(),
         address: state.deliveryAddress,
         order: orderData,
@@ -786,7 +831,50 @@ export default function NewOrderPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {state.products.length === 0 ? (
+                {/* Warehouse Selector */}
+                {state.warehouses.length > 0 && (
+                  <div className='mb-6'>
+                    <Label htmlFor='warehouse-select' className='mb-2 block'>
+                      {t('newOrder.products.selectWarehouse')}
+                    </Label>
+                    <Select
+                      value={state.selectedWarehouseId}
+                      onValueChange={(val) =>
+                        dispatch({
+                          type: 'SET_SELECTED_WAREHOUSE',
+                          payload: val
+                        })
+                      }
+                    >
+                      <SelectTrigger
+                        id='warehouse-select'
+                        className='w-full max-w-md'
+                      >
+                        <SelectValue
+                          placeholder={t(
+                            'newOrder.products.selectWarehousePlaceholder'
+                          )}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {state.warehouses.map((warehouse) => (
+                          <SelectItem key={warehouse.id} value={warehouse.id}>
+                            {warehouse.name} - {warehouse.address}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {!state.selectedWarehouseId ? (
+                  <div className='flex flex-col items-center justify-center py-12 text-center'>
+                    <IconPackage className='text-muted-foreground mb-4 h-12 w-12' />
+                    <p className='text-muted-foreground'>
+                      {t('newOrder.products.selectWarehouseFirst')}
+                    </p>
+                  </div>
+                ) : state.products.length === 0 ? (
                   <div className='flex flex-col items-center justify-center py-12 text-center'>
                     <IconPackage className='text-muted-foreground mb-4 h-12 w-12' />
                     <p className='text-muted-foreground'>

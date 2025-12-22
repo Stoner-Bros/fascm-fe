@@ -1,6 +1,7 @@
 import { fetchJSON } from '@/lib/client';
 import type { FindAllOrderSchedulesDto, OrderSchedule } from '@/types/order';
 import type { InfinityPaginationResponse } from '../types/common';
+import { useAuthStore } from '@/stores/auth.store';
 
 export async function fetchOrderSchedules({
   page = 1,
@@ -12,8 +13,10 @@ export async function fetchOrderSchedules({
     page: String(page),
     limit: String(limit)
   });
+  const warehouseId = useAuthStore.getState().fullInfo?.warehouse?.id;
   if (status) params.set('status', status);
   if (sort) params.set('sort', sort);
+  if (warehouseId) params.set('warehouseId', warehouseId);
 
   return fetchJSON<InfinityPaginationResponse<OrderSchedule>>(
     `/order-schedules?${params.toString()}`

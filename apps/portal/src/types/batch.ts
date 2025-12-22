@@ -60,7 +60,7 @@ export type UpdateBatchDto = Partial<CreateBatchDto>;
 export type FindAllBatchesDto = {
   page?: number;
   limit?: number;
-  importTicketId?: string;
+  warehouseId?: string;
   productId?: string;
   areaId?: string;
 };
