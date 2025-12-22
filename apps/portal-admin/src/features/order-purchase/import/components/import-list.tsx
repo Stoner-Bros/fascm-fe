@@ -77,7 +77,12 @@ export default function ImportList() {
   });
 
   const handleCreate = async () => {
-    if (!formData.inboundBatchId || !formData.areaId || !selectedBatch) {
+    if (
+      !formData.inboundBatchId ||
+      !formData.areaId ||
+      !selectedBatch ||
+      !formData.expiredAt
+    ) {
       return;
     }
 
@@ -91,12 +96,9 @@ export default function ImportList() {
     const payload: any = {
       inboundBatch: { id: formData.inboundBatchId },
       area: { id: formData.areaId },
-      realityQuantity: realityQuantity
+      realityQuantity: realityQuantity,
+      expiredAt: new Date(formData.expiredAt).toISOString()
     };
-
-    if (formData.expiredAt) {
-      payload.expiredAt = new Date(formData.expiredAt).toISOString();
-    }
 
     await createITicket(payload);
     setFormData({
@@ -305,6 +307,7 @@ export default function ImportList() {
                 disabled={
                   !formData.inboundBatchId ||
                   !formData.areaId ||
+                  !formData.expiredAt ||
                   !selectedBatch ||
                   (selectedBatch &&
                     formData.damagedQuantity >= selectedBatch.quantity) ||
@@ -580,6 +583,8 @@ export default function ImportList() {
                 </Label>
                 <DateTimePicker
                   value={formData.expiredAt ?? undefined}
+                  required
+                  disablePast
                   onChange={(value) =>
                     setFormData({
                       ...formData,

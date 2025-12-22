@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { CalendarIcon } from '@radix-ui/react-icons';
-import { format } from 'date-fns';
+import { format, isBefore, startOfDay } from 'date-fns';
 
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -19,13 +19,18 @@ type DateTimePickerProps = {
   onChange?: (value: string) => void;
   placeholder?: string;
   className?: string;
+  required?: boolean;
+  // When true, user cannot select a date/time before the current moment
+  disablePast?: boolean;
 };
 
 export function DateTimePicker({
   value,
   onChange,
   placeholder,
-  className
+  className,
+  required,
+  disablePast
 }: DateTimePickerProps) {
   const [date, setDate] = React.useState<Date | undefined>(
     value ? (typeof value === 'string' ? new Date(value) : value) : undefined
@@ -33,6 +38,9 @@ export function DateTimePicker({
   const [isOpen, setIsOpen] = React.useState(false);
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
+  const now = new Date();
+  const isToday =
+    date && startOfDay(date).getTime() === startOfDay(now).getTime();
   const handleDateSelect = (selectedDate: Date | undefined) => {
     if (selectedDate) {
       // preserve time part if already set
@@ -92,6 +100,7 @@ export function DateTimePicker({
             !date && 'text-muted-foreground',
             className
           )}
+          aria-required={required}
         >
           <CalendarIcon className='mr-2 h-4 w-4' />
           {date ? (
@@ -107,44 +116,67 @@ export function DateTimePicker({
             mode='single'
             selected={date}
             onSelect={handleDateSelect}
+            disabled={
+              disablePast
+                ? (d) => isBefore(d, startOfDay(new Date()))
+                : undefined
+            }
             initialFocus
           />
           <div className='flex flex-col divide-y sm:h-[300px] sm:flex-row sm:divide-x sm:divide-y-0'>
             <ScrollArea className='w-64 sm:w-auto'>
               <div className='flex p-2 sm:flex-col'>
-                {hours.reverse().map((hour) => (
-                  <Button
-                    key={hour}
-                    size='icon'
-                    variant={
-                      date && date.getHours() === hour ? 'default' : 'ghost'
-                    }
-                    className='aspect-square shrink-0 sm:w-full'
-                    onClick={() => handleTimeChange('hour', hour.toString())}
-                  >
-                    {hour}
-                  </Button>
-                ))}
+                {hours.reverse().map((hour) => {
+                  const isDisabledHour =
+                    !!disablePast && !!isToday && hour < now.getHours();
+
+                  return (
+                    <Button
+                      key={hour}
+                      size='icon'
+                      variant={
+                        date && date.getHours() === hour ? 'default' : 'ghost'
+                      }
+                      className='aspect-square shrink-0 sm:w-full'
+                      disabled={isDisabledHour}
+                      onClick={() => handleTimeChange('hour', hour.toString())}
+                    >
+                      {hour}
+                    </Button>
+                  );
+                })}
               </div>
               <ScrollBar orientation='horizontal' className='sm:hidden' />
             </ScrollArea>
             <ScrollArea className='w-64 sm:w-auto'>
               <div className='flex p-2 sm:flex-col'>
-                {Array.from({ length: 12 }, (_, i) => i * 5).map((minute) => (
-                  <Button
-                    key={minute}
-                    size='icon'
-                    variant={
-                      date && date.getMinutes() === minute ? 'default' : 'ghost'
-                    }
-                    className='aspect-square shrink-0 sm:w-full'
-                    onClick={() =>
-                      handleTimeChange('minute', minute.toString())
-                    }
-                  >
-                    {minute.toString().padStart(2, '0')}
-                  </Button>
-                ))}
+                {Array.from({ length: 12 }, (_, i) => i * 5).map((minute) => {
+                  const isDisabledMinute =
+                    !!disablePast &&
+                    !!isToday &&
+                    date &&
+                    date.getHours() === now.getHours() &&
+                    minute < now.getMinutes();
+
+                  return (
+                    <Button
+                      key={minute}
+                      size='icon'
+                      variant={
+                        date && date.getMinutes() === minute
+                          ? 'default'
+                          : 'ghost'
+                      }
+                      className='aspect-square shrink-0 sm:w-full'
+                      disabled={isDisabledMinute}
+                      onClick={() =>
+                        handleTimeChange('minute', minute.toString())
+                      }
+                    >
+                      {minute.toString().padStart(2, '0')}
+                    </Button>
+                  );
+                })}
               </div>
               <ScrollBar orientation='horizontal' className='sm:hidden' />
             </ScrollArea>
