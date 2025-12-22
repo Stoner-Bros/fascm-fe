@@ -21,6 +21,7 @@
   "Sidebar": {
     "overview": "Overview",
     "dashboard": "Dashboard",
+
     "order": "Order",
     "warehouse": "Warehouse",
     "stockManagement": "Stock Management",
@@ -2121,5 +2122,40 @@
       },
       "loading": "Loading..."
     }
+  },
+  "Breadcrumbs": {
+    "dashboard": "Dashboard",
+    "employee": "Employee",
+    "product": "Product",
+    "order-purchase": "Purchase Order",
+    "order-sale": "Sale Order",
+    "order": "Order",
+    "pickup": "Pickup",
+    "delivery": "Delivery",
+    "import": "Import",
+    "export": "Export",
+    "payment": "Payment",
+    "stock-management": "Stock Management",
+    "iot-device": "IoT Device",
+    "iot-devices": "IoT Devices",
+    "category": "Category",
+    "account": "Account",
+    "manager": "Manager",
+    "staff": "Staff",
+    "delivery-staff": "Delivery Staff",
+    "supplier": "Supplier",
+    "consignee": "Consignee",
+    "profile": "Profile",
+    "inbound": "Inbound",
+    "outbound": "Outbound",
+    "truck": "Truck",
+    "kanban": "Kanban",
+    "warehouse": "Warehouse",
+    "overview": "Overview",
+    "managers": "Managers",
+    "staffs": "Staffs",
+    "delivery-staffs": "Delivery Staffs",
+    "suppliers": "Suppliers",
+    "consignees": "Consignees"
   }
 }

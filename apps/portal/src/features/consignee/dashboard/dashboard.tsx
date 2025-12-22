@@ -117,48 +117,73 @@ export default function ConsigneeDashboardFeature() {
     switch (s) {
       case 'pending':
         return (
-          <Badge variant='outline' className='bg-yellow-50'>
+          <Badge
+            variant='outline'
+            className='bg-yellow-50 text-yellow-700 dark:bg-yellow-900 dark:text-black'
+          >
             <IconClock className='mr-1 h-3 w-3' />
             {t('status.pending')}
           </Badge>
         );
       case 'approved':
         return (
-          <Badge variant='default' className='bg-blue-50 text-blue-700'>
+          <Badge
+            variant='default'
+            className='bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+          >
             <IconCheck className='mr-1 h-3 w-3' />
             {t('status.approved')}
           </Badge>
         );
       case 'processing':
         return (
-          <Badge variant='secondary' className='bg-blue-50'>
+          <Badge
+            variant='secondary'
+            className='bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-300'
+          >
             <IconTruck className='mr-1 h-3 w-3' />
             {t('status.processing')}
           </Badge>
         );
       case 'completed':
         return (
-          <Badge variant='default' className='bg-green-50 text-green-700'>
+          <Badge
+            variant='default'
+            className='bg-green-50 text-green-700 dark:bg-green-900 dark:text-green-300'
+          >
             <IconCheck className='mr-1 h-3 w-3' />
             {t('status.completed')}
           </Badge>
         );
       case 'rejected':
         return (
-          <Badge variant='destructive'>
+          <Badge
+            variant='destructive'
+            className='bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300'
+          >
             <IconX className='mr-1 h-3 w-3' />
             {t('status.rejected')}
           </Badge>
         );
       case 'canceled':
         return (
-          <Badge variant='destructive'>
+          <Badge
+            variant='destructive'
+            className='bg-red-50 text-red-700 dark:bg-red-900 dark:text-red-300'
+          >
             <IconX className='mr-1 h-3 w-3' />
             {t('status.canceled')}
           </Badge>
         );
       default:
-        return <Badge variant='outline'>{status}</Badge>;
+        return (
+          <Badge
+            variant='outline'
+            className='bg-gray-50 text-gray-700 dark:bg-gray-900 dark:text-gray-400'
+          >
+            {status}
+          </Badge>
+        );
     }
   };
 
@@ -325,13 +350,15 @@ export default function ConsigneeDashboardFeature() {
                         href={`/consignee/orders/${schedule.id}`}
                         className='block'
                       >
-                        <div className='group hover:border-primary flex items-center justify-between rounded-lg border p-4 transition-all hover:shadow-md'>
+                        <div className='group hover:border-primary flex items-center justify-between rounded-lg border p-4 hover:shadow-md'>
                           <div className='flex-1 space-y-1'>
                             <div className='flex items-center gap-2'>
                               <p className='text-sm font-semibold'>
                                 {schedule.id}
                               </p>
-                              {getStatusBadge(schedule.status ?? 'pending')}
+                              <div className='flex items-center gap-1'>
+                                {getStatusBadge(schedule.status ?? 'pending')}
+                              </div>
                             </div>
                             <p className='text-muted-foreground text-sm'>
                               {t('recentOrders.deliveryDate')}: {deliveryDate}
