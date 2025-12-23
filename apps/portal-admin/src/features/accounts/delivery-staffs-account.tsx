@@ -189,6 +189,7 @@ export default function DeliveryStaffsAccount() {
         licensePhoto: form.licensePhoto || undefined,
         licenseExpiredAt: new Date(form.licenseExpiredAt).toISOString(),
         user: {
+          id: editingStaff?.user?.id ?? 0,
           email: form.email,
           password: form.password || '',
           firstName: form.firstName,

@@ -185,6 +185,7 @@ export default function ManagersAccount() {
         await updateManager(editingManager.id, {
           warehouse: form.warehouseId ? { id: form.warehouseId } : null,
           user: {
+            id: editingManager.user?.id ?? 0,
             email: form.email,
             password: form.password,
             firstName: form.firstName,
@@ -198,6 +199,7 @@ export default function ManagersAccount() {
         await createManager({
           warehouse: form.warehouseId ? { id: form.warehouseId } : null,
           user: {
+            id: 0,
             email: form.email,
             password: form.password,
             firstName: form.firstName,

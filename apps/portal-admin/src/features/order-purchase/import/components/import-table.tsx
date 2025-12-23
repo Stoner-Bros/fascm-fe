@@ -92,10 +92,18 @@ export function ImportTable({
       },
       {
         accessorKey: 'quantity',
-        header: 'Số lượng',
+        header: 'Số lượng nhập / thất thoát',
         cell: ({ row }) => (
           <Badge variant='outline'>
-            {row.original.quantity} {row.original.unit}
+            {row.original.quantity} {row.original.unit} |{' '}
+            <span className='text-red-500'>
+              {' '}
+              {(
+                row.original.quantity / (row.original.percent / 100) -
+                row.original.quantity
+              ).toFixed(0)}{' '}
+              {row.original.unit}{' '}
+            </span>
           </Badge>
         )
       },

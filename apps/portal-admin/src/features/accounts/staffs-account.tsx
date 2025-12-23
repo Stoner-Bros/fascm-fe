@@ -173,6 +173,7 @@ export default function StaffsAccount() {
         position: form.position,
         warehouse: form.warehouseId ? { id: form.warehouseId } : null,
         user: {
+          id: editingStaff?.user?.id ?? 0,
           email: form.email,
           password: form.password,
           firstName: form.firstName,

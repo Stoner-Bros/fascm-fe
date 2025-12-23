@@ -219,6 +219,7 @@ export default function ConsigneesAccount() {
           organizationName: form.organizationName,
           representativeName: form.representativeName,
           user: {
+            id: editingConsignee.user?.id,
             email: form.email,
             password: form.password || '',
             firstName: form.firstName,
@@ -236,6 +237,7 @@ export default function ConsigneesAccount() {
           organizationName: form.organizationName,
           representativeName: form.representativeName,
           user: {
+            id: 0,
             email: form.email,
             password: form.password,
             firstName: form.firstName,

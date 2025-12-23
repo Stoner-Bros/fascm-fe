@@ -5,9 +5,10 @@ export type InfinityPaginationResponse<T> = {
 
 export type AccountUserPayload =
   | {
-      id: string;
+      id: number;
     }
   | {
+      id: number;
       email: string;
       password: string;
       firstName: string;

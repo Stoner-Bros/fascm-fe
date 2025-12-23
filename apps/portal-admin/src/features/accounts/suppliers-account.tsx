@@ -218,6 +218,7 @@ export default function SuppliersAccount() {
           ...basePayload,
           user: {
             ...userFields,
+            id: editingSupplier.user?.id,
             password: form.password || ''
           }
         });
@@ -227,6 +228,7 @@ export default function SuppliersAccount() {
           ...basePayload,
           user: {
             ...userFields,
+            id: 0,
             password: form.password
           }
         });
