@@ -158,11 +158,6 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
     Permission.UPDATE_IOT_DEVICE,
     Permission.DELETE_IOT_DEVICE,
 
-    // Payment
-    Permission.VIEW_PAYMENT,
-    Permission.CREATE_PAYMENT,
-    Permission.UPDATE_PAYMENT,
-
     // Account (limited)
     Permission.VIEW_ACCOUNT,
     Permission.VIEW_STAFF,

@@ -3,8 +3,7 @@
 import { useToast } from '@/components/ui/use-toast';
 import {
   createPayment,
-  subscribeToPaymentStatus,
-  confirmCashPayment
+  subscribeToPaymentStatus
 } from '@/services/payment.service';
 import type { Payment } from '@/types/payment';
 import { useCallback, useEffect, useRef, useState } from 'react';

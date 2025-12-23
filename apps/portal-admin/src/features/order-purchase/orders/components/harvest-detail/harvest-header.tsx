@@ -73,15 +73,14 @@ export function HarvestHeader({
           </>
         )}
         {(status === 'approved' || status === 'processing') &&
-          hasRemainingQuantity && (
-            <PermissionGuard permission={Permission.UPDATE_PURCHASE_ORDER}>
-              <Button onClick={onCreatePhase} variant='default'>
-                <Plus className='mr-2 h-4 w-4' />
-                {t('header.createPhase')}
-              </Button>
-            </PermissionGuard>
-          )}
-        {status === 'processing' && !hasRemainingQuantity && (
+        hasRemainingQuantity ? (
+          <PermissionGuard permission={Permission.UPDATE_PURCHASE_ORDER}>
+            <Button onClick={onCreatePhase} variant='default'>
+              <Plus className='mr-2 h-4 w-4' />
+              {t('header.createPhase')}
+            </Button>
+          </PermissionGuard>
+        ) : (
           <PermissionGuard permission={Permission.UPDATE_PURCHASE_ORDER}>
             <Button onClick={onComplete} variant='default'>
               <Check className='mr-2 h-4 w-4' />
