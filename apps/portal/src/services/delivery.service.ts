@@ -11,6 +11,10 @@ export type Delivery = {
   status?: string | null;
   startTime?: string | null;
   endTime?: string | null;
+  harvestPhaseId?: string | null;
+  harvestScheduleId?: string | null;
+  orderPhaseId?: string | null;
+  orderScheduleId?: string | null;
   orderSchedule?: { id: string } | null;
   orderPhase?: { id: string } | null;
   harvestPhase?: { id: string } | null;
@@ -35,9 +39,13 @@ export async function fetchDeliveryById(id: string) {
 }
 
 export async function fetchDeliveries({
+  harvestPhaseId,
+  orderPhaseId,
   page = 1,
   limit = 100
 }: {
+  harvestPhaseId?: string;
+  orderPhaseId?: string;
   page?: number;
   limit?: number;
 } = {}) {
@@ -45,6 +53,12 @@ export async function fetchDeliveries({
     page: String(page),
     limit: String(limit)
   });
+  if (harvestPhaseId) {
+    params.append('harvestPhaseId', harvestPhaseId);
+  }
+  if (orderPhaseId) {
+    params.append('orderPhaseId', orderPhaseId);
+  }
   return fetchJSON<{
     data: Delivery[];
     page: number;
@@ -52,48 +66,56 @@ export async function fetchDeliveries({
     hasNextPage: boolean;
   }>(`/deliveries?${params.toString()}`);
 }
-//create fetchDeliveriesByHaverstSchedule
-export async function fetchDeliveriesByHarvestSchedule({
-  harvestScheduleId,
+//create fetchDeliveriesByHarvestPhase
+export async function fetchDeliveriesByHarvestPhase({
+  harvestPhaseId,
   page = 1,
   limit = 10
 }: {
-  harvestScheduleId: string;
+  harvestPhaseId: string;
   page?: number;
   limit?: number;
 }) {
   const params = new URLSearchParams({
     page: String(page),
-    limit: String(limit),
-    harvestScheduleId
+    limit: String(limit)
   });
-  return fetchJSON<{
+  params.append('harvestPhaseId', harvestPhaseId);
+  const res = await fetchJSON<{
     data: Delivery[];
     page: number;
     limit: number;
     hasNextPage: boolean;
-  }>(`/deliveries?${params.toString()}`);
+  }>(`/deliveries/with-harvest-phase?${params.toString()}`);
+
+  return {
+    ...res
+  };
 }
-export async function fetchDeliveriesByOrderSchedule({
-  orderScheduleId,
+export async function fetchDeliveriesByOrderPhase({
+  orderPhaseId,
   page = 1,
   limit = 10
 }: {
-  orderScheduleId: string;
+  orderPhaseId: string;
   page?: number;
   limit?: number;
 }) {
   const params = new URLSearchParams({
     page: String(page),
-    limit: String(limit),
-    orderScheduleId
+    limit: String(limit)
   });
-  return fetchJSON<{
+  params.append('orderPhaseId', orderPhaseId);
+  const res = await fetchJSON<{
     data: Delivery[];
     page: number;
     limit: number;
     hasNextPage: boolean;
-  }>(`/deliveries?${params.toString()}`);
+  }>(`/deliveries/with-order-phase?${params.toString()}`);
+
+  return {
+    ...res
+  };
 }
 
 export async function updateDelivery(

@@ -497,12 +497,12 @@
       "canceled": "Đã hủy"
     },
     "detail": {
-      "title": "Chi tiết lô thu hoạch",
+      "title": "Chi tiết đơn chào hàng",
       "id": "ID",
-      "loading": "Đang tải chi tiết lô thu hoạch...",
+      "loading": "Đang tải chi tiết đơn chào hàng...",
       "notFound": {
-        "title": "Không tìm thấy lô thu hoạch",
-        "description": "Không thể tìm thấy lô thu hoạch được yêu cầu.",
+        "title": "Không tìm thấy đơn chào hàng",
+        "description": "Không thể tìm thấy đơn chào hàng được yêu cầu.",
         "backButton": "Về danh sách lô"
       },
       "statusBanner": {
@@ -596,8 +596,8 @@
       },
       "toast": {
         "errorTitle": "Lỗi",
-        "errorLoadDetails": "Không thể tải chi tiết lô thu hoạch",
-        "cancelErrorDescription": "Không thể hủy lô thu hoạch {id}."
+        "errorLoadDetails": "Không thể tải chi tiết đơn chào hàng",
+        "cancelErrorDescription": "Không thể hủy đơn chào hàng {id}."
       }
     },
     "negotiation": {

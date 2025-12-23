@@ -2,6 +2,7 @@ export type HarvestPhaseStatus =
   | 'preparing'
   | 'delivering'
   | 'delivered'
+  | 'returning'
   | 'completed'
   | 'canceled';
 
