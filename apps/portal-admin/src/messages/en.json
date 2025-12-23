@@ -1281,6 +1281,7 @@
     "areaAlertResolvedWithMetrics": "Area {areaId} alert resolved (Temperature {temperature}°C{sep}Humidity {humidity}%)"
   },
   "WarehouseDetail": {
+    "alertDetected": "Area {areaId} alert detected",
     "loading": "Loading...",
     "toast": {
       "loadWarehouseError": "Unable to load warehouse information",
@@ -1369,6 +1370,7 @@
     }
   },
   "AreaDetail": {
+    "alertDetected": "Area {areaId} alert detected",
     "loading": "Loading...",
     "common": {
       "warehouse": "Warehouse"

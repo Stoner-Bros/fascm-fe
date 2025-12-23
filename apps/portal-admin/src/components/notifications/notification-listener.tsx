@@ -201,7 +201,7 @@ export default function NotificationListener() {
         addItem({
           id: nid,
           type: 'area-alert-resolved',
-          title: resolveText('areaAlert'),
+          title: resolveText('areaAlert', { areaId }),
           message: resolveText(
             temperatureFromMsg != null || humidityFromMsg != null
               ? 'areaAlertResolvedWithMetrics'
@@ -221,6 +221,49 @@ export default function NotificationListener() {
             humidity: humidityFromMsg
           }
         });
+
+        if (temperatureFromMsg == null && humidityFromMsg == null) {
+          const stop = subscribeIoTDataUpdates((payload) => {
+            const pAreaId = (payload as any)?.areaId as string | undefined;
+            if (pAreaId && String(pAreaId) !== String(areaId)) return;
+            const readings: any = (
+              typeof (payload as any)?.data === 'object'
+                ? (payload as any)?.data
+                : payload
+            ) as any;
+            const temp =
+              typeof readings?.temperature === 'number'
+                ? readings.temperature
+                : typeof (payload as any)?.temperature === 'number'
+                  ? (payload as any)?.temperature
+                  : undefined;
+            const hum =
+              typeof readings?.humidity === 'number'
+                ? readings.humidity
+                : typeof (payload as any)?.humidity === 'number'
+                  ? (payload as any)?.humidity
+                  : undefined;
+            if (temp == null && hum == null) return;
+            updateBy(
+              (n) => n.id === nid,
+              () => ({
+                data: { areaId, temperature: temp, humidity: hum },
+                message: resolveText('areaAlertResolvedWithMetrics', {
+                  areaId,
+                  temperature: temp,
+                  humidity: hum,
+                  sep: SEPARATOR
+                })
+              })
+            );
+            stop();
+          });
+          setTimeout(() => {
+            try {
+              stop();
+            } catch {}
+          }, 5000);
+        }
         return;
       }
       removeBy(
@@ -231,7 +274,7 @@ export default function NotificationListener() {
       addItem({
         id: nid,
         type: 'area-alert',
-        title: resolveText('areaAlert'),
+        title: resolveText('areaAlert', { areaId }),
         message: resolveText(
           temperatureFromMsg != null || humidityFromMsg != null
             ? 'areaAlertActiveWithMetrics'
@@ -251,7 +294,7 @@ export default function NotificationListener() {
           humidity: humidityFromMsg
         }
       });
-      if (temperature == null && humidity == null) {
+      if (temperatureFromMsg == null && humidityFromMsg == null) {
         const stop = subscribeIoTDataUpdates((payload) => {
           const pAreaId = (payload as any)?.areaId as string | undefined;
           const dId = String((payload as any)?.deviceId ?? '').trim();
@@ -279,7 +322,13 @@ export default function NotificationListener() {
               String(n.type || '') === 'area-alert' &&
               String((n as any).data?.areaId || '') === String(areaId),
             () => ({
-              data: { areaId, temperature: temp, humidity: hum }
+              data: { areaId, temperature: temp, humidity: hum },
+              message: resolveText('areaAlertActiveWithMetrics', {
+                areaId,
+                temperature: temp,
+                humidity: hum,
+                sep: SEPARATOR
+              })
             })
           );
           stop();

@@ -10,6 +10,7 @@ type State = {
 type Actions = {
   setItems: (items: Array<NotificationItem & { data?: any }>) => void;
   addItem: (item: NotificationItem & { data?: any }) => void;
+  addItemSilent: (item: NotificationItem & { data?: any }) => void;
   markRead: (id: string) => void;
   remove: (id: string) => void;
   removeBy: (
@@ -35,6 +36,10 @@ export const useNotificationsStore = create<State & Actions>((set) => ({
       items: [item, ...s.items],
       ephemeral: item,
       ephemeralVisible: true
+    })),
+  addItemSilent: (item: NotificationItem & { data?: any }) =>
+    set((s) => ({
+      items: [item, ...s.items]
     })),
   markRead: (id) =>
     set((s) => ({

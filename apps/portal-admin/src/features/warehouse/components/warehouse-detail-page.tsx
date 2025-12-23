@@ -97,6 +97,12 @@ export default function WarehouseDetailPage({
 
   const [apiWarehouse, setApiWarehouse] = useState<Warehouse | null>(null);
   const [apiAreas, setApiAreas] = useState<Area[]>([]);
+  const apiAreasRef = useRef<Area[]>([]);
+
+  useEffect(() => {
+    apiAreasRef.current = apiAreas;
+  }, [apiAreas]);
+
   const [areaBatches, setAreaBatches] = useState<Batch[]>([]);
   const [areaEnv, setAreaEnv] = useState<Record<string, EnvironmentReadings>>(
     {}
@@ -290,6 +296,34 @@ export default function WarehouseDetailPage({
       if (!aid) return;
       const status = String(payload?.status ?? '').toLowerCase();
       setAreaAlerts((prev) => ({ ...prev, [aid]: status === 'active' }));
+
+      if (status === 'active') {
+        // Toast handled by NotificationListener
+      }
+
+      if (status === 'resolved') {
+        const data = payload?.data || payload;
+        const temp = data?.currentTemperature;
+        const humid = data?.currentHumidity;
+
+        if (temp !== undefined || humid !== undefined) {
+          // Toast handled by NotificationListener
+
+          setAreaEnv((prev) => ({
+            ...prev,
+            [aid]: {
+              temperature:
+                typeof temp === 'number'
+                  ? temp
+                  : (prev[aid]?.temperature ?? null),
+              humidity:
+                typeof humid === 'number'
+                  ? humid
+                  : (prev[aid]?.humidity ?? null)
+            }
+          }));
+        }
+      }
     };
     const events = ['area-alert', 'area:alert', 'alert:update', 'alert'];
     events.forEach((evt) => socket.on(evt, onAlert));

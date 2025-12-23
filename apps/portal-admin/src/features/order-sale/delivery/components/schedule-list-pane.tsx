@@ -206,13 +206,6 @@ export function ScheduleListPane({
                         </p>
                       )}
 
-                      {/* Description */}
-                      {schedule.description && (
-                        <p className='text-muted-foreground mb-1 line-clamp-1 text-xs'>
-                          {schedule.description}
-                        </p>
-                      )}
-
                       {/* Meta info */}
                       <div className='text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px]'>
                         {schedule.deliveryDate && (

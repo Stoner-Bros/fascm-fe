@@ -186,7 +186,27 @@ function RealtimeMap({
     //   });
     //   return;
     // }
-    if (status === 'delivered' || status === 'completed') {
+    if (status === 'completed') {
+      if (!route.length || !socket) return;
+
+      const [lat, lng] = route[0];
+
+      setCurrentIndex(0);
+      setPos({ lat, lng });
+
+      socket.emit('delivery:update', {
+        deliveryId,
+        lat,
+        lng,
+        currentLat: lat,
+        currentLng: lng,
+        status: 'completed'
+      });
+
+      return;
+    }
+
+    if (status === 'delivered') {
       if (!route.length || !socket) return;
 
       const lastIndex = route.length - 1;

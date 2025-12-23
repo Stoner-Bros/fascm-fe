@@ -173,10 +173,36 @@ function RealtimeMap({
   useEffect(() => {
     if (route.length === 0) return;
 
-    if (status === 'delivered' || status === 'completed') {
+    if (status === 'completed') {
+      if (!route.length || !socket) return;
+      const [lat, lng] = route[0];
+      setCurrentIndex(0);
+      setPos({ lat, lng });
+      socket.emit('delivery:update', {
+        deliveryId,
+        lat,
+        lng,
+        currentLat: lat,
+        currentLng: lng,
+        status: 'completed'
+      });
+      return;
+    }
+
+    if (status === 'delivered') {
+      if (!route.length || !socket) return;
       const idx = route.length - 1;
+      const [lat, lng] = route[idx];
       setCurrentIndex(idx);
-      setPos({ lat: route[idx][0], lng: route[idx][1] });
+      setPos({ lat, lng });
+      socket.emit('delivery:update', {
+        deliveryId,
+        lat,
+        lng,
+        currentLat: lat,
+        currentLng: lng,
+        status: 'delivered'
+      });
       return;
     }
 
