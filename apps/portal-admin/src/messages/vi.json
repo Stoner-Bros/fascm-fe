@@ -1279,6 +1279,7 @@
     "areaAlertResolvedWithMetrics": "Cảnh báo khu vực {areaId} đã được xử lý (Nhiệt độ {temperature}°C{sep}Độ ẩm {humidity}%)"
   },
   "WarehouseDetail": {
+    "alertDetected": "Cảnh báo khu vực {areaId} đã phát hiện",
     "loading": "Đang tải...",
     "toast": {
       "loadWarehouseError": "Không thể tải thông tin kho",
@@ -1367,6 +1368,7 @@
     }
   },
   "AreaDetail": {
+    "alertDetected": "Cảnh báo khu vực {areaId} đã được phát hiện",
     "loading": "Đang tải...",
     "common": {
       "warehouse": "Kho"

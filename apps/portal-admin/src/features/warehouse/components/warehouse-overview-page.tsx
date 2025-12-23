@@ -33,9 +33,13 @@ import { Permission } from '@/constants/permissions';
 import { cn } from '@/lib/utils';
 import { fetchAreas } from '@/services/area.service';
 import { fetchBatches } from '@/services/batch.service';
-import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
+import {
+  connectIoTSocket,
+  subscribeIoTDataUpdates
+} from '@/services/iotdevice.service';
 import { fetchManagers, updateManager } from '@/services/manager.service';
 import { createWarehouse, fetchWarehouses } from '@/services/warehouse.service';
+import { useNotificationsStore } from '@/stores/notifications.store';
 import type { Area } from '@/types/area';
 import type { Batch } from '@/types/batch';
 import type { Manager } from '@/types/manager';
@@ -52,6 +56,8 @@ interface WarehouseOverviewPageProps {}
 
 export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
   const { toast } = useToast();
+  const addItemSilent = useNotificationsStore((s) => s.addItemSilent);
+  const removeBy = useNotificationsStore((s) => s.removeBy);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingWarehouses, setIsLoadingWarehouses] = useState(false);
@@ -333,6 +339,7 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
       const payloadAreaId = (payload as any)?.area?.id as string | undefined;
       if (!payloadAreaId) return;
 
+      // Update Environment State
       setAreaEnv((prev) => ({
         ...prev,
         [payloadAreaId]: {
@@ -346,12 +353,19 @@ export function WarehouseOverviewPage({}: WarehouseOverviewPageProps) {
               : (prev[payloadAreaId]?.humidity ?? null)
         }
       }));
+
+      // Notification Logic
+      // const isHighTemp = temperature != null && temperature > 35;
+      // const isHighHumid = humidity != null && humidity > 80;
+
+      // Note: We rely on the backend socket (NotificationListener) to handle global notifications and floating cards.
+      // Removed local logic to avoid duplicate toasts and notifications.
     });
 
     return () => {
       unsubscribe();
     };
-  }, []);
+  }, [addItemSilent, removeBy, toast]);
 
   // Fetch managers chưa gắn warehouse
   const loadManagersWithoutWarehouse = async () => {

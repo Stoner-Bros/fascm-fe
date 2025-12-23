@@ -1,6 +1,7 @@
 'use client';
 
 import IotDeviceCard from '@/components/iot/iot-device-card';
+import { useToast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -100,6 +101,7 @@ export default function AreaDetailView({
   areaId
 }: AreaDetailViewProps) {
   const router = useRouter();
+  const { toast } = useToast();
   const t = useTranslations('AreaDetail');
   const locale = useLocale();
   const [realTimeData, setRealTimeData] = useState<Date | null>(null);
@@ -545,8 +547,21 @@ export default function AreaDetailView({
       };
       if (String(payload?.status ?? '').toLowerCase() === 'resolved') {
         setActiveAlert(null);
+
+        // Show notification with temperature and humidity
+        const data = payload?.data || payload;
+        const temp = data?.currentTemperature;
+        const humid = data?.currentHumidity;
+
+        if (temp !== undefined || humid !== undefined) {
+          // Toast handled by NotificationListener
+          // Update current state if available
+          if (typeof temp === 'number') setTemperature(temp);
+          if (typeof humid === 'number') setHumidity(humid);
+        }
       } else {
         setActiveAlert(alert);
+        // Toast handled by NotificationListener
       }
     };
     socket.emit('alert:subscribeArea', { areaId });
