@@ -203,6 +203,7 @@ export type OrderInvoiceDetail = {
   product?: Product | null;
   createdAt: Date | string;
   updatedAt: Date | string;
+  orderDetailSelections?: OrderDetailSelection[] | null;
 };
 
 export type CreateOrderInvoiceDetailDto = {

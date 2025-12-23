@@ -134,6 +134,7 @@ export interface OrderPhase {
     };
     amount?: number | null;
     [key: string]: unknown;
+    orderDetailSelections?: Array<any>;
   }>;
   imageProof?: Array<{
     id: string;
