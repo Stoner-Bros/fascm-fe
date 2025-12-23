@@ -116,6 +116,7 @@ export function isTokenExpiringSoon(minutesThreshold = 5): boolean {
 function clearTokens() {
   if (typeof document === 'undefined') return;
 
+  removeCookie('warehouseId');
   Object.values(COOKIE_KEYS).forEach((cookieName) => {
     try {
       removeCookie(cookieName, { path: '/' });
