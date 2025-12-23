@@ -37,21 +37,21 @@ export default async function OverViewLayout({
           <div className='col-span-4 md:col-span-3'>
             <SupplierGraph />
           </div>
-          <div className='col-span-4'>{bar_stats}</div>
+          {/* <div className='col-span-4'>{bar_stats}</div>
 
           <div className='col-span-4 md:col-span-3'>
             <InventoryGraph />
-          </div>
+          </div> */}
 
           <div className='col-span-4'>{area_stats}</div>
           <div className='col-span-4 md:col-span-3'>{pie_stats}</div>
 
-          <div className='col-span-4'>
+          {/* <div className='col-span-4'>
             <DebtGraph />
           </div>
           <div className='col-span-4 md:col-span-3'>
             <WarehouseGraph />
-          </div>
+          </div> */}
         </div>
       </div>
     </PageContainer>

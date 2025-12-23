@@ -491,7 +491,7 @@
     },
     "phaseStatuses": {
       "preparing": "Đang chuẩn bị",
-      "delivering": "Đang giao hàng",
+      "delivering": "Đang tới lấy hàng",
       "delivered": "Đã giao hàng",
       "completed": "Hoàn thành",
       "canceled": "Đã hủy"
