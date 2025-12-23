@@ -1,7 +1,6 @@
 'use client';
 
 import IotDeviceCard from '@/components/iot/iot-device-card';
-import { useToast } from '@/components/ui/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,18 +10,15 @@ import {
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle
 } from '@/components/ui/dialog';
-import { DataTable } from '@/components/ui/table/data-table';
-import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Table,
   TableBody,
@@ -31,14 +27,10 @@ import {
   TableHeader,
   TableRow
 } from '@/components/ui/table';
-import {
-  type ColumnDef,
-  getCoreRowModel,
-  getPaginationRowModel,
-  type PaginationState,
-  useReactTable
-} from '@tanstack/react-table';
+import { DataTable } from '@/components/ui/table/data-table';
+import { DataTableSkeleton } from '@/components/ui/table/data-table-skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useToast } from '@/components/ui/use-toast';
 import { getApiBase } from '@/lib/client';
 import {
   createAreaSetting,
@@ -47,18 +39,18 @@ import {
 } from '@/services/area-setting.service';
 import { fetchAreaById, fetchAreaTickets } from '@/services/area.service';
 import { fetchBatchesByArea } from '@/services/batch.service';
-import {
-  createPrice,
-  deletePrice,
-  fetchPricesByBatchId,
-  updatePrice,
-  type CreatePriceDto,
-  type Price,
-  type UpdatePriceDto
-} from '@/services/price.service';
 import { fetchExportTickets } from '@/services/export-ticket.service';
 import { fetchImportTickets } from '@/services/import-ticket.service';
 import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
+import {
+  createPrice,
+  type CreatePriceDto,
+  deletePrice,
+  fetchPricesByBatchId,
+  type Price,
+  updatePrice,
+  type UpdatePriceDto
+} from '@/services/price.service';
 import { fetchWarehouseById } from '@/services/warehouse.service';
 import type { Area as AreaEntity } from '@/types/area';
 import type { AreaSetting } from '@/types/area-setting';
@@ -71,11 +63,15 @@ import {
   IconArrowLeft,
   IconArrowUp,
   IconBell,
+  IconBox,
   IconCalendar,
+  IconClock,
   IconDroplet,
-  IconHistory,
   IconEdit,
   IconEye,
+  IconHistory,
+  IconMapPin,
+  IconPackage,
   IconPlus,
   IconRefresh,
   IconSettings,
@@ -83,12 +79,19 @@ import {
   IconThermometer,
   IconTrash
 } from '@tabler/icons-react';
+import {
+  type ColumnDef,
+  getCoreRowModel,
+  getPaginationRowModel,
+  type PaginationState,
+  useReactTable
+} from '@tanstack/react-table';
 import { format } from 'date-fns';
 import { vi } from 'date-fns/locale';
+import { useLocale, useTranslations } from 'next-intl';
 import { useRouter } from 'next/navigation';
-import { useTranslations, useLocale } from 'next-intl';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { parseAsInteger, useQueryState } from 'nuqs';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 
 interface AreaDetailViewProps {
@@ -1612,160 +1615,376 @@ export default function AreaDetailView({
         </TabsContent>
       </Tabs>
 
-      {/* Price Management Dialog */}
+      {/* Batch Detail & Price Management Dialog */}
       {selectedBatchId && (
         <Dialog open={isPriceDialogOpen} onOpenChange={setIsPriceDialogOpen}>
-          <DialogContent className='max-h-[90vh] max-w-4xl overflow-y-auto'>
-            <DialogHeader>
-              <DialogTitle>
-                {t('products.prices.title', {
-                  batchCode:
-                    areaBatches.find((b) => b.id === selectedBatchId)
-                      ?.batchCode || selectedBatchId
-                })}
-              </DialogTitle>
-              <DialogDescription>
-                {t('products.prices.description')}
-              </DialogDescription>
-            </DialogHeader>
+          <DialogContent className='max-h-[90vh] !max-w-6xl overflow-y-auto p-0'>
+            {/* Header with gradient background */}
+            <div className='from-primary/10 via-primary/5 to-background border-b bg-gradient-to-r px-6 py-5'>
+              <DialogHeader>
+                <DialogTitle className='flex items-center gap-3 text-xl'>
+                  <div className='bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg'>
+                    <IconPackage className='text-primary h-5 w-5' />
+                  </div>
+                  <div>
+                    <span>{t('products.batchDetail.title')}</span>
+                    <p className='text-muted-foreground mt-0.5 text-sm font-normal'>
+                      {t('products.batchDetail.description')}
+                    </p>
+                  </div>
+                </DialogTitle>
+              </DialogHeader>
+            </div>
 
-            <div className='space-y-4'>
-              {/* Add New Price Button */}
-              <div className='flex justify-end'>
-                <Button
-                  size='sm'
-                  onClick={() => {
-                    setEditingPrice('new');
-                  }}
-                >
-                  <IconPlus className='mr-2 h-4 w-4' />
-                  {t('products.prices.addNew')}
-                </Button>
-              </div>
+            <div className='space-y-6 p-6'>
+              {/* Batch Information */}
+              {(() => {
+                const batch = areaBatches.find((b) => b.id === selectedBatchId);
+                if (!batch) return null;
 
-              {/* Prices Table */}
-              {isLoadingPrices ? (
-                <div className='py-8 text-center text-sm text-gray-500'>
-                  {t('products.prices.loading')}
+                const costPerKg =
+                  batch.costPrice && batch.quantity
+                    ? Math.round(batch.costPrice / batch.quantity)
+                    : null;
+
+                return (
+                  <div className='space-y-4'>
+                    {/* Batch Code Header */}
+                    <div className='flex items-center gap-3 rounded-lg border bg-gradient-to-r from-slate-50 to-white p-4 dark:from-slate-900 dark:to-slate-800'>
+                      <div className='flex-1'>
+                        <p className='text-muted-foreground text-xs font-medium tracking-wider'>
+                          {t('products.batches.columns.batchCode')}
+                        </p>
+                        <p className='mt-1 text-lg font-bold tracking-wide'>
+                          {batch.batchCode || '-'}
+                        </p>
+                      </div>
+                      <div className='flex-1 border-l pl-4'>
+                        <p className='text-muted-foreground text-xs font-medium tracking-wider'>
+                          {t('products.batches.columns.product')}
+                        </p>
+                        <p className='text-primary mt-1 text-lg font-semibold'>
+                          {batch.product?.name || '-'}
+                        </p>
+                      </div>
+                      {/* Current Quantity - Số lượng hiện tại */}
+                      <div className='flex-1 border-l pl-4'>
+                        <p className='text-muted-foreground text-xs font-medium'>
+                          {t('products.batches.columns.currentQuantity')}
+                        </p>
+                        <p className='mt-1 text-lg font-bold'>
+                          {(batch.currentQuantity ?? 0).toLocaleString()}{' '}
+                          <span className='text-muted-foreground text-sm font-normal'>
+                            {batch.unit || 'kg'}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Info Grid */}
+                    <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-3'>
+                      {/* Garden Name */}
+                      <div className='rounded-lg border bg-white p-3 shadow-sm transition-shadow hover:shadow-md dark:bg-slate-900'>
+                        <div className='text-muted-foreground mb-1 flex items-center gap-2 text-xs font-medium'>
+                          <IconMapPin className='h-3.5 w-3.5' />
+                          {t('products.batches.columns.gardenName')}
+                        </div>
+                        <p className='truncate text-sm font-semibold'>
+                          {batch.gardenName || '-'}
+                        </p>
+                      </div>
+
+                      {/* Harvest Date */}
+                      <div className='rounded-lg border bg-white p-3 shadow-sm transition-shadow hover:shadow-md dark:bg-slate-900'>
+                        <div className='text-muted-foreground mb-1 flex items-center gap-2 text-xs font-medium'>
+                          <IconCalendar className='h-3.5 w-3.5' />
+                          {t('products.batches.columns.harvestDate')}
+                        </div>
+                        <p className='text-sm font-semibold'>
+                          {batch.harvestDate
+                            ? format(
+                                new Date(batch.harvestDate),
+                                'dd/MM/yyyy',
+                                { locale: vi }
+                              )
+                            : '-'}
+                        </p>
+                      </div>
+
+                      {/* Expired Date */}
+                      <div className='rounded-lg border bg-white p-3 shadow-sm transition-shadow hover:shadow-md dark:bg-slate-900'>
+                        <div className='text-muted-foreground mb-1 flex items-center gap-2 text-xs font-medium'>
+                          <IconClock className='h-3.5 w-3.5' />
+                          {t('products.batches.columns.expiredAt')}
+                        </div>
+                        <p className='text-sm font-semibold'>
+                          {batch.expiredAt
+                            ? format(new Date(batch.expiredAt), 'dd/MM/yyyy', {
+                                locale: vi
+                              })
+                            : '-'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Quantity & Cost Stats */}
+                    <div className='grid gap-3 sm:grid-cols-2 lg:grid-cols-4'>
+                      {/* Init Quantity - Số lượng ban đầu */}
+                      <div className='rounded-lg border bg-white p-3 shadow-sm dark:bg-slate-900'>
+                        <p className='text-muted-foreground text-xs font-medium'>
+                          {t('products.batches.columns.initQuantity')}
+                        </p>
+                        <p className='mt-1 text-lg font-bold'>
+                          {batch.initQuantity != null
+                            ? batch.initQuantity.toLocaleString()
+                            : '-'}{' '}
+                          <span className='text-muted-foreground text-sm font-normal'>
+                            {batch.unit || 'kg'}
+                          </span>
+                        </p>
+                      </div>
+
+                      {/* Quantity - Số lượng nhập */}
+                      <div className='rounded-lg border bg-white p-3 shadow-sm dark:bg-slate-900'>
+                        <p className='text-muted-foreground text-xs font-medium'>
+                          {t('products.batches.columns.realQuantity')}
+                        </p>
+                        <p className='mt-1 text-lg font-bold'>
+                          {(batch.quantity ?? 0).toLocaleString()}{' '}
+                          <span className='text-muted-foreground text-sm font-normal'>
+                            {batch.unit || 'kg'}
+                          </span>
+                        </p>
+                      </div>
+
+                      {/* Cost Price - Giá nhập */}
+                      <div className='rounded-lg border bg-white p-3 shadow-sm dark:bg-slate-900'>
+                        <p className='text-muted-foreground text-xs font-medium'>
+                          {t('products.batches.columns.costPrice')}
+                        </p>
+                        <p className='mt-1 text-lg font-bold text-green-600 dark:text-green-400'>
+                          {batch.costPrice
+                            ? `${batch.costPrice.toLocaleString('vi-VN')}₫`
+                            : '-'}
+                        </p>
+                      </div>
+
+                      {/* Cost per unit - Giá nhập / Số lượng nhập */}
+                      <div className='rounded-lg border bg-white p-3 shadow-sm dark:bg-slate-900'>
+                        <p className='text-muted-foreground text-xs font-medium'>
+                          {t('products.batches.columns.costPerUnit')}
+                        </p>
+                        <p className='mt-1 text-lg font-bold'>
+                          {costPerKg
+                            ? `${costPerKg.toLocaleString('vi-VN')}₫/${batch.unit || 'kg'}`
+                            : '-'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Volume & Created Date */}
+                    {(batch.volume != null || batch.createdAt) && (
+                      <div className='text-muted-foreground flex flex-wrap items-center gap-4 text-xs'>
+                        {batch.volume != null && (
+                          <span className='flex items-center gap-1'>
+                            <IconBox className='h-3.5 w-3.5' />
+                            {t('products.batches.columns.volume')}:{' '}
+                            {batch.volume.toLocaleString()} m³
+                          </span>
+                        )}
+                        {batch.createdAt && (
+                          <span className='flex items-center gap-1'>
+                            <IconClock className='h-3.5 w-3.5' />
+                            {t('products.batches.columns.createdAt')}:{' '}
+                            {format(
+                              new Date(batch.createdAt),
+                              'dd/MM/yyyy HH:mm',
+                              { locale: vi }
+                            )}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
+
+              {/* Price List Section */}
+              <div className='space-y-4'>
+                <div className='flex items-center justify-between border-b pb-3'>
+                  <div className='flex items-center gap-2'>
+                    <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30'>
+                      <IconPackage className='h-4 w-4 text-green-600 dark:text-green-400' />
+                    </div>
+                    <h4 className='text-base font-semibold'>
+                      {t('products.prices.listTitle')}
+                    </h4>
+                  </div>
+                  <Button
+                    size='sm'
+                    onClick={() => setEditingPrice('new')}
+                    className='gap-2 shadow-sm'
+                  >
+                    <IconPlus className='h-4 w-4' />
+                    {t('products.prices.addNew')}
+                  </Button>
                 </div>
-              ) : batchPrices.length === 0 ? (
-                <div className='py-8 text-center text-sm text-gray-500'>
-                  {t('products.prices.empty')}
-                </div>
-              ) : (
-                <div className='overflow-x-auto'>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>
-                          {t('products.prices.columns.price')}
-                        </TableHead>
-                        <TableHead>
-                          {t('products.prices.columns.quantity')}
-                        </TableHead>
-                        <TableHead>
-                          {t('products.prices.columns.unit')}
-                        </TableHead>
-                        <TableHead>
-                          {t('products.prices.columns.createdAt')}
-                        </TableHead>
-                        <TableHead className='text-right'>
-                          {t('products.prices.columns.actions')}
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {batchPrices.map((price) => (
-                        <TableRow key={price.id}>
-                          <TableCell>
-                            {price.price
-                              ? `${price.price.toLocaleString('vi-VN')} VNĐ`
-                              : '-'}
-                          </TableCell>
-                          <TableCell>
-                            {price.quantity?.toLocaleString() || '-'}
-                          </TableCell>
-                          <TableCell>{price.unit || '-'}</TableCell>
-                          <TableCell className='text-xs'>
-                            {price.createdAt
-                              ? format(
-                                  new Date(price.createdAt),
-                                  'dd/MM/yyyy HH:mm',
-                                  {
-                                    locale: vi
-                                  }
-                                )
-                              : '—'}
-                          </TableCell>
-                          <TableCell className='text-right'>
-                            <div className='flex justify-end gap-2'>
-                              <Button
-                                size='sm'
-                                variant='outline'
-                                onClick={() => setEditingPrice(price)}
-                              >
-                                <IconEdit className='h-4 w-4' />
-                              </Button>
-                              <Button
-                                size='sm'
-                                variant='outline'
-                                onClick={async () => {
-                                  if (
-                                    confirm(t('products.prices.confirmDelete'))
-                                  ) {
-                                    try {
-                                      await deletePrice(price.id);
-                                      const prices = await fetchPricesByBatchId(
-                                        selectedBatchId!
-                                      );
-                                      setBatchPrices(
-                                        Array.isArray(prices) ? prices : []
-                                      );
-                                    } catch (error) {
-                                      console.error(
-                                        'Failed to delete price',
-                                        error
-                                      );
-                                    }
-                                  }
-                                }}
-                              >
-                                <IconTrash className='h-4 w-4 text-red-600' />
-                              </Button>
-                            </div>
-                          </TableCell>
+
+                {/* Prices Table */}
+                {isLoadingPrices ? (
+                  <div className='flex items-center justify-center py-12'>
+                    <div className='border-primary h-8 w-8 animate-spin rounded-full border-4 border-t-transparent' />
+                  </div>
+                ) : batchPrices.length === 0 ? (
+                  <div className='flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-gray-200 bg-gray-50/50 py-12 dark:border-gray-700 dark:bg-gray-800/30'>
+                    <div className='flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-700'>
+                      <IconPackage className='h-8 w-8 text-gray-400' />
+                    </div>
+                    <p className='text-muted-foreground mt-4 text-sm'>
+                      {t('products.prices.empty')}
+                    </p>
+                    <Button
+                      size='sm'
+                      variant='outline'
+                      className='mt-4 gap-2'
+                      onClick={() => setEditingPrice('new')}
+                    >
+                      <IconPlus className='h-4 w-4' />
+                      {t('products.prices.addFirst')}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className='overflow-hidden rounded-xl border shadow-sm'>
+                    <Table>
+                      <TableHeader>
+                        <TableRow className='bg-slate-50 dark:bg-slate-800'>
+                          <TableHead className='font-semibold'>
+                            {t('products.prices.columns.price')}
+                          </TableHead>
+                          <TableHead className='font-semibold'>
+                            {t('products.prices.columns.quantity')}
+                          </TableHead>
+                          <TableHead className='font-semibold'>
+                            {t('products.prices.columns.unit')}
+                          </TableHead>
+                          <TableHead className='font-semibold'>
+                            {t('products.prices.columns.createdAt')}
+                          </TableHead>
+                          <TableHead className='text-right font-semibold'>
+                            {t('products.prices.columns.actions')}
+                          </TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
-              )}
+                      </TableHeader>
+                      <TableBody>
+                        {batchPrices.map((price, index) => (
+                          <TableRow
+                            key={price.id}
+                            className={`transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 ${index % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-25 dark:bg-slate-900/50'}`}
+                          >
+                            <TableCell>
+                              <span className='inline-flex items-center rounded-md bg-green-50 px-2.5 py-1 text-sm font-semibold text-green-700 ring-1 ring-green-600/20 ring-inset dark:bg-green-900/30 dark:text-green-400 dark:ring-green-500/30'>
+                                {price.price
+                                  ? `${price.price.toLocaleString('vi-VN')}₫`
+                                  : '-'}
+                              </span>
+                            </TableCell>
+                            <TableCell className='font-medium'>
+                              {price.quantity?.toLocaleString() || '-'}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant='outline' className='font-normal'>
+                                {price.unit || 'kg'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className='text-muted-foreground text-xs'>
+                              {price.createdAt
+                                ? format(
+                                    new Date(price.createdAt),
+                                    'dd/MM/yyyy HH:mm',
+                                    { locale: vi }
+                                  )
+                                : '—'}
+                            </TableCell>
+                            <TableCell className='text-right'>
+                              <div className='flex justify-end gap-1'>
+                                <Button
+                                  size='icon'
+                                  variant='ghost'
+                                  className='h-8 w-8 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/30'
+                                  onClick={() => setEditingPrice(price)}
+                                >
+                                  <IconEdit className='h-4 w-4' />
+                                </Button>
+                                <Button
+                                  size='icon'
+                                  variant='ghost'
+                                  className='h-8 w-8 text-red-500 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/30'
+                                  onClick={async () => {
+                                    if (
+                                      confirm(
+                                        t('products.prices.confirmDelete')
+                                      )
+                                    ) {
+                                      try {
+                                        await deletePrice(price.id);
+                                        const prices =
+                                          await fetchPricesByBatchId(
+                                            selectedBatchId!
+                                          );
+                                        setBatchPrices(
+                                          Array.isArray(prices) ? prices : []
+                                        );
+                                      } catch (error) {
+                                        console.error(
+                                          'Failed to delete price',
+                                          error
+                                        );
+                                      }
+                                    }
+                                  }}
+                                >
+                                  <IconTrash className='h-4 w-4' />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                )}
+              </div>
 
               {/* Edit/Create Price Form */}
               {editingPrice !== null && editingPrice !== undefined && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>
+                <div className='border-primary/30 from-primary/5 to-primary/10 rounded-xl border-2 border-dashed bg-gradient-to-br p-5'>
+                  <div className='mb-4 flex items-center gap-2'>
+                    <div className='bg-primary/20 flex h-8 w-8 items-center justify-center rounded-lg'>
+                      {editingPrice === 'new' || !editingPrice ? (
+                        <IconPlus className='text-primary h-4 w-4' />
+                      ) : (
+                        <IconEdit className='text-primary h-4 w-4' />
+                      )}
+                    </div>
+                    <h4 className='text-base font-semibold'>
                       {editingPrice === 'new' || !editingPrice
                         ? t('products.prices.createTitle')
                         : t('products.prices.editTitle')}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <PriceForm
-                      price={editingPrice === 'new' ? null : editingPrice}
-                      batchId={selectedBatchId!}
-                      onSuccess={async () => {
-                        setEditingPrice(null);
-                        const prices = await fetchPricesByBatchId(
-                          selectedBatchId!
-                        );
-                        setBatchPrices(Array.isArray(prices) ? prices : []);
-                      }}
-                      onCancel={() => setEditingPrice(null)}
-                    />
-                  </CardContent>
-                </Card>
+                    </h4>
+                  </div>
+                  <PriceForm
+                    price={editingPrice === 'new' ? null : editingPrice}
+                    batchId={selectedBatchId!}
+                    onSuccess={async () => {
+                      setEditingPrice(null);
+                      const prices = await fetchPricesByBatchId(
+                        selectedBatchId!
+                      );
+                      setBatchPrices(Array.isArray(prices) ? prices : []);
+                    }}
+                    onCancel={() => setEditingPrice(null)}
+                  />
+                </div>
               )}
             </div>
           </DialogContent>

@@ -1444,6 +1444,10 @@
           "totalQuantity": "Tổng số lượng"
         }
       },
+      "batchDetail": {
+        "title": "Chi tiết lô hàng",
+        "description": "Xem thông tin chi tiết và quản lý giá cho lô hàng"
+      },
       "batches": {
         "title": "Các lô hàng trong khu vực",
         "description": "Hiển thị {count} lô hàng trong khu vực này",
@@ -1456,21 +1460,31 @@
           "batchCode": "Mã lô hàng",
           "product": "Sản phẩm",
           "quantity": "Số lượng",
+          "realQuantity": "Số lượng thực tế nhập",
           "currentQuantity": "Số lượng hiện tại",
+          "initQuantity": "Số lượng dự kiến nhập",
           "unit": "Đơn vị",
-          "costPrice": "Giá vốn",
+          "costPrice": "Giá nhập",
+          "costPerUnit": "Giá/đơn vị",
+          "totalCost": "Tổng giá nhập",
           "expiredAt": "Ngày hết hạn",
           "createdAt": "Ngày tạo",
           "actions": "Thao tác",
-          "id": "ID"
+          "id": "ID",
+          "gardenName": "Tên vườn",
+          "harvestDate": "Ngày thu hoạch",
+          "volume": "Thể tích",
+          "area": "Khu vực"
         }
       },
       "prices": {
         "title": "Giá cho lô hàng {batchCode}",
+        "listTitle": "Bảng giá",
         "description": "Quản lý giá cho lô hàng này",
         "loading": "Đang tải giá...",
-        "empty": "Không tìm thấy giá nào cho lô hàng này.",
-        "addNew": "Thêm giá mới",
+        "empty": "Chưa có giá nào được thiết lập cho lô hàng này.",
+        "addNew": "Thêm giá",
+        "addFirst": "Thêm giá đầu tiên",
         "editTitle": "Sửa giá",
         "createTitle": "Tạo giá mới",
         "confirmDelete": "Bạn có chắc chắn muốn xóa giá này?",

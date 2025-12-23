@@ -34,6 +34,9 @@ export type Batch = {
   };
   createdAt?: string;
   updatedAt?: string;
+  gardenName?: string;
+  harvestDate?: string;
+  initQuantity?: number;
 };
 
 export type CreateBatchDto = {

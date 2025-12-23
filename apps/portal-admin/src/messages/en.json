@@ -1446,6 +1446,10 @@
           "totalQuantity": "Total quantity"
         }
       },
+      "batchDetail": {
+        "title": "Batch Details",
+        "description": "View batch information and manage pricing"
+      },
       "batches": {
         "title": "Batches in area",
         "description": "Showing {count} batch(es) in this area",
@@ -1458,21 +1462,31 @@
           "batchCode": "Batch Code",
           "product": "Product",
           "quantity": "Quantity",
+          "realQuantity": "Actual Quantity",
           "currentQuantity": "Current Quantity",
+          "initQuantity": "Expected Quantity",
           "unit": "Unit",
-          "costPrice": "Cost Price",
+          "costPrice": "Import Cost",
+          "costPerUnit": "Cost/Unit",
+          "totalCost": "Total Import Cost",
           "expiredAt": "Expiration Date",
           "createdAt": "Created At",
           "actions": "Actions",
-          "id": "ID"
+          "id": "ID",
+          "gardenName": "Garden Name",
+          "harvestDate": "Harvest Date",
+          "volume": "Volume",
+          "area": "Area"
         }
       },
       "prices": {
         "title": "Prices for Batch {batchCode}",
+        "listTitle": "Price List",
         "description": "Manage prices for this batch",
         "loading": "Loading prices...",
-        "empty": "No prices found for this batch.",
-        "addNew": "Add New Price",
+        "empty": "No prices have been set for this batch.",
+        "addNew": "Add Price",
+        "addFirst": "Add First Price",
         "editTitle": "Edit Price",
         "createTitle": "Create New Price",
         "confirmDelete": "Are you sure you want to delete this price?",
