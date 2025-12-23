@@ -172,10 +172,38 @@ function RealtimeMap({
   useEffect(() => {
     if (route.length === 0) return;
 
+    // if (status === 'delivered' || status === 'completed') {
+    //   const idx = route.length - 1;
+    //   setCurrentIndex(idx);
+    //   setPos({ lat: route[idx][0], lng: route[idx][1] });
+    //   socket.emit('delivery:update', {
+    //     deliveryId,
+    //     lat: route[idx][0],
+    //     lng: route[idx][1],
+    //     currentLat: route[idx][0],
+    //     currentLng: route[idx][1],
+    //     status: 'delivered'
+    //   });
+    //   return;
+    // }
     if (status === 'delivered' || status === 'completed') {
-      const idx = route.length - 1;
-      setCurrentIndex(idx);
-      setPos({ lat: route[idx][0], lng: route[idx][1] });
+      if (!route.length || !socket) return;
+
+      const lastIndex = route.length - 1;
+      const [lat, lng] = route[lastIndex];
+
+      setCurrentIndex(lastIndex);
+      setPos({ lat, lng });
+
+      socket.emit('delivery:update', {
+        deliveryId,
+        lat,
+        lng,
+        currentLat: lat,
+        currentLng: lng,
+        status: 'delivered'
+      });
+
       return;
     }
 
@@ -643,7 +671,35 @@ export function PhaseDetailPane({
     const uploaded = await onUploadPhaseImageProof(phaseId, proofFiles);
     if (uploaded) {
       await onUpdatePickupStatus(deliveryForProof.id, 'delivered');
-      // Refetch the phase to get updated image proof
+      try {
+        const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        const socket = io(base + '/deliveries', { transports: ['websocket'] });
+        const lat =
+          typeof deliveryForProof.endLat === 'number'
+            ? deliveryForProof.endLat
+            : typeof deliveryForProof.startLat === 'number'
+              ? deliveryForProof.startLat
+              : undefined;
+        const lng =
+          typeof deliveryForProof.endLng === 'number'
+            ? deliveryForProof.endLng
+            : typeof deliveryForProof.startLng === 'number'
+              ? deliveryForProof.startLng
+              : undefined;
+        if (typeof lat === 'number' && typeof lng === 'number') {
+          socket.emit('delivery:update', {
+            deliveryId: deliveryForProof.id,
+            lat,
+            lng,
+            status: 'delivered'
+          });
+        } else {
+          socket.emit('delivery:update', {
+            deliveryId: deliveryForProof.id,
+            status: 'delivered'
+          });
+        }
+      } catch {}
       if (onRefetchPhase && schedule?.id) {
         await onRefetchPhase(phaseId, schedule.id);
       }

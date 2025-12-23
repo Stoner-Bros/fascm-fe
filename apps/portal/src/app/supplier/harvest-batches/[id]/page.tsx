@@ -42,14 +42,14 @@ import {
 } from '@tabler/icons-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 const HarvestRouteSim = dynamic(
   () => import('@/components/map/harvest-route-sim'),
   { ssr: false }
 );
 
 import {
-  fetchDeliveriesByHarvestSchedule,
+  fetchDeliveriesByHarvestPhase,
   Delivery
 } from '@/services/delivery.service';
 import { io } from 'socket.io-client';
@@ -84,6 +84,7 @@ type HarvestPhaseStatus =
   | 'preparing'
   | 'delivering'
   | 'delivered'
+  | 'returning'
   | 'completed'
   | 'canceled';
 
@@ -115,6 +116,8 @@ const getPhaseStatusIcon = (status?: HarvestPhaseStatus | null) => {
       return <IconTruck className='h-4 w-4' />;
     case 'delivered':
       return <IconCheck className='h-4 w-4' />;
+    case 'returning':
+      return <IconCheck className='h-4 w-4' />;
     case 'completed':
       return <IconCheck className='h-4 w-4' />;
     case 'canceled':
@@ -134,6 +137,8 @@ const getPhaseStatusVariant = (
     case 'delivering':
       return 'default';
     case 'delivered':
+      return 'default';
+    case 'returning':
       return 'default';
     case 'completed':
       return 'default';
@@ -157,6 +162,9 @@ const formatDate = (date: string | Date) => {
   });
 };
 
+const sanitizeUrl = (v?: string | null) =>
+  v ? String(v).replace(/[`"]/g, '').trim() : undefined;
+
 export default function HarvestBatchDetailPage() {
   const router = useRouter();
   const params = useParams();
@@ -177,8 +185,20 @@ export default function HarvestBatchDetailPage() {
   const [acceptingPriceId, setAcceptingPriceId] = useState<string | null>(null);
   const [rejectingPriceId, setRejectingPriceId] = useState<string | null>(null);
 
+  const activeDeliveryIdRef = useRef(activeDeliveryId);
+  const handledEndIdsRef = useRef<Set<string>>(new Set());
+  const handledTerminalUpdateIdsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    activeDeliveryIdRef.current = activeDeliveryId;
+  }, [activeDeliveryId]);
+
   const socket = useMemo(() => {
     const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    console.log(
+      '[PORTAL] Creating socket connection to:',
+      base + '/deliveries'
+    );
     return io(base + '/deliveries', { transports: ['websocket'] });
   }, []);
 
@@ -210,6 +230,8 @@ export default function HarvestBatchDetailPage() {
         return t('phaseStatuses.delivering');
       case 'delivered':
         return t('phaseStatuses.delivered');
+      case 'returning':
+        return 'Đã giao hàng';
       case 'completed':
         return t('phaseStatuses.completed');
       case 'canceled':
@@ -219,158 +241,184 @@ export default function HarvestBatchDetailPage() {
     }
   };
 
-  useEffect(() => {
-    let cancelled = false;
+  const loadData = async () => {
+    // Reload schedule details
+    try {
+      const s = await fetchHarvestScheduleById(scheduleId);
+      // Extract details from schedule response (already included)
+      const rows: DetailRow[] = (s.harvestDetails ?? []).map((detail) => {
+        const quantity = Number(detail.quantity ?? 0);
+        const expectedUnitPrice = Number(detail.expectedUnitPrice ?? 0);
+        const finalUnitPrice = Number(detail.finalUnitPrice ?? 0);
+        const finalUnitPriceAccepted = detail.finalUnitPriceAccepted;
 
-    const load = async () => {
-      setLoading(true);
-      try {
-        const s = await fetchHarvestScheduleById(scheduleId);
+        const productName =
+          detail.product?.name ||
+          detail.product?.id ||
+          t('detail.products.unknownProduct');
 
-        // Extract details from schedule response (already included)
-        const rows: DetailRow[] = (s.harvestDetails ?? []).map((detail) => {
-          const quantity = Number(detail.quantity ?? 0);
-          const expectedUnitPrice = Number(detail.expectedUnitPrice ?? 0);
-          const finalUnitPrice = Number(detail.finalUnitPrice ?? 0);
-          const finalUnitPriceAccepted = detail.finalUnitPriceAccepted;
+        const unitRaw =
+          typeof detail.unit === 'string' ? detail.unit.trim() : '';
+        const unit = unitRaw || 'kg';
 
-          const productName =
-            detail.product?.name ||
-            detail.product?.id ||
-            t('detail.products.unknownProduct');
+        return {
+          id: detail.id,
+          productName: String(productName),
+          productImage: detail.product?.image as string | undefined,
+          quantity,
+          unit,
+          expectedUnitPrice,
+          finalUnitPrice,
+          finalUnitPriceAccepted,
+          totalPrice:
+            quantity *
+            (finalUnitPriceAccepted ? finalUnitPrice : expectedUnitPrice)
+        };
+      });
+      setSchedule(s);
+      setDetails(rows);
 
-          const unitRaw =
-            typeof detail.unit === 'string' ? detail.unit.trim() : '';
-          const unit = unitRaw || 'kg';
+      // Also reload deliveries and phases
+      const sid = String(s.id ?? '').trim();
+      if (sid) {
+        setPhasesLoading(true);
+        // Deliveries
+        fetchDeliveriesByHarvestPhase({
+          harvestPhaseId: sid,
+          page: 1,
+          limit: 10
+        })
+          .then((res) => {
+            console.log('[PORTAL] fetchDeliveries res:', res);
+            const all = Array.isArray(res?.data) ? res.data : [];
+            // Trust the API filter
+            const list = all;
+            console.log('[PORTAL] Deliveries list:', list);
+            setDeliveries(list);
+            const prefer =
+              list.find(
+                (x) => String(x.status ?? '').toLowerCase() === 'delivering'
+              ) ||
+              list.find(
+                (x) => String(x.status ?? '').toLowerCase() === 'scheduled'
+              ) ||
+              list
+                .filter(
+                  (x) => String(x.status ?? '').toLowerCase() !== 'completed'
+                )
+                .sort(
+                  (a, b) =>
+                    new Date(
+                      String(b.updatedAt ?? b.createdAt ?? 0)
+                    ).getTime() -
+                    new Date(String(a.updatedAt ?? a.createdAt ?? 0)).getTime()
+                )[0] ||
+              (list.length === 0 ? all : list)
+                .slice()
+                .sort(
+                  (a, b) =>
+                    new Date(
+                      String(b.updatedAt ?? b.createdAt ?? 0)
+                    ).getTime() -
+                    new Date(String(a.updatedAt ?? a.createdAt ?? 0)).getTime()
+                )[0];
+            if (prefer?.id) {
+              setActiveDeliveryId(String(prefer.id));
+              setActiveDeliveryStatus(
+                String(prefer.status ?? '').toLowerCase() as HarvestPhaseStatus
+              );
+              const preferPhaseId = String(
+                prefer.harvestPhaseId ?? prefer.harvestPhase?.id ?? ''
+              );
+              if (preferPhaseId) {
+                setActivePhaseId(preferPhaseId);
+                setPhases((prev) =>
+                  prev.map((p) =>
+                    p.id === preferPhaseId ? { ...p, status: 'delivering' } : p
+                  )
+                );
+              }
+            }
+          })
+          .catch(() => {});
 
-          return {
-            id: detail.id,
-            productName: String(productName),
-            productImage: detail.product?.image as string | undefined,
-            quantity,
-            unit,
-            expectedUnitPrice,
-            finalUnitPrice,
-            finalUnitPriceAccepted,
-            totalPrice:
-              quantity *
-              (finalUnitPriceAccepted ? finalUnitPrice : expectedUnitPrice)
-          };
-        });
-
-        if (cancelled) return;
-        setSchedule(s);
-        setDetails(rows);
-      } catch (err) {
-        if (cancelled) return;
-        toast({
-          title: t('detail.toast.errorTitle'),
-          description: t('detail.toast.errorLoadDetails'),
-          variant: 'destructive'
-        });
-      } finally {
-        if (!cancelled) setLoading(false);
+        // Load phases
+        fetchHarvestPhasesBySchedule({
+          harvestScheduleId: sid,
+          page: 1,
+          limit: 100
+        })
+          .then((res) => {
+            const phasesList = Array.isArray(res?.data) ? res.data : [];
+            // Sort by phaseNumber
+            phasesList.sort(
+              (a, b) => (a.phaseNumber ?? 0) - (b.phaseNumber ?? 0)
+            );
+            setPhases(phasesList);
+          })
+          .catch(() => {
+            setPhases([]);
+          })
+          .finally(() => {
+            setPhasesLoading(false);
+          });
       }
-    };
+    } catch (err) {
+      //
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    void load();
-
-    return () => {
-      cancelled = true;
-    };
+  useEffect(() => {
+    void loadData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [scheduleId]);
 
+  const deliveryIds = useMemo(
+    () => deliveries.map((d) => d.id).join(','),
+    [deliveries]
+  );
+
   useEffect(() => {
-    const sid = String(schedule?.id ?? '').trim();
-    if (!sid) return;
+    console.log(
+      '[PORTAL] Initializing socket listeners. Deliveries:',
+      deliveries.map((d) => d.id)
+    );
 
-    setPhasesLoading(true);
+    const onConnect = () => {
+      console.log('[PORTAL] Socket connected:', socket.id);
+      deliveries.forEach((d) => {
+        // Only subscribe to active/pending deliveries to reduce noise
+        if (['completed', 'canceled'].includes(d.status || '')) return;
 
-    fetchDeliveriesByHarvestSchedule({
-      harvestScheduleId: sid,
-      page: 1,
-      limit: 10
-    })
-      .then((res) => {
-        const all = Array.isArray(res?.data) ? res.data : [];
-        const list = all.filter(
-          (x) => String(x?.harvestSchedule?.id ?? '') === sid
-        );
-        setDeliveries(list);
-        const prefer =
-          list.find(
-            (x) => String(x.status ?? '').toLowerCase() === 'delivering'
-          ) ||
-          list.find(
-            (x) => String(x.status ?? '').toLowerCase() === 'scheduled'
-          ) ||
-          list
-            .filter((x) => String(x.status ?? '').toLowerCase() !== 'completed')
-            .sort(
-              (a, b) =>
-                new Date(String(b.updatedAt ?? b.createdAt ?? 0)).getTime() -
-                new Date(String(a.updatedAt ?? a.createdAt ?? 0)).getTime()
-            )[0] ||
-          (list.length === 0 ? all : list)
-            .slice()
-            .sort(
-              (a, b) =>
-                new Date(String(b.updatedAt ?? b.createdAt ?? 0)).getTime() -
-                new Date(String(a.updatedAt ?? a.createdAt ?? 0)).getTime()
-            )[0];
-        if (prefer?.id) {
-          setActiveDeliveryId(String(prefer.id));
-          setActiveDeliveryStatus(
-            String(prefer.status ?? '').toLowerCase() as HarvestPhaseStatus
-          );
-          const preferPhaseId = String(prefer.harvestPhase?.id ?? '');
-          if (preferPhaseId) {
-            setActivePhaseId(preferPhaseId);
-            setPhases((prev) =>
-              prev.map((p) =>
-                p.id === preferPhaseId ? { ...p, status: 'delivering' } : p
-              )
-            );
-          }
-        }
-      })
-      .catch(() => {});
-
-    // Load phases
-    fetchHarvestPhasesBySchedule({
-      harvestScheduleId: sid,
-      page: 1,
-      limit: 100
-    })
-      .then((res) => {
-        const phasesList = Array.isArray(res?.data) ? res.data : [];
-        // Sort by phaseNumber
-        phasesList.sort((a, b) => (a.phaseNumber ?? 0) - (b.phaseNumber ?? 0));
-        setPhases(phasesList);
-      })
-      .catch(() => {
-        setPhases([]);
-      })
-      .finally(() => {
-        setPhasesLoading(false);
+        console.log('[PORTAL] Subscribing to delivery:', d.id);
+        socket.emit('delivery:subscribe', { deliveryId: d.id });
       });
-  }, [schedule?.id]);
+    };
 
-  useEffect(() => {
-    if (deliveries.length === 0) return;
+    const onConnectError = (err: any) => {
+      console.error('[PORTAL] Socket connection error:', err);
+    };
 
-    deliveries.forEach((d) => {
-      socket.emit('delivery:subscribe', { deliveryId: d.id });
-    });
+    // If already connected, subscribe immediately
+    if (socket.connected) {
+      onConnect();
+    }
+
+    socket.on('connect', onConnect);
+    socket.on('connect_error', onConnectError);
 
     const onDeliveryStart = (data: any) => {
+      console.log('[PORTAL] onDeliveryStart received:', data);
       // Find if this delivery belongs to our list
-      const d = deliveries.find((x) => x.id === data.id);
+      const d = deliveries.find(
+        (x) => x.id === data.id || x.id === data.deliveryId
+      );
       if (d) {
         setActiveDeliveryId(d.id);
         setActiveDeliveryStatus('delivering');
-        const phaseId = String(d.harvestPhase?.id ?? '');
+        const phaseId = String(d.harvestPhaseId ?? d.harvestPhase?.id ?? '');
         if (phaseId) {
           setActivePhaseId(phaseId);
           setPhases((prev) =>
@@ -379,50 +427,88 @@ export default function HarvestBatchDetailPage() {
             )
           );
         }
+        // Reload data to ensure sync
+        void loadData();
       }
     };
 
     const onDeliveryUpdate = (data: any) => {
+      console.log('[PORTAL] onDeliveryUpdate received:', data);
       // Update delivery status if it changes
-      if (
-        activeDeliveryId &&
-        (data.id === activeDeliveryId ||
-          data.deliveryId === activeDeliveryId) &&
-        data.status
-      ) {
-        setActiveDeliveryStatus(
-          String(data.status).toLowerCase() as HarvestPhaseStatus
+      if (data.status) {
+        const d = deliveries.find(
+          (x) => x.id === data.id || x.id === data.deliveryId
         );
-        const d =
-          deliveries.find((x) => x.id === activeDeliveryId) ||
-          deliveries.find((x) => x.id === data.id) ||
-          deliveries.find((x) => x.id === data.deliveryId);
-        const phaseId = String(d?.harvestPhase?.id ?? '');
-        if (phaseId) {
-          setActivePhaseId(phaseId);
+
+        if (d) {
           const nextStatus = String(
             data.status
           ).toLowerCase() as HarvestPhaseStatus;
-          setPhases((prev) =>
-            prev.map((p) =>
-              p.id === phaseId ? { ...p, status: nextStatus } : p
-            )
-          );
+
+          // Check against current active ID using ref to avoid dependency loop
+          // Only switch if we don't have a current active delivery, or if the current one is finished
+          const currentActiveId = activeDeliveryIdRef.current;
+
+          if (currentActiveId === d.id) {
+            setActiveDeliveryStatus(nextStatus);
+          } else if (nextStatus === 'delivering') {
+            // If we are not currently tracking a 'delivering' delivery, switch to this one
+            // This prevents jumping between multiple active trucks
+            setActiveDeliveryId((prev) => {
+              if (!prev) return d.id;
+              // If we have a previous ID, check if it's still relevant.
+              // Since we don't have full state here, we'll stick to the current one
+              // unless the user manually switched (which we can't detect easily here)
+              // or if we rely on the fact that usually only one is "newly" delivering.
+              return prev;
+            });
+            // However, to properly implement "switch to new active", we might need to know the status of the current active one.
+            // If the current active one is 'completed', we should switch.
+            // For now, let's just log the potential conflict.
+            if (currentActiveId && currentActiveId !== d.id) {
+              console.log(
+                `[PORTAL] Ignoring auto-switch to ${d.id} because ${currentActiveId} is already active.`
+              );
+            } else {
+              setActiveDeliveryId(d.id);
+              setActiveDeliveryStatus('delivering');
+            }
+          }
+
+          const phaseId = String(d.harvestPhaseId ?? d.harvestPhase?.id ?? '');
+          if (phaseId) {
+            setActivePhaseId(phaseId);
+            setPhases((prev) =>
+              prev.map((p) =>
+                p.id === phaseId ? { ...p, status: nextStatus } : p
+              )
+            );
+          }
+
+          if (nextStatus === 'delivered' || nextStatus === 'completed') {
+            const id = String(d.id).trim();
+            if (id && !handledTerminalUpdateIdsRef.current.has(id)) {
+              handledTerminalUpdateIdsRef.current.add(id);
+              void loadData();
+            }
+          }
         }
       }
     };
 
     const onDeliveryEnd = (data: any) => {
-      if (
-        activeDeliveryId &&
-        (data.id === activeDeliveryId || data.deliveryId === activeDeliveryId)
-      ) {
-        setActiveDeliveryStatus('completed');
-        const d =
-          deliveries.find((x) => x.id === activeDeliveryId) ||
-          deliveries.find((x) => x.id === data.id) ||
-          deliveries.find((x) => x.id === data.deliveryId);
-        const phaseId = String(d?.harvestPhase?.id ?? '');
+      console.log('[PORTAL] onDeliveryEnd received:', data);
+      const d = deliveries.find(
+        (x) => x.id === data.id || x.id === data.deliveryId
+      );
+
+      if (d) {
+        const currentActiveId = activeDeliveryIdRef.current;
+        if (currentActiveId === d.id) {
+          setActiveDeliveryStatus('completed');
+        }
+
+        const phaseId = String(d.harvestPhaseId ?? d.harvestPhase?.id ?? '');
         if (phaseId) {
           setActivePhaseId(phaseId);
           setPhases((prev) =>
@@ -430,6 +516,12 @@ export default function HarvestBatchDetailPage() {
               p.id === phaseId ? { ...p, status: 'completed' } : p
             )
           );
+        }
+        const id = String(d.id).trim();
+        if (id && !handledEndIdsRef.current.has(id)) {
+          handledEndIdsRef.current.add(id);
+          // Reload data to ensure sync (e.g. schedule status update)
+          void loadData();
         }
       }
     };
@@ -439,14 +531,17 @@ export default function HarvestBatchDetailPage() {
     socket.on('delivery:end', onDeliveryEnd);
 
     return () => {
+      console.log('[PORTAL] Cleaning up socket listeners');
       deliveries.forEach((d) => {
         socket.emit('delivery:unsubscribe', { deliveryId: d.id });
       });
+      socket.off('connect', onConnect);
+      socket.off('connect_error', onConnectError);
       socket.off('delivery:start', onDeliveryStart);
       socket.off('delivery:update', onDeliveryUpdate);
       socket.off('delivery:end', onDeliveryEnd);
     };
-  }, [deliveries, socket, activeDeliveryId]);
+  }, [socket, deliveryIds]);
 
   const handleCancelBatch = () => {
     if (scheduleId) {
@@ -1118,35 +1213,77 @@ export default function HarvestBatchDetailPage() {
                         )}
                       </CardHeader>
                       <CardContent className='space-y-6'>
-                        {/* Delivery Tracking Map */}
-                        {['delivering'].includes(phaseStatus) && (
-                          <Card>
-                            <CardHeader>
-                              <CardTitle className='flex items-center gap-2'>
-                                <IconTruck className='h-5 w-5' />
-                                {t('detail.phases.trackingTitle')}
-                              </CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                              <HarvestRouteSim
-                                cargo={t('detail.phases.cargo', {
-                                  quantity: totalPhaseQuantity
+                        {/* Delivery Tracking Map - Only show if active phase matches this phase */}
+                        {['delivering', 'preparing'].includes(phaseStatus) &&
+                          activePhaseId === phase.id && (
+                            <Card>
+                              <CardHeader>
+                                <CardTitle className='flex items-center gap-2'>
+                                  <IconTruck className='h-5 w-5' />
+                                  {t('detail.phases.trackingTitle')}
+                                </CardTitle>
+                              </CardHeader>
+                              <CardContent>
+                                <HarvestRouteSim
+                                  cargo={t('detail.phases.cargo', {
+                                    quantity: totalPhaseQuantity
+                                  })}
+                                  startAddress={t(
+                                    'detail.phases.startAddressDefault'
+                                  )}
+                                  endAddress={String(schedule.address ?? '')}
+                                  harvestScheduleId={String(schedule.id ?? '')}
+                                  deliveryId={activeDeliveryId}
+                                  status={activeDeliveryStatus}
+                                  onStatusUpdate={loadData}
+                                  productName={(
+                                    phase.harvestInvoiceDetails || []
+                                  )
+                                    .map((d) => d.product?.name)
+                                    .filter(Boolean)
+                                    .join(', ')}
+                                />
+                              </CardContent>
+                            </Card>
+                          )}
+
+                        {Array.isArray(phase.imageProof) &&
+                          phase.imageProof.length > 0 && (
+                            <div className='space-y-3'>
+                              <h5 className='font-semibold'>
+                                Hình ảnh chứng minh
+                              </h5>
+                              <div className='grid grid-cols-2 gap-3 md:grid-cols-4'>
+                                {phase.imageProof.map((proof) => {
+                                  const p: any = proof || {};
+                                  const url = sanitizeUrl(
+                                    typeof p?.photo === 'string'
+                                      ? p.photo
+                                      : (p?.photo?.path ?? p?.path)
+                                  );
+                                  if (!url) return null;
+                                  return (
+                                    <a
+                                      key={proof.id}
+                                      href={url}
+                                      target='_blank'
+                                      rel='noreferrer'
+                                      className='block'
+                                    >
+                                      <div className='relative h-32 w-full overflow-hidden rounded-md border bg-gray-100'>
+                                        <Image
+                                          src={url}
+                                          alt='Hình ảnh chứng minh'
+                                          fill
+                                          className='object-cover'
+                                        />
+                                      </div>
+                                    </a>
+                                  );
                                 })}
-                                startAddress={t(
-                                  'detail.phases.startAddressDefault'
-                                )}
-                                endAddress={String(schedule.address ?? '')}
-                                harvestScheduleId={String(schedule.id ?? '')}
-                                deliveryId={activeDeliveryId}
-                                status={activeDeliveryStatus}
-                                productName={(phase.harvestInvoiceDetails || [])
-                                  .map((d) => d.product?.name)
-                                  .filter(Boolean)
-                                  .join(', ')}
-                              />
-                            </CardContent>
-                          </Card>
-                        )}
+                              </div>
+                            </div>
+                          )}
 
                         {/* Invoice Details (Products) */}
                         {phase.harvestInvoiceDetails &&
