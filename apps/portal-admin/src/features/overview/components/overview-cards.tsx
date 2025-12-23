@@ -76,7 +76,7 @@ export function OverviewCards() {
         <div className='*:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card dark:*:data-[slot=card]:bg-card grid grid-cols-1 gap-4 *:data-[slot=card]:bg-gradient-to-t *:data-[slot=card]:shadow-xs md:grid-cols-2 lg:grid-cols-4'>
           <Card className='@container/card'>
             <CardHeader>
-              <CardDescription>{t('totalRevenue')} (VND)</CardDescription>
+              <CardDescription>{t('totalRevenue')} </CardDescription>
               <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
                 {data.totalRevenue.toLocaleString()}
               </CardTitle>
@@ -93,61 +93,40 @@ export function OverviewCards() {
 
           <Card className='@container/card'>
             <CardHeader>
-              <CardDescription>{t('totalOrders')}</CardDescription>
+              <CardDescription>{t('totalDebtReceivable')}</CardDescription>
               <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                {data.totalOrders.toLocaleString()}
+                {data.totalDebtReceivable.toLocaleString()}
               </CardTitle>
               <CardAction>
                 <Badge variant='outline'>
-                  <IconShoppingCart className='mr-1 size-4' />
-                  {t('ordersLabel')}
+                  <IconCurrencyDollar className='mr-1 size-4' />
+                  {t('debtReceivableLabel')}
                 </Badge>
               </CardAction>
             </CardHeader>
             <CardFooter className='flex-col items-start gap-1.5 text-sm'>
               <div className='line-clamp-1 flex gap-2 font-medium'>
-                {t('ordersDesc')}
+                {t('debtReceivableDesc')}
               </div>
             </CardFooter>
           </Card>
 
           <Card className='@container/card'>
             <CardHeader>
-              <CardDescription>{t('totalDeliveries')}</CardDescription>
+              <CardDescription>{t('totalDebtPayable')}</CardDescription>
               <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                {data.totalDeliveries.toLocaleString()}
+                {data.totalDebtPayable.toLocaleString()}
               </CardTitle>
               <CardAction>
                 <Badge variant='outline'>
-                  <IconTruck className='mr-1 size-4' />
-                  {t('deliveriesLabel')}
+                  <IconCurrencyDollar className='mr-1 size-4' />
+                  {t('debtPayableLabel')}
                 </Badge>
               </CardAction>
             </CardHeader>
             <CardFooter className='flex-col items-start gap-1.5 text-sm'>
               <div className='line-clamp-1 flex gap-2 font-medium'>
-                {t('deliveriesDesc')}
-              </div>
-            </CardFooter>
-          </Card>
-
-          <Card className='@container/card'>
-            <CardHeader>
-              <CardDescription>{t('grossProfit')} (VND)</CardDescription>
-              <CardTitle className='text-2xl font-semibold tabular-nums @[250px]/card:text-3xl'>
-                {data.grossProfit.toLocaleString()}
-              </CardTitle>
-              <CardAction>
-                <Badge variant='outline'>
-                  <span className='hidden @[260px]/card:inline'>
-                    {t('profitLabel')}
-                  </span>
-                </Badge>
-              </CardAction>
-            </CardHeader>
-            <CardFooter className='flex-col items-start gap-1.5 text-sm'>
-              <div className='line-clamp-1 flex gap-2 font-medium'>
-                {t('profitDesc')}
+                {t('debtPayableDesc')}
               </div>
             </CardFooter>
           </Card>

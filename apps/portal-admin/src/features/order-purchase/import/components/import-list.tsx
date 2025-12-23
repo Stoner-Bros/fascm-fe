@@ -125,14 +125,18 @@ export default function ImportList() {
 
   const filteredTickets = useMemo(() => {
     const q = state.searchQuery.toLowerCase();
-    return state.importTickets.filter((ticket) => {
-      const matchesSearch =
-        ticket.id.toLowerCase().includes(q) ||
-        ticket.batchCode.toLowerCase().includes(q) ||
-        ticket.productName.toLowerCase().includes(q) ||
-        ticket.areaName.toLowerCase().includes(q);
-      return matchesSearch;
-    });
+    return state.importTickets
+      .filter((ticket) => {
+        const matchesSearch =
+          ticket.id.toLowerCase().includes(q) ||
+          ticket.batchCode.toLowerCase().includes(q) ||
+          ticket.productName.toLowerCase().includes(q) ||
+          ticket.areaName.toLowerCase().includes(q);
+        return matchesSearch;
+      })
+      .sort((a, b) => {
+        return b.id.localeCompare(a.id);
+      });
   }, [state.importTickets, state.searchQuery]);
 
   // Filter batches that don't have an import ticket yet

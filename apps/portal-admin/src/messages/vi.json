@@ -2108,20 +2108,26 @@
   "Overview": {
     "title": "Xin chào, Chào mừng trở lại 👋",
     "cards": {
-      "totalRevenue": "Tổng Doanh Thu",
+      "totalRevenue": "Doanh thu dự kiến",
       "totalOrders": "Tổng Đơn Hàng",
       "totalCustomers": "Tổng Khách Hàng",
       "totalSuppliers": "Tổng Nhà Cung Cấp",
       "fromLastMonth": "+{value}% so với tháng trước",
       "totalDeliveries": "Tổng Giao Hàng",
+      "totalDebtReceivable": "Tổng Công Nợ Phải Thu",
+      "totalDebtPayable": "Tổng Công Nợ Phải Trả",
       "grossProfit": "Lợi Nhuận Gộp",
-      "revenueDesc": "Tổng doanh thu đã tạo",
+      "revenueDesc": "Tổng doanh thu dự kiến",
       "ordersDesc": "Tổng đơn hàng đã xử lý",
       "deliveriesDesc": "Các giao hàng đã hoàn thành",
+      "debtReceivableDesc": "Tổng số tiền cần thu từ khách hàng",
+      "debtPayableDesc": "Tổng số tiền cần trả cho nhà cung cấp",
       "profitDesc": "Tổng lợi nhuận gộp",
       "revenueLabel": "Doanh thu",
       "ordersLabel": "Đơn hàng",
       "deliveriesLabel": "Giao hàng",
+      "debtReceivableLabel": "Phải Thu",
+      "debtPayableLabel": "Phải Trả",
       "profitLabel": "Lợi nhuận"
     },
     "charts": {
@@ -2223,7 +2229,7 @@
     }
   },
   "PickupPage": {
-    "title": "Quản lý giao hàng",
+    "title": "Quản lý chuyến lấy hàng",
     "description": "Tạo và theo dõi các chuyến thu mua hàng từ nhà vườn",
     "viewMode": {
       "split": "Chia đôi",
