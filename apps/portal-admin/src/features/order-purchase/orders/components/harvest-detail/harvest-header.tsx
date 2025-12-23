@@ -52,7 +52,7 @@ export function HarvestHeader({
         </div>
       </div>
       <div className='flex flex-wrap items-center gap-2'>
-        {status === 'pending' && (
+        {status === 'pending' ? (
           <>
             <PermissionGuard permission={Permission.UPDATE_PURCHASE_ORDER}>
               <Button
@@ -71,9 +71,7 @@ export function HarvestHeader({
               </Button>
             </PermissionGuard>
           </>
-        )}
-        {(status === 'approved' || status === 'processing') &&
-        hasRemainingQuantity ? (
+        ) : hasRemainingQuantity ? (
           <PermissionGuard permission={Permission.UPDATE_PURCHASE_ORDER}>
             <Button onClick={onCreatePhase} variant='default'>
               <Plus className='mr-2 h-4 w-4' />
