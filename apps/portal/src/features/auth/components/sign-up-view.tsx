@@ -121,10 +121,9 @@ export default function SignUpViewPage() {
         router.push('/auth/sign-in');
       }, 3000);
     } catch (err: any) {
+      console.log(err);
       setError(
-        err.message ||
-          t('registrationFailed') ||
-          'Registration failed. Please try again.'
+        t('registrationFailed') || 'Registration failed. Please try again.'
       );
     } finally {
       setIsLoading(false);

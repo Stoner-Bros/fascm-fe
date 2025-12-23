@@ -1,20 +1,21 @@
 'use client';
 
+import { ModeToggle } from '@/components/layout/ThemeToggle/theme-toggle';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useTranslations } from 'next-intl';
-import { Metadata } from 'next';
-import Link from 'next/link';
-import { useState } from 'react';
 import { RoleEnum } from '@/constants/enums';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { ModeToggle } from '@/components/layout/ThemeToggle/theme-toggle';
+import { cn } from '@/lib/utils';
+import { Metadata } from 'next';
+import { useTranslations } from 'next-intl';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 
 export const metadata: Metadata = {
-  title: 'Authentication',
-  description: 'Authentication forms built using the components.'
+  title: 'FASCM | Đăng nhập',
+  description: 'Trang đăng nhập hệ thống FASCM'
 };
 
 export default function SignInViewPage() {
@@ -25,6 +26,22 @@ export default function SignInViewPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const { login, logout } = useAuth();
+
+  const [locale, setLocale] = useState<string>('');
+
+  useEffect(() => {
+    const cookieLocale = document.cookie
+      .split('; ')
+      .find((row) => row.startsWith('NEXT_LOCALE='))
+      ?.split('=')[1];
+    setLocale(cookieLocale || 'en');
+  }, []);
+
+  const handleLocaleChange = (locale: string) => {
+    setLocale(locale);
+    document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000`;
+    router.refresh();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,7 +67,8 @@ export default function SignInViewPage() {
       }
       router.push(dashboardPath); // Redirect to dashboard after successful login
     } catch (err: any) {
-      setError(err.message || 'Login failed. Please try again.');
+      console.log(err);
+      setError('Tài khoản hoặc mật khẩu không chính xác.');
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +114,33 @@ export default function SignInViewPage() {
         </div>
       </div>
       <div className='flex h-full items-center justify-center p-4 lg:p-8'>
-        <div className='absolute top-3 right-3 z-10'>
+        <div className='absolute top-4 right-4 z-10 flex items-center gap-4'>
+          {/* Language Selector */}
+          <div className='flex items-center gap-2'>
+            <button
+              onClick={() => handleLocaleChange('en')}
+              className={cn(
+                'cursor-pointer text-sm font-medium transition-colors',
+                locale === 'en'
+                  ? 'text-agri-primary'
+                  : 'text-muted-foreground hover:text-agri-primary'
+              )}
+            >
+              EN
+            </button>
+            <span className='text-muted-foreground'>|</span>
+            <button
+              onClick={() => handleLocaleChange('vi')}
+              className={cn(
+                'cursor-pointer text-sm font-medium transition-colors',
+                locale === 'vi'
+                  ? 'text-agri-primary'
+                  : 'text-muted-foreground hover:text-agri-primary'
+              )}
+            >
+              VN
+            </button>
+          </div>
           <ModeToggle />
         </div>
         <div className='flex w-full max-w-md flex-col items-center justify-center space-y-6'>

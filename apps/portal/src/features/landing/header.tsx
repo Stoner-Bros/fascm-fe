@@ -22,17 +22,14 @@ export function LandingHeader() {
       .split('; ')
       .find((row) => row.startsWith('NEXT_LOCALE='))
       ?.split('=')[1];
-    if (cookieLocale) {
-      setLocale(cookieLocale);
-    } else {
-      const browserLocale = navigator.language.slice(0, 2);
-      const defaultLocale = ['en', 'vi'].includes(browserLocale)
-        ? browserLocale
-        : 'en';
-      setLocale(defaultLocale);
-      document.cookie = `NEXT_LOCALE=${defaultLocale}; path=/; max-age=31536000; SameSite=Lax`;
-    }
-  }, [router]);
+    setLocale(cookieLocale || 'en');
+  }, []);
+
+  const handleLocaleChange = (locale: string) => {
+    setLocale(locale);
+    document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000`;
+    router.refresh();
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -42,14 +39,6 @@ export function LandingHeader() {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
-
-  const handleLocaleChange = (newLocale: string) => {
-    setLocale(newLocale);
-    // Set cookie with proper path and expiration
-    document.cookie = `NEXT_LOCALE=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
-    // Force a full page reload to ensure server picks up the new locale
-    router.refresh();
-  };
 
   const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
