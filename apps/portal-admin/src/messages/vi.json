@@ -1067,7 +1067,7 @@
       "code": "Mã",
       "tabs": {
         "overview": "Tổng quan",
-        "phases": "Đợt thu hoạch"
+        "phases": "Phiên lấy hàng"
       },
       "header": {
         "reject": "Từ chối",
@@ -1114,9 +1114,9 @@
         "empty": "Không có chi tiết sản phẩm"
       },
       "phases": {
-        "title": "Các đợt thu hoạch",
-        "subtitle": "Danh sách các đợt thu hoạch đã tạo ({count})",
-        "phase": "Đợt",
+        "title": "Các phiên lấy hàng",
+        "subtitle": "Danh sách các phiên lấy hàng đã tạo ({count})",
+        "phase": "Phiên",
         "noDescription": "Không có mô tả",
         "invoiceNumber": "Mã hóa đơn",
         "confirmDelivery": "Xác nhận nhận hàng",
