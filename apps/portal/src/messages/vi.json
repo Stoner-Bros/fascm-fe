@@ -56,7 +56,7 @@
       "iot": "IoT",
       "integration": "tích hợp.",
       "signInSupplier": "Đăng nhập với tư cách Nhà cung cấp",
-      "signInConsignee": "Đăng nhập với tư cách Người nhận hàng"
+      "signInConsignee": "Đăng nhập với tư cách Đại lý bán lẻ"
     },
     "topProducts": {
       "title": "Sản phẩm nổi bật",
@@ -118,7 +118,7 @@
         "description": "Quản lý lô hàng thu hoạch, xác nhận lấy hàng và ghi lại nguồn gốc sản phẩm bằng kỹ thuật số."
       },
       "consignee": {
-        "title": "Mô-đun Người nhận hàng",
+        "title": "Mô-đun Đại lý bán lẻ",
         "description": "Xem và đặt hàng nông sản đã xác minh, theo dõi nguồn gốc và đảm bảo độ tươi khi nhận hàng."
       },
       "iotBlockchain": {
@@ -136,7 +136,7 @@
         }
       },
       "forConsignees": {
-        "title": "Dành cho Người nhận hàng",
+        "title": "Dành cho Đại lý bán lẻ",
         "items": {
           "view": "Xem sản phẩm của nhà cung cấp đã xác minh",
           "track": "Theo dõi độ tươi và chỉ số chất lượng",
@@ -150,7 +150,7 @@
       "title": "Cách hoạt động",
       "description": "Khám phá cách FASCM hoạt động với quy trình được tinh giản của chúng tôi. Người quản lý tạo sản phẩm, nhân viên kho quản lý đơn hàng và nhà cung cấp thực hiện các yêu cầu đã được xác nhận.",
       "tabs": {
-        "consignee": "Tôi là Người nhận hàng",
+        "consignee": "Tôi là Đại lý bán lẻ",
         "supplier": "Tôi là Nhà cung cấp"
       },
       "consignee": {
@@ -201,7 +201,7 @@
         "title": "Sẵn sàng bắt đầu?",
         "descriptionConsignee": "Tham gia nền tảng của chúng tôi để hợp lý hóa quy trình mua sắm của bạn với sự minh bạch và hiệu quả hoàn toàn.",
         "descriptionSupplier": "Tham gia nền tảng của chúng tôi để hợp lý hóa việc thực hiện đơn hàng của bạn với sự minh bạch và hiệu quả hoàn toàn.",
-        "buttonConsignee": "Bắt đầu với tư cách Người nhận hàng",
+        "buttonConsignee": "Bắt đầu với tư cách Đại lý bán lẻ",
         "buttonSupplier": "Bắt đầu với tư cách Nhà cung cấp"
       },
       "stepLabel": "Bước"
@@ -268,7 +268,7 @@
       "title": "Sẵn sàng mang lại sự minh bạch cho chuỗi cung ứng của bạn?",
       "description": "Tham gia cùng hàng trăm nông dân và nhà bán lẻ đã sử dụng FASCM để đảm bảo chất lượng, khả năng truy xuất nguồn gốc và niềm tin trong mọi giao dịch.",
       "registerSupplier": "Đăng ký với tư cách Nhà cung cấp",
-      "registerConsignee": "Đăng ký với tư cách Người nhận hàng",
+      "registerConsignee": "Đăng ký với tư cách Đại lý bán lẻ",
       "alreadyAccount": "Đã có tài khoản?",
       "signIn": "Đăng nhập tại đây"
     },
@@ -620,7 +620,7 @@
     "overview": "Tổng quan",
     "roleDisplay": {
       "Supplier": "Nhà Vườn",
-      "Consignee": "Người nhận hàng"
+      "Consignee": "Đại lý bán lẻ"
     },
     "navigation": {
       "dashboard": "Bảng điều khiển",
@@ -987,7 +987,7 @@
       "fileUploadFailed": "Tải tệp thất bại",
       "fileUploadFailedDescription": "Không thể tải tệp {type}. Vui lòng thử lại.",
       "error": "Lỗi",
-      "consigneeNotFound": "Không tìm thấy thông tin người nhận hàng.",
+      "consigneeNotFound": "Không tìm thấy thông tin đại lý.",
       "supplierNotFound": "Không tìm thấy thông tin nhà cung cấp.",
       "profileUpdated": "Đã cập nhật hồ sơ",
       "profileUpdatedDescription": "Hồ sơ của bạn đã được cập nhật thành công.",
