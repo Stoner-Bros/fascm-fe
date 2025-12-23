@@ -27,9 +27,10 @@ export async function fetchHarvestSchedules({
   });
 
   const warehouseId = getCookie('warehouseId');
-
+  const deliveryStaffId = getCookie('deliveryStaffId');
   if (status) params.set('status', status);
   if (sort) params.set('sort', sort);
+  if (deliveryStaffId) params.set('deliveryStaffId', deliveryStaffId as string);
   if (warehouseId) params.set('warehouseId', warehouseId as string);
 
   return fetchJSON<InfinityPaginationResponse<HarvestSchedule>>(

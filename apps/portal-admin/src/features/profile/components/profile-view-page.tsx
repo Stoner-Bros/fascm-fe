@@ -252,7 +252,7 @@ export default function ProfileViewPage() {
           const manager = roleBasedInfo as Manager;
           await updateManager(manager.id, {
             warehouse: manager.warehouse ? { id: manager.warehouse.id } : null,
-            user: { id: String(user?.id) }
+            user: { id: user?.id ?? 0 }
           });
           break;
 
@@ -261,7 +261,7 @@ export default function ProfileViewPage() {
           await updateStaff(staff.id, {
             position: formData.position,
             warehouse: staff.warehouse ? { id: staff.warehouse.id } : null,
-            user: { id: String(user?.id) }
+            user: { id: user?.id ?? 0 }
           });
           break;
 
@@ -275,7 +275,7 @@ export default function ProfileViewPage() {
             warehouse: deliveryStaff.warehouse
               ? { id: deliveryStaff.warehouse.id }
               : null,
-            user: { id: String(user?.id) }
+            user: { id: user?.id ?? 0 }
           });
           break;
       }

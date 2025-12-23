@@ -8,6 +8,7 @@ import type {
   UpdateHarvestPhaseStatusDto,
   FindAllHarvestPhasesDto
 } from '../types/harvest-phase';
+import { getCookie } from '@/lib/cookie';
 
 export async function createHarvestPhase(body: CreateHarvestPhaseDto) {
   return fetchJSON<HarvestPhase>('/harvest-phases', {
@@ -27,12 +28,14 @@ export async function createMultipleHarvestPhases(
 
 export async function fetchHarvestPhases({
   page = 1,
-  limit = 10
+  limit = 50
 }: FindAllHarvestPhasesDto = {}) {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(limit)
   });
+  const deliveryStaffId = getCookie('deliveryStaffId');
+  if (deliveryStaffId) params.set('deliveryStaffId', deliveryStaffId as string);
 
   return fetchJSON<InfinityPaginationResponse<HarvestPhase>>(
     `/harvest-phases?${params.toString()}`
@@ -48,6 +51,9 @@ export async function fetchHarvestPhasesBySchedule({
     page: String(page),
     limit: String(limit)
   });
+
+  const deliveryStaffId = getCookie('deliveryStaffId');
+  if (deliveryStaffId) params.set('deliveryStaffId', deliveryStaffId as string);
 
   return fetchJSON<InfinityPaginationResponse<HarvestPhase>>(
     `/harvest-phases/harvest-schedule/${harvestScheduleId}?${params.toString()}`

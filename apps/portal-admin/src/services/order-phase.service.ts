@@ -8,6 +8,7 @@ import type {
   UpdateOrderPhaseStatusDto,
   FindAllOrderPhasesDto
 } from '../types/order';
+import { getCookie } from '@/lib/cookie';
 
 export async function createOrderPhase(body: CreateOrderPhaseDto) {
   return fetchJSON<OrderPhase>('/order-phases', {
@@ -34,6 +35,9 @@ export async function fetchOrderPhases({
     limit: String(limit)
   });
 
+  const deliveryStaffId = getCookie('deliveryStaffId');
+  if (deliveryStaffId) params.set('deliveryStaffId', deliveryStaffId as string);
+
   return fetchJSON<InfinityPaginationResponse<OrderPhase>>(
     `/order-phases?${params.toString()}`
   );
@@ -48,6 +52,9 @@ export async function fetchOrderPhasesBySchedule({
     page: String(page),
     limit: String(limit)
   });
+
+  const deliveryStaffId = getCookie('deliveryStaffId');
+  if (deliveryStaffId) params.set('deliveryStaffId', deliveryStaffId as string);
 
   return fetchJSON<InfinityPaginationResponse<OrderPhase>>(
     `/order-phases/order-schedule/${orderScheduleId}?${params.toString()}`

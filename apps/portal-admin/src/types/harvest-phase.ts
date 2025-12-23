@@ -86,4 +86,5 @@ export interface FindAllHarvestPhasesDto {
   page?: number;
   limit?: number;
   harvestScheduleId?: string;
+  deliveryStaffId?: string;
 }

@@ -99,9 +99,16 @@ export default function NotificationListener() {
       try {
         const fullInfo = await fetchMine(roleName);
         setFullInfo(fullInfo);
-        setCookie('warehouseId', String(fullInfo?.warehouse?.id ?? ''), {
-          expires: 120
-        });
+
+        if (roleName === RoleEnum.DELIVERY_STAFF) {
+          setCookie('deliveryStaffId', String(fullInfo?.id ?? ''), {
+            expires: 120
+          });
+        } else {
+          setCookie('warehouseId', String(fullInfo?.warehouse?.id ?? ''), {
+            expires: 120
+          });
+        }
         setEntityId(String(fullInfo?.id ?? ''));
         setWarehouseId(String(fullInfo?.warehouse?.id ?? ''));
 

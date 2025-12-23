@@ -117,6 +117,7 @@ function clearTokens() {
   if (typeof document === 'undefined') return;
 
   removeCookie('warehouseId');
+  removeCookie('deliveryStaffId');
   Object.values(COOKIE_KEYS).forEach((cookieName) => {
     try {
       removeCookie(cookieName, { path: '/' });

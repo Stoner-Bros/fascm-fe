@@ -14,10 +14,11 @@ export async function fetchOrderSchedules({
     limit: String(limit)
   });
   const warehouseId = getCookie('warehouseId');
+  const deliveryStaffId = getCookie('deliveryStaffId');
   if (status) params.set('status', status);
   if (sort) params.set('sort', sort);
   if (warehouseId) params.set('warehouseId', warehouseId as string);
-
+  if (deliveryStaffId) params.set('deliveryStaffId', deliveryStaffId as string);
   return fetchJSON<InfinityPaginationResponse<OrderSchedule>>(
     `/order-schedules?${params.toString()}`
   );

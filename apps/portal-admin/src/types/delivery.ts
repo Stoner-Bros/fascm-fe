@@ -5,6 +5,7 @@
 import { Consignee } from './consignee';
 import { HarvestPhase } from './harvest-phase';
 import { OrderPhase } from './order';
+import { DeliveryStaff } from './delivery-staff';
 
 /**
  * IoT Device type for truck monitoring
@@ -62,6 +63,7 @@ export interface Delivery {
   startTime?: string | null;
   endTime?: string | null;
   truck?: Truck | null;
+  deliveryStaff?: DeliveryStaff | null;
   harvestPhase?: HarvestPhase | null;
   orderPhase?: OrderPhase | null;
   createdAt: string;

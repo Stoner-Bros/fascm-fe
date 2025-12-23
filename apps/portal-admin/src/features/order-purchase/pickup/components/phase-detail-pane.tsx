@@ -828,6 +828,13 @@ export function PhaseDetailPane({
                 const delivery = getPickupByPhaseId(phase.id);
                 const phaseStatus = phase.status || 'preparing';
 
+                // Tìm deliveryStaff đầy đủ từ danh sách deliveryStaffs
+                const fullDeliveryStaff = delivery?.deliveryStaff?.id
+                  ? deliveryStaffs.find(
+                      (ds) => ds.id === delivery.deliveryStaff?.id
+                    )
+                  : null;
+
                 return (
                   <AccordionItem
                     key={phase.id}
@@ -923,8 +930,23 @@ export function PhaseDetailPane({
                               </h5>
 
                               <div className='grid gap-1.5 text-xs'>
+                                {fullDeliveryStaff?.user && (
+                                  <div className='flex items-center gap-1'>
+                                    <span className='text-muted-foreground'>
+                                      Nhân viên giao hàng:
+                                    </span>
+                                    <span className='font-medium'>
+                                      {[
+                                        fullDeliveryStaff.user.firstName,
+                                        fullDeliveryStaff.user.lastName
+                                      ]
+                                        .filter(Boolean)
+                                        .join(' ') || 'Chưa có tên'}
+                                    </span>
+                                  </div>
+                                )}
                                 {delivery.truck && (
-                                  <div className='flex items-center justify-between'>
+                                  <div className='flex items-center gap-1'>
                                     <span className='text-muted-foreground'>
                                       Xe:
                                     </span>
