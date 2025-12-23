@@ -9,7 +9,7 @@ import { useTranslations } from 'next-intl';
 import { useEffect, useMemo, useState } from 'react';
 import { io } from 'socket.io-client';
 import {
-  fetchDeliveriesByOrderSchedule,
+  fetchDeliveriesByOrderPhase,
   type Delivery
 } from '@/services/delivery.service';
 import { normalize } from 'path';
@@ -77,7 +77,7 @@ export function useOrderDetail(orderId: string) {
     const sid = String(orderSchedule?.id ?? '').trim();
     if (!sid) return;
     let localDeliveries: Delivery[] = [];
-    fetchDeliveriesByOrderSchedule({ orderScheduleId: sid, page: 1, limit: 50 })
+    fetchDeliveriesByOrderPhase({ orderPhaseId: sid, page: 1, limit: 50 })
       .then((res) => {
         localDeliveries = Array.isArray(res?.data) ? res.data : [];
         setDeliveries(localDeliveries);

@@ -14,7 +14,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import {
   fetchDeliveryById,
-  fetchDeliveriesByOrderSchedule
+  fetchDeliveriesByOrderPhase
 } from '@/services/delivery.service';
 import { updateOrderScheduleStatus } from '@/services/order-schedule.service';
 import {
@@ -451,8 +451,8 @@ export default function DeliveryRouteSim({
   useEffect(() => {
     const sid = orderScheduleId?.trim();
     if (!sid || activeDeliveryId) return;
-    fetchDeliveriesByOrderSchedule({
-      orderScheduleId: sid,
+    fetchDeliveriesByOrderPhase({
+      orderPhaseId: sid,
       page: 1,
       limit: 10
     })

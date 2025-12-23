@@ -647,6 +647,35 @@ export function PhaseDetailPane({
     const uploaded = await onUploadPhaseImageProof(phaseId, proofFiles);
     if (uploaded) {
       await onUpdateDeliveryStatus(deliveryForProof.id, 'delivered');
+      try {
+        const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        const socket = io(base + '/deliveries', { transports: ['websocket'] });
+        const lat =
+          typeof deliveryForProof.endLat === 'number'
+            ? deliveryForProof.endLat
+            : typeof deliveryForProof.startLat === 'number'
+              ? deliveryForProof.startLat
+              : undefined;
+        const lng =
+          typeof deliveryForProof.endLng === 'number'
+            ? deliveryForProof.endLng
+            : typeof deliveryForProof.startLng === 'number'
+              ? deliveryForProof.startLng
+              : undefined;
+        if (typeof lat === 'number' && typeof lng === 'number') {
+          socket.emit('delivery:update', {
+            deliveryId: deliveryForProof.id,
+            lat,
+            lng,
+            status: 'delivered'
+          });
+        } else {
+          socket.emit('delivery:update', {
+            deliveryId: deliveryForProof.id,
+            status: 'delivered'
+          });
+        }
+      } catch {}
       // Refetch the phase to get updated image proof
       if (onRefetchPhase && schedule?.id) {
         await onRefetchPhase(phaseId, schedule.id);

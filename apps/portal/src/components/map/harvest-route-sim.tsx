@@ -14,7 +14,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { io } from 'socket.io-client';
 import {
   fetchDeliveryById,
-  fetchDeliveriesByHarvestSchedule
+  fetchDeliveriesByHarvestPhase
 } from '@/services/delivery.service';
 import { updateHarvestScheduleStatus } from '@/services/harvest-schedule.service';
 import {
@@ -112,7 +112,9 @@ export default function HarvestRouteSim({
   startLat,
   startLng,
   endLat,
-  endLng
+  endLng,
+  status,
+  onStatusUpdate
 }: {
   cargo: string;
   startAddress?: string;
@@ -125,6 +127,7 @@ export default function HarvestRouteSim({
   endLat?: number;
   endLng?: number;
   status?: string;
+  onStatusUpdate?: () => Promise<void> | void;
 }) {
   const [from, setFrom] = useState<LatLng | undefined>(undefined);
   const [to, setTo] = useState<LatLng | undefined>(undefined);
@@ -155,9 +158,12 @@ export default function HarvestRouteSim({
 
   const socket = useMemo(() => {
     const base = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+    console.log(
+      '[HarvestRouteSim] Connecting socket to:',
+      base + '/deliveries'
+    );
     return io(base + '/deliveries', { transports: ['websocket'] });
   }, []);
-
   useEffect(() => {
     let mounted = true;
     import('leaflet').then(({ default: L }) => {
@@ -318,113 +324,77 @@ export default function HarvestRouteSim({
   useEffect(() => {
     if (!activeDeliveryId) return;
 
-    const onConnect = () => {
-      console.log('Socket connected:', socket.id);
-      socket.emit('delivery:subscribe', { deliveryId: activeDeliveryId });
+    console.log('[HarvestRouteSim] Subscribing to delivery:', activeDeliveryId);
+    socket.emit('delivery:subscribe', { deliveryId: activeDeliveryId });
+
+    const onStart = (p: {
+      startLat: number;
+      startLng: number;
+      startAddress?: string;
+      route?: [number, number][];
+    }) => {
+      console.log('[HarvestRouteSim] Received delivery:start', p);
+      setStartPos({ lat: p.startLat, lng: p.startLng });
+      setEndPos(undefined);
+      setPos({ lat: p.startLat, lng: p.startLng });
+      if (p.startAddress) setStartAddr(normalizeAddress(p.startAddress));
+      if (Array.isArray(p.route)) setRoute(p.route);
+      if (onStatusUpdate) onStatusUpdate();
     };
 
-    const onConnectError = (err: any) => {
-      console.error('Socket connection error:', err);
+    const onUpdate = (p: { lat: number; lng: number }) => {
+      console.log('[HarvestRouteSim] Received delivery:update', p);
+      const hasLat = typeof p?.lat === 'number' && Number.isFinite(p.lat);
+      const hasLng = typeof p?.lng === 'number' && Number.isFinite(p.lng);
+      if (!hasLat || !hasLng) return;
+      setPos({ lat: p.lat, lng: p.lng });
     };
 
-    socket.on('connect', onConnect);
-    socket.on('connect_error', onConnectError);
-    socket.on('disconnect', () => {
-      console.log('Socket disconnected');
-    });
-
-    // Subscribe immediately if already connected
-    if (socket.connected) {
-      onConnect();
-    } else {
-      // Fallback emit just in case, though onConnect should handle it
-      socket.emit('delivery:subscribe', { deliveryId: activeDeliveryId });
-    }
-
-    socket.on('delivery:subscribed', () => {
-      console.log('Subscribed to delivery:', activeDeliveryId);
-    });
-    socket.on(
-      'delivery:start',
-      (p: {
-        startLat: number | string;
-        startLng: number | string;
-        startAddress?: string;
-        route?: [number, number][];
-      }) => {
-        console.log('Received delivery:start', p);
-        const sLat = Number(p.startLat);
-        const sLng = Number(p.startLng);
-        if (Number.isFinite(sLat) && Number.isFinite(sLng)) {
-          setStartPos({ lat: sLat, lng: sLng });
-          setEndPos(undefined);
-          setPos({ lat: sLat, lng: sLng });
-        }
-        if (p.startAddress) setStartAddr(normalizeAddress(p.startAddress));
-        if (Array.isArray(p.route)) setRoute(p.route);
+    const onEnd = async (p: {
+      endLat: number;
+      endLng: number;
+      endAddress?: string;
+    }) => {
+      console.log('[HarvestRouteSim] Received delivery:end', p);
+      const hasLat = typeof p?.endLat === 'number' && Number.isFinite(p.endLat);
+      const hasLng = typeof p?.endLng === 'number' && Number.isFinite(p.endLng);
+      if (hasLat && hasLng) {
+        setEndPos({ lat: p.endLat, lng: p.endLng });
+        setPos({ lat: p.endLat, lng: p.endLng });
       }
-    );
-    socket.on('delivery:update', (p: any) => {
-      console.log('Received delivery:update', p);
-      const lat =
-        p.lat != null
-          ? Number(p.lat)
-          : p.currentLat != null
-            ? Number(p.currentLat)
-            : undefined;
-      const lng =
-        p.lng != null
-          ? Number(p.lng)
-          : p.currentLng != null
-            ? Number(p.currentLng)
-            : undefined;
+      if (p.endAddress) setEndAddr(normalizeAddress(p.endAddress));
 
-      if (Number.isFinite(lat) && Number.isFinite(lng)) {
-        setPos({ lat: lat as number, lng: lng as number });
-      }
-    });
-    socket.on(
-      'delivery:end',
-      async (p: {
-        endLat: number | string;
-        endLng: number | string;
-        endAddress?: string;
-      }) => {
-        console.log('Received delivery:end', p);
-        const eLat = Number(p.endLat);
-        const eLng = Number(p.endLng);
-        if (Number.isFinite(eLat) && Number.isFinite(eLng)) {
-          setEndPos({ lat: eLat, lng: eLng });
-          setPos({ lat: eLat, lng: eLng });
-        }
-        if (p.endAddress) setEndAddr(normalizeAddress(p.endAddress));
-        const id = activeDeliveryId.trim();
-        if (id && harvestScheduleId) {
-          try {
-            const d = await fetchDeliveryById(id);
-            const st = String(d.status ?? '').toLowerCase();
-            if (st === 'completed') {
-              await updateHarvestScheduleStatus(
-                harvestScheduleId as string,
-                'COMPLETED'
-              );
-            }
-          } catch {
-            // Ignore errors
+      const id = activeDeliveryId.trim();
+      if (id && harvestScheduleId) {
+        try {
+          const d = await fetchDeliveryById(id);
+          const st = String(d.status ?? '').toLowerCase();
+          if (st === 'completed') {
+            await updateHarvestScheduleStatus(
+              harvestScheduleId as string,
+              'completed' // Fixed case to lowercase to match typical enum
+            );
           }
+        } catch {
+          // Ignore errors
         }
       }
-    );
-    return () => {
-      socket.off('delivery:start');
-      socket.off('delivery:update');
-      socket.off('delivery:end');
-      socket.off('delivery:subscribed');
-      socket.off('connect');
-      socket.off('connect_error');
-      socket.off('disconnect');
+      if (onStatusUpdate) onStatusUpdate();
     };
-  }, [socket, activeDeliveryId, harvestScheduleId]);
+
+    socket.on('delivery:start', onStart);
+    socket.on('delivery:update', onUpdate);
+    socket.on('delivery:end', onEnd);
+
+    return () => {
+      socket.off('delivery:start', onStart);
+      socket.off('delivery:update', onUpdate);
+      socket.off('delivery:end', onEnd);
+      // DeliveryRouteSim doesn't emit unsubscribe here, but it might be good practice.
+      // However, to align strictly with DeliveryRouteSim behavior which works:
+      // socket.emit('delivery:unsubscribe', { deliveryId: activeDeliveryId });
+    };
+  }, [socket, activeDeliveryId, harvestScheduleId, onStatusUpdate]);
 
   useEffect(() => {
     const id = activeDeliveryId?.trim();
@@ -516,8 +486,8 @@ export default function HarvestRouteSim({
   useEffect(() => {
     const sid = harvestScheduleId?.trim();
     if (!sid || activeDeliveryId) return;
-    fetchDeliveriesByHarvestSchedule({
-      harvestScheduleId: sid,
+    fetchDeliveriesByHarvestPhase({
+      harvestPhaseId: sid,
       page: 1,
       limit: 10
     })
@@ -567,8 +537,9 @@ export default function HarvestRouteSim({
     return [lat, lng] as [number, number];
   })();
 
-  const viewPos =
-    currentPos ?? (pos ? ([pos.lat, pos.lng] as [number, number]) : undefined);
+  const viewPos = pos
+    ? ([pos.lat, pos.lng] as [number, number])
+    : (currentPos ?? undefined);
 
   const traveled = (() => {
     if (route.length === 0) return [] as [number, number][];
