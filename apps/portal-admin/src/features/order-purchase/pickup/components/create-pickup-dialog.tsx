@@ -27,9 +27,10 @@ import {
   Truck as TruckIcon,
   User
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useTranslations } from 'next-intl';
+import { useToast } from '@/components/ui/use-toast';
 
 interface CreatePickupDialogProps {
   open: boolean;
@@ -65,6 +66,35 @@ function getTruckStatusLabel(
   return status ? labels[status] || status : 'Không xác định';
 }
 
+// Helper function to convert quantity to kg
+function convertToKg(
+  quantity: number,
+  unit: string | null | undefined
+): number {
+  if (!quantity || quantity <= 0) return 0;
+
+  const unitLower = (unit || 'kg').toLowerCase().trim();
+
+  // Convert to kg based on unit
+  switch (unitLower) {
+    case 'tấn':
+    case 'ton':
+    case 'tons':
+      return quantity * 1000;
+    case 'kg':
+    case 'kilogram':
+    case 'kilograms':
+      return quantity;
+    case 'g':
+    case 'gram':
+    case 'grams':
+      return quantity / 1000;
+    default:
+      // Assume kg if unit is unknown
+      return quantity;
+  }
+}
+
 export function CreatePickupDialog({
   open,
   onOpenChange,
@@ -78,6 +108,7 @@ export function CreatePickupDialog({
   isSubmitting
 }: CreatePickupDialogProps) {
   const { fullInfo } = useAuth();
+  const { toast } = useToast();
   const t = useTranslations('HarvestOrders.createPickupDialog');
   const [selectedTruckId, setSelectedTruckId] = useState<string>('');
   const [selectedStaffId, setSelectedStaffId] = useState<string>('');
@@ -87,6 +118,40 @@ export function CreatePickupDialog({
   useEffect(() => {
     setStartAddress(fullInfo?.warehouse?.address);
   }, [fullInfo?.warehouse?.address]);
+
+  // Calculate total quantity in kg from harvestInvoiceDetails
+  const totalQuantityKg = useMemo(() => {
+    if (
+      !phase.harvestInvoiceDetails ||
+      phase.harvestInvoiceDetails.length === 0
+    ) {
+      return 0;
+    }
+
+    return phase.harvestInvoiceDetails.reduce((total, detail) => {
+      const quantity = detail.quantity || 0;
+      const unit = detail.unit;
+      return total + convertToKg(quantity, unit);
+    }, 0);
+  }, [phase.harvestInvoiceDetails]);
+
+  // Get selected truck
+  const selectedTruck = useMemo(() => {
+    return trucks.find((t) => t.id === selectedTruckId);
+  }, [trucks, selectedTruckId]);
+
+  // Check if truck capacity is sufficient
+  const isCapacitySufficient = useMemo(() => {
+    if (!selectedTruck || !selectedTruck.capacity) return true; // No truck selected or no capacity info
+    return selectedTruck.capacity >= totalQuantityKg;
+  }, [selectedTruck, totalQuantityKg]);
+
+  // Capacity error message
+  const capacityError = useMemo(() => {
+    if (!selectedTruck || !selectedTruck.capacity) return null;
+    if (isCapacitySufficient) return null;
+    return `Sức chứa không đủ. Tổng khối lượng: ${totalQuantityKg.toFixed(2)}kg, Sức chứa xe: ${selectedTruck.capacity}kg`;
+  }, [selectedTruck, totalQuantityKg, isCapacitySufficient]);
 
   // Filter available trucks
   const availableTrucks = trucks.filter(
@@ -100,6 +165,18 @@ export function CreatePickupDialog({
 
   const handleSubmit = async () => {
     if (!selectedTruckId || !selectedStaffId) return;
+
+    // Validate capacity before submitting
+    if (!isCapacitySufficient) {
+      toast({
+        title: 'Lỗi',
+        description:
+          capacityError ||
+          'Sức chứa xe không đủ để chứa tổng khối lượng sản phẩm',
+        variant: 'destructive'
+      });
+      return;
+    }
 
     const payload: CreateDeliveryDto = {
       harvestPhase: { id: phase.id },
@@ -132,7 +209,12 @@ export function CreatePickupDialog({
       </Button>
       <Button
         onClick={handleSubmit}
-        disabled={!selectedTruckId || !selectedStaffId || isSubmitting}
+        disabled={
+          !selectedTruckId ||
+          !selectedStaffId ||
+          isSubmitting ||
+          !isCapacitySufficient
+        }
       >
         {isSubmitting ? (
           <>
@@ -235,7 +317,10 @@ export function CreatePickupDialog({
               onValueChange={setSelectedTruckId}
               disabled={availableTrucks.length === 0}
             >
-              <SelectTrigger id='truck' className='h-9'>
+              <SelectTrigger
+                id='truck'
+                className={capacityError ? 'border-destructive h-9' : 'h-9'}
+              >
                 <SelectValue
                   placeholder={
                     availableTrucks.length === 0
@@ -250,41 +335,66 @@ export function CreatePickupDialog({
                     {t('noTrucksAvailable')}
                   </div>
                 ) : (
-                  availableTrucks.map((truck) => (
-                    <SelectItem
-                      key={truck.id}
-                      value={truck.id}
-                      disabled={
-                        truck.status === 'in_use' ||
-                        truck.status === 'unavailable'
-                      }
-                    >
-                      <div className='flex items-center gap-2'>
-                        <TruckIcon className='text-muted-foreground h-3.5 w-3.5' />
-                        <span className='font-medium'>
-                          {truck.licensePlate}
-                        </span>
-                        <span className='text-muted-foreground text-xs'>
-                          ({truck.model || 'N/A'} - {truck.capacity}kg)
-                        </span>
-                        <Badge
-                          variant={
-                            truck.status === 'available'
-                              ? 'default'
-                              : truck.status === 'in_use'
-                                ? 'secondary'
-                                : 'outline'
-                          }
-                          className='px-1.5 py-0 text-[10px]'
-                        >
-                          {getTruckStatusLabel(truck.status)}
-                        </Badge>
-                      </div>
-                    </SelectItem>
-                  ))
+                  availableTrucks.map((truck) => {
+                    const truckCapacity = truck.capacity || 0;
+                    const isTruckCapacitySufficient =
+                      truckCapacity >= totalQuantityKg;
+                    const isDisabled =
+                      truck.status === 'in_use' ||
+                      truck.status === 'unavailable' ||
+                      !isTruckCapacitySufficient;
+
+                    return (
+                      <SelectItem
+                        key={truck.id}
+                        value={truck.id}
+                        disabled={isDisabled}
+                      >
+                        <div className='flex items-center gap-2'>
+                          <TruckIcon className='text-muted-foreground h-3.5 w-3.5' />
+                          <span className='font-medium'>
+                            {truck.licensePlate}
+                          </span>
+                          <span className='text-muted-foreground text-xs'>
+                            ({truck.model || 'N/A'} - {truck.capacity}kg)
+                          </span>
+                          <Badge
+                            variant={
+                              truck.status === 'available'
+                                ? 'default'
+                                : truck.status === 'in_use'
+                                  ? 'secondary'
+                                  : 'outline'
+                            }
+                            className='px-1.5 py-0 text-[10px]'
+                          >
+                            {getTruckStatusLabel(truck.status)}
+                          </Badge>
+                          {!isTruckCapacitySufficient &&
+                            totalQuantityKg > 0 && (
+                              <Badge
+                                variant='destructive'
+                                className='px-1.5 py-0 text-[10px]'
+                              >
+                                Không đủ sức chứa
+                              </Badge>
+                            )}
+                        </div>
+                      </SelectItem>
+                    );
+                  })
                 )}
               </SelectContent>
             </Select>
+          )}
+          {capacityError && (
+            <p className='text-destructive text-xs'>{capacityError}</p>
+          )}
+          {selectedTruck && isCapacitySufficient && totalQuantityKg > 0 && (
+            <p className='text-muted-foreground text-xs'>
+              Tổng khối lượng: {totalQuantityKg.toFixed(2)}kg / Sức chứa:{' '}
+              {selectedTruck.capacity}kg
+            </p>
           )}
         </div>
 

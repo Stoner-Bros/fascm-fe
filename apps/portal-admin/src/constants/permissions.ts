@@ -219,10 +219,8 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
 
   [RoleEnum.DELIVERY_STAFF]: [
     // Sale Order (delivery related)
-    Permission.VIEW_SALE_ORDER,
     Permission.MANAGE_SALE_DELIVERY,
     Permission.MANAGE_PURCHASE_PICKUP,
-    Permission.VIEW_PURCHASE_ORDER,
 
     // Profile
     Permission.VIEW_PROFILE,

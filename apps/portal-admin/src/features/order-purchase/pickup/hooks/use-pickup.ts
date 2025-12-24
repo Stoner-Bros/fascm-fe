@@ -636,6 +636,22 @@ export function usePickupPage() {
     [pickups.createPickup, trucks.loadTrucks]
   );
 
+  // Wrapper for updatePickupStatus that refreshes trucks when completed
+  const handleUpdatePickupStatus = useCallback(
+    async (
+      id: string,
+      status: DeliveryStatusEnum
+    ): Promise<Delivery | null> => {
+      const result = await pickups.updatePickupStatus(id, status);
+      // Refresh trucks after status update to completed to update their status
+      if (result && status === 'completed') {
+        await trucks.loadTrucks();
+      }
+      return result;
+    },
+    [pickups.updatePickupStatus, trucks.loadTrucks]
+  );
+
   // Get selected schedule object
   const selectedSchedule = useMemo(() => {
     if (!selectedScheduleId) return null;
@@ -721,7 +737,8 @@ export function usePickupPage() {
     phases,
     pickups: {
       ...pickups,
-      createPickup: handleCreatePickup
+      createPickup: handleCreatePickup,
+      updatePickupStatus: handleUpdatePickupStatus
     }
   };
 }

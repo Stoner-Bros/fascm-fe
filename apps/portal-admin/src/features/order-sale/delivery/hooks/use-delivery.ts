@@ -629,6 +629,35 @@ export function useDeliveryPage() {
     phases.clearCache();
   }, [schedules, deliveries, trucks, deliveryStaffs, phases]);
 
+  // Wrapper for createDelivery that refreshes trucks after success
+  const handleCreateDelivery = useCallback(
+    async (data: CreateDeliveryDto): Promise<Delivery | null> => {
+      const result = await deliveries.createDelivery(data);
+      // Refresh trucks after successful creation to update their status
+      if (result) {
+        await trucks.loadTrucks();
+      }
+      return result;
+    },
+    [deliveries.createDelivery, trucks.loadTrucks]
+  );
+
+  // Wrapper for updateDeliveryStatus that refreshes trucks when completed
+  const handleUpdateDeliveryStatus = useCallback(
+    async (
+      id: string,
+      status: DeliveryStatusEnum
+    ): Promise<Delivery | null> => {
+      const result = await deliveries.updateDeliveryStatus(id, status);
+      // Refresh trucks after status update to completed to update their status
+      if (result && status === 'completed') {
+        await trucks.loadTrucks();
+      }
+      return result;
+    },
+    [deliveries.updateDeliveryStatus, trucks.loadTrucks]
+  );
+
   // Get selected schedule object
   const selectedSchedule = useMemo(() => {
     if (!selectedScheduleId) return null;
@@ -660,6 +689,10 @@ export function useDeliveryPage() {
     deliveryStaffs,
     schedules,
     phases,
-    deliveries
+    deliveries: {
+      ...deliveries,
+      createDelivery: handleCreateDelivery,
+      updateDeliveryStatus: handleUpdateDeliveryStatus
+    }
   };
 }
