@@ -128,15 +128,15 @@ export function DebtCard({ debt }: DebtCardProps) {
         </div>
       </CardHeader>
       <CardContent className='space-y-6'>
-        {/* Highlight Section - Số tiền cần tất toán */}
+        {/* Highlight Section - Số tiền hệ thống nợ */}
         {Boolean(debt.remainingAmount) && (
-          <div className='rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-orange-100/50 p-6 dark:border-orange-800 dark:from-orange-950/30 dark:to-orange-900/20'>
+          <div className='rounded-lg border-2 border-green-300 bg-gradient-to-br from-green-50 to-green-100/50 p-6 dark:border-green-800 dark:from-green-950/30 dark:to-green-900/20'>
             <div className='flex flex-col items-center justify-center text-center md:flex-row md:justify-between md:text-left'>
               <div className='mb-4 md:mb-0'>
                 <p className='text-muted-foreground mb-2 text-sm font-medium'>
                   {t('card.systemOwes')}
                 </p>
-                <p className='text-4xl font-bold text-orange-600 dark:text-orange-400'>
+                <p className='text-4xl font-bold text-green-600 dark:text-green-400'>
                   {formatCurrency(debt.remainingAmount)}
                 </p>
                 <p className='text-muted-foreground mt-2 text-xs'>
@@ -147,7 +147,7 @@ export function DebtCard({ debt }: DebtCardProps) {
               {days >= 0 && (
                 <div className='flex flex-col gap-3'>
                   <p className='text-muted-foreground text-center text-xs'>
-                    {t('card.daysUntilDue', { days })}
+                    {t('card.daysUntilSettlement', { days })}
                   </p>
                 </div>
               )}
@@ -180,7 +180,7 @@ export function DebtCard({ debt }: DebtCardProps) {
               <div className='mb-2 flex items-center gap-2'>
                 <IconCheck className='h-4 w-4 text-green-600 dark:text-green-400' />
                 <p className='text-muted-foreground text-xs font-medium'>
-                  {t('card.paid')}
+                  {t('card.systemPaid')}
                 </p>
               </div>
               <p className='text-xl font-bold text-green-600 dark:text-green-400'>
@@ -200,14 +200,14 @@ export function DebtCard({ debt }: DebtCardProps) {
             </div>
 
             {/* Remaining Amount */}
-            <div className='rounded-lg bg-orange-50 p-4 dark:bg-orange-950/20'>
+            <div className='rounded-lg bg-green-50 p-4 dark:bg-green-950/20'>
               <div className='mb-2 flex items-center gap-2'>
-                <IconAlertCircle className='h-4 w-4 text-orange-600 dark:text-orange-400' />
+                <IconWallet className='h-4 w-4 text-green-600 dark:text-green-400' />
                 <p className='text-muted-foreground text-xs font-medium'>
-                  Còn nợ
+                  {t('card.systemStillOwes')}
                 </p>
               </div>
-              <p className='text-xl font-bold text-orange-600 dark:text-orange-400'>
+              <p className='text-xl font-bold text-green-600 dark:text-green-400'>
                 {formatCurrency(debt.remainingAmount)}
               </p>
               <div className='mt-2'>
@@ -241,19 +241,19 @@ export function DebtCard({ debt }: DebtCardProps) {
                     {formatCurrency(debt.creditLimit)}
                   </p>
                 </div>
-                <div className='rounded-lg bg-orange-50 p-3 dark:bg-orange-950/20'>
+                <div className='rounded-lg bg-green-50 p-3 dark:bg-green-950/20'>
                   <p className='text-muted-foreground mb-1 text-xs font-medium'>
-                    {t('card.used')}
+                    {t('card.systemOwesYou')}
                   </p>
-                  <p className='text-lg font-bold text-orange-600 dark:text-orange-400'>
+                  <p className='text-lg font-bold text-green-600 dark:text-green-400'>
                     {formatCurrency(debt.remainingAmount)}
                   </p>
                 </div>
-                <div className='rounded-lg bg-green-50 p-3 dark:bg-green-950/20'>
+                <div className='rounded-lg bg-blue-50 p-3 dark:bg-blue-950/20'>
                   <p className='text-muted-foreground mb-1 text-xs font-medium'>
-                    {t('card.available')}
+                    {t('card.canSupplyMore')}
                   </p>
-                  <p className='text-lg font-bold text-green-600 dark:text-green-400'>
+                  <p className='text-lg font-bold text-blue-600 dark:text-blue-400'>
                     {formatCurrency(availableCredit)}
                   </p>
                 </div>
@@ -265,7 +265,7 @@ export function DebtCard({ debt }: DebtCardProps) {
                   <div className='flex items-center gap-2'>
                     <IconPercentage className='text-muted-foreground h-4 w-4' />
                     <span className='text-sm font-medium'>
-                      {t('card.usageRate')}
+                      {t('card.creditUsageRate')}
                     </span>
                   </div>
                   <span className='text-lg font-bold'>
@@ -290,7 +290,7 @@ export function DebtCard({ debt }: DebtCardProps) {
                     <div className='flex items-center gap-2 rounded-lg bg-red-50 p-2 dark:bg-red-950/30'>
                       <IconAlertCircle className='h-4 w-4 text-red-600 dark:text-red-400' />
                       <p className='text-xs font-medium text-red-700 dark:text-red-300'>
-                        {t('card.creditLimitWarning')}
+                        {t('card.creditLimitNearMax')}
                       </p>
                     </div>
                   )}
@@ -312,7 +312,7 @@ export function DebtCard({ debt }: DebtCardProps) {
               <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
                 <div className='bg-background rounded-lg p-4'>
                   <p className='text-muted-foreground mb-2 text-xs font-medium'>
-                    {t('card.dueDate')}
+                    {t('card.expectedSettlementDate')}
                   </p>
                   <div className='flex items-center gap-2'>
                     <p
@@ -340,9 +340,9 @@ export function DebtCard({ debt }: DebtCardProps) {
                   </div>
                   <p className='text-muted-foreground mt-2 text-xs'>
                     {isOverdueValue
-                      ? t('card.daysOverdue', { days: Math.abs(days) })
+                      ? t('card.settlementOverdue', { days: Math.abs(days) })
                       : days >= 0
-                        ? t('card.daysUntilDuePayment', { days })
+                        ? t('card.daysUntilSettlement', { days })
                         : t('card.overdueSimple')}
                   </p>
                 </div>
@@ -361,7 +361,7 @@ export function DebtCard({ debt }: DebtCardProps) {
                   </p>
                   {debt.status !== 'paid' && (
                     <p className='text-muted-foreground mt-2 text-xs'>
-                      {t('card.systemWillPay')}
+                      {t('card.waitingForSystemPayment')}
                     </p>
                   )}
                 </div>

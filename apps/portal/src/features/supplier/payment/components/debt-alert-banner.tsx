@@ -25,10 +25,12 @@ export function DebtAlertBanner({ debt }: DebtAlertBannerProps) {
             </div>
             <div className='flex-1'>
               <h3 className='font-semibold text-red-900 dark:text-red-100'>
-                {t('overdueTitle')}
+                {t('systemPaymentOverdueTitle')}
               </h3>
               <p className='text-sm text-red-700 dark:text-red-300'>
-                {t('overdueMessage', { days: Math.abs(daysUntilDue) })}
+                {t('systemPaymentOverdueMessage', {
+                  days: Math.abs(daysUntilDue)
+                })}
               </p>
             </div>
           </div>
@@ -47,10 +49,10 @@ export function DebtAlertBanner({ debt }: DebtAlertBannerProps) {
             </div>
             <div className='flex-1'>
               <h3 className='font-semibold text-orange-900 dark:text-orange-100'>
-                {t('dueSoonTitle')}
+                {t('settlementSoonTitle')}
               </h3>
               <p className='text-sm text-orange-700 dark:text-orange-300'>
-                {t('dueSoonMessage', {
+                {t('settlementSoonMessage', {
                   days: daysUntilDue,
                   date: debt.dueDate ? formatDate(debt.dueDate) : 'N/A'
                 })}
@@ -71,10 +73,10 @@ export function DebtAlertBanner({ debt }: DebtAlertBannerProps) {
           </div>
           <div className='flex-1'>
             <h3 className='font-semibold text-blue-900 dark:text-blue-100'>
-              {t('infoTitle')}
+              {t('settlementInfoTitle')}
             </h3>
             <p className='text-sm text-blue-700 dark:text-blue-300'>
-              {t('infoMessage', {
+              {t('settlementInfoMessage', {
                 days: daysUntilDue,
                 date: debt.dueDate ? formatDate(debt.dueDate) : 'N/A'
               })}
