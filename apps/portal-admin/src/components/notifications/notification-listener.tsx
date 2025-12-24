@@ -1,7 +1,7 @@
 'use client';
 import { RoleEnum } from '@/constants/enums';
 import { useAuth } from '@/hooks/use-auth';
-import { setCookie } from '@/lib/cookie';
+import { removeCookie, setCookie } from '@/lib/cookie';
 import { fetchMine } from '@/services/auth.service';
 import { subscribeIoTDataUpdates } from '@/services/iotdevice.service';
 import {
@@ -99,6 +99,9 @@ export default function NotificationListener() {
       try {
         const fullInfo = await fetchMine(roleName);
         setFullInfo(fullInfo);
+
+        removeCookie('warehouseId');
+        removeCookie('deliveryStaffId');
 
         if (roleName === RoleEnum.DELIVERY_STAFF) {
           setCookie('deliveryStaffId', String(fullInfo?.id ?? ''), {
