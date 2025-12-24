@@ -152,6 +152,7 @@ export function CreatePhaseDialog({
             min={0}
             max={100}
             step={0.1}
+            disabled
           />
           <p className='text-muted-foreground mt-1 text-xs'>
             {t('taxRateHelper')}
