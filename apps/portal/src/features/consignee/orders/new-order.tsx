@@ -596,13 +596,24 @@ export default function NewOrderPage() {
         .then((res) => {
           const allBatches = res?.data || [];
           // Filter out batches with currentQuantity = 0 or empty price list
-          const batches = allBatches.filter(
-            (batch) =>
+          const batches = allBatches.filter((batch) => {
+            let isExpired = false;
+            if (batch.expiredAt) {
+              const expDate = new Date(batch.expiredAt);
+              expDate.setHours(0, 0, 0, 0);
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              isExpired = expDate.getTime() < today.getTime();
+            }
+
+            return (
+              !isExpired &&
               (batch.currentQuantity ?? 0) > 0 &&
               batch.price &&
               Array.isArray(batch.price) &&
               batch.price.length > 0
-          );
+            );
+          });
           dispatch({
             type: 'SET_PRODUCT_BATCHES',
             payload: { productId: product.id, batches }
@@ -694,6 +705,9 @@ export default function NewOrderPage() {
       state.orderLines.length > 0 &&
       state.orderLines.every((l) => {
         if (l.quantity <= 0) return false;
+
+        // Must select a batch
+        if (!l.batchId) return false;
 
         // Check if quantity exceeds batch currentQuantity
         if (l.batchId && l.productId) {
