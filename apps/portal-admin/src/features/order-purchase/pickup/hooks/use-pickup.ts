@@ -501,10 +501,6 @@ export function usePickups() {
         if (!paths.length) {
           throw new Error('No files uploaded');
         }
-        toast({
-          title: 'Thành công',
-          description: `Đã tải ${paths.length} hình ảnh xác nhận đợt thu hoạch`
-        });
         return { paths };
       } catch (error) {
         console.error('Failed to upload phase proof:', error);
@@ -627,6 +623,19 @@ export function usePickupPage() {
     phases.clearCache();
   }, [schedules, pickups, trucks, deliveryStaffs, phases]);
 
+  // Wrapper for createPickup that refreshes trucks after success
+  const handleCreatePickup = useCallback(
+    async (data: CreateDeliveryDto): Promise<Delivery | null> => {
+      const result = await pickups.createPickup(data);
+      // Refresh trucks after successful creation to update their status
+      if (result) {
+        await trucks.loadTrucks();
+      }
+      return result;
+    },
+    [pickups.createPickup, trucks.loadTrucks]
+  );
+
   // Get selected schedule object
   const selectedSchedule = useMemo(() => {
     if (!selectedScheduleId) return null;
@@ -710,6 +719,9 @@ export function usePickupPage() {
     deliveryStaffs,
     schedules,
     phases,
-    pickups
+    pickups: {
+      ...pickups,
+      createPickup: handleCreatePickup
+    }
   };
 }

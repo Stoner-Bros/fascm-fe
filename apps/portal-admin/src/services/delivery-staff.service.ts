@@ -6,6 +6,7 @@ import type {
   FindAllDeliveryStaffsDto
 } from '@/types/delivery-staff';
 import type { InfinityPaginationResponse } from '@/types/common';
+import { getCookie } from '@/lib/cookie';
 
 const BASE_PATH = '/delivery-staffs';
 
@@ -19,7 +20,6 @@ export async function createDeliveryStaff(body: CreateDeliveryStaffDto) {
 export async function fetchDeliveryStaffs({
   page = 1,
   limit = 10,
-  warehouseId,
   search
 }: FindAllDeliveryStaffsDto = {}) {
   const params = new URLSearchParams({
@@ -27,6 +27,7 @@ export async function fetchDeliveryStaffs({
     limit: String(limit)
   });
 
+  const warehouseId = getCookie('warehouseId');
   if (warehouseId) params.set('warehouseId', warehouseId);
   if (search) params.set('search', search);
 
