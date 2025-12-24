@@ -896,9 +896,30 @@ export default function AreaDetailView({
         header: t('products.batches.columns.expiredAt'),
         cell: ({ row }) => {
           const expiredAt = row.original.expiredAt;
-          return expiredAt
-            ? format(new Date(expiredAt), 'dd/MM/yyyy', { locale: vi })
-            : '—';
+          if (!expiredAt) return '—';
+
+          const date = new Date(expiredAt);
+          const now = new Date();
+          now.setHours(0, 0, 0, 0);
+
+          const checkDate = new Date(date);
+          checkDate.setHours(0, 0, 0, 0);
+
+          const diffTime = checkDate.getTime() - now.getTime();
+          const diffDays = diffTime / (1000 * 60 * 60 * 24);
+
+          let className = '';
+          if (diffDays < 0) {
+            className = 'text-gray-300 font-bold';
+          } else if (diffDays <= 7) {
+            className = 'text-orange-400 font-bold';
+          }
+
+          return (
+            <span className={className}>
+              {format(date, 'dd/MM/yyyy', { locale: vi })}
+            </span>
+          );
         }
       },
       {
@@ -989,6 +1010,31 @@ export default function AreaDetailView({
       [t]
     );
 
+  // Sort batches: expired at the bottom
+  const sortedBatches = useMemo(() => {
+    if (!areaBatches) return [];
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    const nowTime = now.getTime();
+
+    return [...areaBatches].sort((a, b) => {
+      const dateA = a.expiredAt
+        ? new Date(a.expiredAt).getTime()
+        : Number.MAX_SAFE_INTEGER;
+      const dateB = b.expiredAt
+        ? new Date(b.expiredAt).getTime()
+        : Number.MAX_SAFE_INTEGER;
+
+      const isExpiredA = dateA < nowTime;
+      const isExpiredB = dateB < nowTime;
+
+      if (isExpiredA !== isExpiredB) {
+        return isExpiredA ? 1 : -1; // Non-expired first
+      }
+      return dateA - dateB; // Ascending date
+    });
+  }, [areaBatches]);
+
   // Batches table
   const batchesPagination: PaginationState = useMemo(
     () => ({
@@ -999,7 +1045,7 @@ export default function AreaDetailView({
   );
 
   const batchesTable = useReactTable({
-    data: areaBatches,
+    data: sortedBatches,
     columns: batchesColumns,
     pageCount: batchesPageCount,
     state: { pagination: batchesPagination },
@@ -1186,19 +1232,6 @@ export default function AreaDetailView({
     return () => clearInterval(interval);
   }, []);
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'normal':
-        return 'bg-green-500';
-      case 'warning':
-        return 'bg-yellow-500';
-      case 'critical':
-        return 'bg-red-500';
-      default:
-        return 'bg-gray-500';
-    }
-  };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'normal':
@@ -1224,17 +1257,38 @@ export default function AreaDetailView({
     }
   };
 
-  const capacity = area?.capacity ?? 0;
-  const usedCapacity =
-    typeof area?.availableCapacity === 'number'
-      ? Math.max(capacity - area.availableCapacity, 0)
-      : 0;
-  const capacityPercentage =
-    capacity > 0 ? (usedCapacity / Math.max(capacity, 1)) * 100 : 0;
-  const activeAlertCount = activeAlert ? 1 : 0;
+  const tempStatus = useMemo(() => {
+    if (temperature == null || !areaSetting) return 'normal';
+    if (
+      areaSetting.minTemperature !== undefined &&
+      temperature < areaSetting.minTemperature
+    )
+      return 'warning';
+    if (
+      areaSetting.maxTemperature !== undefined &&
+      temperature > areaSetting.maxTemperature
+    )
+      return 'warning';
+    return 'normal';
+  }, [temperature, areaSetting]);
+
+  const humidStatus = useMemo(() => {
+    if (humidity == null || !areaSetting) return 'normal';
+    if (
+      areaSetting.minHumidity !== undefined &&
+      humidity < areaSetting.minHumidity
+    )
+      return 'warning';
+    if (
+      areaSetting.maxHumidity !== undefined &&
+      humidity > areaSetting.maxHumidity
+    )
+      return 'warning';
+    return 'normal';
+  }, [humidity, areaSetting]);
+
   const areaName = area?.name;
-  const areaCode = area?.id || areaId;
-  const areaDescription = area?.description || '';
+
   const warehouseName =
     warehouse?.name || `${t('common.warehouse')} ${warehouseId}`;
 
@@ -1308,7 +1362,7 @@ export default function AreaDetailView({
                 ? `${areaSetting.minTemperature}–${areaSetting.maxTemperature}°C`
                 : '—'}
             </p>
-            <div className='mt-2'>{getStatusBadge('normal')}</div>
+            <div className='mt-2'>{getStatusBadge(tempStatus)}</div>
           </CardContent>
         </Card>
 
@@ -1333,7 +1387,7 @@ export default function AreaDetailView({
                 ? `${areaSetting.minHumidity}–${areaSetting.maxHumidity}%`
                 : '—'}
             </p>
-            <div className='mt-2'>{getStatusBadge('normal')}</div>
+            <div className='mt-2'>{getStatusBadge(humidStatus)}</div>
           </CardContent>
         </Card>
 
