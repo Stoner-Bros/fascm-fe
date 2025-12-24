@@ -54,8 +54,7 @@ export function useDebts(options?: UseDebtsOptions) {
 
   useEffect(() => {
     loadDebts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadDebts]);
 
   return {
     debts,
