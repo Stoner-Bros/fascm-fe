@@ -124,7 +124,10 @@ export type OrderPhaseStatus =
 
 export type ImageProof = {
   id: string;
-  path?: string | null;
+  photo: {
+    path?: string | null;
+    id: string;
+  };
   createdAt: Date | string;
   updatedAt: Date | string;
 };

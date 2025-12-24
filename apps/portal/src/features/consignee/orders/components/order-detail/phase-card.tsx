@@ -289,11 +289,10 @@ export function PhaseCard({
                   key={img.id}
                   className='bg-muted relative aspect-square overflow-hidden rounded-md border'
                 >
-                  {img.path && (
-                    <Image
-                      src={img.path}
+                  {img.photo.path && (
+                    <img
+                      src={img.photo.path}
                       alt={t('detail.phases.imageProof')}
-                      fill
                       className='object-cover transition-transform hover:scale-105'
                     />
                   )}
